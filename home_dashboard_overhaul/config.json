@@ -1,0 +1,56 @@
+{
+  "schema_version": 3,
+  "appearance": {
+    "preset": "Sapphire Glass",
+    "mode": "auto",
+    "opacity": 88,
+    "blur": 18,
+    "density": "comfortable",
+    "text_scale": 100
+  },
+  "visibility": {
+    "today": true,
+    "remaining": true,
+    "buried": true,
+    "events": true,
+    "heatmap": true,
+    "heatmap_metrics": true,
+    "bible": true
+  },
+  "study": {
+    "pace_unit": "seconds_per_card",
+    "show_eta": true
+  },
+  "new_cards": {
+    "include_rescheduled": true
+  },
+  "heatmap": {
+    "calendar_view": "year",
+    "week_start": 0,
+    "history_days": 0,
+    "forecast_days": 90,
+    "ignore_before": "",
+    "exclude_manual_reschedules": true,
+    "exclude_deleted_cards": false,
+    "excluded_deck_ids": [],
+    "show_due_forecast": true
+  },
+  "events": {
+    "sort": "ascending",
+    "items": []
+  },
+  "bible": {
+    "quotes": [],
+    "font_color": "#1E90FF",
+    "font_family": "Georgia, serif",
+    "font_size": "28px",
+    "theme_aware_color": true,
+    "rotation_mode": "daily"
+  },
+  "migration": {
+    "completed": false,
+    "completed_at": "",
+    "sources": {},
+    "warnings": []
+  }
+}

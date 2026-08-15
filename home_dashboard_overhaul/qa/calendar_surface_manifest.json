@@ -1,0 +1,99 @@
+{
+  "schema_version": 2,
+  "release": "1.5.3",
+  "package": "home_dashboard_overhaul",
+  "scope": "local-event-only calendar UI",
+  "fail_closed": true,
+  "deferred_paths": [
+    "deferred/calendar_sources_vnext/"
+  ],
+  "acceptance": {
+    "expected_capture_count": 28,
+    "duplicate_capture_ids_fail": true,
+    "missing_capture_ids_fail": true,
+    "unexpected_capture_ids_fail": true,
+    "required_candidate_hash": true,
+    "require_artifact_sidecar": true,
+    "required_package_integrity_true": [
+      "candidate_hash_matches",
+      "source_archive_parity",
+      "installed_archive_parity",
+      "passed"
+    ],
+    "required_package_integrity_empty": [
+      "byte_mismatches",
+      "source_mismatches",
+      "unexpected_files"
+    ],
+    "required_restart_true": [
+      "requested",
+      "completed",
+      "month_view_persisted",
+      "schema_3_persisted"
+    ],
+    "required_initial_identity_gates": [
+      "process",
+      "unique_window",
+      "filesystem",
+      "sync"
+    ],
+    "required_restart_identity_gates": [
+      "process",
+      "unique_window",
+      "filesystem",
+      "sync"
+    ],
+    "maximum_representative_render_ms": 100,
+    "maximum_horizontal_overflow_px": 1
+  },
+  "visual_surfaces": [
+    {"id": "01-year-desktop-light-populated", "view": "year", "viewport": [1440, 900], "state": ["populated", "five-intensity-levels", "due", "events"]},
+    {"id": "02-year-intermediate-light", "view": "year", "viewport": [900, 900], "state": ["populated", "month-boundaries"]},
+    {"id": "03-year-narrow-620x780", "view": "year", "viewport": [620, 780], "state": ["populated", "no-horizontal-overflow"]},
+    {"id": "04-year-dark-125-text-150-scale", "view": "year", "viewport": [1440, 900], "appearance": ["dark", "compact", "125-percent-text", "150-percent-scale"]},
+    {"id": "05-year-high-contrast-200-scale", "view": "year", "viewport": [1440, 900], "appearance": ["high-contrast", "200-percent-scale"], "state": ["non-color-cues"]},
+    {"id": "06-year-selected-today-focus", "view": "year", "viewport": [1440, 900], "state": ["populated", "today", "selection", "focus"]},
+    {"id": "07-year-transition-december-january", "view": "year", "viewport": [1180, 900], "anchor": "2026-12-31", "state": ["year-transition"]},
+    {"id": "08-month-four-week", "view": "month", "viewport": [1180, 900], "anchor": "2021-02-15", "week_start": 0, "state": ["four-week-month"]},
+    {"id": "09-month-five-week-leap-february", "view": "month", "viewport": [1180, 900], "anchor": "2028-02-15", "week_start": 0, "state": ["five-week-month", "leap-year"]},
+    {"id": "10-month-six-week-populated", "view": "month", "viewport": [1180, 900], "anchor": "2026-08-13", "week_start": 0, "state": ["six-week-month", "events", "outside-month"]},
+    {"id": "11-month-rail-1150", "view": "month", "viewport": [1180, 900], "dashboard_width": 1150, "state": ["rail-boundary", "selected-date"], "expected_geometry": {"primary": {"width": 720}, "qa": {"presentation": "rail", "visibleDetails": true}}},
+    {"id": "12-month-inline-1149", "view": "month", "viewport": [1179, 900], "dashboard_width": 1149, "state": ["inline-boundary", "selected-date"], "expected_geometry": {"qa": {"presentation": "inline", "visibleDetails": true}}},
+    {"id": "13-month-layout-1180", "view": "month", "viewport": [1180, 900], "state": ["metric-breakpoint-above", "selected-date"], "expected_geometry": {"qa": {"presentation": "rail"}}},
+    {"id": "14-month-layout-1179", "view": "month", "viewport": [1179, 900], "state": ["metric-breakpoint-below", "selected-date"], "expected_geometry": {"qa": {"presentation": "inline"}}},
+    {"id": "15-month-event-chips-720", "view": "month", "calendar_width": 720, "state": ["one-event", "two-events", "three-plus-events", "overflow"], "expected_geometry": {"primary": {"width": 720}, "qa": {"chipCapacity": 2}}},
+    {"id": "16-month-event-markers-719", "view": "month", "calendar_width": 719, "state": ["compact-event-counts", "overflow"], "expected_geometry": {"primary": {"width": 719}, "qa": {"chipCapacity": 0}}},
+    {"id": "17-month-narrow-620x780", "view": "month", "viewport": [620, 780], "state": ["today", "due", "events", "no-horizontal-overflow"]},
+    {"id": "18-date-details-past", "view": "month", "viewport": [1180, 900], "state": ["past", "completed-reviews", "new-cards-studied", "events", "browse", "manage-events"], "expected_geometry": {"detailsVisible": true, "summaryVisible": 2}},
+    {"id": "19-date-details-today-combined", "view": "month", "viewport": [1180, 900], "state": ["today", "completed-reviews", "new-cards-studied", "due", "event", "selection", "focus"], "expected_geometry": {"detailsVisible": true, "summaryVisible": 3}},
+    {"id": "20-date-details-future-overflow-safe-text", "view": "month", "viewport": [1180, 900], "state": ["future", "due", "three-plus-events", "long-name", "literal-html-text"], "expected_geometry": {"detailsVisible": true, "summaryVisible": 1}},
+    {"id": "21-all-hidden-recovery", "view": "dashboard-recovery", "viewport": [1180, 900], "state": ["all-sections-hidden", "status", "settings-recovery"], "expected_geometry": {"window": {"width": 1180, "height": 900}, "special": {"state": "all-hidden-recovery", "rootPresent": true, "rootVisible": true, "initialized": true, "statePresent": true, "stateVisible": true, "statusRole": "status", "settingsActionCount": 1, "settingsActionEnabled": true, "settingsActionText": "Open Home screen settings", "settingsAccessibleName": "Open Home screen settings", "hiddenHeading": true, "hiddenRecoveryCopy": true, "warningPresent": false, "rawErrorLeak": false, "studyCardPresent": false, "bibleCardPresent": false, "calendarPresent": false, "horizontalOverflow": false}}},
+    {"id": "22-partial-data-unavailable", "view": "dashboard-partial-data", "viewport": [1180, 900], "state": ["partial-data", "analytics-error", "unavailable-values", "warning", "safe-error-text"], "expected_geometry": {"window": {"width": 1180, "height": 900}, "special": {"state": "partial-data-unavailable", "rootPresent": true, "rootVisible": true, "initialized": true, "statePresent": true, "stateVisible": true, "settingsActionCount": 1, "settingsActionEnabled": true, "settingsAccessibleName": "Open Home Dashboard settings", "warningPresent": true, "warningRole": "alert", "warningCopyComplete": true, "unavailableValueCount": 17, "rawErrorLeak": false, "studyCardPresent": true, "bibleCardPresent": true, "calendarPresent": true, "calendarPopulated": true, "historyAvailable": "false", "forecastAvailable": "false", "progressState": "unavailable", "horizontalOverflow": false}}},
+    {"id": "23-loading-state", "view": "dashboard-loading", "viewport": [1180, 900], "state": ["loading", "status", "spinner"], "expected_geometry": {"window": {"width": 1180, "height": 900}, "special": {"state": "loading-state", "rootPresent": true, "rootVisible": true, "initialized": true, "statePresent": true, "stateVisible": true, "statusRole": "status", "settingsActionCount": 0, "warningPresent": false, "rawErrorLeak": false, "studyCardPresent": false, "bibleCardPresent": false, "calendarPresent": false, "loadingClass": true, "loadingCopyComplete": true, "spinnerPresent": true, "spinnerAriaHidden": "true", "horizontalOverflow": false}}},
+    {"id": "24-legacy-activation-required", "view": "dashboard-activation", "viewport": [1180, 900], "state": ["legacy-activation", "paused", "known-addon-name", "settings-recovery"], "expected_geometry": {"window": {"width": 1180, "height": 900}, "special": {"state": "legacy-activation-required", "rootPresent": true, "rootVisible": true, "initialized": true, "statePresent": true, "stateVisible": true, "statusRole": "status", "settingsActionCount": 1, "settingsActionEnabled": true, "settingsActionText": "Open dashboard settings", "settingsAccessibleName": "Open dashboard settings", "warningPresent": false, "rawErrorLeak": false, "studyCardPresent": false, "bibleCardPresent": false, "calendarPresent": false, "activationHeading": true, "legacyNameVisible": true, "rawLegacyIdLeak": false, "horizontalOverflow": false}}},
+    {"id": "25-calendar-settings-desktop", "view": "settings-calendar", "viewport": [1280, 820], "state": ["display", "range-forecast", "history-rules", "deck-exclusions", "live-preview"]},
+    {"id": "26-calendar-settings-intermediate", "view": "settings-calendar", "viewport": [900, 780], "state": ["vertical-composition", "disabled-forecast", "exclusion-count"]},
+    {"id": "27-events-empty-and-contextual", "view": "settings-events", "viewport": [900, 780], "state": ["empty", "opened-from-calendar", "add-event-for-date", "disabled-selection-actions"]},
+    {"id": "28-events-active-archived-feedback", "view": "settings-events", "viewport": [1280, 820], "state": ["active", "archived", "localized-date", "selection", "confirmation-feedback"]}
+  ],
+  "assertion_matrices": {
+    "week_start": [0, 1, 2, 3, 4, 5, 6],
+    "month_rows": [4, 5, 6],
+    "date_boundaries": ["leap-february", "december-to-january", "outside-month"],
+    "appearance": ["light", "dark", "high-contrast"],
+    "density": ["compact", "comfortable", "spacious"],
+    "text_scale_percent": [90, 100, 125],
+    "display_scale_percent": [100, 150, 200],
+    "activity": ["empty", "level-1", "level-2", "level-3", "level-4", "level-5", "due"],
+    "date_state": ["outside-month", "today", "hover", "focus", "selection", "combined"],
+    "events": ["zero", "one", "two", "three-plus", "long-name", "literal-html", "active", "archived"],
+    "data_state": ["loading", "partial-data", "analytics-error", "legacy-activation", "calendar-hidden", "restart-persistence"],
+    "keyboard": ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown", "Enter", "Space", "Escape", "close", "focus-restoration"],
+    "actions": ["month-year-switch", "today", "browse-cards", "date-scoped-manage-events"],
+    "quality": ["no-overlap", "no-clipping", "footer-visible", "no-page-horizontal-overflow", "render-under-100ms", "no-analytics-query-on-view-change", "no-verse-advance-on-view-change", "safe-text-rendering", "contrast"]
+  },
+  "accessibility": {
+    "automated": ["grid-role", "row-and-column-count", "roving-tabindex", "aria-current", "aria-selected", "focus-visible", "state-summary", "focus-restoration"],
+    "human_required": ["spoken-voiceover-grid-navigation", "spoken-date-summary", "spoken-state-announcements", "spoken-settings-and-event-controls"]
+  }
+}

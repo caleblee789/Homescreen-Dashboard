@@ -1,0 +1,31 @@
+1143540799/
+1556734708/
+1771074083/
+635082046/
+BibleVerses/
+**/__pycache__/
+**/*.py[cod]
+.DS_Store
+.pytest_cache/
+home_dashboard_overhaul/dist/
+qa-runs/
+
+# Disposable Anki launch records contain machine-local paths and ephemeral keys.
+**/QA_IDENTITY.json
+
+# Retain superseded live-run evidence locally. The sanitized 1.5.3 release set
+# below is the only QA corpus intended for repository publication.
+docs/acceptance_report*.md
+docs/settings_menu_audit.md
+home_dashboard_overhaul/qa/calendar-polish-before-comparison-*/
+home_dashboard_overhaul/qa/evidence/
+home_dashboard_overhaul/qa/live-ui-*/
+!home_dashboard_overhaul/qa/live-ui-acceptance-1.5.3-release-2026-08-15/
+!home_dashboard_overhaul/qa/live-ui-acceptance-1.5.3-release-2026-08-15/**
+# Keep Finder metadata ignored after the evidence-directory exception above.
+**/.DS_Store
+home_dashboard_overhaul/qa/CALENDAR_UI_AUDIT_1.5.1.md
+home_dashboard_overhaul/qa/CALENDAR_POLISH_BEFORE_AFTER.md
+deferred/calendar_sources_vnext/qa/
+deferred/calendar_sources_vnext/package-artifact/
+deferred/calendar_sources_vnext/docs/acceptance_report_1.6.0_layout.md
