@@ -1,58 +1,47 @@
-"""Capture and assemble the final Home Dashboard 1.7.0 contact sheets.
+#!/usr/bin/env python3
+"""Assemble 100%-only Home Dashboard contact sheets from native Anki captures.
 
-The renderer matrix is restricted to the canonical 100% text-scale cases.
-Native Anki captures are copied from an already verified exact-package run.
-Every detail sheet preserves source screenshots at a 1:1 pixel scale.
+The input must be a passed report from ``runtime_probe_contact_sheets_100.py``
+and the exact archive fixture prepared for the same disposable Anki run. Raw
+Retina captures are copied byte-for-byte. Contact sheets normalize DPR 2
+physical pixels to their logical 100% UI dimensions for readable pagination;
+that presentation resize is not an alternate application or text scale.
 """
 
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
 from datetime import datetime
 import hashlib
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+import re
 import shutil
-import subprocess
-import tempfile
-import time
-from typing import Any, Iterable
-from urllib.parse import urlencode
+from typing import Any
+import zipfile
 
 from PIL import Image, ImageDraw, ImageFont
 
 
-THEME_ORDER = ("Sapphire Glass", "Graphite", "Emerald", "High Contrast")
-THEME_SLUGS = {
-    "Sapphire Glass": "sapphire-glass",
-    "Graphite": "graphite",
-    "Emerald": "emerald",
-    "High Contrast": "high-contrast",
-}
-LAYOUT_DIMENSIONS = {
-    "compact": (560, 900),
-    "wide": (1440, 900),
-}
-NATIVE_FULLSCREEN_SOURCES = (
-    (
-        "isolated-main-window-year-maximized.png",
-        "exact-package-full-screen-month.png",
-        "Month · exact package · full-screen dashboard",
-        "month",
-    ),
-    (
-        "isolated-main-window-month-maximized.png",
-        "exact-package-full-screen-year.png",
-        "Year · exact package · full-screen dashboard",
-        "year",
-    ),
+RELEASE = "1.7.0"
+THEMES = (
+    ("SG", "Sapphire Glass", "sapphire-glass"),
+    ("GR", "Graphite", "graphite"),
+    ("EM", "Emerald", "emerald"),
+    ("HC", "High Contrast", "high-contrast"),
 )
-NATIVE_SETTINGS_SOURCES = (
-    ("settings-wide-calendar.png", "Calendar settings · wide"),
-    ("settings-wide-bible-custom.png", "Bible verse settings · wide"),
-    ("settings-medium-preview.png", "Settings · intermediate"),
-    ("settings-narrow.png", "Settings · narrow"),
+THEME_BY_CODE = {code: (name, slug) for code, name, slug in THEMES}
+MODE_BY_CODE = {"L": "light", "D": "dark"}
+VIEW_BY_CODE = {"M": "month", "Y": "year"}
+LAYOUT_BY_CODE = {"C": "compact", "W": "wide"}
+LAYOUT_DIMENSIONS = {"compact": (560, 900), "wide": (1440, 900)}
+CASE_PATTERN = re.compile(r"^VR-(SG|GR|EM|HC)-(L|D)-(M|Y)-(C|W)-100$")
+FULL_SCREEN_NAMES = (
+    "exact-package-full-screen-month-100",
+    "exact-package-full-screen-year-100",
 )
+SOURCE_ROOT = Path(__file__).resolve().parents[1]
 
 
 def sha256_file(path: Path) -> str:
@@ -63,9 +52,15 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def read_json(path: Path) -> dict[str, Any]:
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise RuntimeError(f"expected a JSON object: {path}")
+    return value
+
+
 def font(size: int, *, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     candidates = (
-        "/System/Library/Fonts/SFNS.ttf",
         (
             "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
             if bold
@@ -81,163 +76,356 @@ def font(size: int, *, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont
     return ImageFont.load_default()
 
 
-def image_dimensions(path: Path) -> tuple[int, int]:
+def png_dimensions(path: Path) -> tuple[int, int]:
     with Image.open(path) as image:
-        image.load()
-        return image.width, image.height
+        dimensions = image.size
+        image.verify()
+        return dimensions
 
 
-def validate_nonblank(path: Path) -> None:
+def png_sample_color_count(path: Path) -> int:
+    """Mirror the runtime probe's cheap paint-readiness sample from PNG bytes."""
     with Image.open(path) as image:
-        rgb = image.convert("RGB")
-        extrema = rgb.getextrema()
-    if all(low == high for low, high in extrema):
-        raise RuntimeError(f"capture is blank: {path}")
+        rgba = image.convert("RGBA")
+        width, height = rgba.size
+        step_x = max(1, width // 24)
+        step_y = max(1, height // 18)
+        colors: set[tuple[int, int, int, int]] = set()
+        for x in range(step_x // 2, width, step_x):
+            for y in range(step_y // 2, height, step_y):
+                colors.add(rgba.getpixel((x, y)))
+                if len(colors) >= 16:
+                    return len(colors)
+        return len(colors)
 
 
-def renderer_cases(matrix_path: Path) -> list[dict[str, Any]]:
-    matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
-    cases = [case for case in matrix.get("cases", []) if case.get("text_scale") == 100]
-    if len(cases) != 32:
-        raise RuntimeError(f"expected 32 canonical 100% cases, found {len(cases)}")
-    if len({case.get("id") for case in cases}) != len(cases):
-        raise RuntimeError("100% visual-regression case IDs must be unique")
-    invalid = [case.get("id") for case in cases if not str(case.get("id", "")).endswith("-100")]
-    if invalid:
-        raise RuntimeError(f"non-100% cases escaped the filter: {invalid}")
-    return cases
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        raise RuntimeError(message)
 
 
-def capture_renderer_case(
-    *,
-    chrome: Path,
-    profile: Path,
-    base_url: str,
-    case: dict[str, Any],
-    destination: Path,
-) -> dict[str, Any]:
-    layout = str(case["layout"])
-    expected = LAYOUT_DIMENSIONS[layout]
-    query = urlencode(
-        {
-            "theme": case["theme"],
-            "mode": case["mode"],
-            "view": case["view"],
-            "scale": "100",
-        }
-    )
-    url = f"{base_url.rstrip('/')}/?{query}"
-    command = [
-        str(chrome),
-        "--headless=new",
-        "--disable-background-networking",
-        "--disable-component-update",
-        "--disable-default-apps",
-        "--disable-extensions",
-        "--disable-features=MediaRouter,OptimizationHints,Translate",
-        "--disable-gpu",
-        "--force-device-scale-factor=1",
-        "--hide-scrollbars",
-        "--no-default-browser-check",
-        "--no-first-run",
-        f"--user-data-dir={profile}",
-        "--virtual-time-budget=750",
-        f"--window-size={expected[0]},{expected[1]}",
-        f"--screenshot={destination}",
-        url,
-    ]
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    deadline = time.monotonic() + 30
-    last_size = -1
-    stable_ticks = 0
-    capture_ready = False
-    while time.monotonic() < deadline:
-        if destination.is_file():
-            current_size = destination.stat().st_size
-            stable_ticks = stable_ticks + 1 if current_size > 0 and current_size == last_size else 0
-            last_size = current_size
-            if stable_ticks >= 2:
-                try:
-                    image_dimensions(destination)
-                    validate_nonblank(destination)
-                except (OSError, RuntimeError):
-                    pass
-                else:
-                    capture_ready = True
-                    break
-        if process.poll() is not None:
-            break
-        time.sleep(0.1)
-
-    if process.poll() is None:
-        process.terminate()
-        try:
-            process.wait(timeout=2)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=2)
-    stdout, stderr = process.communicate()
-    if not capture_ready and destination.is_file():
-        try:
-            image_dimensions(destination)
-            validate_nonblank(destination)
-        except (OSError, RuntimeError):
-            pass
-        else:
-            capture_ready = True
-    if not capture_ready:
-        detail = (stderr or stdout).strip()
-        raise RuntimeError(f"Chrome capture failed for {case['id']}: {detail}")
-    dimensions = image_dimensions(destination)
-    if dimensions != expected:
-        raise RuntimeError(
-            f"{case['id']} dimensions {dimensions} do not match requested {expected}"
-        )
-    validate_nonblank(destination)
+def parse_matrix_case(name: str) -> dict[str, str]:
+    match = CASE_PATTERN.fullmatch(name)
+    if match is None:
+        raise RuntimeError(f"invalid 100% matrix case ID: {name}")
+    theme_code, mode_code, view_code, layout_code = match.groups()
+    theme, theme_slug = THEME_BY_CODE[theme_code]
     return {
-        "id": case["id"],
-        "file": f"captures/{destination.name}",
-        "theme": case["theme"],
-        "mode": case["mode"],
-        "view": case["view"],
-        "layout": layout,
-        "text_scale_percent": 100,
-        "browser_zoom_percent": 100,
-        "device_scale_factor": 1,
-        "dimensions": list(dimensions),
-        "sha256": sha256_file(destination),
-        "url": url,
+        "id": name,
+        "theme": theme,
+        "theme_slug": theme_slug,
+        "mode": MODE_BY_CODE[mode_code],
+        "view": VIEW_BY_CODE[view_code],
+        "layout": LAYOUT_BY_CODE[layout_code],
     }
 
 
+def validate_source_capture(
+    *, capture_root: Path, name: str, record: dict[str, Any]
+) -> Path:
+    reported_file = str(record.get("file", ""))
+    require(
+        bool(reported_file) and Path(reported_file).name == reported_file,
+        f"{name} has an unsafe capture filename",
+    )
+    source = capture_root / reported_file
+    require(source.is_file(), f"missing native capture: {source}")
+    dimensions = png_dimensions(source)
+    expected_dimensions = (
+        int(record.get("pixel_width", -1)),
+        int(record.get("pixel_height", -1)),
+    )
+    require(
+        dimensions == expected_dimensions,
+        f"{name} PNG dimensions {dimensions} do not match report {expected_dimensions}",
+    )
+    source_hash = sha256_file(source)
+    require(
+        source_hash == record.get("sha256"),
+        f"{name} SHA-256 does not match its native runtime report",
+    )
+    require(record.get("ui_scale_percent") == 100, f"{name} is not UI scale 100%")
+    require(record.get("text_scale_percent") == 100, f"{name} is not text scale 100%")
+    require(float(record.get("device_pixel_ratio", 0)) == 2.0, f"{name} is not DPR 2")
+    require(record.get("saved") is True, f"{name} was not recorded as saved")
+    dom = record.get("dom")
+    require(isinstance(dom, dict), f"{name} is missing DOM inspection evidence")
+    require(dom.get("ready") is True, f"{name} did not reach the ready state")
+    require(dom.get("textScale100") is True, f"{name} did not render text scale 100%")
+    require(dom.get("statisticsCards") == 4, f"{name} did not render four statistics cards")
+    require(dom.get("bibleAfter") is True, f"{name} did not place the Bible card after the dashboard")
+    require(dom.get("overflowX") is False, f"{name} has document-level horizontal overflow")
+    require(png_sample_color_count(source) >= 8, f"{name} PNG is visually blank")
+    if "sample_color_count" in record:
+        require(
+            int(record["sample_color_count"]) >= 8,
+            f"{name} runtime paint sample is visually blank",
+        )
+    return source
+
+
+def validate_evidence(
+    *,
+    capture_root: Path,
+    runtime_report: Path,
+    fixture_report: Path,
+    package: Path,
+) -> tuple[dict[str, Any], dict[str, Any], list[dict[str, Any]], list[dict[str, Any]], str]:
+    runtime = read_json(runtime_report)
+    fixture = read_json(fixture_report)
+    require(runtime.get("status") == "passed", "native runtime report did not pass")
+    require(runtime.get("errors") == [], "native runtime report contains errors")
+    scale_policy = runtime.get("scale_policy", {})
+    require(scale_policy.get("ui_scale_percent") == 100, "runtime UI scale is not 100%")
+    require(scale_policy.get("text_scale_percent") == 100, "runtime text scale is not 100%")
+    require(
+        scale_policy.get("excluded_ui_scales_percent") == [125, 150, 200],
+        "runtime excluded-scale policy is incomplete",
+    )
+    identity = runtime.get("identity", {})
+    require(identity.get("profile_matches") is True, "native profile identity did not match")
+    require(
+        identity.get("collection_inside_run_root") is True,
+        "native collection escaped the disposable run root",
+    )
+    require(identity.get("sync_auth_present") is False, "native profile has sync credentials")
+
+    package_hash = sha256_file(package)
+    require(
+        fixture.get("archive_sha256") == package_hash,
+        "fixture archive hash does not match the supplied package",
+    )
+    require(
+        fixture.get("candidate_payload_matches_archive") is True,
+        "installed package payload did not match the archive",
+    )
+    require(fixture.get("archive_file_count") == 24, "exact package must contain 24 files")
+    with zipfile.ZipFile(package) as archive:
+        require(archive.testzip() is None, "exact package archive integrity check failed")
+        members = [info for info in archive.infolist() if not info.is_dir()]
+        member_names = [info.filename for info in members]
+        require(len(member_names) == len(set(member_names)), "exact package has duplicate members")
+        require(
+            all(
+                not PurePosixPath(name).is_absolute()
+                and ".." not in PurePosixPath(name).parts
+                for name in member_names
+            ),
+            "exact package contains an unsafe member path",
+        )
+        member_count = len(members)
+        archive_manifest = json.loads(archive.read("manifest.json"))
+        require(
+            archive_manifest.get("package") == "home_dashboard_overhaul",
+            "exact package has the wrong package identifier",
+        )
+        require(
+            archive_manifest.get("human_version") == RELEASE,
+            f"exact package is not release {RELEASE}",
+        )
+        for name in member_names:
+            source = SOURCE_ROOT.joinpath(*PurePosixPath(name).parts)
+            require(source.is_file(), f"exact package member has no current source: {name}")
+            require(
+                source.read_bytes() == archive.read(name),
+                f"exact package member differs from current source: {name}",
+            )
+    require(member_count == 24, f"exact package contains {member_count} files instead of 24")
+
+    captures = runtime.get("captures")
+    require(isinstance(captures, dict), "native runtime report has no capture map")
+    require(len(captures) == 34, f"expected 34 native captures, found {len(captures)}")
+    states = runtime.get("states")
+    require(isinstance(states, dict), "native runtime report has no state map")
+    require(set(states) == set(captures), "native state and capture IDs differ")
+    capture_files = {path.name for path in capture_root.glob("*.png")}
+    reported_files = {
+        str(record.get("file", ""))
+        for record in captures.values()
+        if isinstance(record, dict)
+    }
+    require(capture_files == reported_files, "native capture directory and report files differ")
+    expected_matrix_ids = {
+        f"VR-{theme_code}-{mode_code}-{view_code}-{layout_code}-100"
+        for theme_code, _theme, _slug in THEMES
+        for mode_code in MODE_BY_CODE
+        for view_code in VIEW_BY_CODE
+        for layout_code in LAYOUT_BY_CODE
+    }
+    actual_matrix_ids = {name for name in captures if name.startswith("VR-")}
+    require(actual_matrix_ids == expected_matrix_ids, "native 100% matrix IDs are incomplete or unexpected")
+    require(
+        set(captures) == expected_matrix_ids | set(FULL_SCREEN_NAMES),
+        "native report contains a noncanonical or non-100% capture",
+    )
+
+    matrix: list[dict[str, Any]] = []
+    for name in sorted(actual_matrix_ids):
+        metadata = parse_matrix_case(name)
+        record = captures[name]
+        require(isinstance(record, dict), f"invalid runtime record for {name}")
+        source = validate_source_capture(capture_root=capture_root, name=name, record=record)
+        require(record.get("dom") == states[name], f"{name} DOM and state records differ")
+        expected_logical = LAYOUT_DIMENSIONS[metadata["layout"]]
+        actual_logical = (
+            int(record.get("logical_width", -1)),
+            int(record.get("logical_height", -1)),
+        )
+        require(
+            actual_logical == expected_logical,
+            f"{name} logical dimensions {actual_logical} do not match {expected_logical}",
+        )
+        require(
+            (int(record["pixel_width"]), int(record["pixel_height"]))
+            == (expected_logical[0] * 2, expected_logical[1] * 2),
+            f"{name} Retina dimensions do not equal DPR 2 logical dimensions",
+        )
+        require(record.get("full_screen") is False, f"{name} was unexpectedly full-screen")
+        require(record["dom"].get("view") == metadata["view"], f"{name} rendered the wrong view")
+        matrix.append({**metadata, "record": record, "source": source})
+
+    full_screen: list[dict[str, Any]] = []
+    for name in FULL_SCREEN_NAMES:
+        record = captures[name]
+        require(isinstance(record, dict), f"invalid runtime record for {name}")
+        source = validate_source_capture(capture_root=capture_root, name=name, record=record)
+        require(record.get("dom") == states[name], f"{name} DOM and state records differ")
+        view = "month" if "-month-" in name else "year"
+        require(record.get("full_screen") is True, f"{name} is not marked full-screen")
+        require(record["dom"].get("view") == view, f"{name} rendered the wrong view")
+        require(int(record.get("logical_width", 0)) >= 1600, f"{name} is not a wide full-screen canvas")
+        require(int(record.get("logical_height", 0)) >= 1000, f"{name} is not a tall full-screen canvas")
+        require(
+            int(record.get("frame_logical_width", 0)) >= int(record.get("logical_width", 0)),
+            f"{name} frame width is inconsistent",
+        )
+        require(
+            int(record.get("frame_logical_height", 0)) >= int(record.get("logical_height", 0)),
+            f"{name} frame height is inconsistent",
+        )
+        full_screen.append(
+            {
+                "id": name,
+                "view": view,
+                "record": record,
+                "source": source,
+            }
+        )
+    return runtime, fixture, matrix, full_screen, package_hash
+
+
+def sanitized_evidence(
+    *, runtime: dict[str, Any], fixture: dict[str, Any], package_name: str
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    published_runtime = deepcopy(runtime)
+    published_fixture = deepcopy(fixture)
+    run_roots = {
+        value
+        for value in (
+            runtime.get("identity", {}).get("run_root"),
+            fixture.get("run_root"),
+        )
+        if isinstance(value, str) and value
+    }
+
+    def sanitize(value: Any) -> Any:
+        if isinstance(value, str):
+            for run_root in run_roots:
+                if value == run_root:
+                    return "<disposable-base>"
+                if value.startswith(run_root + "/"):
+                    return "<disposable-base>" + value[len(run_root) :]
+            return value
+        if isinstance(value, list):
+            return [sanitize(item) for item in value]
+        if isinstance(value, dict):
+            return {key: sanitize(item) for key, item in value.items()}
+        return value
+
+    published_runtime = sanitize(published_runtime)
+    published_fixture = sanitize(published_fixture)
+    published_fixture["archive"] = f"../package/{package_name}"
+    published_json = json.dumps([published_runtime, published_fixture])
+    require("/Users/" not in published_json, "published evidence retains a user path")
+    require(
+        "/private/tmp/anki-release-qa." not in published_json,
+        "published evidence retains a disposable-base path",
+    )
+    return published_runtime, published_fixture
+
+
+def copy_evidence(
+    *,
+    output: Path,
+    matrix: list[dict[str, Any]],
+    full_screen: list[dict[str, Any]],
+    runtime: dict[str, Any],
+    fixture: dict[str, Any],
+    package: Path,
+    package_hash: str,
+) -> None:
+    captures_output = output / "captures"
+    reports_output = output / "runtime-reports"
+    package_output = output / "package"
+    captures_output.mkdir(parents=True)
+    reports_output.mkdir(parents=True)
+    package_output.mkdir(parents=True)
+    for item in [*matrix, *full_screen]:
+        destination = captures_output / item["source"].name
+        shutil.copy2(item["source"], destination)
+        require(sha256_file(destination) == item["record"]["sha256"], f"copy mismatch: {destination}")
+    (reports_output / "runtime-report.json").write_text(
+        json.dumps(runtime, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    (reports_output / "fixture-report.json").write_text(
+        json.dumps(fixture, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    destination_package = package_output / package.name
+    shutil.copy2(package, destination_package)
+    require(sha256_file(destination_package) == package_hash, "copied package hash mismatch")
+    (package_output / f"{package.name}.sha256").write_text(
+        f"{package_hash}  {package.name}\n", encoding="utf-8"
+    )
+
+
 def paint_header(draw: ImageDraw.ImageDraw, title: str, subtitle: str, margin: int) -> None:
-    draw.text((margin, margin), title, fill="#f8fafc", font=font(42, bold=True))
-    draw.text((margin, margin + 58), subtitle, fill="#a8b4c7", font=font(24))
+    draw.text((margin, margin), title, fill="#f8fafc", font=font(38, bold=True))
+    draw.text((margin, margin + 52), subtitle, fill="#a8b4c7", font=font(22))
+
+
+def logical_image(source_path: Path, record: dict[str, Any]) -> Image.Image:
+    logical_size = (int(record["logical_width"]), int(record["logical_height"]))
+    with Image.open(source_path) as image:
+        rgb = image.convert("RGB")
+        if rgb.size == logical_size:
+            return rgb.copy()
+        return rgb.resize(logical_size, Image.Resampling.LANCZOS)
 
 
 def render_theme_sheet(
-    *, output: Path, captures: Path, theme: str, cases: list[dict[str, Any]]
+    *, output: Path, theme: str, theme_slug: str, cases: list[dict[str, Any]]
 ) -> dict[str, Any]:
-    margin = 48
-    gutter = 48
-    row_gutter = 42
-    heading_height = 144
-    caption_height = 58
-    frame_padding = 14
-    column_widths = (560 + 2 * frame_padding, 1440 + 2 * frame_padding)
+    margin = 42
+    gutter = 32
+    row_gutter = 32
+    heading_height = 122
+    caption_height = 48
+    frame_padding = 10
+    column_widths = (
+        LAYOUT_DIMENSIONS["compact"][0] + 2 * frame_padding,
+        LAYOUT_DIMENSIONS["wide"][0] + 2 * frame_padding,
+    )
     row_height = caption_height + 900 + 2 * frame_padding
     rows: list[tuple[dict[str, Any], dict[str, Any]]] = []
     for mode in ("light", "dark"):
         for view in ("month", "year"):
-            matching = [
-                case
+            matching = {
+                case["layout"]: case
                 for case in cases
                 if case["theme"] == theme and case["mode"] == mode and case["view"] == view
-            ]
-            by_layout = {case["layout"]: case for case in matching}
-            if set(by_layout) != {"compact", "wide"}:
-                raise RuntimeError(f"incomplete 100% row for {theme} {mode} {view}")
-            rows.append((by_layout["compact"], by_layout["wide"]))
+            }
+            require(set(matching) == {"compact", "wide"}, f"incomplete row: {theme} {mode} {view}")
+            rows.append((matching["compact"], matching["wide"]))
 
     width = 2 * margin + sum(column_widths) + gutter
     height = 2 * margin + heading_height + len(rows) * row_height + (len(rows) - 1) * row_gutter
@@ -245,8 +433,8 @@ def render_theme_sheet(
     draw = ImageDraw.Draw(canvas)
     paint_header(
         draw,
-        f"Home Dashboard 1.7.0 · {theme}",
-        "Month and Year · light and dark · 100% only · native source pixels",
+        f"Home Dashboard {RELEASE} · {theme}",
+        "Month and Year · light and dark · compact and wide · UI/text scale 100% only",
         margin,
     )
     placements: list[dict[str, Any]] = []
@@ -257,319 +445,279 @@ def render_theme_sheet(
             cell_width = column_widths[column]
             draw.rounded_rectangle(
                 (x, y, x + cell_width, y + row_height),
-                radius=16,
+                radius=14,
                 fill="#e5e7eb",
                 outline="#64748b",
-                width=3,
+                width=2,
             )
-            caption = (
-                f"{case['mode'].title()} · {case['view'].title()} · "
-                f"{case['layout']} · 100%"
+            label = f"{case['mode'].title()} · {case['view'].title()} · {case['layout']} · 100%"
+            draw.text((x + frame_padding, y + 10), label, fill="#172033", font=font(22, bold=True))
+            source_path = output / "captures" / case["source"].name
+            source = logical_image(source_path, case["record"])
+            image_x = x + frame_padding
+            image_y = y + caption_height + frame_padding
+            canvas.paste(source, (image_x, image_y))
+            placements.append(
+                {
+                    "case_id": case["id"],
+                    "source": f"captures/{source_path.name}",
+                    "source_dimensions": [case["record"]["pixel_width"], case["record"]["pixel_height"]],
+                    "presented_dimensions": [source.width, source.height],
+                    "physical_to_logical_presentation_scale": 0.5,
+                    "image_bounds": [image_x, image_y, image_x + source.width, image_y + source.height],
+                }
             )
-            draw.text((x + frame_padding, y + 12), caption, fill="#172033", font=font(25, bold=True))
-            source_path = captures / f"{case['id']}.png"
-            with Image.open(source_path) as source_image:
-                source = source_image.convert("RGB")
-                image_x = x + frame_padding
-                image_y = y + caption_height + frame_padding
-                canvas.paste(source, (image_x, image_y))
-                placements.append(
-                    {
-                        "case_id": case["id"],
-                        "source": f"captures/{source_path.name}",
-                        "source_dimensions": [source.width, source.height],
-                        "image_bounds": [
-                            image_x,
-                            image_y,
-                            image_x + source.width,
-                            image_y + source.height,
-                        ],
-                        "scale": 1.0,
-                    }
-                )
+            source.close()
             x += cell_width + gutter
         y += row_height + row_gutter
+    theme_number = [name for _code, name, _slug in THEMES].index(theme) + 1
     destination = output / "contact-sheets" / (
-        f"0{THEME_ORDER.index(theme) + 1}-dashboard-{THEME_SLUGS[theme]}-100-percent.png"
+        f"0{theme_number}-dashboard-{theme_slug}-100-percent.png"
     )
     destination.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(destination, "PNG", optimize=True)
     return {
-        "title": f"Home Dashboard 1.7.0 · {theme}",
+        "title": f"Home Dashboard {RELEASE} · {theme}",
         "file": f"contact-sheets/{destination.name}",
-        "dimensions": [width, height],
+        "dimensions": [canvas.width, canvas.height],
         "sha256": sha256_file(destination),
-        "source_scale": 1.0,
+        "source_capture_count": len(placements),
+        "ui_scale_percent": 100,
+        "physical_to_logical_presentation_scale": 0.5,
         "placements": placements,
     }
 
 
-def render_single_column_sheet(
-    *,
-    output: Path,
-    filename: str,
-    title: str,
-    subtitle: str,
-    entries: Iterable[tuple[Path, str, str]],
+def render_full_screen_sheet(
+    *, output: Path, captures: list[dict[str, Any]]
 ) -> dict[str, Any]:
-    opened: list[tuple[Path, str, str, Image.Image]] = []
-    for path, label, manifest_path in entries:
-        opened.append((path, label, manifest_path, Image.open(path).convert("RGB")))
-    margin = 48
-    heading_height = 144
-    row_gutter = 42
-    caption_height = 58
-    frame_padding = 14
-    width = 2 * margin + max(image.width for _, _, _, image in opened) + 2 * frame_padding
-    row_heights = [caption_height + image.height + 2 * frame_padding for _, _, _, image in opened]
-    height = 2 * margin + heading_height + sum(row_heights) + (len(opened) - 1) * row_gutter
+    margin = 42
+    heading_height = 122
+    row_gutter = 34
+    caption_height = 48
+    frame_padding = 10
+    logical_images: list[tuple[dict[str, Any], Image.Image]] = []
+    for item in captures:
+        path = output / "captures" / item["source"].name
+        logical_images.append((item, logical_image(path, item["record"])))
+    width = 2 * margin + max(image.width for _item, image in logical_images) + 2 * frame_padding
+    row_heights = [caption_height + image.height + 2 * frame_padding for _item, image in logical_images]
+    height = 2 * margin + heading_height + sum(row_heights) + row_gutter
     canvas = Image.new("RGB", (width, height), "#111827")
     draw = ImageDraw.Draw(canvas)
-    paint_header(draw, title, subtitle, margin)
+    paint_header(
+        draw,
+        f"Exact-package Home Dashboard {RELEASE} · full screen",
+        "Native Anki Month and Year · UI/text scale 100% · DPR 2 sources retained",
+        margin,
+    )
     placements: list[dict[str, Any]] = []
     y = margin + heading_height
-    for (path, label, manifest_path, source), row_height in zip(opened, row_heights):
+    for item, source in logical_images:
+        row_height = caption_height + source.height + 2 * frame_padding
         cell_width = source.width + 2 * frame_padding
         x = (width - cell_width) // 2
         draw.rounded_rectangle(
             (x, y, x + cell_width, y + row_height),
-            radius=16,
+            radius=14,
             fill="#e5e7eb",
             outline="#64748b",
-            width=3,
+            width=2,
         )
-        draw.text((x + frame_padding, y + 12), label, fill="#172033", font=font(25, bold=True))
+        label = f"{item['view'].title()} · full-screen Anki web canvas · 100%"
+        draw.text((x + frame_padding, y + 10), label, fill="#172033", font=font(22, bold=True))
         image_x = x + frame_padding
         image_y = y + caption_height + frame_padding
         canvas.paste(source, (image_x, image_y))
         placements.append(
             {
-                "label": label,
-                "source": manifest_path,
-                "source_dimensions": [source.width, source.height],
-                "image_bounds": [
-                    image_x,
-                    image_y,
-                    image_x + source.width,
-                    image_y + source.height,
+                "case_id": item["id"],
+                "source": f"captures/{item['source'].name}",
+                "source_dimensions": [item["record"]["pixel_width"], item["record"]["pixel_height"]],
+                "presented_dimensions": [source.width, source.height],
+                "frame_logical_dimensions": [
+                    item["record"]["frame_logical_width"],
+                    item["record"]["frame_logical_height"],
                 ],
-                "scale": 1.0,
+                "physical_to_logical_presentation_scale": 0.5,
+                "image_bounds": [image_x, image_y, image_x + source.width, image_y + source.height],
             }
         )
+        source.close()
         y += row_height + row_gutter
-    destination = output / "contact-sheets" / filename
+    destination = output / "contact-sheets" / "05-exact-package-full-screen-dashboard-100-percent.png"
     destination.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(destination, "PNG", optimize=True)
-    for _, _, _, source in opened:
-        source.close()
     return {
-        "title": title,
+        "title": f"Exact-package Home Dashboard {RELEASE} · full screen",
         "file": f"contact-sheets/{destination.name}",
-        "dimensions": [width, height],
+        "dimensions": [canvas.width, canvas.height],
         "sha256": sha256_file(destination),
-        "source_scale": 1.0,
+        "source_capture_count": len(placements),
+        "ui_scale_percent": 100,
+        "physical_to_logical_presentation_scale": 0.5,
         "placements": placements,
     }
 
 
-def copy_native_evidence(source: Path, output: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    fullscreen_root = output / "native-full-screen"
-    settings_root = output / "native-settings"
-    fullscreen_root.mkdir(parents=True)
-    settings_root.mkdir(parents=True)
-    fullscreen: list[dict[str, Any]] = []
-    for source_name, output_name, label, observed_view in NATIVE_FULLSCREEN_SOURCES:
-        source_path = source / source_name
-        if not source_path.is_file():
-            raise RuntimeError(f"missing exact-package full-screen capture: {source_path}")
-        destination = fullscreen_root / output_name
-        shutil.copy2(source_path, destination)
-        validate_nonblank(destination)
-        fullscreen.append(
-            {
-                "label": label,
-                "observed_view": observed_view,
-                "file": f"native-full-screen/{output_name}",
-                "source_filename": source_name,
-                "dimensions": list(image_dimensions(destination)),
-                "sha256": sha256_file(destination),
-                "ui_scale_percent": 100,
-                "device_pixel_ratio": 2.0,
-            }
-        )
-    settings: list[dict[str, Any]] = []
-    for source_name, label in NATIVE_SETTINGS_SOURCES:
-        source_path = source / source_name
-        if not source_path.is_file():
-            raise RuntimeError(f"missing exact-package settings capture: {source_path}")
-        destination = settings_root / source_name
-        shutil.copy2(source_path, destination)
-        validate_nonblank(destination)
-        settings.append(
-            {
-                "label": label,
-                "file": f"native-settings/{source_name}",
-                "dimensions": list(image_dimensions(destination)),
-                "sha256": sha256_file(destination),
-                "ui_scale_percent": 100,
-                "device_pixel_ratio": 2.0,
-            }
-        )
-    return fullscreen, settings
+def manifest_case(item: dict[str, Any]) -> dict[str, Any]:
+    record = item["record"]
+    return {
+        "id": item["id"],
+        "file": f"captures/{item['source'].name}",
+        "theme": item["theme"],
+        "mode": item["mode"],
+        "view": item["view"],
+        "layout": item["layout"],
+        "ui_scale_percent": 100,
+        "text_scale_percent": 100,
+        "logical_dimensions": [record["logical_width"], record["logical_height"]],
+        "physical_dimensions": [record["pixel_width"], record["pixel_height"]],
+        "device_pixel_ratio": record["device_pixel_ratio"],
+        "sha256": record["sha256"],
+        "dom": record["dom"],
+    }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--matrix", required=True, type=Path)
-    parser.add_argument("--preview-url", default="http://127.0.0.1:8765")
-    parser.add_argument("--chrome", required=True, type=Path)
-    parser.add_argument("--native-captures", required=True, type=Path)
+    parser.add_argument("--capture-root", required=True, type=Path)
     parser.add_argument("--runtime-report", required=True, type=Path)
+    parser.add_argument("--fixture-report", required=True, type=Path)
     parser.add_argument("--package", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
 
+    capture_root = args.capture_root.resolve()
+    runtime_report = args.runtime_report.resolve()
+    fixture_report = args.fixture_report.resolve()
+    package = args.package.resolve()
     output = args.output.resolve()
+    require(capture_root.is_dir(), f"capture root not found: {capture_root}")
+    require(runtime_report.is_file(), f"runtime report not found: {runtime_report}")
+    require(fixture_report.is_file(), f"fixture report not found: {fixture_report}")
+    require(package.is_file(), f"package not found: {package}")
     if output.exists():
         raise SystemExit(f"refusing to overwrite existing output: {output}")
-    if not args.chrome.is_file():
-        raise SystemExit(f"Chrome executable not found: {args.chrome}")
-    output.mkdir(parents=True)
-    captures_root = output / "captures"
-    captures_root.mkdir()
-    cases = renderer_cases(args.matrix.resolve())
 
-    records: list[dict[str, Any]] = []
-    with tempfile.TemporaryDirectory(prefix="hdo-contact-capture-chrome-") as profile_name:
-        profile = Path(profile_name)
-        for index, case in enumerate(cases, start=1):
-            destination = captures_root / f"{case['id']}.png"
-            records.append(
-                capture_renderer_case(
-                    chrome=args.chrome.resolve(),
-                    profile=profile,
-                    base_url=args.preview_url,
-                    case=case,
-                    destination=destination,
-                )
-            )
-            print(f"renderer capture {index:02d}/{len(cases)} {case['id']}", flush=True)
-
-    runtime = json.loads(args.runtime_report.read_text(encoding="utf-8"))
-    if runtime.get("status") != "passed" or runtime.get("errors"):
-        raise RuntimeError("exact-package runtime report must pass without errors")
-    fullscreen, settings = copy_native_evidence(args.native_captures.resolve(), output)
-
-    package_root = output / "package"
-    package_root.mkdir()
-    package_copy = package_root / args.package.name
-    shutil.copy2(args.package.resolve(), package_copy)
-    package_hash = sha256_file(package_copy)
-    (package_root / f"{package_copy.name}.sha256").write_text(
-        f"{package_hash}  {package_copy.name}\n", encoding="utf-8"
+    runtime, fixture, matrix, full_screen, package_hash = validate_evidence(
+        capture_root=capture_root,
+        runtime_report=runtime_report,
+        fixture_report=fixture_report,
+        package=package,
     )
-    reports_root = output / "runtime-reports"
-    reports_root.mkdir()
-    report_copy = reports_root / "runtime-report.json"
-    shutil.copy2(args.runtime_report.resolve(), report_copy)
+    runtime, fixture = sanitized_evidence(
+        runtime=runtime,
+        fixture=fixture,
+        package_name=package.name,
+    )
+    output.mkdir(parents=True)
+    copy_evidence(
+        output=output,
+        matrix=matrix,
+        full_screen=full_screen,
+        runtime=runtime,
+        fixture=fixture,
+        package=package,
+        package_hash=package_hash,
+    )
 
     sheets = [
         render_theme_sheet(
             output=output,
-            captures=captures_root,
             theme=theme,
-            cases=cases,
+            theme_slug=theme_slug,
+            cases=matrix,
         )
-        for theme in THEME_ORDER
+        for _theme_code, theme, theme_slug in THEMES
     ]
-    full_screen_entries = [
-        (
-            output / str(record["file"]),
-            str(record["label"]),
-            str(record["file"]),
+    sheets.append(render_full_screen_sheet(output=output, captures=full_screen))
+
+    full_screen_manifest = []
+    for item in full_screen:
+        record = item["record"]
+        full_screen_manifest.append(
+            {
+                "id": item["id"],
+                "view": item["view"],
+                "file": f"captures/{item['source'].name}",
+                "ui_scale_percent": 100,
+                "text_scale_percent": 100,
+                "logical_web_canvas_dimensions": [record["logical_width"], record["logical_height"]],
+                "logical_full_screen_frame_dimensions": [
+                    record["frame_logical_width"],
+                    record["frame_logical_height"],
+                ],
+                "physical_dimensions": [record["pixel_width"], record["pixel_height"]],
+                "device_pixel_ratio": record["device_pixel_ratio"],
+                "sha256": record["sha256"],
+                "dom": record["dom"],
+            }
         )
-        for record in fullscreen
-    ]
-    sheets.append(
-        render_single_column_sheet(
-            output=output,
-            filename="05-exact-package-full-screen-dashboard-100-percent.png",
-            title="Exact-package Home Dashboard · full screen",
-            subtitle="Month and Year · native macOS pixels · application scale 100%",
-            entries=full_screen_entries,
-        )
-    )
-    settings_entries = [
-        (
-            output / str(record["file"]),
-            str(record["label"]),
-            str(record["file"]),
-        )
-        for record in settings
-    ]
-    sheets.append(
-        render_single_column_sheet(
-            output=output,
-            filename="06-exact-package-settings-responsive-100-percent.png",
-            title="Exact-package Settings · responsive layouts",
-            subtitle="Wide, intermediate, and narrow · application scale 100% only",
-            entries=settings_entries,
-        )
-    )
 
     manifest = {
-        "schema_version": 1,
-        "release": "1.7.0",
+        "schema_version": 2,
+        "release": RELEASE,
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "scope": "Updated final-release dashboard contact sheets at 100% only",
+        "scope": "Updated native Home Dashboard contact sheets at UI/text scale 100% only",
         "scale_policy": {
             "allowed_ui_scale_percent": [100],
-            "renderer_text_scale_percent": 100,
-            "renderer_browser_zoom_percent": 100,
-            "renderer_device_scale_factor": 1,
-            "native_anki_application_scale_percent": 100,
-            "native_retina_device_pixel_ratio": 2.0,
+            "allowed_text_scale_percent": [100],
             "excluded_ui_scales_percent": [125, 150, 200],
-        },
-        "candidate": {
-            "file": f"package/{package_copy.name}",
-            "sha256": package_hash,
-        },
-        "renderer_matrix": {
-            "source": f"../{args.matrix.name}",
-            "source_sha256": sha256_file(args.matrix.resolve()),
-            "capture_kind": "current production renderer in local headless Chrome",
-            "case_count": len(records),
-            "cases": records,
-        },
-        "exact_package": {
-            "capture_kind": "native Qt/Anki from verified disposable sync-disabled profile",
-            "runtime_report": {
-                "file": "runtime-reports/runtime-report.json",
-                "status": runtime.get("status"),
-                "sha256": sha256_file(report_copy),
-            },
-            "identity": runtime.get("identity"),
-            "full_screen": fullscreen,
-            "settings": settings,
-            "source_filename_note": (
-                "The probe's two maximized source filenames reflected callback order; "
-                "the normalized Month/Year names above follow the visually rendered view."
+            "native_qt_scale_factor": 1.0,
+            "native_retina_device_pixel_ratio": 2.0,
+            "contact_sheet_physical_to_logical_presentation_scale": 0.5,
+            "presentation_note": (
+                "Raw DPR 2 captures are preserved unchanged. Contact-sheet placements are reduced "
+                "to their logical dimensions only; application and text scale remain 100%."
             ),
         },
+        "candidate": {
+            "file": f"package/{package.name}",
+            "sha256": package_hash,
+            "archive_file_count": fixture["archive_file_count"],
+            "installed_payload_matches_archive": fixture["candidate_payload_matches_archive"],
+        },
+        "native_anki_run": {
+            "capture_kind": "exact package in a disposable sync-disabled native Anki profile",
+            "runtime_report": "runtime-reports/runtime-report.json",
+            "fixture_report": "runtime-reports/fixture-report.json",
+            "status": runtime["status"],
+            "errors": runtime["errors"],
+            "identity": runtime["identity"],
+            "screens": runtime["screens"],
+        },
+        "raw_capture_count": 34,
+        "renderer_matrix": {
+            "case_count": len(matrix),
+            "themes": [theme for _code, theme, _slug in THEMES],
+            "modes": ["light", "dark"],
+            "views": ["month", "year"],
+            "layouts": {name: list(dimensions) for name, dimensions in LAYOUT_DIMENSIONS.items()},
+            "cases": [manifest_case(item) for item in matrix],
+        },
+        "full_screen": full_screen_manifest,
         "contact_sheet_count": len(sheets),
         "contact_sheets": sheets,
+        "minimal_validation": [
+            "runtime report passed with zero errors",
+            "34 canonical 100%-only captures present",
+            "each PNG dimensions and SHA-256 match the runtime report; a nonblank paint sample passes",
+            "exact 24-file package archive and installed payload match",
+            "each dashboard has four statistics cards, Bible card ordering, and no document-level horizontal overflow",
+        ],
         "quality_status": "clean",
-        "boundary": (
-            "Renderer matrix and native macOS exact-package evidence only. "
-            "Spoken VoiceOver, Windows/Linux rendering, and true OS display scaling remain separate gates."
+        "acceptance_boundary": (
+            "Native macOS exact-package rendering and scripted DOM evidence only. Spoken VoiceOver, "
+            "Windows/Linux rendering, device-specific behavior, and non-100% OS display scaling remain separate gates."
         ),
     }
     manifest_path = output / "capture-manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     index = {
-        "release": manifest["release"],
-        "scale_percent": 100,
+        "release": RELEASE,
+        "ui_scale_percent": 100,
+        "raw_capture_count": 34,
         "candidate_sha256": package_hash,
         "contact_sheets": [
             {
@@ -584,40 +732,41 @@ def main() -> None:
     (output / "contact-sheet-index.json").write_text(
         json.dumps(index, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    readme_lines = [
-        "# Home Dashboard 1.7.0 contact sheets — 100% only",
+    readme = [
+        f"# Home Dashboard {RELEASE} contact sheets — 100% only",
         "",
         f"Candidate SHA-256: `{package_hash}`",
         "",
-        "All UI renders in this set use 100% application/text scale. The native macOS captures retain Retina DPR 2 physical pixels; that is pixel density, not enlarged UI scale. No 125%, 150%, or 200% UI captures are included.",
+        "These sheets were generated from the exact packaged add-on in a fresh, sync-disabled independent Anki profile. Every UI and text render is 100%. No 125%, 150%, or 200% cases are included.",
+        "",
+        "The 34 original native screenshots remain byte-for-byte in `captures/` at Retina DPR 2. The sheets reduce those physical pixels to their corresponding logical size for pagination; this does not change the UI scale.",
         "",
         "## Contact sheets",
         "",
     ]
-    readme_lines.extend(
-        f"- [{sheet['title']}]({sheet['file']})" for sheet in sheets
-    )
-    readme_lines.extend(
+    readme.extend(f"- [{sheet['title']}]({sheet['file']})" for sheet in sheets)
+    readme.extend(
         [
             "",
             "## Evidence",
             "",
-            f"- Renderer matrix: {len(records)} captures across four themes, light/dark, Month/Year, and compact/wide layouts.",
-            "- Exact-package full-screen dashboard: Month and Year.",
-            "- Exact-package Settings: wide, intermediate, and narrow layouts.",
-            "- Every detail-sheet placement uses the source screenshot at scale `1.0`.",
-            "- Runtime report status: passed with no recorded errors in a disposable sync-disabled profile.",
+            "- 32 dashboard captures: four themes, light/dark, Month/Year, and compact/wide.",
+            "- 2 exact-package full-screen dashboard captures: Month and Year.",
+            "- Native runtime report: passed with no recorded errors.",
+            "- Exact package: 24 files, installed payload byte-matched to the archive.",
+            f"- Disposable profile: `{runtime['identity']['profile']}`.",
+            "- Sync credentials: absent.",
             "",
             "## Acceptance boundary",
             "",
-            "Spoken VoiceOver, Windows/Linux rendering, and true OS display scaling remain separate acceptance gates.",
+            "Spoken VoiceOver, Windows/Linux rendering, device-specific behavior, and non-100% OS display scaling remain separate acceptance gates.",
             "",
         ]
     )
-    (output / "README.md").write_text("\n".join(readme_lines), encoding="utf-8")
+    (output / "README.md").write_text("\n".join(readme), encoding="utf-8")
 
     print(f"output {output}")
-    print(f"renderer_captures {len(records)}")
+    print(f"raw_captures {len(matrix) + len(full_screen)}")
     print(f"contact_sheets {len(sheets)}")
     print(f"candidate_sha256 {package_hash}")
 

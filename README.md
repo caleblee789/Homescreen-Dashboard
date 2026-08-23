@@ -96,6 +96,12 @@ retains 32 renderer captures across every theme, light/dark mode, Month/Year
 view, and compact/wide layout, plus the exact-package dashboard and Settings
 captures. Six full-resolution sheets preserve every source image at 1:1 scale.
 
+The supplementary
+[`native 100% contact-sheet set`](home_dashboard_overhaul/qa/final-release-contact-sheets-100-percent-2026-08-22-2317/README.md)
+retains all 34 raw Qt/AnkiWebView captures from a fresh exact-package run, plus
+five sheets covering the complete 32-case dashboard matrix and true full-screen
+Month and Year.
+
 Automated semantics, focus, keyboard, contrast, sizing, containment, and the
 macOS Retina runtime passed. Spoken VoiceOver review and native Windows
 high-DPI review remain separate human/platform gates and are not claimed.
