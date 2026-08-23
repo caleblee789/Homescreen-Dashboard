@@ -27,6 +27,10 @@ SHA-256: `3cdfc800de85eaa9fc59f1b06ab9169c517256299c9f174b5709c6bfbaa17ee6`
 The companion
 [`100% contact-sheet set`](../final-release-contact-sheets-100-percent-2026-08-22-2248/README.md)
 adds the complete 32-case renderer matrix and six full-resolution sheets.
+The separate
+[`native 100% contact-sheet set`](../final-release-contact-sheets-100-percent-2026-08-22-2317/README.md)
+retains all 34 native Qt/AnkiWebView captures and five sheets from a fresh
+exact-package run.
 
 The probe launched and exited against only the disposable collection. A distinct normal-profile Anki process was observed after the probe had exited; it was not used for this evidence and was left untouched.
 

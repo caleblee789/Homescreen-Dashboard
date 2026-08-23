@@ -24,3 +24,8 @@ All UI renders in this set use 100% application/text scale. The native macOS cap
 ## Acceptance boundary
 
 Spoken VoiceOver, Windows/Linux rendering, and true OS display scaling remain separate acceptance gates.
+
+The separate
+[`native 100% contact-sheet set`](../final-release-contact-sheets-100-percent-2026-08-22-2317/README.md)
+retains all 34 raw Qt/AnkiWebView captures and five sheets from the current
+exact package.

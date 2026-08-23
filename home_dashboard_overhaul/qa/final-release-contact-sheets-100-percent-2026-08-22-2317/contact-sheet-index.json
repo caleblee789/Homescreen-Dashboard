@@ -1,0 +1,53 @@
+{
+  "candidate_sha256": "3cdfc800de85eaa9fc59f1b06ab9169c517256299c9f174b5709c6bfbaa17ee6",
+  "contact_sheets": [
+    {
+      "dimensions": [
+        2156,
+        4174
+      ],
+      "file": "contact-sheets/01-dashboard-sapphire-glass-100-percent.png",
+      "sha256": "4c67dac8a07c912e6b2e19d1345b1cf520d12361dd1195a221d1956c3b345a9a",
+      "title": "Home Dashboard 1.7.0 \u00b7 Sapphire Glass"
+    },
+    {
+      "dimensions": [
+        2156,
+        4174
+      ],
+      "file": "contact-sheets/02-dashboard-graphite-100-percent.png",
+      "sha256": "66e60e423678b1b2bf5b4125373ba740e24b7ce459921c998ff7c3e207479c7e",
+      "title": "Home Dashboard 1.7.0 \u00b7 Graphite"
+    },
+    {
+      "dimensions": [
+        2156,
+        4174
+      ],
+      "file": "contact-sheets/03-dashboard-emerald-100-percent.png",
+      "sha256": "3f353b8f95c4c3f1c64ee966da01389d9b7a73fca63468e147d4cf209c145783",
+      "title": "Home Dashboard 1.7.0 \u00b7 Emerald"
+    },
+    {
+      "dimensions": [
+        2156,
+        4174
+      ],
+      "file": "contact-sheets/04-dashboard-high-contrast-100-percent.png",
+      "sha256": "3ccf23146d0a0cc32aae4c1bb0b3034c72a49a647c0f378d802e55946898e987",
+      "title": "Home Dashboard 1.7.0 \u00b7 High Contrast"
+    },
+    {
+      "dimensions": [
+        1814,
+        2458
+      ],
+      "file": "contact-sheets/05-exact-package-full-screen-dashboard-100-percent.png",
+      "sha256": "04bf4e877639e97f89e06d7146ac14796352af152c159843b3fed82de8915ace",
+      "title": "Exact-package Home Dashboard 1.7.0 \u00b7 full screen"
+    }
+  ],
+  "raw_capture_count": 34,
+  "release": "1.7.0",
+  "ui_scale_percent": 100
+}
