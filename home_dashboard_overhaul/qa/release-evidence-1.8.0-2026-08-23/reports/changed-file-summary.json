@@ -1,0 +1,313 @@
+{
+  "file_count": 61,
+  "files": [
+    {
+      "file": "CHANGELOG.md",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "README.md",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "config.md",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "config_schema.py",
+      "group": "Color-system implementation",
+      "status": " M"
+    },
+    {
+      "file": "docs/qa/release-visual-contract.md",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "manifest.json",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "qa/acceptance_probe_1_4.py",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/acceptance_probe_1_5_calendar_hidden.py",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/acceptance_probe_1_6.py",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/acceptance_probe_1_6_layout.py",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/build_contact_sheet.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "qa/calendar_surface_manifest.json",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2209/README.md",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2209/live-captures/isolated-main-window-month-maximized.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2209/live-captures/isolated-main-window-year-maximized.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2209/live-captures/isolated-main-window.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2209/live-captures/settings-medium-preview.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2209/live-captures/settings-narrow-150-percent-font.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2209/live-captures/settings-narrow.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2209/live-captures/settings-wide-bible-custom.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2209/live-captures/settings-wide-calendar.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2209/package/home-dashboard-overhaul-1.7.0.ankiaddon",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2209/package/home-dashboard-overhaul-1.7.0.ankiaddon.sha256",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2209/runtime-report.json",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2237/README.md",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2237/live-captures/isolated-main-window-month-maximized.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2237/live-captures/isolated-main-window-year-maximized.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2237/live-captures/isolated-main-window.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2237/live-captures/settings-medium-preview.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2237/live-captures/settings-narrow-150-percent-font.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2237/live-captures/settings-narrow.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2237/live-captures/settings-wide-bible-custom.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2237/live-captures/settings-wide-calendar.png",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2237/package/home-dashboard-overhaul-1.7.0.ankiaddon",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2237/package/home-dashboard-overhaul-1.7.0.ankiaddon.sha256",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/final-release-dashboard-overhaul-2026-08-22-2237/runtime-report.json",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "qa/generate_settings_overhaul_contact_sheets.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "qa/runtime_probe_contact_sheets_100.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "qa/runtime_probe_revised_ui.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "qa/serve_revised_ui_preview.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "qa/ui-surface-registry.json",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "qa/validate_revised_ui_contract.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "qa/visual_regression_matrix_1_7_0.json",
+      "group": "Automated and visual QA",
+      "status": " D"
+    },
+    {
+      "file": "renderer.py",
+      "group": "Color-system implementation",
+      "status": " M"
+    },
+    {
+      "file": "settings.py",
+      "group": "Color-system implementation",
+      "status": " M"
+    },
+    {
+      "file": "tests/calendar_model_test.js",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_calendar_qa_manifest.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_config_and_themes.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_renderer.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_settings_release_contract.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_static_assets.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_ui_surface_registry.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "themes.py",
+      "group": "Color-system implementation",
+      "status": " M"
+    },
+    {
+      "file": "tools/build_ankiaddon.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "web/dashboard.css",
+      "group": "Color-system implementation",
+      "status": " M"
+    },
+    {
+      "file": "web/dashboard.js",
+      "group": "Color-system implementation",
+      "status": " M"
+    },
+    {
+      "file": "qa/color_system_audit.py",
+      "group": "Automated and visual QA",
+      "status": "??"
+    },
+    {
+      "file": "qa/release-evidence-1.8.0-2026-08-23/",
+      "group": "Automated and visual QA",
+      "status": "??"
+    },
+    {
+      "file": "qa/visual_regression_matrix_1_8_0.json",
+      "group": "Automated and visual QA",
+      "status": "??"
+    },
+    {
+      "file": "tests/test_color_system_audit.py",
+      "group": "Automated and visual QA",
+      "status": "??"
+    }
+  ],
+  "generated_at": "2026-08-23T13:39:21-05:00",
+  "schema_version": 1,
+  "scope": "Current Home Dashboard 1.8.0 release-candidate worktree, excluding immutable generated evidence directories"
+}

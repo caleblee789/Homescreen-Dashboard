@@ -1,8 +1,10 @@
-# Preserved reference baseline
+# Historical migration-source checksums
 
-The following directories are read-only implementation references. They are
-excluded from Git and are not packaged, modified, moved, disabled, or deleted by
-the build process.
+These checksums record the legacy source copies used while implementing and
+testing migration compatibility. The physical source directories are no longer
+kept in this repository workspace; current migration behavior is defined by the
+production code and its isolated test fixtures. None of these sources is
+packaged with Home Screen Dashboard.
 
 Payload hashes exclude `meta.json` and generated caches:
 
@@ -17,8 +19,8 @@ Payload hashes exclude `meta.json` and generated caches:
 
 Hashes use each relative path, a NUL separator, and the file bytes in sorted
 order. `meta.json`, Python bytecode, cache folders, and Git metadata are excluded.
-The project source copy includes its pre-existing distribution archives and
-Finder metadata; the installed payload does not.
+The recorded project-source digest included its pre-existing distribution
+archives and Finder metadata; the installed-payload digest did not.
 
 The unified add-on uses a fresh renderer and analytics boundary. It does not
 bundle the legacy Review Heatmap JavaScript, D3, Cal-Heatmap, icons, or vendored

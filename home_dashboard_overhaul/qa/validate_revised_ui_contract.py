@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the machine-readable corrected 1.7.0 UI contract.
+"""Validate the machine-readable corrected 1.8.0 UI contract.
 
 This validator intentionally checks source/contract structure only.  Spoken
 VoiceOver behavior, native Windows high-DPI rendering, and visual judgment stay
@@ -24,15 +24,15 @@ def validate(root: Path = ROOT) -> List[str]:
         (root / "qa" / "calendar_surface_manifest.json").read_text(encoding="utf-8")
     )
     matrix = json.loads(
-        (root / "qa" / "visual_regression_matrix_1_7_0.json").read_text(encoding="utf-8")
+        (root / "qa" / "visual_regression_matrix_1_8_0.json").read_text(encoding="utf-8")
     )
     registry = json.loads(
         (root / "qa" / "ui-surface-registry.json").read_text(encoding="utf-8")
     )
 
-    if manifest.get("release") != "1.7.0":
-        errors.append("manifest release must be 1.7.0")
-    if manifest.get("contract") != "final-release-dashboard-ui-overhaul-2026-08-22":
+    if manifest.get("release") != "1.8.0":
+        errors.append("manifest release must be 1.8.0")
+    if manifest.get("contract") != "final-color-system-refinement-2026-08-23":
         errors.append("manifest does not describe the final-release dashboard overhaul")
     if manifest.get("dashboard_order") != [
         "study_calendar",
@@ -43,14 +43,14 @@ def validate(root: Path = ROOT) -> List[str]:
 
     manifest_ids = [item.get("id") for item in manifest.get("canonical_surfaces", [])]
     registry_ids = [item.get("id") for item in registry.get("surfaces", [])]
-    if len(manifest_ids) != 24 or len(set(manifest_ids)) != 24:
-        errors.append("canonical surface registry must contain 24 unique IDs")
+    if len(manifest_ids) != 25 or len(set(manifest_ids)) != 25:
+        errors.append("canonical surface registry must contain 25 unique IDs")
     if registry_ids != manifest_ids:
         errors.append("surface registry does not exactly mirror the authority manifest")
 
     criteria = manifest.get("acceptance_criteria", [])
-    if [item.get("id") for item in criteria] != list(range(1, 29)):
-        errors.append("acceptance criteria must contain the exact IDs 1 through 28")
+    if [item.get("id") for item in criteria] != list(range(1, 43)):
+        errors.append("acceptance criteria must contain the exact IDs 1 through 42")
 
     axes = matrix.get("axes", {})
     axis_names = ("theme", "mode", "view", "layout", "text_scale")
@@ -95,7 +95,7 @@ def main() -> int:
         for error in errors:
             print("ERROR: {}".format(error))
         return 1
-    print("Revised UI contract: PASS (24 surfaces, 28 criteria, 96 visual cases)")
+    print("Revised UI contract: PASS (25 surfaces, 42 finalization criteria, 96 visual cases)")
     return 0
 
 

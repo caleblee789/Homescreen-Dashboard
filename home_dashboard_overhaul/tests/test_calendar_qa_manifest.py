@@ -8,7 +8,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "qa" / "calendar_surface_manifest.json"
-MATRIX_PATH = ROOT / "qa" / "visual_regression_matrix_1_7_0.json"
+MATRIX_PATH = ROOT / "qa" / "visual_regression_matrix_1_8_0.json"
 REGISTRY_PATH = ROOT / "qa" / "ui-surface-registry.json"
 
 
@@ -20,8 +20,12 @@ class RevisedUiQaContractTests(unittest.TestCase):
         cls.registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
 
     def test_manifest_is_the_authoritative_replacement_contract(self) -> None:
-        self.assertEqual(self.manifest["schema_version"], 4)
-        self.assertEqual(self.manifest["release"], "1.7.0")
+        self.assertEqual(self.manifest["schema_version"], 6)
+        self.assertEqual(self.manifest["release"], "1.8.0")
+        self.assertEqual(
+            self.manifest["contract"],
+            "final-color-system-refinement-2026-08-23",
+        )
         self.assertTrue(self.manifest["replaces_prior_selected_details_and_preview_contracts"])
         self.assertEqual(
             self.manifest["dashboard_order"],
@@ -32,7 +36,7 @@ class RevisedUiQaContractTests(unittest.TestCase):
     def test_current_surface_registry_is_exact_once_and_matches_authority(self) -> None:
         manifest_ids = [item["id"] for item in self.manifest["canonical_surfaces"]]
         registry_ids = [item["id"] for item in self.registry["surfaces"]]
-        self.assertEqual(len(manifest_ids), 24)
+        self.assertEqual(len(manifest_ids), 25)
         self.assertEqual(len(manifest_ids), len(set(manifest_ids)))
         self.assertEqual(registry_ids, manifest_ids)
         self.assertTrue(self.registry["exact_once"])
@@ -52,10 +56,21 @@ class RevisedUiQaContractTests(unittest.TestCase):
             },
         )
 
-    def test_all_twenty_eight_acceptance_criteria_are_bound(self) -> None:
+    def test_all_forty_two_finalization_criteria_are_bound(self) -> None:
         criteria = self.manifest["acceptance_criteria"]
-        self.assertEqual([item["id"] for item in criteria], list(range(1, 29)))
+        self.assertEqual([item["id"] for item in criteria], list(range(1, 43)))
         self.assertTrue(all(str(item["requirement"]).strip() for item in criteria))
+        contract_text = " ".join(item["requirement"] for item in criteria)
+        for required in (
+            "CalendarFooter",
+            "No upcoming event",
+            "in N days",
+            "low-chroma violet backgrounds",
+            "solid primary accent treatment",
+            "90 to 94 percent",
+            "all 32 native",
+        ):
+            self.assertIn(required, contract_text)
 
     def test_visual_matrix_is_the_exact_96_case_cartesian_product(self) -> None:
         axes = self.matrix["axes"]

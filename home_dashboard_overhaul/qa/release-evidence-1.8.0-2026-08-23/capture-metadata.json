@@ -1,0 +1,10 @@
+{
+  "THM-01": {"state": "month-wide", "theme": "Sapphire Glass", "mode": "light", "scale_percent": 100, "opacity": 100},
+  "THM-02": {"state": "month-wide", "theme": "Sapphire Glass", "mode": "dark", "scale_percent": 100, "opacity": 100},
+  "THM-03": {"state": "month-wide", "theme": "Graphite", "mode": "light", "scale_percent": 100, "opacity": 100},
+  "THM-04": {"state": "month-wide", "theme": "Graphite", "mode": "dark", "scale_percent": 100, "opacity": 100},
+  "THM-05": {"state": "month-wide", "theme": "Emerald", "mode": "light", "scale_percent": 100, "opacity": 100},
+  "THM-06": {"state": "month-wide", "theme": "Emerald", "mode": "dark", "scale_percent": 100, "opacity": 100},
+  "THM-07": {"state": "month-wide", "theme": "High Contrast", "mode": "light", "scale_percent": 100, "opacity": 100},
+  "THM-08": {"state": "month-wide", "theme": "High Contrast", "mode": "dark", "scale_percent": 100, "opacity": 100}
+}

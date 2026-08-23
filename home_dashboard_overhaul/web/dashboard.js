@@ -132,14 +132,9 @@
       : "";
   }
 
-  function formatSelectedDate(value, todayIso, locale) {
+  function formatSelectedDate(value, locale) {
     var parsed = dateValue(value);
     if (!parsed) return "";
-    if (isoDate(parsed) === todayIso) {
-      return "Today, " + new Intl.DateTimeFormat(locale || undefined, {
-        year: "numeric", month: "short", day: "numeric"
-      }).format(parsed);
-    }
     return formatLongDate(parsed, locale);
   }
 
@@ -148,6 +143,7 @@
     var reference = dateValue(referenceValue);
     if (!parsed) return "";
     return new Intl.DateTimeFormat(locale || undefined, {
+      weekday: "short",
       month: "short",
       day: "numeric",
       year: reference && reference.getFullYear() === parsed.getFullYear() ? undefined : "numeric"
@@ -283,21 +279,12 @@
     return positive[Math.max(0, Math.min(positive.length - 1, Math.ceil(positive.length * 0.9) - 1))];
   }
 
-  function getDueOverlayHeight(dueCount, reference, view) {
-    var count = Math.max(0, Number(dueCount) || 0);
-    var robustReference = Math.max(0, Number(reference) || 0);
-    if (!count || !robustReference) return 0;
-    return view === "year" ? 100 : 6;
-  }
-
   function getDueLoadLevel(dueCount, reference) {
     var count = Math.max(0, Number(dueCount) || 0);
     var robustReference = Math.max(0, Number(reference) || 0);
-    if (!count || !robustReference) return "";
+    if (!count || !robustReference) return 0;
     var scaled = Math.sqrt(Math.min(count, robustReference) / robustReference);
-    if (scaled <= 0.34) return "low";
-    if (scaled <= 0.67) return "medium";
-    return "high";
+    return Math.max(1, Math.min(5, Math.ceil(scaled * 5)));
   }
 
   function intensityThresholds(values) {
@@ -470,10 +457,14 @@
     var tooltip = root.querySelector(".hdo-calendar-tooltip");
     var tooltipHeading = root.querySelector("[data-hdo-tooltip-heading]");
     var tooltipRows = root.querySelector("[data-hdo-tooltip-rows]");
+    var dateState = root.querySelector("[data-hdo-date-state]");
     var contextDate = root.querySelector("[data-hdo-context-date]");
     var contextEvent = root.querySelector("[data-hdo-context-event]");
+    var contextEventMarker = root.querySelector("[data-hdo-event-marker]");
     var eventLink = root.querySelector("[data-hdo-open-events]");
+    var eventMeta = root.querySelector("[data-hdo-event-meta]");
     var eventMore = root.querySelector("[data-hdo-event-more]");
+    var eventEmpty = root.querySelector("[data-hdo-event-empty]");
     var editEvent = root.querySelector("[data-hdo-edit-event]");
     var primaryAction = root.querySelector("[data-hdo-primary-action]");
     var mostMissed = root.querySelector("[data-hdo-most-missed]");
@@ -484,6 +475,9 @@
       var completed = stateNumber(day.reviews_completed);
       var due = stateNumber(day.reviews_due);
       var events = state.eventsByDate[day.date] || stateItems(day.events) || [];
+      var relation = day.date < String(state.payload.scheduling_date || "")
+        ? "past"
+        : day.date > String(state.payload.scheduling_date || "") ? "future" : "current";
       var cacheKey = [day.date, view, completed, due, events.length, state.dueReference, state.thresholds.join(",")].join("|");
       if (state.modelCache.has(cacheKey)) return state.modelCache.get(cacheKey);
       var model = {
@@ -491,9 +485,9 @@
         completed: completed,
         due: due,
         events: events,
+        relation: relation,
         intensity: intensityLevel(completed, state.thresholds),
-        dueHeight: getDueOverlayHeight(due, state.dueReference, view),
-        dueLoad: getDueLoadLevel(due, state.dueReference)
+        dueLoad: relation === "past" ? 0 : getDueLoadLevel(due, state.dueReference)
       };
       state.modelCache.set(cacheKey, model);
       return model;
@@ -555,43 +549,68 @@
     }
 
     function updateContext() {
-      if (contextDate) contextDate.textContent = formatSelectedDate(state.selected, String(state.payload.calendar_date || ""), locale);
-      var selectedEvents = state.eventsByDate[state.selected] || [];
-      var upcoming = getNextUpcomingEvent(state.events, state.payload.calendar_date);
-      if (contextEvent && eventLink && eventMore && editEvent) {
-        var context = selectedEvents.length
-          ? { event: selectedEvents[0], additional: selectedEvents.length - 1, selected: true }
-          : upcoming ? { event: upcoming.event, additional: upcoming.additional, selected: false } : null;
-        if (context) {
-          var countdown = eventCountdown(context.event.date, state.payload.calendar_date, locale);
-          var eventDate = formatEventDate(context.event.date, state.payload.calendar_date, locale);
-          var eventText = context.selected
-            ? "Event on this date: " + context.event.name
-            : "Next event: " + context.event.name + " · " + eventDate + (countdown ? " · " + countdown : "");
-          eventLink.textContent = eventText;
-          eventLink.title = eventText;
-          eventLink.dataset.eventDate = context.event.date;
-          eventMore.textContent = context.additional > 0 ? "+" + formatNumber(context.additional, locale) : "";
-          editEvent.dataset.eventId = String(context.event.id || "");
-          editEvent.dataset.eventDate = context.event.date;
-          editEvent.setAttribute("aria-label", "Edit event: " + context.event.name);
+      var todayIso = String(state.payload.calendar_date || state.payload.scheduling_date || "");
+      if (contextDate) {
+        contextDate.textContent = formatSelectedDate(state.selected, locale);
+        contextDate.dateTime = state.selected;
+      }
+      if (dateState) {
+        var selectedIsToday = state.selected === todayIso;
+        dateState.textContent = selectedIsToday ? "Today" : "Selected";
+        dateState.classList.toggle("is-today", selectedIsToday);
+        dateState.classList.toggle("is-selected", !selectedIsToday);
+      }
+      var upcoming = getNextUpcomingEvent(state.events, todayIso);
+      if (contextEvent && contextEventMarker && eventLink && eventMeta && eventMore && eventEmpty && editEvent) {
+        if (upcoming) {
+          var countdown = eventCountdown(upcoming.event.date, todayIso, locale);
+          var eventDate = formatEventDate(upcoming.event.date, todayIso, locale);
+          var eventMetaText = eventDate + (countdown ? " · " + countdown : "");
+          var eventDescription = "Next event: " + upcoming.event.name + (eventMetaText ? " · " + eventMetaText : "");
+          contextEventMarker.hidden = false;
+          eventLink.hidden = false;
+          eventLink.textContent = upcoming.event.name;
+          eventLink.title = eventDescription;
+          eventLink.dataset.eventDate = upcoming.event.date;
+          eventMeta.hidden = !eventMetaText;
+          eventMeta.textContent = eventMetaText;
+          eventMore.hidden = upcoming.additional <= 0;
+          eventMore.textContent = upcoming.additional > 0
+            ? "+" + formatNumber(upcoming.additional, locale) + " more"
+            : "";
+          eventEmpty.hidden = true;
+          editEvent.hidden = false;
+          editEvent.dataset.eventId = String(upcoming.event.id || "");
+          editEvent.dataset.eventDate = upcoming.event.date;
+          editEvent.setAttribute("aria-label", "Edit event: " + upcoming.event.name);
           editEvent.title = "Edit event";
-          contextEvent.hidden = false;
         } else {
-          contextEvent.hidden = true;
+          contextEventMarker.hidden = true;
+          eventLink.hidden = true;
+          eventLink.textContent = "";
+          eventLink.removeAttribute("title");
+          eventLink.dataset.eventDate = "";
+          eventMeta.hidden = true;
+          eventMeta.textContent = "";
+          eventMore.hidden = true;
+          eventMore.textContent = "";
+          eventEmpty.hidden = false;
+          editEvent.hidden = true;
+          editEvent.dataset.eventId = "";
+          editEvent.dataset.eventDate = "";
         }
       }
       var day = state.days[state.selected];
       var capabilities = getSelectedDateCapabilities(day, String(state.payload.scheduling_date || ""));
       if (primaryAction) {
-        if (capabilities.primary === "reviewed") primaryAction.textContent = "Reviewed cards";
-        if (capabilities.primary === "due") primaryAction.textContent = "Due cards";
+        if (capabilities.primary === "reviewed") primaryAction.textContent = "View reviewed cards";
+        if (capabilities.primary === "due") primaryAction.textContent = "View due cards";
         primaryAction.dataset.action = capabilities.primary;
-        setButtonHidden(primaryAction, !capabilities.primary);
-        primaryAction.disabled = !capabilities.primaryEnabled;
+        setButtonHidden(primaryAction, !capabilities.primaryEnabled);
+        primaryAction.disabled = false;
         primaryAction.title = capabilities.primaryEnabled
           ? "Open " + primaryAction.textContent.toLowerCase()
-          : capabilities.primaryReason;
+          : "";
       }
       if (mostMissed) {
         var available = capabilities.mostMissedCandidate && state.mostMissed[state.selected] === true;
@@ -619,9 +638,28 @@
         next.tabIndex = 0;
         if (focusCell) next.focus();
       }
+      keepSelectedYearCellVisible();
       updateContext();
       send("calendar_selection_changed", { date: dayIso, follows_today: state.followsToday });
       if (liveStatus) liveStatus.textContent = "Selected " + formatLongDate(dayIso, locale);
+    }
+
+    function keepSelectedYearCellVisible() {
+      if (state.view !== "year") return;
+      var frame = shell.querySelector(".hdo-calendar-grid-frame");
+      var selectedCell = calendar.querySelector(".hdo-calendar-day.is-selected");
+      if (!frame || !selectedCell || frame.scrollWidth <= frame.clientWidth + 1) return;
+      var target = selectedCell.offsetLeft + selectedCell.offsetWidth / 2 - frame.clientWidth / 2;
+      frame.scrollLeft = Math.max(0, Math.min(frame.scrollWidth - frame.clientWidth, target));
+    }
+
+    var selectedVisibilityFrame = shell.querySelector(".hdo-calendar-grid-frame");
+    if (selectedVisibilityFrame && typeof window.ResizeObserver === "function") {
+      new window.ResizeObserver(function () {
+        window.requestAnimationFrame(keepSelectedYearCellVisible);
+      }).observe(selectedVisibilityFrame);
+    } else {
+      window.addEventListener("resize", keepSelectedYearCellVisible);
     }
 
     function createDayCell(dayIso, outOfMonth, view, rowIndex, columnIndex) {
@@ -640,6 +678,10 @@
       cell.className = "hdo-calendar-day";
       cell.dataset.date = dayIso;
       cell.dataset.level = String(model ? model.intensity : 0);
+      cell.dataset.dueLevel = String(model ? model.dueLoad : 0);
+      cell.dataset.heatKind = model && model.relation === "future" && model.dueLoad > 0
+        ? "due"
+        : "completion";
       cell.setAttribute("role", "gridcell");
       var cellLabel = formatLongDate(dayIso, locale);
       if (model && model.events.length) {
@@ -653,6 +695,7 @@
       if (rowIndex) cell.setAttribute("aria-rowindex", String(rowIndex));
       if (columnIndex) cell.setAttribute("aria-colindex", String(columnIndex));
       if (outOfMonth) cell.classList.add("is-out-of-month");
+      if (model && model.relation === "future") cell.classList.add("is-future");
       if (dayIso === state.selected) cell.classList.add("is-selected");
       if (dayIso === String(state.payload.calendar_date || "")) cell.classList.add("is-today");
       if (dateObject && dateObject.getDate() === 1) cell.classList.add("is-month-start");
@@ -662,13 +705,6 @@
       number.textContent = String(dateObject ? dateObject.getDate() : "");
       cell.appendChild(number);
 
-      if (model && model.dueHeight > 0) {
-        var hatch = document.createElement("span");
-        hatch.className = "hdo-due-hatch";
-        hatch.dataset.load = model.dueLoad;
-        hatch.setAttribute("aria-hidden", "true");
-        cell.appendChild(hatch);
-      }
       if (model && model.events.length) {
         var marker = document.createElement("span");
         marker.className = "hdo-event-marker";
@@ -801,7 +837,7 @@
           var monthLabel = document.createElement("span");
           monthLabel.className = "hdo-year-month-label";
           monthLabel.textContent = new Intl.DateTimeFormat(locale || undefined, { month: "short" }).format(monthStart);
-          monthLabel.style.gridColumn = String(labelColumn);
+          monthLabel.style.setProperty("--hdo-month-start-week", String(labelColumn));
           monthLabel.setAttribute("aria-hidden", "true");
           calendar.appendChild(monthLabel);
         }
@@ -817,6 +853,11 @@
         });
       }
       updateContext();
+      if (typeof window.requestAnimationFrame === "function") {
+        window.requestAnimationFrame(keepSelectedYearCellVisible);
+      } else {
+        keepSelectedYearCellVisible();
+      }
     }
 
     function requestRange() {
@@ -906,12 +947,12 @@
       state.selected = state.followsToday ? String(envelope.facts.scheduling_date || priorSelected) : priorSelected;
       if (calendarChanged) renderCalendar();
       else updateContext();
-      updateMetricValues(root, envelope.facts.statistics, locale);
+      updateMetricValues(root, envelope.facts.statistics, locale, envelope.facts.retention_target);
       root.setAttribute("aria-busy", "false");
     };
 
     renderCalendar();
-    updateMetricValues(root, payload.statistics, locale);
+    updateMetricValues(root, payload.statistics, locale, payload.retention_target);
     global.addEventListener("resize", function () {
       updateProgressComposition(root, state.payload.statistics, locale);
     });
@@ -964,6 +1005,7 @@
     var workload = counts.completed + counts.new + counts.learning + counts.review;
     var percent = roundedProgressPercent(counts.completed, workload);
     completeNode.textContent = percent + "% complete";
+    completeNode.setAttribute("aria-label", percent + "% complete");
     track.setAttribute("aria-valuenow", String(percent));
     var labels = {
       completed: "Completed",
@@ -972,6 +1014,7 @@
       review: "Reviews remaining"
     };
     var descriptions = [];
+    var hasPopulatedSegment = false;
     Object.keys(counts).forEach(function (key) {
       var segment = track.querySelector('[data-hdo-progress-segment="' + key + '"]');
       var description = labels[key] + ": " + formatNumber(counts[key], locale) +
@@ -980,11 +1023,15 @@
       if (!segment) return;
       segment.dataset.hdoProgressCount = String(counts[key]);
       segment.style.setProperty("--hdo-progress-count", String(counts[key]));
+      segment.classList.toggle("is-populated", counts[key] > 0);
+      segment.classList.toggle(
+        "has-preceding-populated",
+        counts[key] > 0 && hasPopulatedSegment
+      );
+      if (counts[key] > 0) hasPopulatedSegment = true;
       segment.title = description;
       var hiddenLabel = segment.querySelector(".hdo-visually-hidden");
       if (hiddenLabel) hiddenLabel.textContent = description;
-      var renderedWidth = workload > 0 ? track.clientWidth * counts[key] / workload : 0;
-      segment.classList.toggle("is-visually-tiny", counts[key] > 0 && renderedWidth < 1);
     });
     track.setAttribute(
       "aria-valuetext",
@@ -994,7 +1041,32 @@
     );
   }
 
-  function updateMetricValues(root, statistics, locale) {
+  function updateMetricSemanticRole(root, key, role) {
+    var value = root.querySelector('[data-hdo-metric="' + key + '"]');
+    var row = value && value.closest(".hdo-metric-row");
+    if (!row) return;
+    ["success", "warning", "danger"].forEach(function (name) {
+      row.classList.remove("hdo-value--" + name);
+    });
+    if (role) row.classList.add("hdo-value--" + role);
+  }
+
+  function rateSemanticRole(percent, target, lowerIsBetter) {
+    if (target === null || target === undefined || target === "") return "";
+    var value = Number(percent);
+    var threshold = Number(target);
+    if (!Number.isFinite(value) || !Number.isFinite(threshold)) return "";
+    if (lowerIsBetter) {
+      if (value <= threshold) return "success";
+      if (value <= threshold + 10) return "warning";
+      return "danger";
+    }
+    if (value >= threshold) return "success";
+    if (value >= threshold - 10) return "warning";
+    return "danger";
+  }
+
+  function updateMetricValues(root, statistics, locale, retentionTarget) {
     if (!statistics || typeof statistics !== "object") return;
     var today = availableValue(statistics.today);
     var queue = availableValue(statistics.queue);
@@ -1017,6 +1089,26 @@
       setMetric(root, "last_seven_days.new_cards_studied", formatNumber(recent.new_cards_studied, locale));
       setMetric(root, "last_seven_days.retention", recent.retention && recent.retention.status === "available" ? recent.retention.percent + "%" : null);
       setMetric(root, "last_seven_days.again_rate", recent.again_rate && recent.again_rate.status === "available" ? recent.again_rate.percent + "%" : null);
+      updateMetricSemanticRole(
+        root,
+        "last_seven_days.retention",
+        recent.retention && recent.retention.status === "available"
+          ? rateSemanticRole(recent.retention.percent, retentionTarget, false)
+          : ""
+      );
+      updateMetricSemanticRole(
+        root,
+        "last_seven_days.again_rate",
+        recent.again_rate && recent.again_rate.status === "available"
+          ? rateSemanticRole(
+              recent.again_rate.percent,
+              retentionTarget === null || retentionTarget === undefined || retentionTarget === ""
+                ? null
+                : 100 - Number(retentionTarget),
+              true
+            )
+          : ""
+      );
     }
     if (longTerm) {
       setMetric(root, "long_term.average_reviews_per_active_day", formatNumber(longTerm.average_reviews_per_active_day, locale));
@@ -1024,15 +1116,37 @@
       setMetric(root, "long_term.longest_streak", formatNumber(longTerm.longest_streak, locale) + (longTerm.longest_streak === 1 ? " day" : " days"));
       setMetric(root, "long_term.lifetime_cards_studied", formatNumber(longTerm.lifetime_cards_studied, locale));
       setMetric(root, "long_term.lifetime_retention", longTerm.lifetime_retention && longTerm.lifetime_retention.status === "available" ? longTerm.lifetime_retention.percent + "%" : null);
+      updateMetricSemanticRole(root, "long_term.lifetime_retention", "");
     }
     updateProgressComposition(root, statistics, locale);
   }
 
   var activeState = null;
 
+  function applyDocumentTheme(root) {
+    if (!root || typeof document === "undefined") return;
+    var styles = global.getComputedStyle(root);
+    var canvas = styles.getPropertyValue("--ui-canvas").trim();
+    var primary = styles.getPropertyValue("--ui-text-primary").trim();
+    var track = styles.getPropertyValue("--ui-scrollbar-track").trim();
+    var thumb = styles.getPropertyValue("--ui-scrollbar-thumb").trim();
+    var mode = root.dataset.hdoColorMode === "dark" ? "dark" : "light";
+    [document.documentElement, document.body].forEach(function (surface) {
+      if (!surface) return;
+      if (canvas) surface.style.background = canvas;
+      if (primary) surface.style.color = primary;
+      surface.style.colorScheme = mode;
+      if (track && thumb) surface.style.scrollbarColor = thumb + " " + track;
+    });
+    document.documentElement.dataset.hdoColorMode = mode;
+  }
+
   function mount() {
     var root = document.getElementById("hdo-dashboard");
-    if (root) activeState = mountDashboard(root);
+    if (root) {
+      applyDocumentTheme(root);
+      activeState = mountDashboard(root);
+    }
   }
 
   global.HDOHomeDashboard = {
@@ -1062,15 +1176,19 @@
     navigate: navigate,
     groupEvents: groupEvents,
     getNextUpcomingEvent: getNextUpcomingEvent,
+    formatSelectedDate: formatSelectedDate,
+    formatEventDate: formatEventDate,
+    eventCountdown: eventCountdown,
     getSelectedDateCapabilities: getSelectedDateCapabilities,
     pluralLabel: pluralLabel,
     buildCalendarTooltipRows: buildCalendarTooltipRows,
     getDueLoadScale: getDueLoadScale,
-    getDueOverlayHeight: getDueOverlayHeight,
     getDueLoadLevel: getDueLoadLevel,
     intensityThresholds: intensityThresholds,
     intensityLevel: intensityLevel,
+    rateSemanticRole: rateSemanticRole,
     formatNumber: formatNumber,
+    applyDocumentTheme: applyDocumentTheme,
     mountLoadingState: mountLoadingState,
     mountDashboard: mountDashboard
   };

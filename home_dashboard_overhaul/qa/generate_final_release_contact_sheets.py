@@ -18,13 +18,20 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import shutil
+import sys
 from typing import Any
 import zipfile
 
 from PIL import Image, ImageDraw, ImageFont
 
+PACKAGE_PARENT = Path(__file__).resolve().parents[2]
+if str(PACKAGE_PARENT) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_PARENT))
 
-RELEASE = "1.7.0"
+from home_dashboard_overhaul.qa.color_system_audit import write_release_reports
+
+
+RELEASE = "1.8.0"
 THEMES = (
     ("SG", "Sapphire Glass", "sapphire-glass"),
     ("GR", "Graphite", "graphite"),
@@ -35,8 +42,10 @@ THEME_BY_CODE = {code: (name, slug) for code, name, slug in THEMES}
 MODE_BY_CODE = {"L": "light", "D": "dark"}
 VIEW_BY_CODE = {"M": "month", "Y": "year"}
 LAYOUT_BY_CODE = {"C": "compact", "W": "wide"}
-LAYOUT_DIMENSIONS = {"compact": (560, 900), "wide": (1440, 900)}
+LAYOUT_DIMENSIONS = {"compact": (560, 1050), "wide": (1440, 900)}
 CASE_PATTERN = re.compile(r"^VR-(SG|GR|EM|HC)-(L|D)-(M|Y)-(C|W)-100$")
+INTERACTION_PATTERN = re.compile(r"^STATE-(SG|GR|EM|HC)-(L|D)-100$")
+INTERACTION_DIMENSIONS = (1280, 900)
 FULL_SCREEN_NAMES = (
     "exact-package-full-screen-month-100",
     "exact-package-full-screen-year-100",
@@ -120,8 +129,22 @@ def parse_matrix_case(name: str) -> dict[str, str]:
     }
 
 
+def parse_interaction_case(name: str) -> dict[str, str]:
+    match = INTERACTION_PATTERN.fullmatch(name)
+    if match is None:
+        raise RuntimeError(f"invalid 100% interaction case ID: {name}")
+    theme_code, mode_code = match.groups()
+    theme, theme_slug = THEME_BY_CODE[theme_code]
+    return {
+        "id": name,
+        "theme": theme,
+        "theme_slug": theme_slug,
+        "mode": MODE_BY_CODE[mode_code],
+    }
+
+
 def validate_source_capture(
-    *, capture_root: Path, name: str, record: dict[str, Any]
+    *, capture_root: Path, name: str, record: dict[str, Any], dashboard: bool = True
 ) -> Path:
     reported_file = str(record.get("file", ""))
     require(
@@ -152,8 +175,20 @@ def validate_source_capture(
     require(isinstance(dom, dict), f"{name} is missing DOM inspection evidence")
     require(dom.get("ready") is True, f"{name} did not reach the ready state")
     require(dom.get("textScale100") is True, f"{name} did not render text scale 100%")
-    require(dom.get("statisticsCards") == 4, f"{name} did not render four statistics cards")
-    require(dom.get("bibleAfter") is True, f"{name} did not place the Bible card after the dashboard")
+    if dashboard:
+        require(dom.get("statisticsCards") == 4, f"{name} did not render four statistics cards")
+        require(dom.get("metricColumns") == 2, f"{name} did not render a two-column statistics grid")
+        require(dom.get("metricRows") == 2, f"{name} did not render a two-row statistics grid")
+        require(dom.get("metricNoOverlap") is True, f"{name} has overlapping metric labels and values")
+        require(dom.get("cardsContained") is True, f"{name} has a statistics card overflow")
+        require(dom.get("bibleAfter") is True, f"{name} did not place the Bible card after the statistics")
+        require(dom.get("completeYearVisible") is True, f"{name} clipped the Year heatmap or month labels")
+        require(dom.get("selectedDayVisible") is True, f"{name} clipped the selected calendar day")
+        require(int(dom.get("eventMarkers", 0)) >= 1, f"{name} did not render the reference event state")
+        require(dom.get("completionLegendSwatches") == 5, f"{name} has an incomplete completion legend")
+        require(dom.get("dueLegendSwatches") == 3, f"{name} has an incomplete reviews-due legend")
+        require(dom.get("eventLegendMarkers") == 1, f"{name} has an incomplete event legend")
+        require(dom.get("layoutContained") is True, f"{name} escaped the dashboard root")
     require(dom.get("overflowX") is False, f"{name} has document-level horizontal overflow")
     require(png_sample_color_count(source) >= 8, f"{name} PNG is visually blank")
     if "sample_color_count" in record:
@@ -170,11 +205,29 @@ def validate_evidence(
     runtime_report: Path,
     fixture_report: Path,
     package: Path,
-) -> tuple[dict[str, Any], dict[str, Any], list[dict[str, Any]], list[dict[str, Any]], str]:
+) -> tuple[
+    dict[str, Any],
+    dict[str, Any],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    str,
+]:
     runtime = read_json(runtime_report)
     fixture = read_json(fixture_report)
     require(runtime.get("status") == "passed", "native runtime report did not pass")
     require(runtime.get("errors") == [], "native runtime report contains errors")
+    stress = runtime.get("stress_checks", {})
+    require(stress.get("status") == "passed", "native Sapphire stress checks did not pass")
+    require(
+        set(stress.get("year_widths", {})) == {"319", "439", "440", "939", "940", "1280"},
+        "native breakpoint stress matrix is incomplete",
+    )
+    require(isinstance(stress.get("month_compact"), dict), "native compact Month stress check is missing")
+    require(isinstance(stress.get("no_next_event"), dict), "native no-event stress check is missing")
+    interaction_report = runtime.get("interaction_fixture", {})
+    require(interaction_report.get("status") == "passed", "native interaction-state fixture did not pass")
+    require(interaction_report.get("case_count") == 8, "native interaction-state matrix is incomplete")
     scale_policy = runtime.get("scale_policy", {})
     require(scale_policy.get("ui_scale_percent") == 100, "runtime UI scale is not 100%")
     require(scale_policy.get("text_scale_percent") == 100, "runtime text scale is not 100%")
@@ -189,6 +242,11 @@ def validate_evidence(
         "native collection escaped the disposable run root",
     )
     require(identity.get("sync_auth_present") is False, "native profile has sync credentials")
+    require(
+        identity.get("candidate_manifest_inside_run_root") is True
+        and identity.get("probe_inside_run_root") is True,
+        "native candidate or probe escaped the disposable base",
+    )
 
     package_hash = sha256_file(package)
     require(
@@ -234,7 +292,7 @@ def validate_evidence(
 
     captures = runtime.get("captures")
     require(isinstance(captures, dict), "native runtime report has no capture map")
-    require(len(captures) == 34, f"expected 34 native captures, found {len(captures)}")
+    require(len(captures) == 42, f"expected 42 native captures, found {len(captures)}")
     states = runtime.get("states")
     require(isinstance(states, dict), "native runtime report has no state map")
     require(set(states) == set(captures), "native state and capture IDs differ")
@@ -254,8 +312,18 @@ def validate_evidence(
     }
     actual_matrix_ids = {name for name in captures if name.startswith("VR-")}
     require(actual_matrix_ids == expected_matrix_ids, "native 100% matrix IDs are incomplete or unexpected")
+    expected_interaction_ids = {
+        f"STATE-{theme_code}-{mode_code}-100"
+        for theme_code, _theme, _slug in THEMES
+        for mode_code in MODE_BY_CODE
+    }
+    actual_interaction_ids = {name for name in captures if name.startswith("STATE-")}
     require(
-        set(captures) == expected_matrix_ids | set(FULL_SCREEN_NAMES),
+        actual_interaction_ids == expected_interaction_ids,
+        "native interaction-state IDs are incomplete or unexpected",
+    )
+    require(
+        set(captures) == expected_matrix_ids | expected_interaction_ids | set(FULL_SCREEN_NAMES),
         "native report contains a noncanonical or non-100% capture",
     )
 
@@ -281,8 +349,79 @@ def validate_evidence(
             f"{name} Retina dimensions do not equal DPR 2 logical dimensions",
         )
         require(record.get("full_screen") is False, f"{name} was unexpectedly full-screen")
+        require(record.get("window_title_matches_profile") is True, f"{name} window identity did not match the disposable profile")
         require(record["dom"].get("view") == metadata["view"], f"{name} rendered the wrong view")
+        require(record["dom"].get("themeIdentity") == metadata["theme"], f"{name} rendered the wrong theme")
+        require(record["dom"].get("colorModeIdentity") == metadata["mode"], f"{name} rendered the wrong mode")
+        require(record["dom"].get("hostCanvasThemed") is True, f"{name} left the host viewport unthemed")
+        require(record["dom"].get("colorSchemeApplied") is True, f"{name} did not apply color-scheme")
+        if metadata["layout"] == "wide":
+            require(record["dom"].get("wideSharedShell") is True, f"{name} did not use the shared wide shell")
+            require(record["dom"].get("bottomAligned") is True, f"{name} rail and calendar bottoms did not align")
+        else:
+            require(record["dom"].get("stackedSharedShell") is True, f"{name} did not stack the rail beneath the calendar")
         matrix.append({**metadata, "record": record, "source": source})
+
+    interaction: list[dict[str, Any]] = []
+    interaction_cases = interaction_report.get("cases", {})
+    require(
+        isinstance(interaction_cases, dict) and set(interaction_cases) == expected_interaction_ids,
+        "native interaction-state report and capture matrix differ",
+    )
+    for name in sorted(actual_interaction_ids):
+        metadata = parse_interaction_case(name)
+        record = captures[name]
+        require(isinstance(record, dict), f"invalid runtime record for {name}")
+        source = validate_source_capture(
+            capture_root=capture_root,
+            name=name,
+            record=record,
+            dashboard=False,
+        )
+        dom = record["dom"]
+        require(record.get("dom") == states[name], f"{name} DOM and state records differ")
+        require(record.get("dom") == interaction_cases[name], f"{name} interaction records differ")
+        require(
+            (int(record.get("logical_width", -1)), int(record.get("logical_height", -1)))
+            == INTERACTION_DIMENSIONS,
+            f"{name} has the wrong logical dimensions",
+        )
+        require(
+            (int(record["pixel_width"]), int(record["pixel_height"]))
+            == (INTERACTION_DIMENSIONS[0] * 2, INTERACTION_DIMENSIONS[1] * 2),
+            f"{name} Retina dimensions do not equal DPR 2 logical dimensions",
+        )
+        require(record.get("full_screen") is False, f"{name} was unexpectedly full-screen")
+        require(record.get("window_title_matches_profile") is True, f"{name} window identity did not match the disposable profile")
+        require(dom.get("theme") == metadata["theme"], f"{name} rendered the wrong theme")
+        require(dom.get("mode") == metadata["mode"], f"{name} rendered the wrong mode")
+        for check in (
+            "hostCanvasThemed", "colorSchemeApplied", "completeTokensMatch",
+            "dueBackgroundsMatch", "dueIndicatorsMatch", "primaryStatesMatch",
+            "segmentStatesMatch", "iconStatesMatch", "selectedVisible", "todayVisible",
+            "combinedVisible", "combinedLayersIndependent", "eventLayered",
+            "eventDueLayered", "emptyPastState", "emptyFutureState", "outsideState",
+            "outsideDueState", "emptyProgressNoSliver", "partialProgressMapped",
+            "fullProgressComplete", "surfaceHierarchyDistinct", "currentColorIcons",
+        ):
+            require(dom.get(check) is True, f"{name} failed {check}")
+        require(dom.get("completionLevels") == 6, f"{name} omitted completion levels")
+        require(dom.get("dueLevels") == 5, f"{name} omitted reviews-due levels")
+        require(dom.get("completionUnique") == 6, f"{name} completion levels are not unique")
+        require(dom.get("dueUnique") == 5, f"{name} reviews-due backgrounds are not explicitly ordered")
+        require(dom.get("dueIndicatorCount") == 5, f"{name} omitted nonzero due indicators")
+        require(
+            dom.get("dueIndicatorHeights") == ["4px"] * 5,
+            f"{name} due indicator height changes with intensity",
+        )
+        require(dom.get("primaryStateCount") == 4, f"{name} omitted primary action states")
+        require(dom.get("segmentStateCount") == 2, f"{name} omitted segmented-control states")
+        require(dom.get("iconStateCount") == 2, f"{name} omitted icon-control states")
+        require(dom.get("selectedStateCount") == 6, f"{name} omitted selected heat levels")
+        require(dom.get("todayStateCount") == 6, f"{name} omitted today heat levels")
+        require(dom.get("eventMarkers") == 3, f"{name} omitted event marker layers")
+        require(dom.get("semanticScenarioCount") == 6, f"{name} omitted target-aware metric states")
+        interaction.append({**metadata, "record": record, "source": source})
 
     full_screen: list[dict[str, Any]] = []
     for name in FULL_SCREEN_NAMES:
@@ -292,7 +431,12 @@ def validate_evidence(
         require(record.get("dom") == states[name], f"{name} DOM and state records differ")
         view = "month" if "-month-" in name else "year"
         require(record.get("full_screen") is True, f"{name} is not marked full-screen")
+        require(record.get("window_title_matches_profile") is True, f"{name} window identity did not match the disposable profile")
         require(record["dom"].get("view") == view, f"{name} rendered the wrong view")
+        require(record["dom"].get("hostCanvasThemed") is True, f"{name} left the full-screen host viewport unthemed")
+        require(record["dom"].get("colorSchemeApplied") is True, f"{name} did not apply color-scheme")
+        require(record["dom"].get("wideSharedShell") is True, f"{name} did not use the shared wide shell")
+        require(record["dom"].get("bottomAligned") is True, f"{name} rail and calendar bottoms did not align")
         require(int(record.get("logical_width", 0)) >= 1600, f"{name} is not a wide full-screen canvas")
         require(int(record.get("logical_height", 0)) >= 1000, f"{name} is not a tall full-screen canvas")
         require(
@@ -311,7 +455,7 @@ def validate_evidence(
                 "source": source,
             }
         )
-    return runtime, fixture, matrix, full_screen, package_hash
+    return runtime, fixture, matrix, interaction, full_screen, package_hash
 
 
 def sanitized_evidence(
@@ -358,6 +502,7 @@ def copy_evidence(
     *,
     output: Path,
     matrix: list[dict[str, Any]],
+    interaction: list[dict[str, Any]],
     full_screen: list[dict[str, Any]],
     runtime: dict[str, Any],
     fixture: dict[str, Any],
@@ -370,7 +515,7 @@ def copy_evidence(
     captures_output.mkdir(parents=True)
     reports_output.mkdir(parents=True)
     package_output.mkdir(parents=True)
-    for item in [*matrix, *full_screen]:
+    for item in [*matrix, *interaction, *full_screen]:
         destination = captures_output / item["source"].name
         shutil.copy2(item["source"], destination)
         require(sha256_file(destination) == item["record"]["sha256"], f"copy mismatch: {destination}")
@@ -415,7 +560,7 @@ def render_theme_sheet(
         LAYOUT_DIMENSIONS["compact"][0] + 2 * frame_padding,
         LAYOUT_DIMENSIONS["wide"][0] + 2 * frame_padding,
     )
-    row_height = caption_height + 900 + 2 * frame_padding
+    row_height = caption_height + max(height for _width, height in LAYOUT_DIMENSIONS.values()) + 2 * frame_padding
     rows: list[tuple[dict[str, Any], dict[str, Any]]] = []
     for mode in ("light", "dark"):
         for view in ("month", "year"):
@@ -488,6 +633,79 @@ def render_theme_sheet(
     }
 
 
+def render_interaction_sheet(
+    *, output: Path, captures: list[dict[str, Any]]
+) -> dict[str, Any]:
+    margin = 42
+    gutter = 32
+    row_gutter = 32
+    heading_height = 122
+    caption_height = 48
+    frame_padding = 10
+    cell_width = INTERACTION_DIMENSIONS[0] + 2 * frame_padding
+    row_height = caption_height + INTERACTION_DIMENSIONS[1] + 2 * frame_padding
+    width = 2 * margin + 2 * cell_width + gutter
+    height = 2 * margin + heading_height + len(THEMES) * row_height + (len(THEMES) - 1) * row_gutter
+    canvas = Image.new("RGB", (width, height), "#111827")
+    draw = ImageDraw.Draw(canvas)
+    paint_header(
+        draw,
+        f"Home Dashboard {RELEASE} · interaction color states",
+        "All four themes · light and dark · controls, heat levels, overlays, semantics, progress extremes · 100%",
+        margin,
+    )
+    placements: list[dict[str, Any]] = []
+    y = margin + heading_height
+    for _code, theme, _slug in THEMES:
+        matching = {
+            item["mode"]: item for item in captures if item["theme"] == theme
+        }
+        require(set(matching) == {"light", "dark"}, f"incomplete interaction row: {theme}")
+        x = margin
+        for mode in ("light", "dark"):
+            item = matching[mode]
+            draw.rounded_rectangle(
+                (x, y, x + cell_width, y + row_height),
+                radius=14,
+                fill="#e5e7eb",
+                outline="#64748b",
+                width=2,
+            )
+            label = f"{theme} · {mode.title()} · UI/text 100%"
+            draw.text((x + frame_padding, y + 10), label, fill="#172033", font=font(22, bold=True))
+            source_path = output / "captures" / item["source"].name
+            source = logical_image(source_path, item["record"])
+            image_x = x + frame_padding
+            image_y = y + caption_height + frame_padding
+            canvas.paste(source, (image_x, image_y))
+            placements.append(
+                {
+                    "case_id": item["id"],
+                    "source": f"captures/{source_path.name}",
+                    "source_dimensions": [item["record"]["pixel_width"], item["record"]["pixel_height"]],
+                    "presented_dimensions": [source.width, source.height],
+                    "physical_to_logical_presentation_scale": 0.5,
+                    "image_bounds": [image_x, image_y, image_x + source.width, image_y + source.height],
+                }
+            )
+            source.close()
+            x += cell_width + gutter
+        y += row_height + row_gutter
+    destination = output / "contact-sheets" / "05-interaction-state-fixture-100-percent.png"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    canvas.save(destination, "PNG", optimize=True)
+    return {
+        "title": f"Home Dashboard {RELEASE} · interaction color states",
+        "file": f"contact-sheets/{destination.name}",
+        "dimensions": [canvas.width, canvas.height],
+        "sha256": sha256_file(destination),
+        "source_capture_count": len(placements),
+        "ui_scale_percent": 100,
+        "physical_to_logical_presentation_scale": 0.5,
+        "placements": placements,
+    }
+
+
 def render_full_screen_sheet(
     *, output: Path, captures: list[dict[str, Any]]
 ) -> dict[str, Any]:
@@ -545,7 +763,7 @@ def render_full_screen_sheet(
         )
         source.close()
         y += row_height + row_gutter
-    destination = output / "contact-sheets" / "05-exact-package-full-screen-dashboard-100-percent.png"
+    destination = output / "contact-sheets" / "06-exact-package-full-screen-dashboard-100-percent.png"
     destination.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(destination, "PNG", optimize=True)
     return {
@@ -579,6 +797,23 @@ def manifest_case(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def manifest_interaction_case(item: dict[str, Any]) -> dict[str, Any]:
+    record = item["record"]
+    return {
+        "id": item["id"],
+        "file": f"captures/{item['source'].name}",
+        "theme": item["theme"],
+        "mode": item["mode"],
+        "ui_scale_percent": 100,
+        "text_scale_percent": 100,
+        "logical_dimensions": [record["logical_width"], record["logical_height"]],
+        "physical_dimensions": [record["pixel_width"], record["pixel_height"]],
+        "device_pixel_ratio": record["device_pixel_ratio"],
+        "sha256": record["sha256"],
+        "dom": record["dom"],
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--capture-root", required=True, type=Path)
@@ -600,7 +835,7 @@ def main() -> None:
     if output.exists():
         raise SystemExit(f"refusing to overwrite existing output: {output}")
 
-    runtime, fixture, matrix, full_screen, package_hash = validate_evidence(
+    runtime, fixture, matrix, interaction, full_screen, package_hash = validate_evidence(
         capture_root=capture_root,
         runtime_report=runtime_report,
         fixture_report=fixture_report,
@@ -615,11 +850,21 @@ def main() -> None:
     copy_evidence(
         output=output,
         matrix=matrix,
+        interaction=interaction,
         full_screen=full_screen,
         runtime=runtime,
         fixture=fixture,
         package=package,
         package_hash=package_hash,
+    )
+    reports_summary = write_release_reports(output / "reports", SOURCE_ROOT)
+    require(
+        reports_summary["hardcoded_color_audit"]["status"] == "passed",
+        "hardcoded-color audit did not pass",
+    )
+    require(
+        reports_summary["contrast_test_report"]["status"] == "passed",
+        "contrast test report did not pass",
     )
 
     sheets = [
@@ -631,6 +876,7 @@ def main() -> None:
         )
         for _theme_code, theme, theme_slug in THEMES
     ]
+    sheets.append(render_interaction_sheet(output=output, captures=interaction))
     sheets.append(render_full_screen_sheet(output=output, captures=full_screen))
 
     full_screen_manifest = []
@@ -687,7 +933,7 @@ def main() -> None:
             "identity": runtime["identity"],
             "screens": runtime["screens"],
         },
-        "raw_capture_count": 34,
+        "raw_capture_count": 42,
         "renderer_matrix": {
             "case_count": len(matrix),
             "themes": [theme for _code, theme, _slug in THEMES],
@@ -696,20 +942,31 @@ def main() -> None:
             "layouts": {name: list(dimensions) for name, dimensions in LAYOUT_DIMENSIONS.items()},
             "cases": [manifest_case(item) for item in matrix],
         },
+        "interaction_state_matrix": {
+            "case_count": len(interaction),
+            "themes": [theme for _code, theme, _slug in THEMES],
+            "modes": ["light", "dark"],
+            "logical_dimensions": list(INTERACTION_DIMENSIONS),
+            "cases": [manifest_interaction_case(item) for item in interaction],
+        },
         "full_screen": full_screen_manifest,
         "contact_sheet_count": len(sheets),
         "contact_sheets": sheets,
+        "release_reports": reports_summary,
         "minimal_validation": [
             "runtime report passed with zero errors",
-            "34 canonical 100%-only captures present",
+            "42 canonical 100%-only captures present: 32 dashboard, 8 interaction-state, and 2 full-screen",
             "each PNG dimensions and SHA-256 match the runtime report; a nonblank paint sample passes",
             "exact 24-file package archive and installed payload match",
             "each dashboard has four statistics cards, Bible card ordering, and no document-level horizontal overflow",
+            "hardcoded-color audit has zero unexplained component-level literals",
+            "full viewport theming, integrated footer, soft due backgrounds, fixed due markers, primary actions, text, overlays, and important-boundary checks pass",
         ],
         "quality_status": "clean",
         "acceptance_boundary": (
             "Native macOS exact-package rendering and scripted DOM evidence only. Spoken VoiceOver, "
-            "Windows/Linux rendering, device-specific behavior, and non-100% OS display scaling remain separate gates."
+            "human contact-sheet acceptance, Windows/Linux rendering, forced colors, device-specific behavior, "
+            "and non-100% OS display scaling remain separate gates."
         ),
     }
     manifest_path = output / "capture-manifest.json"
@@ -717,7 +974,7 @@ def main() -> None:
     index = {
         "release": RELEASE,
         "ui_scale_percent": 100,
-        "raw_capture_count": 34,
+        "raw_capture_count": 42,
         "candidate_sha256": package_hash,
         "contact_sheets": [
             {
@@ -739,7 +996,7 @@ def main() -> None:
         "",
         "These sheets were generated from the exact packaged add-on in a fresh, sync-disabled independent Anki profile. Every UI and text render is 100%. No 125%, 150%, or 200% cases are included.",
         "",
-        "The 34 original native screenshots remain byte-for-byte in `captures/` at Retina DPR 2. The sheets reduce those physical pixels to their corresponding logical size for pagination; this does not change the UI scale.",
+        "The 42 original native screenshots remain byte-for-byte in `captures/` at Retina DPR 2. The sheets reduce those physical pixels to their corresponding logical size for pagination; this does not change the UI scale.",
         "",
         "## Contact sheets",
         "",
@@ -751,8 +1008,12 @@ def main() -> None:
             "## Evidence",
             "",
             "- 32 dashboard captures: four themes, light/dark, Month/Year, and compact/wide.",
+            "- 8 interaction-state captures: four themes in light/dark with primary and secondary controls, completion and Reviews Due levels, every Today/Selected completion level, event/outside combinations, target-aware rates, and empty/partial/full progress.",
             "- 2 exact-package full-screen dashboard captures: Month and Year.",
             "- Native runtime report: passed with no recorded errors.",
+            f"- [Hardcoded-color audit]({reports_summary['hardcoded_color_audit']['markdown']}): passed with zero component-level hardcoding.",
+            f"- [Contrast test report]({reports_summary['contrast_test_report']['markdown']}): {reports_summary['contrast_test_report']['check_count']} gated pairs passed.",
+            f"- [Changed-file summary]({reports_summary['changed_file_summary']['markdown']}): {reports_summary['changed_file_summary']['file_count']} release-candidate files.",
             "- Exact package: 24 files, installed payload byte-matched to the archive.",
             f"- Disposable profile: `{runtime['identity']['profile']}`.",
             "- Sync credentials: absent.",
@@ -766,7 +1027,7 @@ def main() -> None:
     (output / "README.md").write_text("\n".join(readme), encoding="utf-8")
 
     print(f"output {output}")
-    print(f"raw_captures {len(matrix) + len(full_screen)}")
+    print(f"raw_captures {len(matrix) + len(interaction) + len(full_screen)}")
     print(f"contact_sheets {len(sheets)}")
     print(f"candidate_sha256 {package_hash}")
 

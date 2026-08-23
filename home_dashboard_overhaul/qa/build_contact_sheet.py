@@ -330,7 +330,7 @@ def build_contact_sheet_index(
         )
     return {
         "schema_version": 1,
-        "release": "1.7.0",
+        "release": "1.8.0",
         "ui_geometry_revision": ui_geometry_revision,
         "candidate_sha256": candidate_sha256,
         "primary_surface_count": len(primary_images),
@@ -355,8 +355,8 @@ def validate_contact_sheet_index(
     errors: list[str] = []
     if index.get("schema_version") != 1:
         errors.append("contact-sheet index schema_version must be 1")
-    if index.get("release") != "1.7.0":
-        errors.append("contact-sheet index release must be 1.7.0")
+    if index.get("release") != "1.8.0":
+        errors.append("contact-sheet index release must be 1.8.0")
     revision = index.get("ui_geometry_revision")
     if isinstance(revision, bool) or not isinstance(revision, int) or revision < 1:
         errors.append("contact-sheet index needs a positive ui_geometry_revision")
@@ -523,7 +523,7 @@ def main() -> None:
     parser.add_argument("directory", type=Path)
     parser.add_argument(
         "--title",
-        default="Home Screen Dashboard 1.7.0 · Exact-package UI acceptance",
+        default="Home Screen Dashboard 1.8.0 · Offline visual reference",
     )
     parser.add_argument("--output-directory", type=Path)
     parser.add_argument("--manifest", type=Path)

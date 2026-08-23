@@ -274,7 +274,7 @@ def main() -> None:
     ]
     manifest = {
         "schema_version": 1,
-        "release": "1.7.0",
+        "release": "1.8.0",
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "scope": "Four-page Settings overhaul at native 100% screenshot scale",
         "candidate": {

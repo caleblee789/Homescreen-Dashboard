@@ -10,7 +10,12 @@ from pathlib import Path
 import re
 from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Tuple
 
-from .themes import DEFAULT_HEATMAP_PRESETS, HEATMAP_PRESETS, PRESETS
+from .themes import (
+    DEFAULT_CUSTOM_BIBLE_COLOR,
+    DEFAULT_HEATMAP_PRESETS,
+    HEATMAP_PRESETS,
+    PRESETS,
+)
 from .verse import load_default_quotes
 
 
@@ -266,7 +271,11 @@ def normalize_config(raw: object) -> Dict[str, Any]:
     quotes = [value.strip() for value in raw_quotes if isinstance(value, str) and value.strip()] if isinstance(raw_quotes, list) else []
     bible["quotes"] = quotes[:500] or defaults["bible"]["quotes"]
     color = bible.get("font_color")
-    bible["font_color"] = color if isinstance(color, str) and HEX_COLOR_RE.fullmatch(color.strip()) else "#1E90FF"
+    bible["font_color"] = (
+        color
+        if isinstance(color, str) and HEX_COLOR_RE.fullmatch(color.strip())
+        else DEFAULT_CUSTOM_BIBLE_COLOR
+    )
     bible["font_family"] = _font_family(bible.get("font_family"))
     size = bible.get("font_size")
     bible["font_size"] = size.lower() if isinstance(size, str) and FONT_SIZE_RE.fullmatch(size.lower()) else "28px"

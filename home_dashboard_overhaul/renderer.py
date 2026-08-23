@@ -24,9 +24,8 @@ from .models import (
     TodayStats,
     ValueState,
 )
-from .themes import DEFAULT_HEATMAP_PRESETS, resolve_theme
+from .themes import DEFAULT_HEATMAP_PRESETS, composite_color, resolve_theme
 from .ui_primitives import (
-    COMPLETION_TOKEN_ROLE,
     CONTENT_MODE_INTERMEDIATE,
     DASHBOARD_PRIMITIVES,
     FOCUS_RING_OFFSET_PX,
@@ -94,18 +93,7 @@ def _eta(duration_seconds: int | None, now: datetime | None = None) -> str:
     return "{}, {}".format(label, _clock_time(completion))
 
 
-def _rgba(hex_color: str, percent: int) -> str:
-    raw = str(hex_color).lstrip("#")
-    try:
-        red, green, blue = (int(raw[index:index + 2], 16) for index in (0, 2, 4))
-    except (TypeError, ValueError):
-        red, green, blue = 255, 255, 255
-    return "rgba({},{},{},{:.2f})".format(
-        red, green, blue, min(100, max(0, int(percent))) / 100.0
-    )
-
-
-def _style(config: Mapping[str, Any], anki_dark: bool) -> str:
+def _resolved_theme(config: Mapping[str, Any], anki_dark: bool) -> Mapping[str, str]:
     appearance = config["appearance"]
     theme_name = str(appearance.get("preset", "Sapphire Glass"))
     preset_map = config.get("heatmap", {}).get("presets_by_theme", {})
@@ -114,67 +102,77 @@ def _style(config: Mapping[str, Any], anki_dark: bool) -> str:
         if isinstance(preset_map, Mapping)
         else DEFAULT_HEATMAP_PRESETS.get(theme_name)
     )
-    theme = resolve_theme(
+    return resolve_theme(
         theme_name,
         appearance.get("mode"),
         anki_dark,
         heatmap_name,
     )
-    # The panel layer owns a readability floor even when the user asks for a
-    # more transparent decorative background.
-    safe_opacity = max(91, int(appearance.get("opacity", 88)))
+
+
+def _style(config: Mapping[str, Any], anki_dark: bool) -> str:
+    appearance = config["appearance"]
+    theme = _resolved_theme(config, anki_dark)
+    # Preserve the existing opacity preference without translucent data colors:
+    # card surfaces are precomposited into opaque values over the theme canvas.
+    safe_opacity = max(91, int(appearance.get("opacity", 88))) / 100
+    rendered_surface = composite_color(
+        theme["ui_surface_1"], theme["ui_canvas"], safe_opacity
+    )
+    if "ui_card_gradient_start" in theme:
+        card_background = "linear-gradient(180deg, {} 0%, {} 100%)".format(
+            composite_color(theme["ui_card_gradient_start"], theme["ui_canvas"], safe_opacity),
+            composite_color(theme["ui_card_gradient_end"], theme["ui_canvas"], safe_opacity),
+        )
+    else:
+        card_background = rendered_surface
     declarations = {
-        "--hdo-bg": theme["background"],
-        "--hdo-page-scrim-start": _rgba(theme["background"], 72),
-        "--hdo-page-scrim-end": _rgba(theme["background"], 82),
-        "--hdo-panel-background": _rgba(theme["panel_surface"], safe_opacity),
-        "--hdo-panel-scrim": _rgba(theme["panel_surface"], 97),
-        "--hdo-surface-solid": theme["surface"],
-        "--hdo-border": theme["border"],
-        "--hdo-control-border": theme["control_border"],
-        "--hdo-text": theme["text"],
-        "--hdo-muted": theme["muted"],
-        "--hdo-disabled": theme["disabled"],
-        "--hdo-accent": theme["accent"],
-        "--hdo-selection": theme["selection"],
-        "--hdo-accent-text": theme["accent_text"],
-        "--hdo-on-accent": theme["on_accent"],
-        "--hdo-on-selection": theme["on_selection"],
-        "--hdo-accent-soft": theme["accent_soft"],
-        "--hdo-forecast": theme["forecast"],
-        "--hdo-due-stripe": theme["due_stripe"],
-        "--hdo-review": theme["review"],
-        "--hdo-event": theme["event"],
-        "--hdo-on-event": theme["on_event"],
-        "--hdo-shadow": theme["shadow"],
-        "--hdo-focus": theme["focus"],
-        "--hdo-new": theme["new"],
-        "--hdo-success": theme["success"],
-        "--hdo-{}".format(COMPLETION_TOKEN_ROLE): theme["completion"],
-        "--hdo-warning": theme["warning"],
-        "--hdo-danger": theme["danger"],
-        "--hdo-danger-soft": theme["danger_soft"],
-        "--hdo-heatmap-empty": theme["heatmap_empty"],
-        "--hdo-on-heatmap-empty": theme["on_heatmap_empty"],
-        "--hdo-heatmap-out-of-month": theme["heatmap_out_of_month"],
-        "--hdo-on-heatmap-out-of-month": theme["on_heatmap_out_of_month"],
-        "--hdo-heatmap-1": theme["heatmap_1"],
-        "--hdo-heatmap-2": theme["heatmap_2"],
-        "--hdo-heatmap-3": theme["heatmap_3"],
-        "--hdo-heatmap-4": theme["heatmap_4"],
-        "--hdo-heatmap-5": theme["heatmap_5"],
-        "--hdo-on-heatmap-1": theme["on_heatmap_1"],
-        "--hdo-on-heatmap-2": theme["on_heatmap_2"],
-        "--hdo-on-heatmap-3": theme["on_heatmap_3"],
-        "--hdo-on-heatmap-4": theme["on_heatmap_4"],
-        "--hdo-on-heatmap-5": theme["on_heatmap_5"],
+        "--ui-card-background": card_background,
         "--hdo-target-size": "{}px".format(INTERACTION_TARGET_MIN_PX),
         "--hdo-control-visual": "{}px".format(VISUAL_CHROME_PX),
         "--hdo-focus-ring": "{}px".format(FOCUS_RING_PX),
         "--hdo-focus-offset": "{}px".format(FOCUS_RING_OFFSET_PX),
         "--hdo-scale": str(int(appearance.get("text_scale", 100)) / 100),
     }
+    declarations.update({
+        "--{}".format(key.replace("_", "-")): value
+        for key, value in theme.items()
+        if key not in {"theme_name", "color_mode", "heatmap_preset"}
+    })
     return ";".join("{}:{}".format(key, value) for key, value in declarations.items())
+
+
+def _host_surface_style(config: Mapping[str, Any], anki_dark: bool) -> str:
+    """Paint the controlled web canvas before the dashboard's first frame."""
+
+    theme = _resolved_theme(config, anki_dark)
+    mode = str(theme["color_mode"])
+    return (
+        '<style id="hdo-host-theme">'
+        'html,body,#root,.dashboard-host,.dashboard-scroll-surface{{'
+        'min-height:100%;background:{}!important;color:{};color-scheme:{};}}'
+        'html{{scrollbar-color:{} {};}}'
+        'html::-webkit-scrollbar,body::-webkit-scrollbar,'
+        '.dashboard-scroll-surface::-webkit-scrollbar{{width:8px;height:8px;}}'
+        'html::-webkit-scrollbar-track,body::-webkit-scrollbar-track,'
+        '.dashboard-scroll-surface::-webkit-scrollbar-track{{background:{};}}'
+        'html::-webkit-scrollbar-thumb,body::-webkit-scrollbar-thumb,'
+        '.dashboard-scroll-surface::-webkit-scrollbar-thumb{{background:{};border:2px solid {};border-radius:999px;}}'
+        'html::-webkit-scrollbar-thumb:hover,body::-webkit-scrollbar-thumb:hover,'
+        '.dashboard-scroll-surface::-webkit-scrollbar-thumb:hover{{background:{};}}'
+        'body{{overscroll-behavior-block:none;}}'
+        '</style>'
+    ).format(
+        _escape(theme["ui_canvas"]),
+        _escape(theme["ui_text_primary"]),
+        _escape(mode),
+        _escape(theme["ui_scrollbar_thumb"]),
+        _escape(theme["ui_scrollbar_track"]),
+        _escape(theme["ui_scrollbar_track"]),
+        _escape(theme["ui_scrollbar_thumb"]),
+        _escape(theme["ui_scrollbar_track"]),
+        _escape(theme["ui_scrollbar_thumb_hover"]),
+    )
 
 
 def _format_count(value: object) -> str:
@@ -206,11 +204,18 @@ def _stats_group(
 ) -> str:
     if not rows and not lead:
         return ""
+    card_class = {
+        "hdo-progress": "hdo-progress-card",
+        "hdo-session": "hdo-session-card",
+        "hdo-last-seven": "hdo-recent-card",
+        "hdo-all-time": "hdo-lifetime-card",
+    }.get(group_id, "")
     return (
-        '<section class="hdo-statistics-card" data-hdo-primitive="{}" '
+        '<section class="hdo-statistics-card {}" data-hdo-primitive="{}" '
         'aria-labelledby="{}-title"><header class="hdo-stat-card-header">'
         '<h3 id="{}-title">{}</h3>{}</header>{}<dl>{}</dl></section>'
     ).format(
+        _escape(card_class),
         _dashboard_primitive("statistics-card"),
         _escape(group_id),
         _escape(group_id),
@@ -244,12 +249,13 @@ def _progress_segment(label: str, key: str, count: int, workload: int) -> str:
     share = _progress_share(safe_count, workload)
     description = "{}: {} ({}%)".format(label, _format_count(safe_count), share)
     return (
-        '<span class="hdo-progress-segment hdo-progress-segment--{}" '
+        '<span class="hdo-progress-segment hdo-progress-segment--{}{}" '
         'data-hdo-progress-segment="{}" data-hdo-progress-count="{}" '
         'style="--hdo-progress-count:{}" title="{}">'
         '<span class="hdo-visually-hidden">{}</span></span>'
     ).format(
         _escape(key),
+        " is-populated" if safe_count > 0 else "",
         _escape(key),
         safe_count,
         safe_count,
@@ -293,9 +299,9 @@ def _progress_group(snapshot: DashboardSnapshot) -> str:
             if workload == 0:
                 composition = "No workload today. 0% complete."
             heading_meta = (
-                '<span class="hdo-progress-complete" data-hdo-metric="progress.percent">'
-                '{}% complete</span>'
-            ).format(percent)
+                '<span class="hdo-progress-complete" data-hdo-metric="progress.percent" '
+                'aria-label="{}% complete">{}% complete</span>'
+            ).format(percent, percent)
             lead = (
                 '<div class="hdo-progress-track" data-hdo-progress-track role="progressbar" '
                 'aria-label="Today’s workload composition" aria-valuemin="0" '
@@ -312,14 +318,14 @@ def _progress_group(snapshot: DashboardSnapshot) -> str:
             )
         rows.extend((
             _metric("New remaining", _format_count(new_remaining), "queue.new", "hdo-value--new"),
-            _metric("Learning remaining", _format_count(learning_remaining), "queue.learning", "hdo-value--warning"),
+            _metric("Learning remaining", _format_count(learning_remaining), "queue.learning", "hdo-value--learning"),
             _metric("Reviews remaining", _format_count(review_remaining), "queue.review", "hdo-value--review"),
             _metric("Total remaining", _format_count(remaining), "queue.total"),
         ))
     if buried_state.is_available:
         buried: BuriedStats = buried_state.value
         buried_total = max(0, int(buried.new)) + max(0, int(buried.learning)) + max(0, int(buried.review))
-        rows.append(_metric("Buried", _format_count(buried_total), "buried.total"))
+        rows.append(_metric("Buried", _format_count(buried_total), "buried.total", "hdo-value--buried"))
     return _stats_group("Today’s Progress", "hdo-progress", rows, lead, heading_meta)
 
 
@@ -353,8 +359,8 @@ def _rate_text(value: RateMetric) -> str:
     return "{}%".format(value.percent) if value.status == RateStatus.AVAILABLE and value.percent is not None else ""
 
 
-def _retention_role(value: RateMetric, target: int) -> str:
-    if value.status != RateStatus.AVAILABLE or value.percent is None:
+def _retention_role(value: RateMetric, target: int | None) -> str:
+    if value.status != RateStatus.AVAILABLE or value.percent is None or target is None:
         return ""
     if value.percent >= target:
         return "hdo-value--success"
@@ -363,8 +369,8 @@ def _retention_role(value: RateMetric, target: int) -> str:
     return "hdo-value--danger"
 
 
-def _again_role(value: RateMetric, retention_target: int) -> str:
-    if value.status != RateStatus.AVAILABLE or value.percent is None:
+def _again_role(value: RateMetric, retention_target: int | None) -> str:
+    if value.status != RateStatus.AVAILABLE or value.percent is None or retention_target is None:
         return ""
     target = max(0, 100 - retention_target)
     if value.percent <= target:
@@ -374,7 +380,7 @@ def _again_role(value: RateMetric, retention_target: int) -> str:
     return "hdo-value--danger"
 
 
-def _last_seven_group(snapshot: DashboardSnapshot, target: int) -> str:
+def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
     state = _facts_state(snapshot, "last_seven_days")
     if not state.is_available:
         return ""
@@ -392,7 +398,7 @@ def _last_seven_group(snapshot: DashboardSnapshot, target: int) -> str:
     return _stats_group("Last 7 Days", "hdo-last-seven", rows)
 
 
-def _all_time_group(snapshot: DashboardSnapshot, target: int) -> str:
+def _all_time_group(snapshot: DashboardSnapshot, _target: int | None) -> str:
     state = _facts_state(snapshot, "long_term")
     if not state.is_available:
         return ""
@@ -405,14 +411,15 @@ def _all_time_group(snapshot: DashboardSnapshot, target: int) -> str:
     ]
     retention = _rate_text(stats.lifetime_retention)
     if retention:
-        rows.append(_metric("Lifetime retention", retention, "long_term.lifetime_retention", _retention_role(stats.lifetime_retention, target)))
+        rows.append(_metric("Lifetime retention", retention, "long_term.lifetime_retention"))
     rows.append(_metric("Lifetime cards studied", _format_count(stats.lifetime_cards_studied), "long_term.lifetime_cards_studied"))
     return _stats_group("All Time", "hdo-all-time", rows)
 
 
 def _metrics(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
     visibility = config["visibility"]
-    target = int(config.get("study", {}).get("retention_target", 80))
+    target_value = config.get("study", {}).get("retention_target")
+    target = int(target_value) if isinstance(target_value, (int, float)) else None
     groups: list[str] = []
     if visibility.get("remaining", True):
         groups.append(_progress_group(snapshot))
@@ -563,6 +570,12 @@ def dashboard_facts_payload(
     selected = preview_date or _selected_iso(selected_date) or scheduling_date or calendar_date
     view = str(config.get("heatmap", {}).get("calendar_view", "year"))
     week_start = int(config.get("heatmap", {}).get("week_start", 0))
+    retention_target_value = config.get("study", {}).get("retention_target")
+    retention_target = (
+        int(retention_target_value)
+        if isinstance(retention_target_value, (int, float))
+        else None
+    )
     range_payload = calendar_range_payload(snapshot, selected or date.today().isoformat(), view, week_start)
     return {
         "activity": range_payload["activity"],
@@ -584,7 +597,7 @@ def dashboard_facts_payload(
             "last_seven_days": _value_state_payload(facts.last_seven_days),
             "long_term": _value_state_payload(facts.long_term),
         },
-        "retention_target": int(config.get("study", {}).get("retention_target", 80)),
+        "retention_target": retention_target,
         "view": view,
         "week_start": week_start,
     }
@@ -602,7 +615,11 @@ def _calendar_controls(config: Mapping[str, Any]) -> str:
         '<button type="button" data-hdo-calendar="today">Today</button>'
         '<button type="button" data-hdo-calendar="next" aria-label="Next period" title="Next period">›</button></div>'
         '<button type="button" class="hdo-settings" data-hdo-command="calendar-settings" '
-        'aria-label="Calendar settings" title="Calendar settings">⚙</button>'
+        'aria-label="Calendar settings" title="Calendar settings">'
+        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+        '<path d="M9.7 2.8h4.6l.6 2.2c.5.2 1 .5 1.5.9l2.2-.6 2.3 4-1.6 1.6v2.2l1.6 1.6-2.3 4-2.2-.6c-.5.4-1 .7-1.5.9l-.6 2.2H9.7L9.1 19c-.5-.2-1-.5-1.5-.9l-2.2.6-2.3-4 1.6-1.6v-2.2L3.1 9.3l2.3-4 2.2.6c.5-.4 1-.7 1.5-.9l.6-2.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>'
+        '<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/>'
+        '</svg></button>'
         '</div>'
     ).format("true" if view == "month" else "false", "true" if view == "year" else "false")
 
@@ -610,7 +627,8 @@ def _calendar_controls(config: Mapping[str, Any]) -> str:
 def _calendar(snapshot: DashboardSnapshot, config: Mapping[str, Any], selected_date: str, facts_revision: int) -> str:
     payload = dashboard_facts_payload(snapshot, config, selected_date, facts_revision)
     event_legend = (
-        '<span class="hdo-legend-key"><i class="hdo-legend-event" aria-hidden="true"></i>Event</span>'
+        '<div class="hdo-legend-group hdo-legend-event">'
+        '<i class="hdo-legend-event-marker" aria-hidden="true"></i><span>Event</span></div>'
         if config.get("visibility", {}).get("events", True)
         else ""
     )
@@ -621,28 +639,46 @@ def _calendar(snapshot: DashboardSnapshot, config: Mapping[str, Any], selected_d
         '<p class="hdo-eyebrow">Study Calendar</p><h2 id="hdo-calendar-heading" data-hdo-calendar-title></h2>'
         '</div>{}</header>'
         '<div class="hdo-calendar-shell" data-hdo-calendar-view="{}" aria-busy="false">'
-        '<div class="hdo-month-weekdays" aria-hidden="true"></div>'
+        '<div class="hdo-calendar-body"><div class="hdo-month-weekdays" aria-hidden="true"></div>'
+        '<div class="hdo-calendar-grid-frame"><div class="hdo-year-heatmap-content">'
         '<div class="hdo-calendar-grid" role="grid" aria-label="Study calendar"></div>'
-        '</div>'
+        '</div></div></div></div>'
+        '<footer class="hdo-calendar-footer" '
+        'data-hdo-primitive="{}">'
         '<div class="hdo-calendar-legend" aria-label="Calendar legend">'
-        '<span class="hdo-completion-legend"><span>Less completed</span>'
+        '<div class="hdo-legend-group hdo-legend-completion">'
+        '<span class="hdo-legend-title">Completion</span>'
+        '<span class="hdo-legend-endpoint">Less</span>'
+        '<span class="hdo-legend-scale hdo-completion-legend" aria-hidden="true">'
         '<i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i><i data-level="5"></i>'
-        '<span>More</span></span>'
-        '<span class="hdo-due-legend"><span>Reviews due</span>'
-        '<i data-load="low"></i><i data-load="medium"></i><i data-load="high"></i></span>{}</div>'
-        '<div class="hdo-calendar-context-bar" data-hdo-primitive="{}" aria-live="polite">'
-        '<div class="hdo-context-copy">'
-        '<div class="hdo-context-selected"><strong>Selected date:</strong> <span data-hdo-context-date></span></div>'
-        '<div class="hdo-context-event" data-hdo-context-event hidden>'
-        '<span class="hdo-context-event-marker" aria-hidden="true"></span>'
-        '<button type="button" class="hdo-context-event-link" data-hdo-open-events></button>'
-        '<span data-hdo-event-more></span>'
-        '<button type="button" class="hdo-icon-button" data-hdo-edit-event '
-        'aria-label="Edit event" title="Edit event">✎</button></div></div>'
+        '</span><span class="hdo-legend-endpoint">More</span></div>'
+        '<div class="hdo-legend-group hdo-legend-due">'
+        '<span class="hdo-legend-title">Reviews due</span>'
+        '<span class="hdo-legend-scale hdo-due-legend" aria-hidden="true">'
+        '<i data-due-level="1"></i><i data-due-level="3"></i><i data-due-level="5"></i>'
+        '</span></div>{}</div>'
+        '<div class="hdo-calendar-context hdo-calendar-context-bar" aria-live="polite">'
+        '<div class="hdo-selected-date-line">'
+        '<span class="hdo-date-state-chip" data-hdo-date-state>Today</span>'
+        '<time data-hdo-context-date></time></div>'
+        '<div class="hdo-next-event-line" data-hdo-context-event>'
+        '<span class="hdo-context-label">Next event</span>'
+        '<span class="hdo-context-event-marker" data-hdo-event-marker aria-hidden="true" hidden></span>'
+        '<span class="hdo-event-summary">'
+        '<button type="button" class="hdo-event-title" data-hdo-open-events hidden></button>'
+        '<span class="hdo-event-meta" data-hdo-event-meta hidden></span>'
+        '<span class="hdo-event-more" data-hdo-event-more hidden></span>'
+        '<span class="hdo-event-empty" data-hdo-event-empty>No upcoming event</span></span>'
+        '<button type="button" class="hdo-edit-event-button hdo-icon-button" data-hdo-edit-event '
+        'aria-label="Edit event" title="Edit event" hidden>'
+        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+        '<path d="m4 16.8-.8 4 4-.8L18.6 8.6l-3.2-3.2L4 16.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
+        '<path d="m13.8 7 3.2 3.2M3.8 20.2h16.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'
+        '</svg></button></div>'
         '<div class="hdo-context-actions">'
-        '<button type="button" class="hdo-context-action hdo-context-action--primary" data-hdo-primary-action hidden></button>'
+        '<button type="button" class="hdo-context-action hdo-calendar-card-action hdo-context-action--primary" data-hdo-primary-action hidden></button>'
         '<button type="button" class="hdo-context-action" data-hdo-most-missed hidden>Most missed</button>'
-        '</div></div>'
+        '</div></div></footer>'
         '<div id="hdo-calendar-tooltip" class="hdo-calendar-tooltip" role="tooltip" hidden>'
         '<h3 data-hdo-tooltip-heading></h3><dl data-hdo-tooltip-rows></dl></div>'
         '<p class="hdo-visually-hidden" role="status" aria-live="polite" data-hdo-calendar-status></p>'
@@ -653,17 +689,17 @@ def _calendar(snapshot: DashboardSnapshot, config: Mapping[str, Any], selected_d
         _dashboard_primitive("dashboard-header"),
         _calendar_controls(config),
         _escape(config.get("heatmap", {}).get("calendar_view", "year")),
-        event_legend,
         _dashboard_primitive("calendar-context-bar"),
+        event_legend,
         _safe_json(payload),
     )
 
 
 def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
     bible = config["bible"]
-    custom_color = "" if bible.get("theme_aware_color", True) else "color:{};".format(_escape(bible.get("font_color", "#1E90FF")))
+    custom_color = "" if bible.get("theme_aware_color", True) else "color:{};".format(_escape(bible.get("font_color", "")))
     reference = (
-        '<div class="hdo-verse-reference">{}</div>'.format(snapshot.verse.reference_html)
+        '<footer class="hdo-verse-reference">{}</footer>'.format(snapshot.verse.reference_html)
         if snapshot.verse.reference_html
         else ""
     )
@@ -671,9 +707,9 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
         '<section class="hdo-card hdo-dashboard-panel hdo-bible-card" data-hdo-primitive="{}" '
         'aria-labelledby="hdo-bible-title"><p class="hdo-eyebrow">Bible Verse</p>'
         '<h2 id="hdo-bible-title" class="hdo-visually-hidden">Bible Verse</h2>'
-        '<div class="hdo-verse-scrim"><blockquote class="hdo-verse" '
+        '<blockquote class="hdo-verse" '
         'style="{}--hdo-verse-font:{};--hdo-verse-size:{}">'
-        '<div class="hdo-verse-body">{}</div>{}</blockquote></div></section>'
+        '<div class="hdo-verse-body">{}</div></blockquote>{}</section>'
     ).format(
         _dashboard_primitive("bible-verse-card"),
         custom_color,
@@ -714,18 +750,32 @@ def render_dashboard(
     render_config = dict(config)
     if preview:
         render_config["_preview_context"] = True
+    resolved_theme = _resolved_theme(render_config, anki_dark)
     visibility = render_config["visibility"]
-    sections: list[str] = []
     has_calendar = bool(visibility.get("heatmap", True))
-    if has_calendar:
-        sections.append(_calendar(snapshot, render_config, selected_date, facts_revision))
+    calendar = (
+        _calendar(snapshot, render_config, selected_date, facts_revision)
+        if has_calendar
+        else ""
+    )
     metrics = _metrics(snapshot, render_config)
     has_metrics = bool(metrics)
-    if metrics:
-        sections.append(metrics)
-    if visibility.get("bible", True):
-        sections.append(_bible(snapshot, render_config))
-    if not sections:
+    bible = _bible(snapshot, render_config) if visibility.get("bible", True) else ""
+    has_insights = bool(metrics or bible)
+    sections: list[str] = []
+    if calendar or has_insights:
+        rail = (
+            '<aside class="hdo-insight-rail" aria-label="Study insights">{}{}</aside>'.format(
+                metrics,
+                bible,
+            )
+            if has_insights
+            else ""
+        )
+        sections.append(
+            '<div class="hdo-dashboard-layout">{}{}</div>'.format(calendar, rail)
+        )
+    else:
         sections.append(
             '<section class="hdo-card hdo-recovery-card" data-hdo-primitive="{}" role="status">'
             '<p class="hdo-eyebrow">Home Screen Dashboard</p><h2>Dashboard sections are hidden</h2>'
@@ -737,16 +787,20 @@ def render_dashboard(
     payload = dashboard_facts_payload(snapshot, render_config, selected_date, facts_revision)
     if not visibility.get("heatmap", True):
         sections.append('<script type="application/json" class="hdo-dashboard-data">{}</script>'.format(_safe_json(payload)))
-    return (
-        '<div id="hdo-dashboard" class="hdo-dashboard{}" data-hdo-preview="{}" '
+    return _host_surface_style(render_config, anki_dark) + (
+        '<div id="hdo-dashboard" class="hdo-dashboard dashboard-host dashboard-scroll-surface{}" data-hdo-preview="{}" '
+        'data-hdo-theme="{}" data-hdo-color-mode="{}" '
         'data-hdo-runtime-stack="{}" data-hdo-stack-position="{}" '
         'data-hdo-content-mode="{}" data-hdo-high-contrast="{}" '
         'data-hdo-calendar-view="{}" data-hdo-has-calendar="{}" data-hdo-has-metrics="{}" '
+        'data-hdo-has-insights="{}" '
         'data-hdo-enlarged-text="{}" aria-busy="false" style="{}">'
         '<main class="hdo-stack">{}{}</main></div>'
     ).format(
         " hdo-dashboard--preview" if preview else "",
         "true" if preview else "false",
+        _escape(resolved_theme["theme_name"]),
+        _escape(resolved_theme["color_mode"]),
         "false" if preview else "true",
         _escape(render_config.get("home_screen", {}).get("position", "top")),
         CONTENT_MODE_INTERMEDIATE,
@@ -754,6 +808,7 @@ def render_dashboard(
         _escape(render_config.get("heatmap", {}).get("calendar_view", "year")),
         "true" if has_calendar else "false",
         "true" if has_metrics else "false",
+        "true" if has_insights else "false",
         "true" if int(render_config.get("appearance", {}).get("text_scale", 100)) >= 125 else "false",
         _style(render_config, anki_dark),
         _data_warning(snapshot, render_config),
@@ -767,8 +822,10 @@ def render_loading(config: Mapping[str, Any], anki_dark: bool = False) -> str:
         if config.get("visibility", {}).get("bible", True)
         else ""
     )
-    return (
-        '<div id="hdo-dashboard" class="hdo-dashboard hdo-dashboard--loading" '
+    resolved_theme = _resolved_theme(config, anki_dark)
+    return _host_surface_style(config, anki_dark) + (
+        '<div id="hdo-dashboard" class="hdo-dashboard dashboard-host dashboard-scroll-surface hdo-dashboard--loading" '
+        'data-hdo-theme="{}" data-hdo-color-mode="{}" '
         'data-hdo-runtime-stack="true" data-hdo-stack-position="{}" '
         'data-hdo-content-mode="{}" aria-busy="true" style="{}"><main class="hdo-stack">'
         '<section class="hdo-card hdo-loading-card" data-hdo-primitive="{}" aria-busy="true">'
@@ -784,6 +841,8 @@ def render_loading(config: Mapping[str, Any], anki_dark: bool = False) -> str:
         '</div></div></section>'
         '</main></div>'
     ).format(
+        _escape(resolved_theme["theme_name"]),
+        _escape(resolved_theme["color_mode"]),
         _escape(config.get("home_screen", {}).get("position", "top")),
         CONTENT_MODE_INTERMEDIATE,
         _style(config, anki_dark),
@@ -800,8 +859,10 @@ def render_activation_required(
     anki_dark: bool = False,
 ) -> str:
     names = [LEGACY_NAMES.get(value, value) for value in enabled_ids]
-    return (
-        '<div id="hdo-dashboard" class="hdo-dashboard" data-hdo-runtime-stack="true" '
+    resolved_theme = _resolved_theme(config, anki_dark)
+    return _host_surface_style(config, anki_dark) + (
+        '<div id="hdo-dashboard" class="hdo-dashboard dashboard-host dashboard-scroll-surface" '
+        'data-hdo-theme="{}" data-hdo-color-mode="{}" data-hdo-runtime-stack="true" '
         'data-hdo-stack-position="{}" data-hdo-content-mode="{}" style="{}">'
         '<main class="hdo-stack"><section class="hdo-card hdo-recovery-card" '
         'data-hdo-primitive="{}" role="status"><p class="hdo-eyebrow">Home Screen Dashboard</p>'
@@ -810,6 +871,8 @@ def render_activation_required(
         '<button type="button" data-hdo-command="settings">Open settings</button>'
         '</section></main></div>'
     ).format(
+        _escape(resolved_theme["theme_name"]),
+        _escape(resolved_theme["color_mode"]),
         _escape(config.get("home_screen", {}).get("position", "top")),
         CONTENT_MODE_INTERMEDIATE,
         _style(config, anki_dark),

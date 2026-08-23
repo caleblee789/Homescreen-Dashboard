@@ -36,11 +36,13 @@ omits unsupported future due rows and actions.
 semantic presentation of available retention values. `study.show_eta` controls
 the Today’s Session ETA row.
 
-The compact context bar has no visibility or placement setting. It always
-belongs to the calendar card and distinguishes the selected date, an event on
-that date, and the global next event. Past/current dates retain Reviewed and
-future dates retain Due; the applicable action is disabled with a reason when
-its exact card set is empty or unavailable. Most missed remains hidden until an
+The integrated calendar footer has no visibility or placement setting. It
+always belongs to the calendar card and combines the Completion, Reviews due,
+and Event legend groups with a Today/Selected date chip and the global next
+event. Past/current dates with studied cards expose View reviewed cards and
+supported future dates expose View due cards; the action is hidden when its
+exact card set is empty or unavailable. It uses the solid theme
+primary treatment. Most missed remains hidden until an
 eligible Again answer is confirmed.
 
 Collection-backed preview figures use the most recent saved Home snapshot.
