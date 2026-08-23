@@ -51,7 +51,7 @@ DEFERRED_SOURCE_FILES = frozenset({
 DEFERRED_SOURCE_PREFIXES = ("_vendor/",)
 RELEASE_CONTRACT_FILES = (
     "qa/calendar_surface_manifest.json",
-    "qa/visual_regression_matrix_1_7_0.json",
+    "qa/visual_regression_matrix_1_8_0.json",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 FIXED_TIMESTAMP = (2026, 8, 21, 0, 0, 0)
@@ -139,12 +139,9 @@ def _validate_theme_contract(namespace: dict) -> None:
     if not callable(resolver) or not isinstance(heatmaps, dict) or not isinstance(defaults, dict):
         raise ValueError("theme resolver and authored heatmap presets are required")
 
-    signatures: set[tuple[str, ...]] = set()
     required_heatmap_roles = {
-        "heatmap_empty", "on_heatmap_empty", "heatmap_out_of_month",
-        "on_heatmap_out_of_month",
-        *{"heatmap_{}".format(level) for level in range(1, 6)},
-        *{"on_heatmap_{}".format(level) for level in range(1, 6)},
+        *{"heat_complete_{}".format(level) for level in range(6)},
+        *{"heat_complete_text_{}".format(level) for level in range(6)},
     }
     for theme_name, preset_names in expected_themes.items():
         if tuple(heatmaps.get(theme_name, {})) != preset_names:
@@ -155,41 +152,80 @@ def _validate_theme_contract(namespace: dict) -> None:
             palette = heatmaps[theme_name][preset_name]
             if set(palette) != {"light", "dark"}:
                 raise ValueError("{} / {} must provide light and dark variants".format(theme_name, preset_name))
-            signature: list[str] = []
             for mode in ("light", "dark"):
                 tokens = palette[mode]
                 if set(tokens) != required_heatmap_roles:
                     raise ValueError("{} / {} / {} has an incomplete authored ladder".format(theme_name, preset_name, mode))
-                fills = [tokens["heatmap_{}".format(level)] for level in range(1, 6)]
-                distances = [_perceptual_distance(tokens["heatmap_empty"], fill) for fill in fills]
+                fills = [tokens["heat_complete_{}".format(level)] for level in range(6)]
+                distances = [_perceptual_distance(fills[0], fill) for fill in fills[1:]]
                 if any(left >= right for left, right in zip(distances, distances[1:])):
                     raise ValueError("{} / {} / {} intensity is not monotonic".format(theme_name, preset_name, mode))
                 if any(_perceptual_distance(left, right) < 6 for left, right in zip(fills, fills[1:])):
                     raise ValueError("{} / {} / {} has indistinguishable adjacent levels".format(theme_name, preset_name, mode))
-                for role in ("empty", "1", "2", "3", "4", "5", "out_of_month"):
-                    if _contrast(tokens["heatmap_{}".format(role)], tokens["on_heatmap_{}".format(role)]) < 4.5:
-                        raise ValueError("{} / {} / {} {} fails text contrast".format(theme_name, preset_name, mode, role))
+                for level in range(6):
+                    if _contrast(tokens["heat_complete_{}".format(level)], tokens["heat_complete_text_{}".format(level)]) < 4.5:
+                        raise ValueError("{} / {} / {} level {} fails text contrast".format(theme_name, preset_name, mode, level))
                 resolved = resolver(theme_name, mode, mode == "dark", preset_name)
                 for key, value in tokens.items():
                     if resolved.get(key) != value:
                         raise ValueError("resolved heatmap tokens drift from the selected authored preset")
-                signature.extend(tokens[key] for key in sorted(tokens))
-            frozen = tuple(signature)
-            if frozen in signatures:
-                raise ValueError("heatmap presets must be independently authored")
-            signatures.add(frozen)
 
     required_semantic = {
-        "background", "surface", "panel_surface", "text", "muted", "border",
-        "accent", "completion", "review", "success", "event", "forecast",
-        "focus", "warning", "danger", "disabled", "due_stripe",
+        "ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3",
+        "ui_border_subtle", "ui_border_default", "ui_border_strong",
+        "ui_text_primary", "ui_text_secondary", "ui_text_tertiary", "ui_text_disabled",
+        "ui_eyebrow", "ui_accent", "ui_accent_hover", "ui_accent_pressed",
+        "ui_accent_soft", "ui_accent_border", "ui_on_accent", "ui_focus",
+        "ui_shadow_card", "ui_shadow_overlay",
+        *{"status_{}_{}".format(role, suffix) for role in (
+            "new", "learning", "review", "buried", "success", "warning", "danger", "event"
+        ) for suffix in ("fill", "text")},
+        *{"heat_complete_{}".format(level) for level in range(6)},
+        *{"heat_complete_text_{}".format(level) for level in range(6)},
+        *{"heat_due_bg_{}".format(level) for level in range(1, 6)},
+        *{"heat_due_mark_{}".format(level) for level in range(1, 6)},
+        "progress_complete", "calendar_empty_bg",
+        "calendar_outside_bg", "calendar_outside_text", "calendar_future_bg",
+        "calendar_future_text", "calendar_footer_bg", "calendar_today_ring",
+        "calendar_selected_ring", "calendar_ring_halo", "calendar_event_halo",
+        "calendar_ring_halo", "ui_disabled_surface", "ui_disabled_border",
+        "ui_control_hover", "ui_control_pressed",
     }
+    semantic_reference = {mode: None for mode in ("light", "dark")}
     for theme_name in expected_themes:
         for mode in ("light", "dark"):
             resolved = resolver(theme_name, mode, mode == "dark", defaults[theme_name])
             missing = sorted(required_semantic.difference(resolved))
             if missing:
                 raise ValueError("{} {} is missing semantic roles: {}".format(theme_name, mode, ", ".join(missing)))
+            for level in range(1, 6):
+                if _contrast(resolved["heat_due_bg_{}".format(level)], resolved["ui_text_primary"]) < 4.5:
+                    raise ValueError("{} {} due level {} fails text contrast".format(theme_name, mode, level))
+            for text_role in ("ui_text_primary", "ui_text_secondary", "ui_text_tertiary"):
+                for surface_role in ("ui_surface_1", "ui_surface_2", "ui_surface_3"):
+                    if _contrast(resolved[text_role], resolved[surface_role]) < 4.5:
+                        raise ValueError("{} {} {} fails on {}".format(theme_name, mode, text_role, surface_role))
+            for accent_role in ("ui_accent", "ui_accent_hover", "ui_accent_pressed"):
+                if _contrast(resolved["ui_on_accent"], resolved[accent_role]) < 4.5:
+                    raise ValueError("{} {} button text fails on {}".format(theme_name, mode, accent_role))
+            # Strong boundaries are independently gated. Accent borders are a
+            # secondary cue paired with contrast-safe accent text and a soft
+            # state fill, so their standalone ratio remains advisory.
+            for boundary, surface in (("ui_border_strong", "ui_surface_2"),):
+                if _contrast(resolved[boundary], resolved[surface]) < 3:
+                    raise ValueError("{} {} {} fails graphical contrast".format(theme_name, mode, boundary))
+            semantic = {
+                key: value for key, value in resolved.items() if key.startswith("status_")
+                and not key.endswith("_soft")
+            }
+            if semantic_reference[mode] is None:
+                semantic_reference[mode] = semantic
+            elif semantic != semantic_reference[mode]:
+                raise ValueError("{} {} recolors stable semantic roles".format(theme_name, mode))
+            if theme_name == "High Contrast":
+                for surface_role in ("ui_surface_1", "ui_surface_2", "ui_surface_3"):
+                    if _contrast(resolved["ui_text_primary"], resolved[surface_role]) < 7:
+                        raise ValueError("High Contrast {} primary text misses 7:1".format(mode))
 
 
 def _validate_visual_matrix(matrix: dict) -> None:
@@ -232,12 +268,12 @@ def validate_sources() -> dict:
     config = _json("config.json")
     verse_data = _json("default_verses.json")
     surface_contract = _json("qa/calendar_surface_manifest.json")
-    visual_matrix = _json("qa/visual_regression_matrix_1_7_0.json")
+    visual_matrix = _json("qa/visual_regression_matrix_1_8_0.json")
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.7.0":
-        raise ValueError("release artifact must use semantic version 1.7.0")
+    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.0":
+        raise ValueError("release artifact must use semantic version 1.8.0")
     if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260800):
         raise ValueError("release must be pinned to Anki 26.8")
     if config.get("schema_version") != 6:
@@ -280,9 +316,11 @@ def validate_sources() -> dict:
             "most_missed_target", "def collect_day_insight",
         ),
         "renderer.py": (
-            "hdo-calendar-context-bar", "hdo-summary-metrics-grid", "hdo-bible-card",
+            "hdo-calendar-footer", "hdo-date-state-chip", "hdo-event-meta",
+            "hdo-edit-event-button", "hdo-summary-metrics-grid", "hdo-bible-card",
             "New cards studied", "hdo-progress-segment", "retention_target", "day_insight_payload",
             "hdo-loading-region--calendar", "The dashboard could not finish loading.",
+            "hdo-context-action--primary", "hdo-host-theme", "dashboard-scroll-surface",
         ),
         "settings.py": (
             "Dashboard preview", "Open full preview", 'QLabel("Sample data")',
@@ -297,15 +335,18 @@ def validate_sources() -> dict:
         "web/dashboard.js": (
             "function buildCalendarTooltipRows", "function getSelectedDateCapabilities",
             "function getNextUpcomingEvent", "function getDueLoadScale",
-            "function getDueOverlayHeight", "function getDueLoadLevel",
+            "function getDueLoadLevel", "function applyDocumentTheme", 'relation === "past" ? 0',
             'calendar.addEventListener("pointerover"', 'send("open_most_missed"',
             "function mountLoadingState", "Still loading your study data…",
             'send("diagnostics", {})',
         ),
         "web/dashboard.css": (
-            "hdo-calendar-context-bar", "pointer-events: none", "min-width: min(232px",
-            "min-width: 1320px", "minmax(760px, 1fr) minmax(500px, .46fr)",
-            "height: 6px", "hdo-event-marker", "hdo-loading-layout",
+            "hdo-calendar-footer", "hdo-calendar-card-action", "hdo-context-action--primary",
+            "width: min(94%, 820px)", "pointer-events: none", "min-width: min(232px",
+            "min-width: 440px", "min-width: 940px",
+            "minmax(0, 1fr) clamp(332px, 34cqi, 392px)",
+            "block-size: clamp(2px, 24%, 4px)", "var(--heat-due-mark-5)",
+            "var(--progress-complete)", "hdo-event-marker", "hdo-loading-layout",
         ),
     }
     for relative, markers in required.items():
@@ -318,7 +359,7 @@ def validate_sources() -> dict:
         "Outside due forecast", "Outside study history", "No events",
         "Select a date for details", "hdo-selected-date-details",
         "hdo-most-missed-list", "hdo-due-deck-breakdown", "Expand preview",
-        "open_insight_card", "Using sample data",
+        "open_insight_card", "Using sample data", "getDueOverlayHeight", "hdo-due-hatch",
     ):
         if forbidden in dashboard_surface_source:
             raise ValueError("removed dashboard surface/copy remains: {}".format(forbidden))
@@ -330,8 +371,8 @@ def validate_sources() -> dict:
     _validate_theme_contract(runpy.run_path(str(ROOT / "themes.py")))
     _validate_visual_matrix(visual_matrix)
     criteria = surface_contract.get("acceptance_criteria")
-    if not isinstance(criteria, list) or len(criteria) != 28:
-        raise ValueError("corrected surface contract must encode all 28 acceptance criteria")
+    if not isinstance(criteria, list) or len(criteria) != 42:
+        raise ValueError("corrected surface contract must encode all 42 acceptance criteria")
 
     verses = verse_data.get("quote")
     if (

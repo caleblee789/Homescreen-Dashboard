@@ -1,86 +1,95 @@
-# Home Screen Dashboard 1.7.0
+# Home Screen Dashboard 1.8.0
 
 Home Screen Dashboard is a calendar-first Deck Browser dashboard for Anki
-Desktop 26.8. Its production hierarchy is deliberately fixed:
+Desktop 26.8. It combines study history, due work, local events, progress
+metrics, and a rotating Bible verse without patching Anki's private Deck
+Browser or statistics classes.
 
-1. Study Calendar with Month/Year controls, one shared calendar grid, separate
-   completion and due legends, and a compact context bar.
-2. Today’s Progress, Today’s Session, Last 7 Days, and All Time.
-3. A full-width Bible verse.
+## What changed in 1.8.0
 
-The calendar context bar explicitly distinguishes the selected date, an event
-on that date, and the globally calculated next event. An event on the selected
-date opens that exact record for editing. Past/current dates expose Reviewed;
-future dates expose Due. Those date-appropriate Browser actions stay visible
-but disabled with an explanatory tooltip when no exact card set exists, while
-Most missed appears only after an eligible Again answer is confirmed. The
-dashboard does not render card previews, a selected-date details panel, a
-due-deck list, or a separate events column.
+- Rebuilt all four light/dark themes around shared semantic roles for canvas,
+  surfaces, text, controls, study states, calendar overlays, and progress.
+- Made New, Learning, Review, Buried, Success, Danger, and Event colors stable
+  across themes while keeping each theme's accent and surface identity.
+- Replaced opacity-derived calendar heat colors with explicit completion and
+  Reviews Due scales, including readable date text and a fixed-height due
+  marker that does not depend on hue alone.
+- Strengthened the shared Month/Year layout, responsive metric rail, calendar
+  footer, interaction states, typography, and full-viewport theme painting.
+- Added automated hardcoded-color and contrast audits for production surfaces.
 
-Calendar cells use one visual responsibility per state: completion volume is the
-authored heatmap fill, relative due volume is a quiet bottom band, an event is a
-diamond, Today is a compact date-number badge, selection is a 2 px border,
-keyboard focus is an external ring, and outside-month dates use muted text with
-a dashed border. Month and Year share the same day model and full-horizon due
-normalization. The due reference is the 90th percentile of positive forecast
-counts; square-root scaling maps load to low, medium, and high density/opacity
-without letting one outlier flatten the forecast.
+## Dashboard
 
-The four dashboard themes are Sapphire Glass, Graphite, Emerald, and High
-Contrast. Calendar & data provides four independently saved completion ramps
-for each theme. Every ramp has authored light/dark empty, five-level, foreground,
-and outside-month tokens; the levels are not opacity variants of one accent.
+Month and Year share one persistent shell. At wide widths the calendar sits to
+the left of a fixed-order insight rail containing Today's Progress, Today's
+Session, Last 7 Days, All Time, and the Bible verse. At smaller widths the rail
+moves below the calendar without changing its order.
 
-Metric values are locale-formatted, tabular, right-aligned, and omitted when
-unsupported. At 1,320 px and wider, Month places a 2×2 metric rail beside the
-calendar. Intermediate layouts place the 2×2 grid below the calendar, narrow
-layouts use one card per row, and Year remains full width with fixed square
-cells and visible month labels. Last 7 Days includes New cards studied
-immediately after Cards studied. Today’s Progress uses a count-derived
-four-segment workload bar; buried cards remain outside the workload. ETA remains
-neutral, while retention uses the configured target to choose its semantic
-state.
+The integrated calendar footer contains the Completion, Reviews Due, and Event
+legends; the selected date; the next upcoming event and edit action; and an
+exact Reviewed or Due Browser action when matching cards exist. Most missed is
+available only after an eligible Again answer. Card previews, a separate event
+column, due-deck lists, and the old selected-date details panel are not rendered.
 
-Open settings from Anki’s Tools menu or the calendar gear. The editor has four
-pages: Dashboard, Events, Bible verse, and About & support. Dashboard combines
-Appearance, Content & study metrics, and Calendar & data in three scoped areas;
-visibility and study calculations are separated inside the middle area. At
-1,180 px and wider, Settings shows a vertical rail and contextual Dashboard or
-Bible preview; from 760–1,179 px it uses horizontal tabs with the preview behind
-Preview; below 760 px it uses a four-item selector. Events
-and About & support always use the full editor width. The production renderer
-powers the staged preview, with Current section / Full dashboard and Fit /
-Actual size controls. The preview is content-sized, Bible uses the selected
-staged verse, and only collection-backed Dashboard fallback data receives a
-Sample data badge. Events attach Edit, Archive/Restore, and Delete to each row's
-overflow menu and use a centered empty state when no events exist.
-Staged changes do not affect Home until Save.
+Completion uses six explicit opaque levels. Future Reviews Due uses five soft
+violet levels plus a stronger fixed-height bottom marker. Today, selection,
+keyboard focus, adjacent-month dates, and event diamonds remain independent so
+combined states keep their meaning.
 
-Bible color editing uses an explicit Theme color / Custom color choice, a
-validated #RRGGBB field, a swatch, and an inline contrast warning. Theme color
-hides and removes the custom controls from focus without discarding the stored value. Card-header
-resets are staged and offer Undo. The non-overlay footer shows Close or Discard
-changes alongside Save changes, while the header announces dirty, saving,
-saved, and failure states.
+## Themes and responsive behavior
 
-Dashboard loading begins with component-shaped skeletons, announces a delayed
-state after 2.5 seconds, and becomes a retryable failure with a diagnostics path
-after 12 seconds. Release restart evidence waits for the fully rendered
-dashboard and reads saved values back in both Home and Settings.
+The themes are Sapphire Glass, Graphite, Emerald, and High Contrast. Existing
+saved theme and heatmap identifiers remain compatible and resolve to their
+theme's canonical completion scale. The active theme paints the full WebView
+canvas, including unused and overscrolled space, and publishes matching browser
+color-scheme and scrollbar colors.
 
-Configuration schema 6 removes legacy selected-details and dashboard-preview
-slots, places summary metrics before the Bible, adds a retention target, and
-stores one heatmap preset per theme. Migration is idempotent and preserves
-unrelated settings and relative ordering.
+At 940 CSS pixels and wider, Month and Year place the 2×2 metric grid and Bible
+verse beside the calendar. From 440–939 pixels the rail follows the calendar
+while retaining two metric columns. Below 440 pixels the metric cards use one
+column. The Year heatmap remains complete and scrolls internally only below its
+minimum readable width.
 
-Buried counts follow the scheduler-relevant Progressbar method: only queues -2
-and -3 are included; suspended cards are excluded; New counts type 0; Learning
-counts types 1/3 only when due by the scheduler day or rollover cutoff according
-to the due representation; Review counts type 2 only when due by today.
+## Settings and persistence
 
-The unified dashboard remains inactive while a legacy source add-on is enabled,
-preventing duplicate information and load-order conflicts. External-calendar
-source work remains deferred and is not packaged.
+Open settings from Anki's Tools menu or the calendar gear. The four pages are
+Dashboard, Events, Bible verse, and About & support. Settings remain staged
+until **Save changes**; section resets are undoable, event actions stay attached
+to their rows, and the Dashboard and Bible previews use the production renderer.
+
+Configuration schema 6 removes retired layout slots while preserving unrelated
+keys, events, verse data, saved theme identifiers, and supported preferences.
+The dashboard remains inactive while a legacy source add-on is enabled, which
+prevents duplicate panels and load-order conflicts. External-calendar source
+work remains deferred and is not packaged.
+
+## Install
+
+Install `home-dashboard-overhaul-1.8.0.ankiaddon` through **Tools → Add-ons →
+Install from file**, restart Anki, and disable any legacy source add-ons named by
+the activation card. The manifest is pinned to Anki Desktop 26.8.
+
+## Build and offline validation
+
+From the repository root, use Python 3.10 or newer:
+
+```sh
+python3 -m unittest discover -s home_dashboard_overhaul/tests -p 'test_*.py' -v
+node home_dashboard_overhaul/tests/calendar_model_test.js
+python3 home_dashboard_overhaul/qa/validate_revised_ui_contract.py
+python3 home_dashboard_overhaul/qa/color_system_audit.py --output home_dashboard_overhaul/dist/color-audit
+python3 home_dashboard_overhaul/tools/build_ankiaddon.py
+```
+
+The deterministic builder creates a 24-file allowlisted archive under `dist/`,
+checks safe paths and fixed timestamps, and verifies every packaged byte against
+the source tree. QA tools, deferred modules, local user data, and generated
+evidence are excluded.
+
+The 1.8.0 release gate is intentionally offline: source, contract, color,
+package-integrity, and source/archive-parity checks are required, but live Anki,
+restart persistence, spoken VoiceOver, Windows/Linux rendering, forced colors,
+and device-specific display scaling are not claimed.
 
 Copyright 2026. Licensed under AGPL-3.0-or-later. See
 `THIRD_PARTY_NOTICES.md` for Scripture and upstream notices.

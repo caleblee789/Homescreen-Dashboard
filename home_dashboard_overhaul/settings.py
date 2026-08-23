@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import replace
 from datetime import date, datetime
+import hashlib
 import html as html_module
 import json
 from pathlib import Path
@@ -86,7 +87,14 @@ from .settings_model import (
     resolve_section_target,
     settings_content_mode,
 )
-from .themes import DEFAULT_HEATMAP_PRESETS, HEATMAP_PRESETS, PRESETS, composite_color, resolve_theme
+from .themes import (
+    DEFAULT_CUSTOM_BIBLE_COLOR,
+    DEFAULT_HEATMAP_PRESETS,
+    HEATMAP_PRESETS,
+    PRESETS,
+    composite_color,
+    resolve_theme,
+)
 from .ui_primitives import (
     CONTENT_MODE_EXTRA_WIDE,
     CONTENT_MODE_INTERMEDIATE,
@@ -106,6 +114,14 @@ CALEB_MENU_OBJECT_NAME = "caleb_m_addons_menu"
 ACTION_TEXT = "Home Screen Dashboard settings"
 PROJECT_URL = "https://github.com/caleblee789/Homescreen-Dashboard"
 ISSUES_URL = "https://github.com/caleblee789/Homescreen-Dashboard/issues"
+PACKAGE_ROOT = Path(__file__).resolve().parent
+
+
+def _web_asset_url(package: str, filename: str) -> str:
+    """Use packaged-byte revisions so Settings previews cannot reuse stale assets."""
+
+    digest = hashlib.sha256((PACKAGE_ROOT / "web" / filename).read_bytes()).hexdigest()[:16]
+    return "/_addons/{}/web/{}?v={}".format(package, filename, digest)
 
 SETTINGS_ROW_PRIMITIVE_ROLE = Qt.ItemDataRole.UserRole + 1
 SETTINGS_ROW_TARGET_ROLE = Qt.ItemDataRole.UserRole + 2
@@ -158,16 +174,16 @@ def _palette_tokens() -> Dict[str, str]:
         "button_text": brush_color("buttonText", "text"),
         "border": brush_color("mid", "text"),
         "highlight": highlight,
-        # Native highlightedText is commonly white even when Anki's active
-        # accent is the pale #93C5FD blue.  Resolve the foreground from the
-        # actual fill so every primary action remains contrast safe.
+        # Native highlightedText can be too light for a pale application
+        # highlight. Resolve the foreground from the actual fill so every
+        # primary action remains contrast safe.
         "highlight_text": _foreground_for(highlight),
-        "focus": semantic_fallback["focus"],
+        "focus": semantic_fallback["ui_focus"],
         "disabled": brush_color("placeholderText", "text"),
-        "success": semantic_fallback["success"],
-        "warning": semantic_fallback["warning"],
-        "danger": semantic_fallback["danger"],
-        "danger_bg": semantic_fallback["danger_soft"],
+        "success": semantic_fallback["status_success_text"],
+        "warning": semantic_fallback["status_warning_text"],
+        "danger": semantic_fallback["status_danger_text"],
+        "danger_bg": semantic_fallback["status_danger_soft"],
     }
 
 
@@ -191,25 +207,27 @@ def _theme_tokens(
         bool(anki_dark),
     )
     return {
-        "window": theme["background"],
-        "base": theme["surface"],
+        "window": theme["ui_canvas"],
+        "base": theme["ui_surface_1"],
         "verse_card": composite_color(
-            theme["surface"],
-            theme["background"],
+            theme["ui_surface_1"],
+            theme["ui_canvas"],
             int(appearance.get("opacity", 88)) / 100,
         ),
-        "alternate": theme["accent_soft"],
-        "text": theme["text"],
-        "muted": theme["muted"],
-        "button": theme["surface"],
-        "button_text": theme["text"],
-        "border": theme["control_border"],
-        "highlight": theme["accent"],
-        "highlight_text": theme["on_accent"],
-        "focus": theme["focus"],
-        "disabled": theme["disabled"],
-        "danger": theme["danger"],
-        "danger_bg": theme["danger_soft"],
+        "alternate": theme["ui_surface_2"],
+        "text": theme["ui_text_primary"],
+        "muted": theme["ui_text_secondary"],
+        "button": theme["ui_surface_2"],
+        "button_text": theme["ui_text_primary"],
+        "border": theme["ui_border_default"],
+        "highlight": theme["ui_accent"],
+        "highlight_text": theme["ui_on_accent"],
+        "focus": theme["ui_focus"],
+        "disabled": theme["ui_text_disabled"],
+        "success": theme["status_success_text"],
+        "warning": theme["status_warning_text"],
+        "danger": theme["status_danger_text"],
+        "danger_bg": theme["status_danger_soft"],
     }
 
 
@@ -240,9 +258,7 @@ def _settings_style(
     config: Optional[Mapping[str, Any]] = None,
     anki_dark: Optional[bool] = None,
 ) -> str:
-    # Settings is application chrome. Dashboard presets affect only swatches
-    # and previews, never the editor itself.
-    values = _palette_tokens()
+    values = _theme_tokens(config, anki_dark)
     values.update(
         visual_chrome=str(VISUAL_CHROME_PX),
         focus_ring=str(FOCUS_RING_PX),
@@ -1446,7 +1462,7 @@ class EventEditDialog(SettingsEditorDialog):
         self.name.setCursorPosition(0)
         _set_accessibility(self.name, "Event name", "Required. Up to 160 characters.")
         self.name_help = QLabel(
-            "Calendar cells display an event marker. The full event name appears in the context bar and calendar tooltip."
+            "Calendar cells display an event marker. The full event name appears in the integrated calendar footer and calendar tooltip."
         )
         self.name_help.setObjectName("EditorHelp")
         self.name_help.setWordWrap(True)
@@ -1555,7 +1571,7 @@ class SettingsDialog(QDialog):
             )
         self._hdo_theme_tokens = _theme_tokens(self.staged, self.controller.is_dark())
         self._preview_content_size = QSize()
-        self.setStyleSheet(_settings_style())
+        self.setStyleSheet(_settings_style(self.staged, self.controller.is_dark()))
         outer = QGridLayout(self)
         outer.setContentsMargins(16, 12, 16, 0)
         outer.setHorizontalSpacing(0)
@@ -1817,7 +1833,7 @@ class SettingsDialog(QDialog):
         super().changeEvent(event)
 
     def _current_stylesheet(self) -> str:
-        return _settings_style()
+        return _settings_style(self.draft.values, self.controller.is_dark())
 
     def _add_page(self, section_id: str, page: QWidget) -> None:
         name = SECTION_LABELS[section_id]
@@ -2980,7 +2996,7 @@ class SettingsDialog(QDialog):
         self.font_color_value = bible["font_color"]
         self.font_color = QLineEdit(self.font_color_value.upper())
         self.font_color.setMaxLength(7)
-        self.font_color.setPlaceholderText("#1E90FF")
+        self.font_color.setPlaceholderText(DEFAULT_CUSTOM_BIBLE_COLOR)
         self.font_color.textChanged.connect(self._font_color_text_changed)
         self.font_color.editingFinished.connect(self._font_color_edited)
         self.font_color_swatch = QPushButton("")
@@ -3364,16 +3380,36 @@ class SettingsDialog(QDialog):
             DEFAULT_HEATMAP_PRESETS[name],
         )
         tokens = resolve_theme(name, mode, self.controller.is_dark(), heatmap_name)
-        colors = [tokens[key] for key in ("background", "surface", "accent", "text")]
+        samples = [
+            ("canvas", tokens["ui_canvas"], ""),
+            ("surface", tokens["ui_surface_1"], ""),
+            ("accent", tokens["ui_accent"], ""),
+            ("high completion", tokens["heat_complete_5"], ""),
+            ("Reviews Due", tokens["heat_due_bg_5"], tokens["heat_due_mark_5"]),
+        ]
         squares = " ".join(
-            '<span style="background:{}; border:1px solid {}; color:{};">&nbsp;&nbsp;&nbsp;&nbsp;</span>'.format(
-                color, tokens["control_border"], color
+            '<span style="background:{}; border:1px solid {}; border-bottom:{} solid {}; color:{};">&nbsp;&nbsp;&nbsp;&nbsp;</span>'.format(
+                color,
+                tokens["ui_border_default"],
+                "4px" if marker else "1px",
+                marker or tokens["ui_border_default"],
+                color,
             )
-            for color in colors
+            for _label, color, marker in samples
         )
         self.preset_swatch.setText(squares)
         self.preset_swatch.setAccessibleDescription(
-            "{} palette: background {}, surface {}, accent {}, and text {}.".format(name, *colors)
+            "{} palette: {}.".format(
+                name,
+                "; ".join(
+                    "{} {}{}".format(
+                        label,
+                        color,
+                        " with bottom marker {}".format(marker) if marker else "",
+                    )
+                    for label, color, marker in samples
+                ),
+            )
         )
 
     def _dashboard_theme_changed(self, *_args: object) -> None:
@@ -3433,7 +3469,7 @@ class SettingsDialog(QDialog):
             swatches = QHBoxLayout()
             swatches.setSpacing(2)
             tokens = variants[variant]
-            for token in ("heatmap_empty", "heatmap_1", "heatmap_2", "heatmap_3", "heatmap_4", "heatmap_5"):
+            for token in ("heat_complete_0", "heat_complete_1", "heat_complete_2", "heat_complete_3", "heat_complete_4", "heat_complete_5"):
                 swatch = QLabel()
                 swatch.setFixedSize(22, 18)
                 swatch.setStyleSheet(
@@ -3509,7 +3545,7 @@ class SettingsDialog(QDialog):
     def _apply_theme(self) -> None:
         config = self.draft.values
         self._hdo_theme_tokens = _theme_tokens(config, self.controller.is_dark())
-        stylesheet = _settings_style()
+        stylesheet = _settings_style(config, self.controller.is_dark())
         if self.styleSheet() != stylesheet:
             self.setStyleSheet(stylesheet)
         self._update_preset_swatch()
@@ -4178,7 +4214,6 @@ class SettingsDialog(QDialog):
             self.current_section == "dashboard" and self.controller.snapshot is None
         )
         package = mw.addonManager.addonFromModule(__name__)
-        base = "/_addons/{}/web/".format(package)
         self.preview.stdHtml(
             render_dashboard(
                 snapshot,
@@ -4186,8 +4221,8 @@ class SettingsDialog(QDialog):
                 anki_dark=self.controller.is_dark(),
                 preview=True,
             ),
-            css=[base + "dashboard.css"],
-            js=[base + "dashboard.js"],
+            css=[_web_asset_url(package, "dashboard.css")],
+            js=[_web_asset_url(package, "dashboard.js")],
             context=self,
         )
         QTimer.singleShot(180, self._fit_inline_preview)
@@ -4232,7 +4267,6 @@ class SettingsDialog(QDialog):
         web = AnkiWebView(dialog, title="Home Screen Dashboard full preview")
         web.setAccessibleName("Full Home Screen Dashboard preview")
         package = mw.addonManager.addonFromModule(__name__)
-        base = "/_addons/{}/web/".format(package)
         web.stdHtml(
             render_dashboard(
                 snapshot,
@@ -4240,8 +4274,8 @@ class SettingsDialog(QDialog):
                 anki_dark=self.controller.is_dark(),
                 preview=True,
             ),
-            css=[base + "dashboard.css"],
-            js=[base + "dashboard.js"],
+            css=[_web_asset_url(package, "dashboard.css")],
+            js=[_web_asset_url(package, "dashboard.js")],
             context=dialog,
         )
         outer.addWidget(web, 1)
@@ -4283,7 +4317,11 @@ class SettingsDialog(QDialog):
   document.body.style.overflowY = 'auto';
   document.body.style.margin = '0';
   document.body.style.minHeight = '0';
-  document.body.style.background = getComputedStyle(root).getPropertyValue('--hdo-bg');
+  var canvas = getComputedStyle(root).getPropertyValue('--ui-canvas');
+  document.documentElement.style.background = canvas;
+  document.body.style.background = canvas;
+  document.documentElement.style.colorScheme = root.dataset.hdoColorMode || 'light';
+  document.body.style.colorScheme = root.dataset.hdoColorMode || 'light';
   root.style.zoom = '1';
   root.style.maxWidth = 'none';
   root.style.minHeight = '0';
@@ -4296,13 +4334,25 @@ class SettingsDialog(QDialog):
   var naturalWidth = focusOnly ? viewportWidth : (useActual ? 1000 : viewportWidth);
   root.style.width = naturalWidth + 'px';
   if (focusOnly && target) {
-    Array.prototype.forEach.call(stack.children, function (child) {
-      child.style.display = child === target ? '' : 'none';
+    var layout = root.querySelector('.hdo-dashboard-layout');
+    var rail = root.querySelector('.hdo-insight-rail');
+    var calendar = root.querySelector('.hdo-calendar-card');
+    var metrics = root.querySelector('.hdo-summary-metrics-grid');
+    var bible = root.querySelector('.hdo-bible-card');
+    [calendar, metrics, bible].forEach(function (surface) {
+      if (surface) surface.style.display = surface === target ? '' : 'none';
     });
+    if (layout) layout.style.gridTemplateColumns = 'minmax(0, 1fr)';
+    if (rail) {
+      rail.style.display = target === calendar ? 'none' : 'grid';
+      rail.style.height = 'auto';
+      rail.style.gridTemplateRows = target === metrics ? 'max-content' : 'minmax(108px, auto)';
+    }
+    root.dataset.hdoSettingsPreviewFocus = 'true';
   }
   if (emphasisSelector) {
     Array.prototype.forEach.call(document.querySelectorAll(emphasisSelector), function (node) {
-      node.style.outline = '3px solid var(--hdo-accent)';
+      node.style.outline = '3px solid var(--ui-focus)';
       node.style.outlineOffset = '3px';
     });
   }

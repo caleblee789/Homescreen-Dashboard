@@ -25,12 +25,18 @@ class CorrectedStaticAssetTests(unittest.TestCase):
             anki_dark=True,
         )
 
-    def test_dashboard_order_is_calendar_metrics_then_bible(self) -> None:
+    def test_dashboard_uses_one_shared_calendar_and_persistent_insight_rail(self) -> None:
         calendar = self.html.index("hdo-calendar-card")
+        layout = self.html.index("hdo-dashboard-layout")
+        rail = self.html.index("hdo-insight-rail")
         metrics = self.html.index("hdo-summary-metrics-grid")
         bible = self.html.index("hdo-bible-card")
+        self.assertLess(layout, calendar)
         self.assertLess(calendar, metrics)
+        self.assertLess(rail, metrics)
         self.assertLess(metrics, bible)
+        self.assertEqual(self.html.count("hdo-dashboard-layout"), 1)
+        self.assertEqual(self.html.count("hdo-insight-rail"), 1)
 
     def test_removed_dashboard_surfaces_leave_no_markup_or_reserved_slots(self) -> None:
         compact_sources = "\n".join((self.renderer, self.js, self.css, self.html)).casefold()
@@ -50,11 +56,23 @@ class CorrectedStaticAssetTests(unittest.TestCase):
     def test_context_bar_follows_legend_inside_the_calendar_card(self) -> None:
         calendar = self.html.split("hdo-calendar-card", 1)[1]
         self.assertLess(calendar.index("hdo-calendar-legend"), calendar.index("hdo-calendar-context-bar"))
+        self.assertIn('class="hdo-calendar-footer"', calendar)
+        self.assertIn('data-hdo-date-state', calendar)
         self.assertIn('data-hdo-context-date', calendar)
         self.assertIn('data-hdo-open-events', calendar)
+        self.assertIn('data-hdo-event-meta', calendar)
+        self.assertIn('data-hdo-event-empty', calendar)
         self.assertIn('data-hdo-edit-event', calendar)
         self.assertIn('data-hdo-primary-action', calendar)
         self.assertIn('data-hdo-most-missed hidden', calendar)
+        self.assertRegex(
+            self.css,
+            r"\.hdo-next-event-line\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;",
+        )
+        self.assertRegex(
+            self.css,
+            r"\.hdo-event-summary\s*\{[^}]*flex:\s*0 1 auto;",
+        )
 
     def test_compact_surfaces_omit_internal_boundary_copy_and_placeholders(self) -> None:
         sources = self.renderer + self.js
@@ -95,49 +113,71 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         ):
             self.assertIn(marker, self.renderer + self.js)
 
-    def test_due_load_uses_one_robust_reference_and_view_specific_quiet_band(self) -> None:
+    def test_due_load_uses_one_robust_reference_and_fixed_geometry_five_level_band(self) -> None:
         for marker in (
             "getDueLoadScale",
             "Math.ceil(positive.length * 0.9) - 1",
             "Math.sqrt(Math.min(count, robustReference) / robustReference)",
-            'return view === "year" ? 100 : 6',
-            'return "low"',
-            'return "medium"',
-            'return "high"',
+            "Math.ceil(scaled * 5)",
             "due_load_reference",
         ):
             self.assertIn(marker, self.js + self.renderer)
         self.assertIn("modelCache: new Map()", self.js)
-        self.assertIn("getDueOverlayHeight(due, state.dueReference, view)", self.js)
         self.assertIn("getDueLoadLevel(due, state.dueReference)", self.js)
+        self.assertNotIn("getDueOverlayHeight", self.js)
+        self.assertNotIn("hdo-due-hatch", self.js + self.css)
 
     def test_calendar_state_hierarchy_has_distinct_visual_responsibilities(self) -> None:
         for marker in (
             ".hdo-calendar-day[data-level=",
-            ".hdo-due-hatch",
+            '.hdo-calendar-day[data-heat-kind="due"][data-due-level="1"]',
+            "var(--heat-due-bg-1)",
+            "var(--heat-due-mark-5)",
             ".hdo-event-marker",
-            ".is-today .hdo-date-number",
+            ".hdo-calendar-day.is-today",
+            ".hdo-calendar-day.is-today.is-selected",
             ".hdo-calendar-day.is-selected",
             ".hdo-calendar-day:focus-visible",
             ".hdo-calendar-day.is-out-of-month",
+            '.hdo-calendar-day.is-out-of-month[data-heat-kind="due"][data-due-level]',
         ):
             self.assertIn(marker, self.css)
-        self.assertIn("height: 10px", self.css)
+        self.assertIn("height: 6px", self.css)
         self.assertIn("aspect-ratio: 1 / 1", self.css)
+        selected_rule = self.css.split(".hdo-calendar-day.is-selected {", 1)[1].split("}", 1)[0]
+        self.assertIn("0 0 0 1px var(--calendar-ring-halo)", selected_rule)
+        self.assertIn("0 0 0 3px var(--calendar-selected-ring)", selected_rule)
+        self.assertIn(".hdo-calendar-day.is-selected:focus-visible", self.css)
+        self.assertIn("block-size: clamp(2px, 24%, 4px)", self.css)
+        self.assertIn("block-size: max(2px, 34%)", self.css)
         year_marker = self.css.split(".hdo-calendar-grid--year .hdo-event-marker {", 1)[1].split("}", 1)[0]
-        self.assertIn("height: 7px", year_marker)
-        self.assertIn("width: 7px", year_marker)
+        self.assertIn("height: 4px", year_marker)
+        self.assertIn("width: 4px", year_marker)
 
-    def test_metrics_use_only_four_two_or_one_columns(self) -> None:
+    def test_shared_shell_uses_940_and_440_container_breakpoints(self) -> None:
         self.assertIn("grid-template-columns: minmax(0, 1fr);", self.css)
-        self.assertIn("@container hdo-dashboard (min-width: 600px)", self.css)
+        self.assertIn("@container hdo-dashboard (min-width: 440px)", self.css)
         self.assertIn("grid-template-columns: repeat(2, minmax(0, 1fr));", self.css)
-        self.assertIn("@container hdo-dashboard (min-width: 1100px)", self.css)
-        self.assertIn("grid-template-columns: repeat(4, minmax(0, 1fr));", self.css)
-        self.assertIn("@container hdo-dashboard (min-width: 1320px)", self.css)
-        self.assertIn("grid-template-columns: minmax(760px, 1fr) minmax(500px, .46fr);", self.css)
+        self.assertIn("@container hdo-dashboard (min-width: 940px)", self.css)
+        self.assertIn("grid-template-columns: minmax(0, 1fr) clamp(332px, 34cqi, 392px);", self.css)
+        self.assertIn("@container hdo-dashboard (max-width: 439px)", self.css)
+        self.assertNotIn('data-hdo-calendar-view="year"] .hdo-summary-metrics-grid', self.css)
+        self.assertNotIn('data-hdo-calendar-view="month"]', self.css)
         self.assertNotRegex(self.css, r"grid-template-columns:\s*repeat\(3")
         self.assertIn("font-variant-numeric: tabular-nums", self.css)
+
+    def test_year_grid_is_fluid_and_month_labels_use_week_columns(self) -> None:
+        year = self.css.split(".hdo-calendar-grid--year {", 1)[1].split("}", 1)[0]
+        dashboard_buttons = self.css.split("#hdo-dashboard button {", 1)[1].split("}", 1)[0]
+        self.assertIn("repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))", year)
+        self.assertIn("width: 100%", year)
+        self.assertIn("min-width: 0", year)
+        self.assertIn("margin: 0", dashboard_buttons)
+        self.assertNotIn("repeat(var(--hdo-year-weeks, 53), max-content)", year)
+        self.assertNotIn("transform: scale", self.css)
+        self.assertIn("grid-column-start: var(--hdo-month-start-week)", self.css)
+        self.assertIn('monthLabel.style.setProperty("--hdo-month-start-week"', self.js)
+        self.assertIn("@container hdo-calendar (max-width: 319px)", self.css)
 
     def test_no_component_specific_hex_colors_or_remote_dependencies(self) -> None:
         self.assertIsNone(re.search(r"#[0-9a-fA-F]{3,8}\b", self.css))

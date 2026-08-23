@@ -283,13 +283,13 @@ def _process_main_month(value: object, attempt: int) -> None:
     if value.get("view") != "month" or value.get("day_count") not in {28, 35, 42}:
         _error("main-month", RuntimeError("Month did not render one complete calendar grid"))
         return
-    if value.get("cell_min", 0) < 56 or value.get("cell_max", 999) > 72:
-        _error("main-month", RuntimeError("Month cells escaped the 56 to 72 pixel release range"))
+    if value.get("cell_min", 0) < 34 or value.get("cell_max", 999) > 40:
+        _error("main-month", RuntimeError("Month cells escaped the 34 to 40 pixel release range"))
         return
     if value.get("metric_group_count") != 4 or not value.get("layout_matches_width"):
         _error("main-month", RuntimeError("Month calendar/statistics layout does not match its container"))
         return
-    if value.get("overflow_x") or not value.get("bible_after"):
+    if value.get("overflow_x") or not value.get("bible_after_metrics") or not value.get("bottom_aligned"):
         _error("main-month", RuntimeError("Month has horizontal overflow or an invalid Bible position"))
         return
     if value.get("switch_ms", 9999) > 250:
@@ -321,6 +321,8 @@ def _inspect_main_month(attempt: int = 0) -> None:
   var calendarRect = calendar.getBoundingClientRect();
   var metricsRect = metrics.getBoundingClientRect();
   var bibleRect = bible.getBoundingClientRect();
+  root.__hdoQaRailNode = root.querySelector('.hdo-insight-rail');
+  var selected = root.querySelector('.hdo-calendar-day.is-selected');
   var heights = cells.map(function (cell) { return cell.getBoundingClientRect().height; });
   var sideBySide = metricsRect.left >= calendarRect.right - 1 &&
     Math.abs(metricsRect.top - calendarRect.top) <= 2;
@@ -335,8 +337,10 @@ def _inspect_main_month(attempt: int = 0) -> None:
     metric_group_count:metrics.querySelectorAll('.hdo-statistics-card').length,
     side_by_side:sideBySide,
     stacked:stacked,
-    layout_matches_width:rootRect.width >= 1320 ? sideBySide : stacked,
-    bible_after:bibleRect.top >= Math.max(calendarRect.bottom, metricsRect.bottom) - 1,
+    layout_matches_width:rootRect.width >= 940 ? sideBySide : stacked,
+    bible_after_metrics:bibleRect.top >= metricsRect.bottom - 1,
+    bottom_aligned:Math.abs(calendarRect.bottom - bibleRect.bottom) <= 2,
+    selected_date:selected ? selected.dataset.date : '',
     overflow_x:document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
     switch_ms:Number(switchMs.toFixed(2))
   };
@@ -359,6 +363,9 @@ def _process_main_year(value: object) -> None:
     if value.get("month_label_count") != 12 or value.get("max_square_error", 999) > 1:
         _error("main-year", RuntimeError("Year month labels or square-cell geometry failed"))
         return
+    if not value.get("complete_year_visible") or not value.get("rail_persisted") or not value.get("selection_preserved"):
+        _error("main-year", RuntimeError("Year was clipped or switching remounted shared state"))
+        return
     if value.get("overflow_x") or value.get("switch_ms", 9999) > 250:
         _error("main-year", RuntimeError("Year overflowed the page or switching exceeded 250 ms"))
         return
@@ -378,24 +385,36 @@ def _inspect_main_year() -> None:
   var year = root && root.querySelector('[data-hdo-view="year"]');
   if (!root || !year) return {ready:false};
   var started = performance.now();
+  var selectedBefore = root.querySelector('.hdo-calendar-day.is-selected');
+  var selectedDateBefore = selectedBefore ? selectedBefore.dataset.date : '';
   if (root.dataset.hdoCalendarView !== 'year') year.click();
   var switchMs = performance.now() - started;
   var cells = Array.from(root.querySelectorAll('.hdo-calendar-day'));
   var labels = root.querySelectorAll('.hdo-year-month-label');
   var shell = root.querySelector('.hdo-calendar-shell');
-  if (!cells.length || !shell) return {ready:false};
+  var frame = root.querySelector('.hdo-calendar-grid-frame');
+  var grid = root.querySelector('.hdo-calendar-grid--year');
+  var selectedAfter = root.querySelector('.hdo-calendar-day.is-selected');
+  if (!cells.length || !shell || !frame || !grid) return {ready:false};
   root.scrollIntoView({block:'start'});
   var squareErrors = cells.map(function (cell) {
     var rect = cell.getBoundingClientRect();
     return Math.abs(rect.width - rect.height);
   });
+  var frameRect = frame.getBoundingClientRect();
+  var gridRect = grid.getBoundingClientRect();
+  var labelText = Array.from(labels).map(function (label) { return label.textContent.trim(); });
   return {
     ready:true,
     view:root.dataset.hdoCalendarView,
     day_count:cells.length,
     month_label_count:labels.length,
     max_square_error:Number(Math.max.apply(null, squareErrors).toFixed(2)),
-    shell_scrollable:shell.scrollWidth > shell.clientWidth + 1,
+    shell_scrollable:frame.scrollWidth > frame.clientWidth + 1,
+    complete_year_visible:labelText.length === 12 && labelText[0] === 'Jan' && labelText[11] === 'Dec' &&
+      gridRect.left >= frameRect.left - 1 && gridRect.right <= frameRect.right + 1,
+    rail_persisted:root.__hdoQaRailNode === root.querySelector('.hdo-insight-rail'),
+    selection_preserved:selectedDateBefore !== '' && selectedAfter && selectedAfter.dataset.date === selectedDateBefore,
     overflow_x:document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
     switch_ms:Number(switchMs.toFixed(2))
   };

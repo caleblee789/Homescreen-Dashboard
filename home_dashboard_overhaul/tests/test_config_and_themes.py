@@ -12,10 +12,14 @@ from home_dashboard_overhaul.config_schema import (
     normalize_config,
 )
 from home_dashboard_overhaul.themes import (
+    COMPLETION_SCALES,
     DEFAULT_HEATMAP_PRESETS,
     HEATMAP_PRESETS,
     PRESETS,
-    _contrast,
+    PROJECTED_DUE_SCALES,
+    REVIEWS_DUE_INDICATORS,
+    SEMANTIC_PALETTES,
+    contrast_ratio,
     resolve_theme,
 )
 from home_dashboard_overhaul.tools.build_ankiaddon import _perceptual_distance
@@ -160,43 +164,39 @@ class ThemeTests(unittest.TestCase):
             EXPECTED_HEATMAPS,
         )
 
-    def test_all_sixteen_presets_are_independent_complete_and_contrast_safe(self) -> None:
-        signatures = set()
+    def test_saved_heatmap_ids_resolve_to_one_complete_contrast_safe_theme_scale(self) -> None:
         for theme_name, preset_names in EXPECTED_HEATMAPS.items():
             for preset_name in preset_names:
                 palette = HEATMAP_PRESETS[theme_name][preset_name]
-                signature = []
                 for mode in ("light", "dark"):
                     tokens = palette[mode]
                     expected = {
-                        "heatmap_empty", "on_heatmap_empty", "heatmap_out_of_month",
-                        "on_heatmap_out_of_month",
-                        *{"heatmap_{}".format(level) for level in range(1, 6)},
-                        *{"on_heatmap_{}".format(level) for level in range(1, 6)},
+                        *{"heat_complete_{}".format(level) for level in range(6)},
+                        *{"heat_complete_text_{}".format(level) for level in range(6)},
                     }
                     self.assertEqual(set(tokens), expected)
+                    self.assertEqual(
+                        tuple(tokens["heat_complete_{}".format(level)] for level in range(6)),
+                        COMPLETION_SCALES[theme_name][mode],
+                    )
                     distances = [
-                        _perceptual_distance(tokens["heatmap_empty"], tokens["heatmap_{}".format(level)])
+                        _perceptual_distance(tokens["heat_complete_0"], tokens["heat_complete_{}".format(level)])
                         for level in range(1, 6)
                     ]
                     self.assertTrue(all(left < right for left, right in zip(distances, distances[1:])))
                     self.assertTrue(all(
-                        _perceptual_distance(tokens["heatmap_{}".format(level)], tokens["heatmap_{}".format(level + 1)]) >= 6
-                        for level in range(1, 5)
+                        _perceptual_distance(tokens["heat_complete_{}".format(level)], tokens["heat_complete_{}".format(level + 1)]) >= 6
+                        for level in range(5)
                     ))
-                    for role in ("empty", "1", "2", "3", "4", "5", "out_of_month"):
+                    for level in range(6):
                         self.assertGreaterEqual(
-                            _contrast(tokens["heatmap_{}".format(role)], tokens["on_heatmap_{}".format(role)]),
+                            contrast_ratio(tokens["heat_complete_{}".format(level)], tokens["heat_complete_text_{}".format(level)]),
                             4.5,
                         )
                     resolved = resolve_theme(theme_name, mode, mode == "dark", preset_name)
                     self.assertEqual(resolved["heatmap_preset"], preset_name)
                     for key, value in tokens.items():
                         self.assertEqual(resolved[key], value)
-                    signature.extend(tokens[key] for key in sorted(tokens))
-                self.assertNotIn(tuple(signature), signatures)
-                signatures.add(tuple(signature))
-        self.assertEqual(len(signatures), 16)
 
     def test_unknown_heatmap_value_uses_each_theme_default(self) -> None:
         for theme_name, default in DEFAULT_HEATMAP_PRESETS.items():
@@ -205,15 +205,95 @@ class ThemeTests(unittest.TestCase):
                 self.assertEqual(resolved["heatmap_preset"], default)
 
     def test_shared_semantic_roles_exist_without_component_hex(self) -> None:
+        required = {
+            "ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3",
+            "ui_border_subtle", "ui_border_default", "ui_border_strong",
+            "ui_text_primary", "ui_text_secondary", "ui_text_tertiary", "ui_text_disabled",
+            "ui_eyebrow", "ui_accent", "ui_accent_hover", "ui_accent_pressed",
+            "ui_accent_soft", "ui_accent_border", "ui_on_accent", "ui_focus",
+            "ui_shadow_card", "ui_shadow_overlay",
+            *{"status_{}_{}".format(role, suffix) for role in (
+                "new", "learning", "review", "buried", "success", "warning", "danger", "event"
+            ) for suffix in ("fill", "text")},
+            *{"heat_complete_{}".format(level) for level in range(6)},
+            *{"heat_due_bg_{}".format(level) for level in range(1, 6)},
+            *{"heat_due_mark_{}".format(level) for level in range(1, 6)},
+            "progress_complete", "calendar_empty_bg",
+            "calendar_outside_bg", "calendar_outside_text", "calendar_future_bg",
+            "calendar_future_text", "calendar_footer_bg", "calendar_today_ring",
+            "calendar_selected_ring", "calendar_ring_halo", "calendar_event_halo",
+        }
         for theme_name in PRESETS:
             for mode in ("light", "dark"):
                 resolved = resolve_theme(theme_name, mode, mode == "dark")
-                for role in (
-                    "surface", "panel_surface", "text", "muted", "border", "accent",
-                    "completion", "review", "success", "event", "forecast", "focus",
-                    "warning", "danger", "disabled", "due_stripe",
-                ):
-                    self.assertIn(role, resolved)
+                self.assertFalse(required.difference(resolved))
+                for key, value in SEMANTIC_PALETTES[mode].items():
+                    self.assertEqual(resolved[key], value)
+
+    def test_core_surface_hierarchy_and_target_palettes_are_explicit(self) -> None:
+        light = resolve_theme("Sapphire Glass", "light", False)
+        dark = resolve_theme("Sapphire Glass", "dark", True)
+        self.assertEqual(
+            [light[key] for key in ("ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3")],
+            ["#EEF3F8", "#FFFFFF", "#F7FAFD", "#EDF3F9"],
+        )
+        self.assertEqual(
+            [dark[key] for key in ("ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3")],
+            ["#0A111B", "#111A27", "#152234", "#1B2A3D"],
+        )
+        self.assertEqual(
+            [light[key] for key in ("status_new_fill", "status_learning_fill", "status_review_fill", "status_success_fill", "status_event_fill")],
+            ["#158FC1", "#E28A32", "#8A6BB5", "#43A366", "#D0A02D"],
+        )
+        self.assertEqual(
+            [dark["heat_complete_{}".format(level)] for level in range(6)],
+            list(COMPLETION_SCALES["Sapphire Glass"]["dark"]),
+        )
+
+    def test_text_button_and_heat_tokens_pass_contrast_gates(self) -> None:
+        for theme_name in PRESETS:
+            for mode in ("light", "dark"):
+                with self.subTest(theme=theme_name, mode=mode):
+                    theme = resolve_theme(theme_name, mode, mode == "dark")
+                    for text_role in ("ui_text_primary", "ui_text_secondary", "ui_text_tertiary"):
+                        for surface_role in ("ui_surface_1", "ui_surface_2", "ui_surface_3"):
+                            self.assertGreaterEqual(contrast_ratio(theme[text_role], theme[surface_role]), 4.5)
+                    for background in ("ui_accent", "ui_accent_hover", "ui_accent_pressed"):
+                        self.assertGreaterEqual(contrast_ratio(theme["ui_on_accent"], theme[background]), 4.5)
+                    for level in range(1, 6):
+                        self.assertGreaterEqual(
+                            contrast_ratio(theme["heat_due_bg_{}".format(level)], theme["ui_text_primary"]),
+                            4.5,
+                        )
+                        self.assertEqual(theme["heat_due_bg_{}".format(level)], PROJECTED_DUE_SCALES[mode][level])
+                        self.assertEqual(theme["heat_due_mark_{}".format(level)], REVIEWS_DUE_INDICATORS[mode][level])
+                    if theme_name == "High Contrast":
+                        for surface_role in ("ui_surface_1", "ui_surface_2", "ui_surface_3"):
+                            self.assertGreaterEqual(contrast_ratio(theme["ui_text_primary"], theme[surface_role]), 7)
+
+    def test_theme_specific_finalization_keeps_structure_and_semantics_distinct(self) -> None:
+        sapphire_dark = resolve_theme("Sapphire Glass", "dark", True)
+        self.assertNotEqual(sapphire_dark["calendar_selected_ring"], sapphire_dark["heat_complete_5"])
+        self.assertGreaterEqual(
+            contrast_ratio(sapphire_dark["ui_text_secondary"], sapphire_dark["ui_surface_2"]),
+            4.5,
+        )
+
+        emerald_dark = resolve_theme("Emerald", "dark", True)
+        self.assertEqual(
+            [emerald_dark[key] for key in ("ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3")],
+            ["#0B100E", "#121816", "#171F1B", "#1D2721"],
+        )
+        self.assertNotEqual(emerald_dark["status_success_fill"], emerald_dark["ui_accent"])
+
+        graphite_dark = resolve_theme("Graphite", "dark", True)
+        self.assertEqual(graphite_dark["progress_complete"], "#9BA6B1")
+        self.assertEqual(graphite_dark["heat_complete_5"], "#ADB6BF")
+        self.assertNotEqual(graphite_dark["calendar_selected_ring"], graphite_dark["ui_border_strong"])
+
+        for mode in ("light", "dark"):
+            high_contrast = resolve_theme("High Contrast", mode, mode == "dark")
+            self.assertEqual(high_contrast["ui_shadow_card"], "none")
 
 
 if __name__ == "__main__":

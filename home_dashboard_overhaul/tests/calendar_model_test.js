@@ -50,6 +50,9 @@ const upcoming = model.getNextUpcomingEvent(events, "2026-08-17");
 assert.strictEqual(upcoming.event.id, "a");
 assert.strictEqual(upcoming.additional, 1);
 assert.strictEqual(model.getNextUpcomingEvent(events, "2026-09-02"), null);
+assert.strictEqual(model.formatSelectedDate("2026-08-22", "en-US"), "Sat, Aug 22, 2026");
+assert.strictEqual(model.formatEventDate("2026-08-28", "2026-08-22", "en-US"), "Fri, Aug 28");
+assert.strictEqual(model.eventCountdown("2026-08-28", "2026-08-22", "en-US"), "in 6 days");
 
 // Exact selected-date action truth table.
 function day(date, completed, due, again) {
@@ -131,13 +134,21 @@ assert.strictEqual(model.formatNumber(322120, "en-US"), "322,120");
 assert.strictEqual(model.getDueLoadScale([0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10000]), 9);
 assert.strictEqual(model.getDueLoadScale([0, 0, 0]), 0);
 assert.strictEqual(model.getDueLoadScale([5, 5, 5]), 5);
-assert.strictEqual(model.getDueOverlayHeight(0, 100, "month"), 0);
-assert.strictEqual(model.getDueOverlayHeight(10000, 100, "month"), 6);
-assert.strictEqual(model.getDueOverlayHeight(25, 100, "month"), 6);
-assert.strictEqual(model.getDueOverlayHeight(1, 100, "year"), 100);
-assert.strictEqual(model.getDueLoadLevel(1, 100), "low");
-assert.strictEqual(model.getDueLoadLevel(16, 100), "medium");
-assert.strictEqual(model.getDueLoadLevel(49, 100), "high");
+assert.strictEqual(model.getDueLoadLevel(1, 100), 1);
+assert.strictEqual(model.getDueLoadLevel(9, 100), 2);
+assert.strictEqual(model.getDueLoadLevel(25, 100), 3);
+assert.strictEqual(model.getDueLoadLevel(49, 100), 4);
+assert.strictEqual(model.getDueLoadLevel(100, 100), 5);
+
+// Target-aware rate colors remain neutral without a configured target and
+// invert their success direction for Again rate.
+assert.strictEqual(model.rateSemanticRole(92, 90, false), "success");
+assert.strictEqual(model.rateSemanticRole(84, 90, false), "warning");
+assert.strictEqual(model.rateSemanticRole(76, 90, false), "danger");
+assert.strictEqual(model.rateSemanticRole(8, 10, true), "success");
+assert.strictEqual(model.rateSemanticRole(14, 10, true), "warning");
+assert.strictEqual(model.rateSemanticRole(24, 10, true), "danger");
+assert.strictEqual(model.rateSemanticRole(92, null, false), "");
 
 const thresholds = model.intensityThresholds([0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]);
 assert.deepStrictEqual(thresholds, [2, 5, 13, 34, 89]);
@@ -161,6 +172,24 @@ assert(js.includes("state.mostMissed[day.date] = null"));
 assert(css.includes("pointer-events: none"));
 assert(css.includes("min-width: min(232px"));
 assert(css.includes("max-width: min(260px"));
-assert(css.includes("grid-template-columns: minmax(760px, 1fr) minmax(500px, .46fr)"));
+assert(css.includes("grid-template-columns: minmax(0, 1fr) clamp(332px, 34cqi, 392px)"));
+assert(css.includes("@container hdo-dashboard (min-width: 440px)"));
+assert(css.includes("@container hdo-dashboard (min-width: 940px)"));
+assert(css.includes("repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))"));
+assert(js.includes('monthLabel.style.setProperty("--hdo-month-start-week"'));
+assert(js.includes('primaryAction.textContent = "View reviewed cards"'));
+assert(js.includes('primaryAction.textContent = "View due cards"'));
+assert(js.includes("setButtonHidden(primaryAction, !capabilities.primaryEnabled)"));
+assert(!js.includes("getDueOverlayHeight"));
+assert(!js.includes("hdo-due-hatch"));
+assert(css.includes('.hdo-calendar-day[data-heat-kind="due"][data-due-level="1"]'));
+assert(css.includes("background: var(--heat-due-bg-1)"));
+assert(css.includes("background: var(--heat-due-mark-5)"));
+assert(css.includes("block-size: clamp(2px, 24%, 4px)"));
+assert(css.includes("block-size: max(2px, 34%)"));
+assert(css.includes("background: var(--calendar-future-bg)"));
+assert(js.includes("keepSelectedYearCellVisible"));
+assert(js.includes("window.ResizeObserver"));
+assert(js.includes('completeNode.setAttribute("aria-label", percent + "% complete")'));
 
 console.log("calendar model tests passed");

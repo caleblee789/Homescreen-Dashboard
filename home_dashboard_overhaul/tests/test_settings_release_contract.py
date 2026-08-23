@@ -28,14 +28,14 @@ class SettingsReleaseContractTests(unittest.TestCase):
         cls.manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
     def test_release_metadata_and_schema_six_are_current(self) -> None:
-        self.assertEqual(self.manifest["human_version"], "1.7.0")
+        self.assertEqual(self.manifest["human_version"], "1.8.0")
         self.assertEqual(self.config["schema_version"], 6)
         self.assertEqual(
             tuple(PRESETS),
             ("Sapphire Glass", "Graphite", "Emerald", "High Contrast"),
         )
 
-    def test_all_sixteen_heatmap_presets_are_theme_specific_cards(self) -> None:
+    def test_saved_heatmap_identifiers_are_preserved_as_theme_native_cards(self) -> None:
         expected = {
             "Sapphire Glass": ("Sapphire", "Amethyst", "Glacier", "Sea Glass"),
             "Graphite": ("Slate", "Steel", "Plum", "Mint"),
@@ -55,18 +55,18 @@ class SettingsReleaseContractTests(unittest.TestCase):
                         self.assertTrue(all(
                             key in tokens
                             for key in (
-                                "heatmap_empty",
-                                "heatmap_1",
-                                "heatmap_2",
-                                "heatmap_3",
-                                "heatmap_4",
-                                "heatmap_5",
-                                "on_heatmap_1",
-                                "on_heatmap_2",
-                                "on_heatmap_3",
-                                "on_heatmap_4",
-                                "on_heatmap_5",
-                                "heatmap_out_of_month",
+                                "heat_complete_0",
+                                "heat_complete_1",
+                                "heat_complete_2",
+                                "heat_complete_3",
+                                "heat_complete_4",
+                                "heat_complete_5",
+                                "heat_complete_text_0",
+                                "heat_complete_text_1",
+                                "heat_complete_text_2",
+                                "heat_complete_text_3",
+                                "heat_complete_text_4",
+                                "heat_complete_text_5",
                             )
                         ))
         self.assertIn('card = SettingsCard(\n            "Calendar & data"', self.settings)
@@ -108,14 +108,21 @@ class SettingsReleaseContractTests(unittest.TestCase):
             '"bible_verse": ".hdo-bible-card"',
             "var naturalWidth = focusOnly ? viewportWidth",
             "root.style.width = naturalWidth + 'px'",
-            "child.style.display = child === target ? '' : 'none'",
+            "surface.style.display = surface === target ? '' : 'none'",
+            "rail.style.display = target === calendar ? 'none' : 'grid'",
             "document.documentElement.style.overflowY = 'auto'",
-            "document.body.style.background = getComputedStyle(root).getPropertyValue('--hdo-bg')",
+            "var canvas = getComputedStyle(root).getPropertyValue('--ui-canvas')",
+            "document.documentElement.style.background = canvas",
+            "document.body.style.colorScheme = root.dataset.hdoColorMode || 'light'",
+            '("Reviews Due", tokens["heat_due_bg_5"], tokens["heat_due_mark_5"])',
             "Open full preview",
             'QLabel("Sample data")',
             "representative_preview_snapshot",
             "verse_content(self.quotes[selected_quote])",
             "self.preview.setFixedHeight(max(160, min(520, height)))",
+            "def _web_asset_url(package: str, filename: str) -> str:",
+            'css=[_web_asset_url(package, "dashboard.css")]',
+            'js=[_web_asset_url(package, "dashboard.js")]',
         ):
             self.assertIn(marker, self.settings)
         self.assertNotIn("Using sample data", self.settings)

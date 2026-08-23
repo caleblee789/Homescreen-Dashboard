@@ -1,5 +1,58 @@
 # Changelog
 
+## 1.8.0 — 2026-08-23
+
+- Rebuilt the calendar footer as one integrated surface with explicit
+  Completion, Reviews due, and Event legend groups; Today/Selected date chips;
+  a global next-event row using weekday metadata and `in N days`; an adjacent
+  pencil; and a 30 px solid primary Browser action that disappears when no
+  exact card set applies.
+- Separated future workload from completed activity: future cells now remain
+  neutral when empty and use five soft violet backgrounds with a fixed-height
+  stronger bottom marker when Reviews Due data exists. Today and selected use
+  independent interaction rings; event diamonds and focus remain composable,
+  including combined states.
+- Increased Year heatmap scale and month-label readability; strengthened small
+  statistics and verse typography; thickened the contiguous workload bar; and
+  refined light/dark surface hierarchy without changing the shared shell,
+  two-by-two rail, Bible placement, content-driven height, or theme geometry.
+- Tuned Sapphire dark borders and secondary text, neutralized Emerald dark
+  surfaces, strengthened Graphite interaction affordance, and made High
+  Contrast structurally distinct through luminance and boundaries while
+  preserving stable study-semantic and Reviews Due colors.
+- Finalized the Sapphire Glass dashboard shell: Month and Year now share one
+  calendar-left / insight-rail-right composition at 940 px and wider, retain a
+  two-by-two metric grid beneath the calendar from 440–939 px, and use one
+  metric column only below 440 px. The Bible verse now belongs to the persistent
+  insight rail instead of a full-dashboard banner.
+- Rebuilt Year as a fluid week grid with true week-column month labels, complete
+  January-through-December compact rendering, quiet lower-edge due marks, and
+  an internal scroller only below the minimum readable heatmap width. Switching
+  views preserves the selected date and leaves the insight rail mounted.
+- Reduced Month cells to a 34–40 px responsive range, made statistic rows
+  content-driven, added overflow-safe metric alignment and action wording, and
+  replaced ambiguous calendar/event glyphs with recognizable vector icons.
+- Rebuilt all four light/dark themes around one semantic contract separating
+  neutral canvas/surface elevation, theme accent, stable study semantics,
+  explicit completion and subordinate reviews-due indicators, calendar overlays, disabled
+  states, borders, and shadows. Sapphire now uses neutral navy depth, Graphite
+  is deliberately neutral, High Contrast reserves strong borders for state,
+  and Emerald uses charcoal-green rather than a uniform green field.
+- Stabilized New cyan, Learning orange, Review violet, Buried slate, Success
+  leaf green, Danger rose, and Event gold across themes. Percent Complete and
+  the completed progress segment now use the selected theme accent; remaining
+  workload segments use their matching semantic values and remain zero-safe.
+- Replaced opacity-derived heat colors with explicit opaque six-level
+  completion scales and a separate purple Reviews Due indicator system,
+  including explicit level-based date text, independent Today/selected states, and
+  a gold event marker with contrasting outline and surface halo. Month, Year,
+  and both legend systems consume the same variables.
+- Removed component color literals, diffuse colored card glows, blanket
+  High-Contrast outlines, brightness filters, and whole-control disabled
+  opacity. Theme previews now show canvas, surface, accent, and high-completion
+  roles, while dashboard and Settings ancillary surfaces consume the semantic
+  system.
+
 ## 1.7.0 — 2026-08-21
 
 - Completed the second-pass Settings release audit: the editor now uses a true
