@@ -2,6 +2,7 @@
   "use strict";
 
   var DAY_MS = 86400000;
+  var UNAVAILABLE_TEXT = "—";
 
   function parseDate(value) {
     var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
@@ -188,6 +189,23 @@
     };
   }
 
+  function getContextEvent(events, selectedIso, todayIso) {
+    var selected = groupEvents(events)[selectedIso] || [];
+    if (selected.length) {
+      return {
+        event: selected[0],
+        additional: selected.length - 1,
+        relationship: "Event on this date"
+      };
+    }
+    var upcoming = getNextUpcomingEvent(events, todayIso);
+    return upcoming ? {
+      event: upcoming.event,
+      additional: upcoming.additional,
+      relationship: "Next event"
+    } : null;
+  }
+
   function eventCountdown(eventDate, todayValue, locale) {
     var eventDay = dateValue(eventDate);
     var today = dateValue(todayValue);
@@ -284,7 +302,7 @@
     var robustReference = Math.max(0, Number(reference) || 0);
     if (!count || !robustReference) return 0;
     var scaled = Math.sqrt(Math.min(count, robustReference) / robustReference);
-    return Math.max(1, Math.min(5, Math.ceil(scaled * 5)));
+    return Math.max(1, Math.min(3, Math.ceil(scaled * 3)));
   }
 
   function intensityThresholds(values) {
@@ -460,6 +478,7 @@
     var dateState = root.querySelector("[data-hdo-date-state]");
     var contextDate = root.querySelector("[data-hdo-context-date]");
     var contextEvent = root.querySelector("[data-hdo-context-event]");
+    var contextEventLabel = root.querySelector("[data-hdo-context-event-label]");
     var contextEventMarker = root.querySelector("[data-hdo-event-marker]");
     var eventLink = root.querySelector("[data-hdo-open-events]");
     var eventMeta = root.querySelector("[data-hdo-event-meta]");
@@ -560,29 +579,30 @@
         dateState.classList.toggle("is-today", selectedIsToday);
         dateState.classList.toggle("is-selected", !selectedIsToday);
       }
-      var upcoming = getNextUpcomingEvent(state.events, todayIso);
+      var eventContext = getContextEvent(state.events, state.selected, todayIso);
       if (contextEvent && contextEventMarker && eventLink && eventMeta && eventMore && eventEmpty && editEvent) {
-        if (upcoming) {
-          var countdown = eventCountdown(upcoming.event.date, todayIso, locale);
-          var eventDate = formatEventDate(upcoming.event.date, todayIso, locale);
+        if (contextEventLabel) contextEventLabel.textContent = eventContext ? eventContext.relationship : "Next event";
+        if (eventContext) {
+          var countdown = eventCountdown(eventContext.event.date, todayIso, locale);
+          var eventDate = formatEventDate(eventContext.event.date, todayIso, locale);
           var eventMetaText = eventDate + (countdown ? " · " + countdown : "");
-          var eventDescription = "Next event: " + upcoming.event.name + (eventMetaText ? " · " + eventMetaText : "");
+          var eventDescription = eventContext.relationship + ": " + eventContext.event.name + (eventMetaText ? " · " + eventMetaText : "");
           contextEventMarker.hidden = false;
           eventLink.hidden = false;
-          eventLink.textContent = upcoming.event.name;
+          eventLink.textContent = eventContext.event.name;
           eventLink.title = eventDescription;
-          eventLink.dataset.eventDate = upcoming.event.date;
+          eventLink.dataset.eventDate = eventContext.event.date;
           eventMeta.hidden = !eventMetaText;
           eventMeta.textContent = eventMetaText;
-          eventMore.hidden = upcoming.additional <= 0;
-          eventMore.textContent = upcoming.additional > 0
-            ? "+" + formatNumber(upcoming.additional, locale) + " more"
+          eventMore.hidden = eventContext.additional <= 0;
+          eventMore.textContent = eventContext.additional > 0
+            ? "+" + formatNumber(eventContext.additional, locale) + " more"
             : "";
           eventEmpty.hidden = true;
           editEvent.hidden = false;
-          editEvent.dataset.eventId = String(upcoming.event.id || "");
-          editEvent.dataset.eventDate = upcoming.event.date;
-          editEvent.setAttribute("aria-label", "Edit event: " + upcoming.event.name);
+          editEvent.dataset.eventId = String(eventContext.event.id || "");
+          editEvent.dataset.eventDate = eventContext.event.date;
+          editEvent.setAttribute("aria-label", "Edit event: " + eventContext.event.name);
           editEvent.title = "Edit event";
         } else {
           contextEventMarker.hidden = true;
@@ -603,8 +623,8 @@
       var day = state.days[state.selected];
       var capabilities = getSelectedDateCapabilities(day, String(state.payload.scheduling_date || ""));
       if (primaryAction) {
-        if (capabilities.primary === "reviewed") primaryAction.textContent = "View reviewed cards";
-        if (capabilities.primary === "due") primaryAction.textContent = "View due cards";
+        if (capabilities.primary === "reviewed") primaryAction.textContent = "Reviewed cards";
+        if (capabilities.primary === "due") primaryAction.textContent = "Due cards";
         primaryAction.dataset.action = capabilities.primary;
         setButtonHidden(primaryAction, !capabilities.primaryEnabled);
         primaryAction.disabled = false;
@@ -831,13 +851,26 @@
         if (weekdays) weekdays.replaceChildren();
         calendar.className = "hdo-calendar-grid hdo-calendar-grid--year";
         calendar.style.setProperty("--hdo-year-weeks", String(year.weeks));
+        [
+          { day: 1, label: "Mon" },
+          { day: 3, label: "Wed" },
+          { day: 5, label: "Fri" }
+        ].forEach(function (weekday) {
+          var weekdayLabel = document.createElement("span");
+          var weekdayRow = ((weekday.day - jsWeekStart(state.weekStart) + 7) % 7) + 2;
+          weekdayLabel.className = "hdo-year-weekday-label";
+          weekdayLabel.textContent = weekday.label;
+          weekdayLabel.style.gridRow = String(weekdayRow);
+          weekdayLabel.setAttribute("aria-hidden", "true");
+          calendar.appendChild(weekdayLabel);
+        });
         for (var month = 0; month < 12; month += 1) {
           var monthStart = new Date(state.anchor.getFullYear(), month, 1);
           var labelColumn = Math.floor(dayDifference(monthStart, year.displayStart) / 7) + 1;
           var monthLabel = document.createElement("span");
           monthLabel.className = "hdo-year-month-label";
           monthLabel.textContent = new Intl.DateTimeFormat(locale || undefined, { month: "short" }).format(monthStart);
-          monthLabel.style.setProperty("--hdo-month-start-week", String(labelColumn));
+          monthLabel.style.setProperty("--hdo-month-start-week", String(labelColumn + 1));
           monthLabel.setAttribute("aria-hidden", "true");
           calendar.appendChild(monthLabel);
         }
@@ -848,7 +881,7 @@
           var column = Math.floor(offset / 7) + 1;
           var cell = createDayCell(dayIso, false, "year", row, column);
           cell.style.gridRow = String(row + 1);
-          cell.style.gridColumn = String(column);
+          cell.style.gridColumn = String(column + 1);
           calendar.appendChild(cell);
         });
       }
@@ -947,32 +980,44 @@
       state.selected = state.followsToday ? String(envelope.facts.scheduling_date || priorSelected) : priorSelected;
       if (calendarChanged) renderCalendar();
       else updateContext();
-      updateMetricValues(root, envelope.facts.statistics, locale, envelope.facts.retention_target);
+      updateMetricValues(
+        root,
+        envelope.facts.statistics,
+        envelope.facts.presentation,
+        locale,
+        envelope.facts.retention_target
+      );
       root.setAttribute("aria-busy", "false");
     };
 
     renderCalendar();
-    updateMetricValues(root, payload.statistics, locale, payload.retention_target);
+    updateMetricValues(root, payload.statistics, payload.presentation, locale, payload.retention_target);
     global.addEventListener("resize", function () {
-      updateProgressComposition(root, state.payload.statistics, locale);
+      updateProgressComposition(root, state.payload.statistics, state.payload.presentation, locale);
     });
     var selectedDay = state.days[state.selected];
     if (selectedDay) requestMostMissedCapability(selectedDay);
     return state;
   }
 
-  function setMetric(root, key, value) {
+  function setMetric(root, key, value, rawValue) {
     var node = root.querySelector('[data-hdo-metric="' + key + '"]');
     if (!node) return;
     var row = node.closest(".hdo-metric-row");
-    if (value === null || value === undefined || value === "") {
-      if (row) row.hidden = true;
-      else node.hidden = true;
-      return;
+    var unavailable = value === null || value === undefined || value === "" || value === UNAVAILABLE_TEXT;
+    if (row) {
+      row.hidden = false;
+      row.classList.toggle("is-unavailable", unavailable);
+      var semantic = row.dataset.hdoSemantic || "";
+      if (semantic) {
+        row.classList.toggle(
+          "hdo-value--" + semantic,
+          !unavailable && Number.isFinite(Number(rawValue)) && Number(rawValue) > 0
+        );
+      }
     }
-    if (row) row.hidden = false;
-    else node.hidden = false;
-    node.textContent = String(value);
+    node.hidden = false;
+    node.textContent = unavailable ? UNAVAILABLE_TEXT : String(value);
   }
 
   function availableValue(state) {
@@ -989,23 +1034,44 @@
     return (100 * count / workload).toFixed(1).replace(/\.0$/, "");
   }
 
-  function updateProgressComposition(root, statistics, locale) {
+  function updateProgressComposition(root, statistics, presentation, locale) {
     if (!statistics || typeof statistics !== "object") return;
     var today = availableValue(statistics.today);
     var queue = availableValue(statistics.queue);
     var track = root.querySelector("[data-hdo-progress-track]");
     var completeNode = root.querySelector('[data-hdo-metric="progress.percent"]');
-    if (!today || !queue || !track || !completeNode) return;
-    var counts = {
-      completed: Math.max(0, Number(today.answers) || 0),
-      new: Math.max(0, Number(queue.new) || 0),
-      learning: Math.max(0, Number(queue.learning) || 0),
-      review: Math.max(0, Number(queue.review) || 0)
+    if (!track || !completeNode) return;
+    var progress = presentation && presentation.progress && typeof presentation.progress === "object"
+      ? presentation.progress
+      : null;
+    var counts = progress ? {
+      completed: Math.max(0, Number(progress.completed) || 0),
+      new: Math.max(0, Number(progress.new) || 0),
+      learning: Math.max(0, Number(progress.learning) || 0),
+      review: Math.max(0, Number(progress.review) || 0)
+    } : {
+      completed: today ? Math.max(0, Number(today.answers) || 0) : 0,
+      new: queue ? Math.max(0, Number(queue.new) || 0) : 0,
+      learning: queue ? Math.max(0, Number(queue.learning) || 0) : 0,
+      review: queue ? Math.max(0, Number(queue.review) || 0) : 0
     };
-    var workload = counts.completed + counts.new + counts.learning + counts.review;
-    var percent = roundedProgressPercent(counts.completed, workload);
-    completeNode.textContent = percent + "% complete";
-    completeNode.setAttribute("aria-label", percent + "% complete");
+    var workload = progress ? Math.max(0, Number(progress.workload) || 0)
+      : counts.completed + counts.new + counts.learning + counts.review;
+    var remaining = counts.new + counts.learning + counts.review;
+    var state = progress && typeof progress.state === "string"
+      ? progress.state
+      : !today || !queue ? "unavailable" : workload === 0 ? "no_cards_due" : remaining === 0 ? "complete" : "in_progress";
+    var percent = progress && progress.percent !== null && progress.percent !== undefined
+      ? Number(progress.percent)
+      : state === "complete" ? 100 : state === "in_progress" ? roundedProgressPercent(counts.completed, workload) : 0;
+    var heading = state === "no_cards_due"
+      ? "No cards due"
+      : state === "unavailable" ? UNAVAILABLE_TEXT : percent + "%";
+    completeNode.textContent = heading;
+    completeNode.dataset.hdoProgressState = state;
+    completeNode.classList.toggle("is-unavailable", state === "unavailable");
+    completeNode.setAttribute("aria-label", state === "no_cards_due" ? "No cards are due today" : state === "unavailable" ? "Today’s workload is unavailable" : percent + "% complete");
+    track.dataset.hdoProgressState = state;
     track.setAttribute("aria-valuenow", String(percent));
     var labels = {
       completed: "Completed",
@@ -1014,7 +1080,6 @@
       review: "Reviews remaining"
     };
     var descriptions = [];
-    var hasPopulatedSegment = false;
     Object.keys(counts).forEach(function (key) {
       var segment = track.querySelector('[data-hdo-progress-segment="' + key + '"]');
       var description = labels[key] + ": " + formatNumber(counts[key], locale) +
@@ -1024,20 +1089,19 @@
       segment.dataset.hdoProgressCount = String(counts[key]);
       segment.style.setProperty("--hdo-progress-count", String(counts[key]));
       segment.classList.toggle("is-populated", counts[key] > 0);
-      segment.classList.toggle(
-        "has-preceding-populated",
-        counts[key] > 0 && hasPopulatedSegment
-      );
-      if (counts[key] > 0) hasPopulatedSegment = true;
       segment.title = description;
       var hiddenLabel = segment.querySelector(".hdo-visually-hidden");
       if (hiddenLabel) hiddenLabel.textContent = description;
     });
     track.setAttribute(
       "aria-valuetext",
-      workload > 0
+      state === "no_cards_due"
+        ? "No cards are due today."
+        : state === "unavailable"
+          ? "Today’s workload is unavailable."
+          : workload > 0
         ? percent + "% complete. " + descriptions.join("; ") + "."
-        : "No workload today. 0% complete."
+        : "Today’s workload is unavailable."
     );
   }
 
@@ -1066,29 +1130,44 @@
     return "danger";
   }
 
-  function updateMetricValues(root, statistics, locale, retentionTarget) {
+  function updateMetricValues(root, statistics, presentation, locale, retentionTarget) {
     if (!statistics || typeof statistics !== "object") return;
     var today = availableValue(statistics.today);
     var queue = availableValue(statistics.queue);
     var buried = availableValue(statistics.buried);
     var recent = availableValue(statistics.last_seven_days);
     var longTerm = availableValue(statistics.long_term);
+    var todayPresentation = presentation && presentation.today_session || {};
     if (today) {
-      setMetric(root, "today.answers", formatNumber(today.answers, locale));
-      setMetric(root, "today.new_cards_studied", formatNumber(today.new_cards_studied, locale));
+      setMetric(root, "today.answers", todayPresentation.cards_studied || formatNumber(today.answers, locale), today.answers);
+      setMetric(root, "today.new_cards_studied", todayPresentation.new_cards_studied || formatNumber(today.new_cards_studied, locale), today.new_cards_studied);
+      setMetric(root, "today.seconds", todayPresentation.time || UNAVAILABLE_TEXT, today.seconds);
+      setMetric(root, "today.pace", todayPresentation.pace || UNAVAILABLE_TEXT, today.pace_value);
+      setMetric(root, "queue.eta", todayPresentation.eta || UNAVAILABLE_TEXT, queue && queue.estimated_duration_seconds);
+    } else {
+      ["today.answers", "today.new_cards_studied", "today.seconds", "today.pace", "queue.eta"].forEach(function (key) {
+        setMetric(root, key, UNAVAILABLE_TEXT, null);
+      });
     }
     if (queue) {
-      setMetric(root, "queue.new", formatNumber(queue.new, locale));
-      setMetric(root, "queue.learning", formatNumber(queue.learning, locale));
-      setMetric(root, "queue.review", formatNumber(queue.review, locale));
-      setMetric(root, "queue.total", formatNumber((queue.new || 0) + (queue.learning || 0) + (queue.review || 0), locale));
+      setMetric(root, "queue.new", formatNumber(queue.new, locale), queue.new);
+      setMetric(root, "queue.learning", formatNumber(queue.learning, locale), queue.learning);
+      setMetric(root, "queue.review", formatNumber(queue.review, locale), queue.review);
+      setMetric(root, "queue.total", formatNumber((queue.new || 0) + (queue.learning || 0) + (queue.review || 0), locale), (queue.new || 0) + (queue.learning || 0) + (queue.review || 0));
+    } else {
+      ["queue.new", "queue.learning", "queue.review", "queue.total"].forEach(function (key) {
+        setMetric(root, key, UNAVAILABLE_TEXT, null);
+      });
     }
-    if (buried) setMetric(root, "buried.total", formatNumber((buried.new || 0) + (buried.learning || 0) + (buried.review || 0), locale));
+    if (buried) {
+      var buriedTotal = (buried.new || 0) + (buried.learning || 0) + (buried.review || 0);
+      setMetric(root, "buried.total", formatNumber(buriedTotal, locale), buriedTotal);
+    } else setMetric(root, "buried.total", UNAVAILABLE_TEXT, null);
     if (recent) {
-      setMetric(root, "last_seven_days.cards_studied", formatNumber(recent.cards_studied, locale));
-      setMetric(root, "last_seven_days.new_cards_studied", formatNumber(recent.new_cards_studied, locale));
-      setMetric(root, "last_seven_days.retention", recent.retention && recent.retention.status === "available" ? recent.retention.percent + "%" : null);
-      setMetric(root, "last_seven_days.again_rate", recent.again_rate && recent.again_rate.status === "available" ? recent.again_rate.percent + "%" : null);
+      setMetric(root, "last_seven_days.cards_studied", formatNumber(recent.cards_studied, locale), recent.cards_studied);
+      setMetric(root, "last_seven_days.new_cards_studied", formatNumber(recent.new_cards_studied, locale), recent.new_cards_studied);
+      setMetric(root, "last_seven_days.retention", recent.retention && recent.retention.status === "available" ? recent.retention.percent + "%" : UNAVAILABLE_TEXT, recent.retention && recent.retention.percent);
+      setMetric(root, "last_seven_days.again_rate", recent.again_rate && recent.again_rate.status === "available" ? recent.again_rate.percent + "%" : UNAVAILABLE_TEXT, recent.again_rate && recent.again_rate.percent);
       updateMetricSemanticRole(
         root,
         "last_seven_days.retention",
@@ -1109,16 +1188,26 @@
             )
           : ""
       );
+    } else {
+      ["last_seven_days.cards_studied", "last_seven_days.new_cards_studied", "last_seven_days.retention", "last_seven_days.again_rate"].forEach(function (key) {
+        setMetric(root, key, UNAVAILABLE_TEXT, null);
+      });
+      updateMetricSemanticRole(root, "last_seven_days.retention", "");
+      updateMetricSemanticRole(root, "last_seven_days.again_rate", "");
     }
     if (longTerm) {
-      setMetric(root, "long_term.average_reviews_per_active_day", formatNumber(longTerm.average_reviews_per_active_day, locale));
-      setMetric(root, "long_term.current_streak", formatNumber(longTerm.current_streak, locale) + (longTerm.current_streak === 1 ? " day" : " days"));
-      setMetric(root, "long_term.longest_streak", formatNumber(longTerm.longest_streak, locale) + (longTerm.longest_streak === 1 ? " day" : " days"));
-      setMetric(root, "long_term.lifetime_cards_studied", formatNumber(longTerm.lifetime_cards_studied, locale));
-      setMetric(root, "long_term.lifetime_retention", longTerm.lifetime_retention && longTerm.lifetime_retention.status === "available" ? longTerm.lifetime_retention.percent + "%" : null);
+      setMetric(root, "long_term.average_reviews_per_active_day", formatNumber(longTerm.average_reviews_per_active_day, locale), longTerm.average_reviews_per_active_day);
+      setMetric(root, "long_term.current_streak", formatNumber(longTerm.current_streak, locale) + (longTerm.current_streak === 1 ? " day" : " days"), longTerm.current_streak);
+      setMetric(root, "long_term.longest_streak", formatNumber(longTerm.longest_streak, locale) + (longTerm.longest_streak === 1 ? " day" : " days"), longTerm.longest_streak);
+      setMetric(root, "long_term.lifetime_cards_studied", formatNumber(longTerm.lifetime_cards_studied, locale), longTerm.lifetime_cards_studied);
+      setMetric(root, "long_term.lifetime_retention", longTerm.lifetime_retention && longTerm.lifetime_retention.status === "available" ? longTerm.lifetime_retention.percent + "%" : UNAVAILABLE_TEXT, longTerm.lifetime_retention && longTerm.lifetime_retention.percent);
       updateMetricSemanticRole(root, "long_term.lifetime_retention", "");
+    } else {
+      ["long_term.average_reviews_per_active_day", "long_term.current_streak", "long_term.longest_streak", "long_term.lifetime_retention", "long_term.lifetime_cards_studied"].forEach(function (key) {
+        setMetric(root, key, UNAVAILABLE_TEXT, null);
+      });
     }
-    updateProgressComposition(root, statistics, locale);
+    updateProgressComposition(root, statistics, presentation, locale);
   }
 
   var activeState = null;
@@ -1126,18 +1215,23 @@
   function applyDocumentTheme(root) {
     if (!root || typeof document === "undefined") return;
     var styles = global.getComputedStyle(root);
-    var canvas = styles.getPropertyValue("--ui-canvas").trim();
     var primary = styles.getPropertyValue("--ui-text-primary").trim();
     var track = styles.getPropertyValue("--ui-scrollbar-track").trim();
     var thumb = styles.getPropertyValue("--ui-scrollbar-thumb").trim();
     var mode = root.dataset.hdoColorMode === "dark" ? "dark" : "light";
     [document.documentElement, document.body].forEach(function (surface) {
       if (!surface) return;
-      if (canvas) surface.style.background = canvas;
       if (primary) surface.style.color = primary;
       surface.style.colorScheme = mode;
       if (track && thumb) surface.style.scrollbarColor = thumb + " " + track;
     });
+    var backgroundSurfaces = [document.documentElement, document.body, document.getElementById("root")];
+    var hasBackgroundImage = root.dataset.hdoQaBackgroundImage === "true" || backgroundSurfaces.some(function (surface) {
+      if (!surface) return false;
+      var image = global.getComputedStyle(surface).backgroundImage;
+      return Boolean(image && image !== "none");
+    });
+    root.dataset.hdoBackgroundImage = hasBackgroundImage ? "true" : "false";
     document.documentElement.dataset.hdoColorMode = mode;
   }
 
@@ -1176,6 +1270,7 @@
     navigate: navigate,
     groupEvents: groupEvents,
     getNextUpcomingEvent: getNextUpcomingEvent,
+    getContextEvent: getContextEvent,
     formatSelectedDate: formatSelectedDate,
     formatEventDate: formatEventDate,
     eventCountdown: eventCountdown,

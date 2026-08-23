@@ -288,7 +288,7 @@ def _interaction_html(theme: str, mode: str) -> str:
 
     def heat_cells(kind: str) -> str:
         items = []
-        levels = range(1, 6) if kind == "due" else range(6)
+        levels = range(1, 4) if kind == "due" else range(6)
         for level in levels:
             if kind == "due":
                 opening = (

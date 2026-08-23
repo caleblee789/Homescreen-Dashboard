@@ -1061,6 +1061,69 @@ class HistoricalTimingAndBuriedTests(unittest.TestCase):
         stats = _buried(col)
         self.assertEqual((stats.new, stats.learning, stats.review), (2, 2, 1))
 
+    def test_buried_adds_due_tree_cards_hidden_from_ankis_active_queue(self) -> None:
+        class QueueAwareScheduler:
+            today = 500
+            day_cutoff = int(datetime(2026, 8, 14, 4).timestamp())
+
+            def deck_due_tree(self, deck_id):
+                self.requested_deck_id = deck_id
+                return SimpleNamespace(
+                    deck_id=deck_id,
+                    new_count=7,
+                    learn_count=5,
+                    review_count=9,
+                    children=(),
+                )
+
+            def get_queued_cards(self, *, fetch_limit):
+                self.fetch_limit = fetch_limit
+                return SimpleNamespace(
+                    new_count=4,
+                    learning_count=3,
+                    review_count=6,
+                )
+
+        col = SQLiteCollection()
+        col.sched = QueueAwareScheduler()
+        col.decks = SimpleNamespace(get_current_id=lambda: 1)
+        col.db.connection.executemany(
+            "INSERT INTO cards (id, did, queue, due, type) VALUES (?, ?, ?, ?, ?)",
+            [
+                (1, 1, -2, 0, 0),
+                (2, 1, -3, col.sched.day_cutoff - 1, 1),
+                (3, 1, -2, col.sched.today, 2),
+            ],
+        )
+
+        stats = _buried(col)
+
+        self.assertEqual((stats.new, stats.learning, stats.review), (4, 3, 4))
+        self.assertEqual(col.sched.requested_deck_id, 1)
+        self.assertEqual(col.sched.fetch_limit, 0)
+
+    def test_buried_uses_sql_only_when_dashboard_deck_exclusions_are_active(self) -> None:
+        class QueueAwareScheduler:
+            today = 500
+            day_cutoff = int(datetime(2026, 8, 14, 4).timestamp())
+
+            def deck_due_tree(self, _deck_id):
+                raise AssertionError("unscoped scheduler counts must not be used")
+
+            def get_queued_cards(self, *, fetch_limit):
+                raise AssertionError("unscoped scheduler counts must not be used")
+
+        col = SQLiteCollection()
+        col.sched = QueueAwareScheduler()
+        col.decks = SimpleNamespace(get_current_id=lambda: 1)
+        col.db.connection.execute(
+            "INSERT INTO cards (id, did, queue, due, type) VALUES (1, 1, -2, 0, 0)"
+        )
+
+        stats = _buried(col, FilterScope(excluded_deck_ids=(2,)))
+
+        self.assertEqual((stats.new, stats.learning, stats.review), (1, 0, 0))
+
 
 if __name__ == "__main__":
     unittest.main()

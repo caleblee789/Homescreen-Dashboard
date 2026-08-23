@@ -34,10 +34,10 @@ EXPECTED_HEATMAPS = {
 
 
 class ConfigTests(unittest.TestCase):
-    def test_defaults_are_schema_six_and_use_the_correct_hierarchy(self) -> None:
+    def test_defaults_are_schema_seven_and_use_the_correct_hierarchy(self) -> None:
         config = normalize_config({})
-        self.assertEqual(SCHEMA_VERSION, 6)
-        self.assertEqual(config["schema_version"], 6)
+        self.assertEqual(SCHEMA_VERSION, 7)
+        self.assertEqual(config["schema_version"], 7)
         self.assertEqual(
             config["layout"]["order"],
             ["study_calendar", "summary_metrics", "bible_verse"],
@@ -47,7 +47,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config["heatmap"]["presets_by_theme"], dict(DEFAULT_HEATMAP_PRESETS))
         self.assertEqual(len(default_config()["bible"]["quotes"]), 483)
 
-    def test_schema_six_removes_every_retired_slot_and_is_idempotent(self) -> None:
+    def test_schema_seven_removes_known_retired_slots_and_is_idempotent(self) -> None:
         raw = {
             "schema_version": 5,
             "unknown_top": {"preserve": True},
@@ -71,6 +71,11 @@ class ConfigTests(unittest.TestCase):
                 "due_deck_breakdown": True,
                 "future_key": 7,
             },
+            "study": {
+                "show_eta": False,
+                "show_estimate": True,
+                "future_calculation": "preserved",
+            },
         }
         once = normalize_config(raw)
         twice = normalize_config(deepcopy(once))
@@ -92,6 +97,9 @@ class ConfigTests(unittest.TestCase):
             self.assertNotIn(removed, encoded)
         for removed in ("selected_date", "most_missed", "due_decks"):
             self.assertNotIn(removed, once["visibility"])
+        self.assertNotIn("show_eta", once["study"])
+        self.assertNotIn("show_estimate", once["study"])
+        self.assertEqual(once["study"]["future_calculation"], "preserved")
 
     def test_heatmap_preferences_are_independent_and_unknown_values_reset_locally(self) -> None:
         config = normalize_config({
@@ -216,8 +224,8 @@ class ThemeTests(unittest.TestCase):
                 "new", "learning", "review", "buried", "success", "warning", "danger", "event"
             ) for suffix in ("fill", "text")},
             *{"heat_complete_{}".format(level) for level in range(6)},
-            *{"heat_due_bg_{}".format(level) for level in range(1, 6)},
-            *{"heat_due_mark_{}".format(level) for level in range(1, 6)},
+            *{"heat_due_bg_{}".format(level) for level in range(1, 4)},
+            *{"heat_due_mark_{}".format(level) for level in range(1, 4)},
             "progress_complete", "calendar_empty_bg",
             "calendar_outside_bg", "calendar_outside_text", "calendar_future_bg",
             "calendar_future_text", "calendar_footer_bg", "calendar_today_ring",
@@ -260,7 +268,7 @@ class ThemeTests(unittest.TestCase):
                             self.assertGreaterEqual(contrast_ratio(theme[text_role], theme[surface_role]), 4.5)
                     for background in ("ui_accent", "ui_accent_hover", "ui_accent_pressed"):
                         self.assertGreaterEqual(contrast_ratio(theme["ui_on_accent"], theme[background]), 4.5)
-                    for level in range(1, 6):
+                    for level in range(1, 4):
                         self.assertGreaterEqual(
                             contrast_ratio(theme["heat_due_bg_{}".format(level)], theme["ui_text_primary"]),
                             4.5,
@@ -282,7 +290,7 @@ class ThemeTests(unittest.TestCase):
         emerald_dark = resolve_theme("Emerald", "dark", True)
         self.assertEqual(
             [emerald_dark[key] for key in ("ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3")],
-            ["#0B100E", "#121816", "#171F1B", "#1D2721"],
+            ["#0B100E", "#111A16", "#17241D", "#203129"],
         )
         self.assertNotEqual(emerald_dark["status_success_fill"], emerald_dark["ui_accent"])
 

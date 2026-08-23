@@ -782,8 +782,85 @@ def _queue(
     return QueueStats(new, learning, review, total, estimate)
 
 
+def _deck_tree_node(node: Any, deck_id: int) -> Any | None:
+    """Return one deck node from an Anki due tree without assuming its root."""
+
+    try:
+        if int(getattr(node, "deck_id", 0) or 0) == deck_id:
+            return node
+    except (TypeError, ValueError, OverflowError):
+        pass
+    for child in getattr(node, "children", ()) or ():
+        match = _deck_tree_node(child, deck_id)
+        if match is not None:
+            return match
+    return None
+
+
+def _scheduler_hidden_buried(
+    col: Any,
+    scope: FilterScope,
+) -> BuriedStats:
+    """Return due siblings omitted from Anki's authoritative reviewer queue.
+
+    Anki's due tree is populated before the queue builder applies sibling
+    burying, while ``QueuedCards`` is the source of the native reviewer
+    counter.  Progressbar reconciles those two snapshots and adds each positive
+    category difference to cards already in queues -2/-3.  Deck exclusions are
+    a dashboard-only filter that Anki's queue builder cannot express, so the
+    reconciliation deliberately falls back to SQL-only counts when exclusions
+    are active.
+    """
+
+    if scope.excluded_deck_ids:
+        return BuriedStats()
+
+    sched = getattr(col, "sched", None)
+    decks = getattr(col, "decks", None)
+    get_queued_cards = getattr(sched, "get_queued_cards", None)
+    deck_due_tree = getattr(sched, "deck_due_tree", None)
+    if not callable(get_queued_cards) or not callable(deck_due_tree):
+        return BuriedStats()
+
+    get_current_id = getattr(decks, "get_current_id", None)
+    if not callable(get_current_id):
+        get_current_id = getattr(decks, "selected", None)
+    if not callable(get_current_id):
+        return BuriedStats()
+
+    try:
+        deck_id = int(get_current_id())
+        try:
+            node = deck_due_tree(deck_id)
+        except TypeError:
+            node = _deck_tree_node(deck_due_tree(), deck_id)
+        if node is None:
+            return BuriedStats()
+        try:
+            queued = get_queued_cards(fetch_limit=0)
+        except TypeError:
+            queued = get_queued_cards()
+        tree_new = max(0, int(getattr(node, "new_count", 0) or 0))
+        tree_learning = max(0, int(getattr(node, "learn_count", 0) or 0))
+        tree_review = max(0, int(getattr(node, "review_count", 0) or 0))
+        queue_new = max(0, int(getattr(queued, "new_count", 0) or 0))
+        queue_learning = max(0, int(getattr(queued, "learning_count", 0) or 0))
+        queue_review = max(0, int(getattr(queued, "review_count", 0) or 0))
+    except Exception:
+        # The scheduler reconciliation is an optional precision layer.  A
+        # backend or compatibility failure must not hide the authoritative SQL
+        # count of cards already in queues -2/-3.
+        return BuriedStats()
+
+    return BuriedStats(
+        max(0, tree_new - queue_new),
+        max(0, tree_learning - queue_learning),
+        max(0, tree_review - queue_review),
+    )
+
+
 def _buried(col: Any, scope: Optional[FilterScope] = None) -> BuriedStats:
-    """Return currently relevant buried counts, excluding suspended/future work."""
+    """Return Progressbar-equivalent buried and scheduler-hidden due counts."""
     resolved = scope or FilterScope()
     conditions = ["queue IN (-2, -3)"]
     args: List[object] = []
@@ -804,10 +881,16 @@ def _buried(col: Any, scope: Optional[FilterScope] = None) -> BuriedStats:
         int(getattr(col.sched, "today", 0)),
         *args,
     )
-    return BuriedStats(
+    already_buried = BuriedStats(
         max(0, int(row[0] or 0)) if row else 0,
         max(0, int(row[1] or 0)) if len(row) > 1 else 0,
         max(0, int(row[2] or 0)) if len(row) > 2 else 0,
+    )
+    scheduler_hidden = _scheduler_hidden_buried(col, resolved)
+    return BuriedStats(
+        already_buried.new + scheduler_hidden.new,
+        already_buried.learning + scheduler_hidden.learning,
+        already_buried.review + scheduler_hidden.review,
     )
 
 

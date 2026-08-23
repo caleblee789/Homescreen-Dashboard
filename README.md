@@ -1,54 +1,42 @@
 # Home Screen Dashboard
 
-Home Screen Dashboard 1.8.0 is a calendar-first, responsive Deck Browser
+Home Screen Dashboard 1.8.1 is a calendar-first, responsive Deck Browser
 dashboard for Anki Desktop 26.8. It combines study history, due work, local
-events, progress metrics, and a rotating Bible verse without patching Anki's
+events, progress metrics, and a rotating Bible verse without patching Anki’s
 private Deck Browser or statistics classes.
 
-![Home Screen Dashboard 1.8.0 in Sapphire Glass light mode](home_dashboard_overhaul/qa/release-evidence-1.8.0-2026-08-23/captures/THM-01.png)
+## 1.8.1 highlights
 
-## Highlights
-
-- A shared Month/Year calendar with explicit six-level completion heatmaps,
-  five-level Reviews Due backgrounds and fixed-height markers, event diamonds,
-  keyboard navigation, and collision-aware tooltips.
-- An integrated footer with separate Completion, Reviews Due, and Event
-  legends; selected-date context; the next event; and exact Reviewed, Due, or
-  Most missed Browser actions only when applicable.
-- Four metric cards—Today's Progress, Today's Session, Last 7 Days, and All
-  Time—plus a rotating Bible verse in one persistent responsive insight rail.
-- Four light/dark themes built from shared semantic roles. Study-state colors
-  remain stable while theme accents, surfaces, and interaction treatments stay
-  visually distinct.
-- Staged responsive settings for dashboard appearance, study metrics, calendar
-  data, local events, Bible verses, and support information.
-
-At 940 CSS pixels and wider, Month and Year place the calendar beside a 2×2
-metric rail and Bible card. From 440–939 pixels the rail moves below the
-calendar while keeping two metric columns; narrower layouts use one column.
+- Native 100% geometry uses a 1,480 px dashboard, a 430–450 px rail, compact
+  Month rows, and an unframed Year heatmap with Mon/Wed/Fri references.
+- The wide information architecture remains calendar left, four equal metric
+  cards in a 2×2 rail right, and the Bible verse beneath both rail columns.
+- Component-width rules move the rail below the calendar around 1,220 px and
+  stack metric cards below about 640 px without horizontal scrolling.
+- Calendar completion, today, selection, due work, and gold event markers have
+  independent roles. Due work uses three presentation levels and selection is
+  exactly one 2 px outline.
+- True zero workload says `No cards due`. Statistics retain every defined row,
+  use `—` for unavailable values, and apply category color only to positive
+  values. ETA remains a permanent Today’s Session row.
+- Selected-date events take precedence over the global next event; exact
+  actions use `Reviewed cards` and `Due cards`.
+- Native/default hosts stay transparent. A top-level scrim appears only when a
+  real background image is detected.
+- Configuration schema 7 retires only known ETA-visibility fields while
+  preserving unrelated keys and all other settings.
 
 ## Install
 
-1. Download the verified
-   [`home-dashboard-overhaul-1.8.0.ankiaddon`](home_dashboard_overhaul/qa/release-evidence-1.8.0-2026-08-23/package/home-dashboard-overhaul-1.8.0.ankiaddon).
+1. Use the verified
+   [`home-dashboard-overhaul-1.8.1.ankiaddon`](home_dashboard_overhaul/qa/release-evidence-1.8.1-2026-08-23/package/home-dashboard-overhaul-1.8.1.ankiaddon)
+   from the 1.8.1 release evidence directory.
 2. In Anki, choose **Tools → Add-ons → Install from file**.
 3. Restart Anki and disable any legacy source add-ons identified by the
    activation card.
 
 The manifest supports Anki Desktop 26.8 (`min_point_version` and
 `max_point_version` 260800).
-
-## Settings and persistence
-
-Open **Tools → Home Screen Dashboard settings** or use the calendar gear. The
-four responsive pages are Dashboard, Events, Bible verse, and About & support.
-Changes remain staged until **Save changes**. Configuration schema 6 removes
-retired layout slots while preserving unrelated keys, local events, verse data,
-saved themes, and supported preferences.
-
-External calendar sources remain deferred and are not packaged. Buried-card
-counts include scheduler-relevant queues -2 and -3, exclude suspended cards,
-and remain outside the progress denominator.
 
 ## Build and test
 
@@ -63,40 +51,40 @@ python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
 The deterministic builder creates a 24-file allowlisted archive, rejects unsafe
-paths, fixes timestamps, and verifies source/archive byte parity. Deferred
-calendar modules, QA tools, generated evidence, and local user data stay outside
-the package.
+paths, fixes timestamps, and verifies source/archive byte parity. The 1.8.1
+workflow also requires a second byte-identical build and exact-package native
+Anki 26.8.1 validation in a fresh sync-disabled disposable profile.
 
-## Release validation
+The current machine-readable release contracts are:
 
-The final 1.8.0 archive SHA-256 is:
+- [`calendar_surface_manifest_1_8_1.json`](home_dashboard_overhaul/qa/calendar_surface_manifest_1_8_1.json)
+- [`visual_regression_matrix_1_8_1.json`](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_1.json)
+- [`capture_evidence_manifest_1_8_1.json`](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_1.json)
 
-```text
-84ce1ad81f888d18f856bef14b06759bae9631e5dc16da47338817ee391733e8
-```
+The current
+[`1.8.1 native release evidence`](home_dashboard_overhaul/qa/release-evidence-1.8.1-2026-08-23/README.md)
+contains the complete 47-capture set, a full overview, 13 readable detail
+contact sheets, the exact candidate archive, and the runtime reports. Restart
+settings persistence is explicitly user-waived after the preserved calendar
+view mismatch; it is not represented as passed.
 
 The retained
-[`1.8.0 offline release evidence`](home_dashboard_overhaul/qa/release-evidence-1.8.0-2026-08-23/README.md)
-contains the exact deterministic package, checksum, color-audit reports, and a
-100%-scale visual reference/contact sheet. The release gate covers source,
-tests, UI contracts, color contrast, package integrity, and source/archive
-parity.
+[`1.8.0 release evidence`](home_dashboard_overhaul/qa/release-evidence-1.8.0-2026-08-23/README.md)
+is immutable historical comparison material and is not 1.8.1 acceptance
+evidence.
 
-No Anki process or profile is launched for the 1.8.0 release gate. Live startup,
-restart persistence, spoken VoiceOver, Windows/Linux rendering, forced-colors
-behavior, and non-100% OS display scaling remain unverified and are not claimed.
-
-The immutable 1.5.3 evidence remains available for historical comparison under
-[`home_dashboard_overhaul/qa/live-ui-acceptance-1.5.3-release-2026-08-15/`](home_dashboard_overhaul/qa/live-ui-acceptance-1.5.3-release-2026-08-15/).
+Dedicated 125%/150% captures, spoken screen-reader review, Windows/Linux,
+forced-colors review, and OS-level scaling acceptance are deferred and must not
+be inferred from the macOS 100% run.
 
 ## Project layout
 
 - `home_dashboard_overhaul/`: packaged add-on source and user documentation
-- `home_dashboard_overhaul/tests/`: offline behavior and release-contract tests
+- `home_dashboard_overhaul/tests/`: behavior and release-contract tests
 - `home_dashboard_overhaul/qa/`: machine-readable contracts, QA tools, and
   retained release evidence
 - `deferred/calendar_sources_vnext/`: intentionally deferred external-calendar
-  source excluded from 1.8.0
+  source excluded from 1.8.1
 
 ## License and notices
 

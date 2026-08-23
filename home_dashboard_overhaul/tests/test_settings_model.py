@@ -220,7 +220,6 @@ class SettingsDraftTests(unittest.TestCase):
             normalize_config(
                 {
                     "visibility": {"today": False, "heatmap": False, "events": True},
-                    "study": {"show_eta": True},
                     "heatmap": {"show_due_forecast": False, "forecast_days": 180},
                     "bible": {"theme_aware_color": True, "font_color": "#123456"},
                 }
@@ -229,14 +228,12 @@ class SettingsDraftTests(unittest.TestCase):
         self.assertEqual(
             draft.dependency_state,
             {
-                "study.show_eta": False,
                 "visibility.events": False,
                 "heatmap.forecast_days": False,
                 "bible.font_color": False,
             },
         )
         self.assertTrue(draft.values["visibility"]["events"])
-        self.assertTrue(draft.values["study"]["show_eta"])
         self.assertEqual(draft.values["heatmap"]["forecast_days"], 180)
 
     def test_three_way_merge_takes_untouched_external_and_reports_conflict(self) -> None:

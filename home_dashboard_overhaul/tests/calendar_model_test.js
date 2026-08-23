@@ -50,6 +50,16 @@ const upcoming = model.getNextUpcomingEvent(events, "2026-08-17");
 assert.strictEqual(upcoming.event.id, "a");
 assert.strictEqual(upcoming.additional, 1);
 assert.strictEqual(model.getNextUpcomingEvent(events, "2026-09-02"), null);
+assert.deepStrictEqual(model.getContextEvent(events, "2026-08-28", "2026-08-17"), {
+  event: { id: "a", date: "2026-08-28", name: "Alpha" },
+  additional: 1,
+  relationship: "Event on this date"
+});
+assert.deepStrictEqual(model.getContextEvent(events, "2026-08-22", "2026-08-17"), {
+  event: { id: "a", date: "2026-08-28", name: "Alpha" },
+  additional: 1,
+  relationship: "Next event"
+});
 assert.strictEqual(model.formatSelectedDate("2026-08-22", "en-US"), "Sat, Aug 22, 2026");
 assert.strictEqual(model.formatEventDate("2026-08-28", "2026-08-22", "en-US"), "Fri, Aug 28");
 assert.strictEqual(model.eventCountdown("2026-08-28", "2026-08-22", "en-US"), "in 6 days");
@@ -135,10 +145,10 @@ assert.strictEqual(model.getDueLoadScale([0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10000
 assert.strictEqual(model.getDueLoadScale([0, 0, 0]), 0);
 assert.strictEqual(model.getDueLoadScale([5, 5, 5]), 5);
 assert.strictEqual(model.getDueLoadLevel(1, 100), 1);
-assert.strictEqual(model.getDueLoadLevel(9, 100), 2);
-assert.strictEqual(model.getDueLoadLevel(25, 100), 3);
-assert.strictEqual(model.getDueLoadLevel(49, 100), 4);
-assert.strictEqual(model.getDueLoadLevel(100, 100), 5);
+assert.strictEqual(model.getDueLoadLevel(9, 100), 1);
+assert.strictEqual(model.getDueLoadLevel(25, 100), 2);
+assert.strictEqual(model.getDueLoadLevel(49, 100), 3);
+assert.strictEqual(model.getDueLoadLevel(100, 100), 3);
 
 // Target-aware rate colors remain neutral without a configured target and
 // invert their success direction for Again rate.
@@ -170,26 +180,32 @@ assert(js.includes("state.selected = isoDate(state.anchor)"));
 assert(js.includes("modelCache: new Map()"));
 assert(js.includes("state.mostMissed[day.date] = null"));
 assert(css.includes("pointer-events: none"));
-assert(css.includes("min-width: min(232px"));
+assert(css.includes("min-width: min(220px"));
 assert(css.includes("max-width: min(260px"));
-assert(css.includes("grid-template-columns: minmax(0, 1fr) clamp(332px, 34cqi, 392px)"));
-assert(css.includes("@container hdo-dashboard (min-width: 440px)"));
-assert(css.includes("@container hdo-dashboard (min-width: 940px)"));
+assert(css.includes("width: min(1480px, calc(100vw - 64px))"));
+assert(css.includes("grid-template-columns: minmax(0, 1fr) clamp(430px, 30cqi, 450px)"));
+assert(css.includes("@container hdo-dashboard (min-width: 640px)"));
+assert(css.includes("@container hdo-dashboard (min-width: 1220px)"));
 assert(css.includes("repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))"));
 assert(js.includes('monthLabel.style.setProperty("--hdo-month-start-week"'));
-assert(js.includes('primaryAction.textContent = "View reviewed cards"'));
-assert(js.includes('primaryAction.textContent = "View due cards"'));
+assert(js.includes('primaryAction.textContent = "Reviewed cards"'));
+assert(js.includes('primaryAction.textContent = "Due cards"'));
+assert(js.includes('relationship: "Event on this date"'));
 assert(js.includes("setButtonHidden(primaryAction, !capabilities.primaryEnabled)"));
 assert(!js.includes("getDueOverlayHeight"));
 assert(!js.includes("hdo-due-hatch"));
-assert(css.includes('.hdo-calendar-day[data-heat-kind="due"][data-due-level="1"]'));
+assert(css.includes('.hdo-calendar-day.is-future[data-due-level="1"]'));
 assert(css.includes("background: var(--heat-due-bg-1)"));
-assert(css.includes("background: var(--heat-due-mark-5)"));
-assert(css.includes("block-size: clamp(2px, 24%, 4px)"));
-assert(css.includes("block-size: max(2px, 34%)"));
+assert(css.includes("background: var(--heat-due-mark-3)"));
+assert(css.includes("block-size: 2px"));
+assert(css.includes("block-size: 4px"));
+assert(css.includes("block-size: 6px"));
 assert(css.includes("background: var(--calendar-future-bg)"));
+assert(css.includes('.hdo-calendar-grid--year .hdo-calendar-day.is-today::before'));
+assert(js.includes('weekdayLabel.className = "hdo-year-weekday-label"'));
 assert(js.includes("keepSelectedYearCellVisible"));
 assert(js.includes("window.ResizeObserver"));
-assert(js.includes('completeNode.setAttribute("aria-label", percent + "% complete")'));
+assert(js.includes('state === "no_cards_due" ? "No cards are due today"'));
+assert(js.includes("presentation && presentation.progress"));
 
 console.log("calendar model tests passed");
