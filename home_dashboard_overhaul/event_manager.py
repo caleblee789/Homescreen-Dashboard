@@ -173,7 +173,7 @@ class EventManagerDialog(QDialog):
         self._selected_date = selected_date
         self._source_rows: Dict[str, Dict[str, Any]] = {}
         self.setObjectName("HomeDashboardEventManager")
-        self.setWindowTitle("Event Manager — Home Dashboard")
+        self.setWindowTitle("Event Manager — Home Screen Dashboard")
         self.setMinimumSize(760, 560)
         self.resize(1180, 760)
         self.setSizeGripEnabled(True)

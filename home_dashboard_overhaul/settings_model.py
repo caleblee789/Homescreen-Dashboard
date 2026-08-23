@@ -7,72 +7,165 @@ compatibility behavior can be exercised without starting the application.
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from datetime import date
 from typing import Any, Dict, Iterable, Mapping, MutableMapping, Sequence, Tuple
 
 from .config_schema import default_config, normalize_config
+from .models import DashboardSnapshot, EventItem, ValueState
+from .ui_primitives import (
+    CONTENT_MODE_EXTRA_WIDE,
+    CONTENT_MODE_INTERMEDIATE,
+    CONTENT_MODE_NARROW,
+    CONTENT_MODES,
+)
 from .verse import verse_within_limit
 
 
 Path = Tuple[str, ...]
 _MISSING = object()
 
+SETTINGS_CONTENT_MODES = CONTENT_MODES
+
+HISTORY_RANGE_ALL = "all"
+HISTORY_RANGE_90 = "90"
+HISTORY_RANGE_180 = "180"
+HISTORY_RANGE_365 = "365"
+HISTORY_RANGE_CUSTOM = "custom"
+HISTORY_RANGE_VALUES = (
+    HISTORY_RANGE_ALL,
+    HISTORY_RANGE_90,
+    HISTORY_RANGE_180,
+    HISTORY_RANGE_365,
+    HISTORY_RANGE_CUSTOM,
+)
+
+
+def history_range_choice(history_days: object, ignore_before: object) -> str:
+    """Project the persisted range fields into the compact Settings choice."""
+
+    if isinstance(ignore_before, str) and ignore_before.strip():
+        return HISTORY_RANGE_CUSTOM
+    try:
+        days = int(history_days)
+    except (TypeError, ValueError, OverflowError):
+        days = 0
+    return str(days) if days in {90, 180, 365} else HISTORY_RANGE_ALL
+
+
+def history_range_values(choice: object, custom_start: object) -> Tuple[int, str]:
+    """Return canonical ``history_days`` and ``ignore_before`` values."""
+
+    selected = str(choice or "")
+    if selected in {HISTORY_RANGE_90, HISTORY_RANGE_180, HISTORY_RANGE_365}:
+        return int(selected), ""
+    if selected == HISTORY_RANGE_CUSTOM:
+        try:
+            return 0, date.fromisoformat(str(custom_start)).isoformat()
+        except (TypeError, ValueError):
+            return 0, ""
+    return 0, ""
+
+
+@dataclass(frozen=True)
+class SettingsLayoutMetrics:
+    """Measured minimums used to select the native Settings composition.
+
+    The widget layer supplies live size hints and font metrics.  Keeping the
+    decision pure makes it possible to prove that layout changes follow content
+    fit rather than release-screenshot widths.
+    """
+
+    available_width: int
+    font_height: int
+    sidebar_width: int
+    editor_width: int
+    preview_width: int
+    footer_width: int
+    spacing: int = 0
+
+
+def settings_content_mode(metrics: SettingsLayoutMetrics) -> str:
+    """Return the release-specified responsive Settings composition.
+
+    The UI architecture changes at 1180 and 760 logical pixels.  Individual
+    controls still use live font metrics and wrapping size hints, but the
+    navigation and preview must remain predictable at the documented widths.
+    """
+
+    values = (
+        metrics.available_width,
+        metrics.font_height,
+        metrics.sidebar_width,
+        metrics.editor_width,
+        metrics.preview_width,
+        metrics.footer_width,
+        metrics.spacing,
+    )
+    if any(not isinstance(value, int) or value < 0 for value in values):
+        raise ValueError("settings layout metrics must be non-negative integers")
+
+    available = metrics.available_width
+    if available >= 1180:
+        return CONTENT_MODE_EXTRA_WIDE
+    if available >= 760:
+        return CONTENT_MODE_INTERMEDIATE
+    return CONTENT_MODE_NARROW
+
 
 SECTION_IDS = (
-    "theme_layout",
-    "home_screen",
-    "calendar_data",
+    "dashboard",
     "events",
     "bible_verse",
-    "about",
+    "about_support",
 )
 
 SECTION_LABELS = {
-    "theme_layout": "Theme & layout",
-    "home_screen": "Home screen",
-    "calendar_data": "Calendar & data",
+    "dashboard": "Dashboard",
     "events": "Events",
     "bible_verse": "Bible verse",
-    "about": "About",
+    "about_support": "About & support",
 }
 
 SECTION_GROUPS = {
-    "theme_layout": "Personalize",
-    "home_screen": "Personalize",
-    "calendar_data": "Personalize",
-    "events": "Content",
-    "bible_verse": "Content",
-    "about": "Support",
+    section_id: "" for section_id in SECTION_IDS
 }
 
-_ALIASES = {
-    "": "theme_layout",
-    "appearance": "theme_layout",
-    "theme": "theme_layout",
-    "theme & layout": "theme_layout",
-    "theme_layout": "theme_layout",
-    "dashboard": "home_screen",
-    "home": "home_screen",
-    "home screen": "home_screen",
-    "home_screen": "home_screen",
-    "activity": "calendar_data",
-    "calendar": "calendar_data",
-    "calendar & data": "calendar_data",
-    "calendar_data": "calendar_data",
-    "event": "events",
-    "events": "events",
-    "bible": "bible_verse",
-    "bible verse": "bible_verse",
-    "bible_verse": "bible_verse",
-    "about": "about",
-    "about & credits": "about",
+_SECTION_TARGETS = {
+    "": ("dashboard", "appearance"),
+    "appearance": ("dashboard", "appearance"),
+    "theme": ("dashboard", "appearance"),
+    "theme & layout": ("dashboard", "appearance"),
+    "theme_layout": ("dashboard", "appearance"),
+    "dashboard": ("dashboard", ""),
+    "home": ("dashboard", "dashboard_sections"),
+    "home screen": ("dashboard", "dashboard_sections"),
+    "home_screen": ("dashboard", "dashboard_sections"),
+    "activity": ("dashboard", "calendar"),
+    "calendar": ("dashboard", "calendar"),
+    "calendar & data": ("dashboard", "calendar"),
+    "calendar_data": ("dashboard", "calendar"),
+    "event": ("events", ""),
+    "events": ("events", ""),
+    "bible": ("bible_verse", ""),
+    "bible verse": ("bible_verse", ""),
+    "bible_verse": ("bible_verse", ""),
+    "about": ("about_support", ""),
+    "about & credits": ("about_support", ""),
+    "about & support": ("about_support", ""),
+    "about_support": ("about_support", ""),
 }
 
 
 def resolve_section(value: object) -> str:
     """Return a stable settings section ID while retaining legacy routes."""
+    return resolve_section_target(value)[0]
+
+
+def resolve_section_target(value: object) -> Tuple[str, str]:
+    """Return the four-page route and an optional Dashboard card anchor."""
     key = str(value or "").strip().casefold()
-    return _ALIASES.get(key, "theme_layout")
+    return _SECTION_TARGETS.get(key, ("dashboard", ""))
 
 
 def font_family_value(staged: object, selected: object, explicitly_changed: bool) -> str:
@@ -82,6 +175,64 @@ def font_family_value(staged: object, selected: object, explicitly_changed: bool
     if explicitly_changed and selected_value:
         return selected_value
     return staged_value or selected_value
+
+
+def preview_snapshot_with_staged_events(
+    snapshot: DashboardSnapshot,
+    config: Mapping[str, Any],
+    reference_date: str,
+) -> DashboardSnapshot:
+    """Overlay staged local events without reading or replacing study data.
+
+    Settings previews are allowed to reflect unsaved appearance and event edits,
+    but collection-backed values remain the controller's saved snapshot.  The
+    returned snapshot updates only the canonical facts used by every renderer.
+    """
+
+    try:
+        today = date.fromisoformat(reference_date)
+    except (TypeError, ValueError):
+        raise ValueError("reference_date must be an ISO civil date")
+
+    event_config = config.get("events", {})
+    if not isinstance(event_config, Mapping):
+        event_config = {}
+    staged: list[EventItem] = []
+    raw_items = event_config.get("items", [])
+    if isinstance(raw_items, Sequence) and not isinstance(raw_items, (str, bytes)):
+        for raw in raw_items:
+            if not isinstance(raw, Mapping) or raw.get("archived"):
+                continue
+            try:
+                event_date = date.fromisoformat(str(raw["date"]))
+                event_id = str(raw["id"])
+                name = str(raw["name"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            staged.append(
+                EventItem(
+                    event_id=event_id,
+                    name=name,
+                    date=event_date.isoformat(),
+                    days_remaining=(event_date - today).days,
+                )
+            )
+    staged.sort(
+        key=lambda item: (item.date, item.name.casefold()),
+        reverse=event_config.get("sort") == "descending",
+    )
+    event_items = tuple(staged)
+    event_state = ValueState.available(event_items)
+    facts_with_events = replace(snapshot.facts, events=event_state)
+    dates = set(snapshot.facts.days)
+    dates.update(item.date for item in event_items)
+    days = {}
+    for iso_date in dates:
+        day = snapshot.facts.days.get(iso_date) or facts_with_events.for_date(iso_date)
+        day_events = tuple(item for item in event_items if item.date == iso_date)
+        days[iso_date] = replace(day, events=ValueState.available(day_events))
+    facts = replace(facts_with_events, days=days)
+    return replace(snapshot, facts=facts)
 
 
 def _leaf_values(value: object, prefix: Path = ()) -> Dict[Path, object]:
@@ -186,10 +337,33 @@ def three_way_merge(
     return MergeResult(merged, tuple(conflicts))
 
 
-_SECTION_DEFAULT_PATHS = {
-    "theme_layout": (("appearance",),),
-    "home_screen": (("visibility",), ("study",), ("new_cards",)),
-    "calendar_data": (("heatmap",),),
+_RESET_DEFAULT_PATHS = {
+    "appearance": (("appearance",), ("home_screen",)),
+    "dashboard_sections": (("visibility",), ("study",), ("new_cards",)),
+    "home_screen_legacy": (
+        ("visibility",),
+        ("study",),
+        ("new_cards",),
+        ("home_screen",),
+    ),
+    "calendar": (("heatmap",),),
+    "dashboard": (
+        ("appearance",),
+        ("home_screen",),
+        ("visibility",),
+        ("study",),
+        ("new_cards",),
+        ("heatmap",),
+    ),
+    "bible_appearance": (
+        ("bible", "font_family"),
+        ("bible", "font_size"),
+        ("bible", "font_color"),
+        ("bible", "theme_aware_color"),
+    ),
+    "bible_rotation": (
+        ("bible", "rotation_mode"),
+    ),
     "bible_verse": (
         ("bible", "font_family"),
         ("bible", "font_size"),
@@ -217,6 +391,11 @@ class SettingsDraft:
         return changed_paths(self.baseline, self.values)
 
     @property
+    def changed_leaf_count(self) -> int:
+        """Count changed persisted leaves; managed lists remain one leaf each."""
+        return len(self.changed_paths)
+
+    @property
     def dependency_state(self) -> Dict[str, bool]:
         visibility = self.values["visibility"]
         return {
@@ -234,8 +413,29 @@ class SettingsDraft:
         self.values = deepcopy(self.baseline)
 
     def reset_section(self, section: object) -> bool:
-        section_id = resolve_section(section)
-        paths = _SECTION_DEFAULT_PATHS.get(section_id)
+        """Compatibility reset for old callers; new UI uses ``reset_card``."""
+        key = str(section or "").strip().casefold()
+        legacy_scope = {
+            "appearance": "appearance",
+            "theme": "appearance",
+            "theme & layout": "appearance",
+            "theme_layout": "appearance",
+            "home": "home_screen_legacy",
+            "home screen": "home_screen_legacy",
+            "home_screen": "home_screen_legacy",
+            "activity": "calendar",
+            "calendar": "calendar",
+            "calendar & data": "calendar",
+            "calendar_data": "calendar",
+            "bible": "bible_verse",
+            "bible verse": "bible_verse",
+            "bible_verse": "bible_verse",
+        }.get(key, resolve_section(section))
+        return self.reset_card(legacy_scope)
+
+    def reset_card(self, scope: object) -> bool:
+        """Restore one card's fields without touching managed content lists."""
+        paths = _RESET_DEFAULT_PATHS.get(str(scope or "").strip().casefold())
         if not paths:
             return False
         for path in paths:

@@ -1,0 +1,444 @@
+{
+  "captures": {
+    "isolated-main-window": {
+      "device_pixel_ratio": 2.0,
+      "height": 1140,
+      "path": "<disposable-base>/hdo-revised-ui-probe/isolated-main-window.png",
+      "saved": true,
+      "width": 1334
+    },
+    "isolated-main-window-month-maximized": {
+      "device_pixel_ratio": 2.0,
+      "height": 2082,
+      "path": "<disposable-base>/hdo-revised-ui-probe/isolated-main-window-month-maximized.png",
+      "saved": true,
+      "width": 3420
+    },
+    "isolated-main-window-year-maximized": {
+      "device_pixel_ratio": 2.0,
+      "height": 2082,
+      "path": "<disposable-base>/hdo-revised-ui-probe/isolated-main-window-year-maximized.png",
+      "saved": true,
+      "width": 3420
+    },
+    "settings-medium-preview": {
+      "device_pixel_ratio": 2.0,
+      "height": 1800,
+      "path": "<disposable-base>/hdo-revised-ui-probe/settings-medium-preview.png",
+      "saved": true,
+      "width": 1800
+    },
+    "settings-narrow": {
+      "device_pixel_ratio": 2.0,
+      "height": 1560,
+      "path": "<disposable-base>/hdo-revised-ui-probe/settings-narrow.png",
+      "saved": true,
+      "width": 1240
+    },
+    "settings-narrow-150-percent-font": {
+      "device_pixel_ratio": 2.0,
+      "height": 1560,
+      "path": "<disposable-base>/hdo-revised-ui-probe/settings-narrow-150-percent-font.png",
+      "saved": true,
+      "width": 1240
+    },
+    "settings-wide-bible-custom": {
+      "device_pixel_ratio": 2.0,
+      "height": 1800,
+      "path": "<disposable-base>/hdo-revised-ui-probe/settings-wide-bible-custom.png",
+      "saved": true,
+      "width": 2640
+    },
+    "settings-wide-calendar": {
+      "device_pixel_ratio": 2.0,
+      "height": 1800,
+      "path": "<disposable-base>/hdo-revised-ui-probe/settings-wide-calendar.png",
+      "saved": true,
+      "width": 2640
+    }
+  },
+  "errors": [],
+  "identity": {
+    "collection_inside_run_root": true,
+    "collection_path": "<disposable-base>/Codex QA HDO Final 20260822 2204/collection.anki2",
+    "expected_profile": "Codex QA HDO Final 20260822 2204",
+    "main_window_title": "Codex QA HDO Final 20260822 2204 - Anki",
+    "pid": 66681,
+    "profile": "Codex QA HDO Final 20260822 2204",
+    "profile_matches": true,
+    "run_root": "<disposable-base>",
+    "sync_auth_present": false
+  },
+  "schema_version": 1,
+  "states": {
+    "bible": {
+      "current_section": "bible_verse",
+      "footer": {
+        "height": 60,
+        "visible": true,
+        "width": 1288,
+        "x": 16,
+        "y": 840
+      },
+      "hex_enabled": true,
+      "hex_focus_policy": 11,
+      "minimum_size": [
+        560,
+        560
+      ],
+      "mode": "extra-wide",
+      "object_id": 5172543344,
+      "preview": {
+        "height": 612,
+        "visible": true,
+        "width": 284,
+        "x": 1020,
+        "y": 62
+      },
+      "preview_requested": true,
+      "preview_toggle_checked": true,
+      "preview_toggle_text": "Preview",
+      "same_dialog_after_reopen": true,
+      "scroll": {
+        "footer_clearance": 0,
+        "horizontal_scroll_visible": false,
+        "vertical_scroll_visible": true,
+        "viewport_height": 770,
+        "viewport_width": 664
+      },
+      "section_after_reopen": "bible_verse",
+      "section_selector": {
+        "height": 480,
+        "visible": false,
+        "width": 640,
+        "x": 16,
+        "y": 12
+      },
+      "sidebar": {
+        "height": 192,
+        "visible": true,
+        "width": 163,
+        "x": 16,
+        "y": 62
+      },
+      "size": [
+        1320,
+        900
+      ],
+      "stored_custom_color": "#1E90FF",
+      "swatch_enabled": true,
+      "swatch_focus_policy": 11,
+      "window_title": "Home Screen Dashboard settings"
+    },
+    "main_month": {
+      "bible_after": true,
+      "cell_max": 62,
+      "cell_min": 62,
+      "day_count": 42,
+      "layout_matches_width": true,
+      "metric_group_count": 4,
+      "overflow_x": false,
+      "ready": true,
+      "root_width": 1680,
+      "side_by_side": true,
+      "stacked": false,
+      "switch_ms": 9.4,
+      "view": "month"
+    },
+    "main_year": {
+      "day_count": 365,
+      "max_square_error": 0,
+      "month_label_count": 12,
+      "overflow_x": false,
+      "ready": true,
+      "shell_scrollable": false,
+      "switch_ms": 24.6,
+      "view": "year"
+    },
+    "medium_preview_hidden": {
+      "current_section": "bible_verse",
+      "footer": {
+        "height": 60,
+        "visible": true,
+        "width": 868,
+        "x": 16,
+        "y": 840
+      },
+      "minimum_size": [
+        560,
+        560
+      ],
+      "mode": "intermediate",
+      "object_id": 5172543344,
+      "preview": {
+        "height": 612,
+        "visible": false,
+        "width": 284,
+        "x": 1051,
+        "y": 156
+      },
+      "preview_requested": false,
+      "preview_toggle_checked": false,
+      "preview_toggle_text": "Preview",
+      "scroll": {
+        "footer_clearance": 0,
+        "horizontal_scroll_visible": false,
+        "vertical_scroll_visible": true,
+        "viewport_height": 676,
+        "viewport_width": 868
+      },
+      "section_selector": {
+        "height": 480,
+        "visible": false,
+        "width": 640,
+        "x": 16,
+        "y": 108
+      },
+      "sidebar": {
+        "height": 192,
+        "visible": false,
+        "width": 163,
+        "x": 16,
+        "y": 156
+      },
+      "size": [
+        900,
+        900
+      ],
+      "window_title": "Home Screen Dashboard settings"
+    },
+    "medium_preview_visible": {
+      "current_section": "bible_verse",
+      "footer": {
+        "height": 60,
+        "visible": true,
+        "width": 868,
+        "x": 16,
+        "y": 840
+      },
+      "minimum_size": [
+        560,
+        560
+      ],
+      "mode": "intermediate",
+      "object_id": 5172543344,
+      "preview": {
+        "height": 612,
+        "visible": false,
+        "width": 284,
+        "x": 1051,
+        "y": 156
+      },
+      "preview_requested": false,
+      "preview_toggle_checked": false,
+      "preview_toggle_text": "Preview",
+      "scroll": {
+        "footer_clearance": 0,
+        "horizontal_scroll_visible": false,
+        "vertical_scroll_visible": false,
+        "viewport_height": 676,
+        "viewport_width": 868
+      },
+      "section_selector": {
+        "height": 480,
+        "visible": false,
+        "width": 640,
+        "x": 16,
+        "y": 108
+      },
+      "sidebar": {
+        "height": 192,
+        "visible": false,
+        "width": 163,
+        "x": 16,
+        "y": 156
+      },
+      "size": [
+        900,
+        900
+      ],
+      "window_title": "Home Screen Dashboard settings"
+    },
+    "narrow": {
+      "current_section": "bible_verse",
+      "footer": {
+        "height": 66,
+        "visible": true,
+        "width": 588,
+        "x": 16,
+        "y": 714
+      },
+      "minimum_size": [
+        560,
+        560
+      ],
+      "mode": "narrow",
+      "object_id": 5172543344,
+      "preview": {
+        "height": 612,
+        "visible": false,
+        "width": 284,
+        "x": 771,
+        "y": 137
+      },
+      "preview_requested": false,
+      "preview_toggle_checked": false,
+      "preview_toggle_text": "Preview",
+      "scroll": {
+        "footer_clearance": 0,
+        "horizontal_scroll_visible": false,
+        "vertical_scroll_visible": false,
+        "viewport_height": 569,
+        "viewport_width": 588
+      },
+      "section_selector": {
+        "height": 44,
+        "visible": true,
+        "width": 511,
+        "x": 16,
+        "y": 85
+      },
+      "sidebar": {
+        "height": 192,
+        "visible": false,
+        "width": 163,
+        "x": 16,
+        "y": 137
+      },
+      "size": [
+        620,
+        780
+      ],
+      "window_title": "Home Screen Dashboard settings"
+    },
+    "narrow_150_percent": {
+      "current_section": "bible_verse",
+      "font_point_size": 19.5,
+      "footer": {
+        "height": 66,
+        "visible": true,
+        "width": 588,
+        "x": 16,
+        "y": 714
+      },
+      "horizontal_overflow": false,
+      "minimum_size": [
+        560,
+        560
+      ],
+      "mode": "narrow",
+      "object_id": 5172543344,
+      "preview": {
+        "height": 612,
+        "visible": false,
+        "width": 284,
+        "x": 771,
+        "y": 193
+      },
+      "preview_requested": false,
+      "preview_toggle_checked": false,
+      "preview_toggle_text": "Preview",
+      "scroll": {
+        "footer_clearance": 0,
+        "horizontal_scroll_visible": false,
+        "vertical_scroll_visible": false,
+        "viewport_height": 513,
+        "viewport_width": 588
+      },
+      "section_selector": {
+        "height": 44,
+        "visible": true,
+        "width": 588,
+        "x": 16,
+        "y": 89
+      },
+      "sidebar": {
+        "height": 192,
+        "visible": false,
+        "width": 163,
+        "x": 16,
+        "y": 193
+      },
+      "size": [
+        620,
+        780
+      ],
+      "window_title": "Home Screen Dashboard settings"
+    },
+    "wide": {
+      "current_section": "dashboard",
+      "footer": {
+        "height": 60,
+        "visible": true,
+        "width": 1288,
+        "x": 16,
+        "y": 840
+      },
+      "heatmap_presets": [
+        "Amethyst",
+        "Glacier",
+        "Sapphire",
+        "Sea Glass"
+      ],
+      "heatmap_presets_exact": true,
+      "minimum_size": [
+        560,
+        560
+      ],
+      "mode": "extra-wide",
+      "object_id": 5172543344,
+      "preview": {
+        "height": 662,
+        "visible": true,
+        "width": 284,
+        "x": 1020,
+        "y": 62
+      },
+      "preview_requested": true,
+      "preview_toggle_checked": true,
+      "preview_toggle_text": "Preview",
+      "scroll": {
+        "footer_clearance": 0,
+        "horizontal_scroll_visible": false,
+        "vertical_scroll_visible": false,
+        "viewport_height": 770,
+        "viewport_width": 664
+      },
+      "section_selector": {
+        "height": 480,
+        "visible": false,
+        "width": 640,
+        "x": 16,
+        "y": 12
+      },
+      "sidebar": {
+        "height": 192,
+        "visible": true,
+        "width": 163,
+        "x": 16,
+        "y": 62
+      },
+      "size": [
+        1320,
+        900
+      ],
+      "window_title": "Home Screen Dashboard settings"
+    },
+    "wide_preview_dom": {
+      "background": "rgb(11, 22, 36)",
+      "bodyScrollHeight": 596,
+      "bodyScrollWidth": 276,
+      "fit": "fit",
+      "forbidden": false,
+      "hasMetrics": true,
+      "metricGroupCount": 4,
+      "metricsOmittedForUnavailable": false,
+      "order": true,
+      "overflowX": false,
+      "ready": true,
+      "viewportWidth": 276,
+      "width": 276
+    }
+  },
+  "status": "passed"
+}

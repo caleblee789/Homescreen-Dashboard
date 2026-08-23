@@ -90,7 +90,11 @@ class MigrationTests(unittest.TestCase):
         self.assertEqual(migrated["appearance"]["preset"], "Sapphire Glass")
         self.assertEqual(migrated["heatmap"]["forecast_days"], 730)
         self.assertTrue(migrated["migration"]["warnings"])
-        self.assertEqual(migrated["study"], {"pace_unit": "seconds_per_card", "show_eta": True})
+        self.assertEqual(migrated["study"], {
+            "pace_unit": "seconds_per_card",
+            "show_eta": True,
+            "retention_target": 80,
+        })
         self.assertTrue(migrated["new_cards"]["include_rescheduled"])
         self.assertEqual(migrated["heatmap"]["week_start"], 5)
         self.assertNotIn("introduced", migrated)
@@ -104,6 +108,16 @@ class MigrationTests(unittest.TestCase):
         repeated, state = prepare_migration(self.mw, migrated)
         self.assertEqual(repeated, migrated)
         self.assertIsNone(state)
+
+    def test_every_legacy_palette_alias_resets_to_sapphire(self) -> None:
+        for palette in ("lime", "olive", "ice", "magenta", "flame", "unknown", "Emerald"):
+            with self.subTest(palette=palette):
+                self.mw.col.synced["colors"] = palette
+                migrated, _state = prepare_migration(self.mw, {})
+                self.assertEqual(migrated["schema_version"], 6)
+                self.assertEqual(migrated["appearance"]["preset"], "Sapphire Glass")
+                self.assertNotIn("density", migrated["appearance"])
+                self.assertEqual(normalize_config(migrated), migrated)
 
     def test_legacy_guard_reports_only_enabled_ids(self) -> None:
         self.manager.enabled["1556734708"] = False

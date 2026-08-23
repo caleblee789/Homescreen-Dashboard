@@ -1,39 +1,56 @@
-# Home Dashboard - Overhaul
+# Home Screen Dashboard settings
 
-Use **Tools → Caleb M. Add-ons Settings → Home Dashboard - Overhaul settings**.
+Open the editor from **Tools → Home Screen Dashboard settings**. The calendar
+gear opens **Calendar & data** directly.
 
-The visual editor includes all supported settings, section-specific production
-renderer previews, Month/Year controls, local event management, and staged Bible
-verse management. It follows the staged dashboard preset immediately but writes
-nothing until **Save changes**. Dirty-close prompts, safe section resets, and
-conflict-aware three-way merges protect saved and unknown future keys. Direct
-JSON editing remains available for recovery; invalid values are normalized.
+Schema 6 keeps exactly three layout roles in the built-in hierarchy:
+`study_calendar`, `summary_metrics`, and `bible_verse`. Legacy selected-date,
+due-deck, and dashboard card-preview roles are removed during normalization and
+are never recreated. Unknown unrelated keys are retained.
 
-The Calendar page explains date semantics: study counts and due forecasts follow
-the configured rollover, while events retain their civil-calendar dates.
-This explanation is intentionally kept out of the compact dashboard preview.
+`appearance.preset` accepts `Sapphire Glass`, `Graphite`, `Emerald`, or `High
+Contrast`. `appearance.mode` accepts `auto`, `light`, or `dark`.
+`appearance.opacity` accepts 70–100, while the renderer applies a stable page
+scrim and a 91% effective minimum for text-bearing panels. Decorative
+background transparency never makes panel text translucent.
+`appearance.text_scale` accepts 90–150.
 
-Schema 3 stores the last view and week start under `heatmap`, the rescheduled-card
-preference under `new_cards`, and the ETA toggle under `study`. The existing
-`visibility.remaining` key controls the complete Today’s Progress group; its
-internal name is intentionally unchanged for compatibility. `study.show_eta`
-controls only the ETA row in Today. No progress-specific key or snapshot field is
-required.
+`heatmap.presets_by_theme` stores an independent completion ramp for every
+dashboard theme:
 
-The selected-date Study Insight rail reuses the existing Calendar history,
-forecast, deleted-card, manual-reschedule, and excluded-deck settings. It does not
-add a configuration key: today/past insights come from full scheduling-day
-`revlog` data, and future insights come from the configured due forecast.
+- Sapphire Glass: Sapphire, Amethyst, Glacier, Sea Glass
+- Graphite: Slate, Steel, Plum, Mint
+- Emerald: Emerald, Jade, Moss, Lagoon
+- High Contrast: Cyan, Gold, Magenta, Monochrome
 
-Schema 2's Introduced visibility, week start, and estimate toggle migrate
-automatically; obsolete lookback, multiplier, period, and custom-summary keys are
-removed. Legacy `calendar_mode` values are migrated to Year and removed on the
-next save. Version 1.5.3 does not bump schema 3.
+An unknown or legacy value resets only that theme to its first preset. Switching
+dashboard themes restores the last valid ramp saved for that theme.
 
-Today’s Progress is calculated at render time from current scheduling-day answers and
-the actionable `queue.new`, `queue.learning`, and `queue.review` counts. Buried
-counts are deliberately separate and do not contribute to the bar, percentage,
-Total remaining, or ETA.
+`heatmap.calendar_view` accepts `month` or `year`; `week_start` accepts 0–6.
+History, forecast, manual-reschedule, deleted-card, and deck-exclusion options
+form one scope shared by calendar counts and their exact Browser targets.
+`forecast_days: 0` or `show_due_forecast: false` retains Today’s due value but
+omits unsupported future due rows and actions.
 
-The unified dashboard remains inactive while any of the five legacy source
-add-ons are enabled. This prevents duplicate information and load-order conflicts.
+`study.retention_target` accepts 50–100 and defaults to 80. It controls only the
+semantic presentation of available retention values. `study.show_eta` controls
+the Today’s Session ETA row.
+
+The compact context bar has no visibility or placement setting. It always
+belongs to the calendar card and distinguishes the selected date, an event on
+that date, and the global next event. Past/current dates retain Reviewed and
+future dates retain Due; the applicable action is disabled with a reason when
+its exact card set is empty or unavailable. Most missed remains hidden until an
+eligible Again answer is confirmed.
+
+Collection-backed preview figures use the most recent saved Home snapshot.
+Staged display, event, heatmap, and Bible changes update the production-rendered
+Live preview immediately but write nothing until Save.
+
+When `bible.theme_aware_color` is enabled, the stored `bible.font_color` is
+preserved while its input and swatch are disabled. Rotation accepts the existing
+supported values and invalid/missing rotation normalizes to `daily`.
+
+The add-on performs a one-time source migration and remains paused while any
+legacy source add-on is enabled. Direct JSON editing remains available for
+recovery; values are normalized on load and save.

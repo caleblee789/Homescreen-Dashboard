@@ -1,5 +1,154 @@
 # Changelog
 
+## 1.7.0 — 2026-08-21
+
+- Completed the second-pass Settings release audit: the editor now uses a true
+  header/body/footer grid, contrast-safe native controls with vector select
+  chevrons, keyboard-operable segmented choices, compact painted switches, and
+  bounded intermediate fields that reflow safely at 150% application text.
+- Reorganized the combined Dashboard into Appearance, Content & study metrics,
+  and Calendar & data; separated visible sections from study calculations; and
+  repaired legacy Calendar routing so the complete target heading remains in
+  view after responsive layout settles.
+- Replaced fixed preview canvases with content-sized Current section / Full
+  dashboard and Fit / Actual size previews. Bible preview uses the selected
+  staged verse without sample-data copy, while Dashboard labels deterministic
+  fallback facts only when live collection facts are unavailable.
+- Moved event actions into per-row overflow menus, added a centered empty state,
+  made the verse library incremental, collapsed inactive custom-color controls,
+  and removed empty minimum height from About cards.
+- Added component-shaped loading skeletons, delayed and retryable failure states,
+  a diagnostics route, and controlled-restart QA that waits for the finished
+  dashboard before proving calendar view, week start, palette, visibility, and
+  migration-preserved local data.
+
+- Replaced the large selected-date details workspace with a compact Calendar
+  context bar shared by Month, Year, narrow layouts, and the production Settings
+  preview. It distinguishes the selected date, an event on that date, and the
+  globally calculated next event; supports direct exact-event editing; keeps
+  Reviewed or Due visible for the appropriate date type with an explanatory
+  disabled state when no exact cards exist; and reveals Most missed only after
+  an eligible Again answer.
+- Removed the dashboard card-preview list, due-deck breakdown, separate events
+  column, per-row Browser actions, expansion control, settings toggle, layout
+  slot, preview data, and eager card-content loading. Most-missed IDs are now
+  resolved only after an eligible date is selected and retain Again-count,
+  total-answer, and stable-card-ID ordering in the Browser.
+- Enforced omission-based rendering for unsupported metrics and tooltip rows.
+  Tooltips now use the date as their heading, distinguish Completed reviews/New
+  cards studied from Reviews due/New cards due, use locale formatting and plural
+  rules, open on hover or keyboard focus, and remain collision-aware and pointer
+  inert.
+- Added 16 independent theme-specific completion ramps with authored light/dark
+  empty, five intensity, foreground, and outside-month tokens. Calendar & data
+  uses visual preset cards and remembers one ramp per theme.
+- Made the quiet due band encode relative load using the 90th percentile of
+  positive full-horizon counts and square-root scaling. Low, medium, and high
+  density/opacity remain legible without letting one outlier flatten the
+  forecast, and the due legend stays separate from completion intensity.
+- Clarified calendar state ownership and enlarged the outlined diamond event
+  marker. Today, selection, focus, out-of-month, completion, due, and event
+  states no longer compete for the same border or fill.
+- Moved the four metric groups above the Bible, added Last 7 Days New cards
+  studied, and made Month use a 2×2 metric rail beside the calendar at 1,320 px
+  and wider, a 2×2 grid below it at intermediate widths, and one card per row at
+  narrow widths. Year stays full width with square cells and visible month
+  labels. Values are locale-separated and tabular; ETA is neutral and retention
+  remains target-aware.
+- Rebuilt Today’s Progress as an exact-count four-segment workload bar for
+  completed, New, Learning, and Review counts, with half-up completion rounding
+  and buried cards kept outside the workload and Total remaining.
+- Added a stable page scrim and a 91% effective opacity floor for text-bearing
+  panels so user-selected background transparency cannot reduce readability.
+- Rebuilt Settings preview around the production renderer with contextual and
+  full-dashboard controls. Wide, intermediate, and narrow modes reuse one field
+  structure; preview visibility no longer replaces navigation; custom Bible
+  color uses a hex field plus swatch; and the footer occupies its own grid row.
+- Upgraded configuration to schema 6 with an idempotent removal of stale
+  selected-details/card-preview slots, canonical calendar/metrics/Bible order,
+  per-theme heatmap choices, and a configured retention target.
+- Aligned buried-card counts with scheduler-relevant Progressbar semantics,
+  excluding suspended and future buried cards while distinguishing integer-day
+  and timestamp learning due values.
+- Replaced the superseded selected-panel release fixtures with a 28-criterion
+  corrected UI contract and an exact 96-state visual-regression matrix covering
+  four themes, two modes, Month/Year, compact/wide, and 100/125/150% text scale.
+
+## Superseded 1.7.0 candidate — 2026-08-15 (not shipped)
+
+- Upgraded configuration to schema 5, kept Layout Density retired, reduced the
+  appearance system to Sapphire Glass, Graphite, Emerald, and High Contrast, and
+  made every removed, legacy, malformed, or unknown palette persist as Sapphire
+  Glass. Top/Bottom Home Screen Position remains restart-safe, Panel Opacity
+  remains background-only at 70–100 with an 88 default, and missing or invalid
+  verse rotation safely defaults to Daily without changing explicit choices.
+- Added complete semantic palette roles and automated contrast/color-distance
+  gates for Completion, Review, Success, Forecast, Event, Danger, selection,
+  focus, buttons, and heatmap intensity. Sapphire retains its approved base
+  palette, Emerald separates Accent from Review and Success, and High Contrast
+  retains the CAL-05/INS-11 non-color patterns and shapes.
+- Anchored both Home Screen Position choices below Anki's native deck list: Top
+  now means first among injected add-on panels only, while native bottom actions
+  remain in their separate unchanged bar.
+- Rebuilt Settings responsiveness so only the extra-wide composition uses the
+  sidebar; intermediate and minimum widths use the section selector and optional
+  preview. The preview pane now follows measured dashboard content instead of a
+  fixed split, and preview provenance badges were removed.
+- Replaced flat deck exclusions with a collapsed cascading tri-state hierarchy,
+  ancestor-preserving search, visible-match bulk actions, minimal-root storage,
+  and removable unavailable deck identifiers.
+- Reworked Events around Search, contained sort choices, Active/Archived tabs, a
+  compact Add Event action, a full-width list, wrapping contextual actions, and
+  destination-tab reselection with staged archive/restore feedback.
+- Simplified About to manifest-derived product, version, supported Anki, license,
+  privacy, Scripture, neutral help, third-party notices, and recovery guidance.
+
+- Replaced renderer-side numeric defaults and reconciliation with one typed
+  dashboard-facts authority for Calendar, tooltips, selected-date details,
+  filtered statistics, exact Browse targets, and saved Settings previews.
+- Reorganized statistics into Today’s Progress, Today’s Session, Last 7 Days,
+  and All-Time. Last 7 Days contains exactly Cards studied, Retention, and Again
+  rate; All-Time adds Avg cards/day, Active days, both streaks, Lifetime
+  retention, and Lifetime cards studied. Buried counts remain a compact
+  non-workload summary within Today’s Progress.
+- Made the scheduler cutoff authoritative for Today, streaks, due work, and
+  navigation; applied one deck-exclusion scope to Calendar, details, Today,
+  Today’s Progress, Today’s Session, Last 7 Days, All-Time, buried summaries,
+  Browse, and Settings previews; and added exact targetless states for deleted,
+  no-history, and no-due results.
+- Unified Reviews due, progress, percentage, ETA, tooltips, Browse, and previews
+  on scoped raw scheduled demand without reducing review counts for daily limits.
+- Added coalesced revisioned refreshes for answers and collection operations,
+  explicit Settings/event invalidation, stale-result rejection, retained-data
+  updating states, retry handling, and a single daily-rollover timer.
+- Replaced Month breakpoint cliffs with measured intrinsic composition and added
+  a capacity-driven 12-month Year layout with unique dates, cross-boundary
+  keyboard navigation, and one persistent movable details component.
+- Replaced every in-cell event title/count treatment with one accessible plain
+  diamond while retaining complete inert event names in tooltips, details, and
+  management.
+- Made selected-date details persistent with the current scheduling day selected
+  by default; removed the current-day summary boxes; and replaced question
+  snippets with a compact three-row Most Missed list using normalized text-only
+  answer summaries, bounded front/image/equation fallbacks, deck breadcrumbs,
+  right-aligned Again counts, one four-line disclosure, and controller-owned
+  per-card Browser actions. Source HTML, CSS, scripts, controls, and dimensions
+  cannot style or execute inside the dashboard.
+- Replaced Settings sample figures with a saved-data preview contract: staged
+  appearance, layout, visibility, events, and verse changes remain visible,
+  while collection-backed figures use the canonical Home snapshot and remain
+  explicitly unavailable before Home has loaded one.
+- Updated the event-name helper and About surface with release-accurate,
+  privacy-forward copy, neutral project/support links, complete third-party
+  attribution, and rollback guidance without internal implementation details.
+- Added a deterministic, fail-closed candidate scenario contract for the full
+  stable surface registry, including Most Missed safety/responsiveness, all four
+  themes, supported opacity/background contexts, restart, and schema-5 fixtures.
+- Added separate pending-contract and completed-evidence validation for the
+  exact-once candidate set; release mode verifies exact package bytes, every
+  registered raw capture, per-state and interaction reports, complete indexed
+  contact sheets, fixture identity, and the pinned immutable-baseline digest.
+
 ## 1.5.3 — 2026-08-15
 
 - Fixed first-load, reload, and restart insight requests by waiting for Anki's

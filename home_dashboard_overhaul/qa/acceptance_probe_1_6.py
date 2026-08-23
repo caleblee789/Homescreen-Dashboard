@@ -667,7 +667,7 @@ def verify_restart_cache() -> None:
                 item.get("name") == "Concurrent manager event"
                 for item in controller().config["events"]["items"]
             ),
-            "schema_3_preserved": controller().config.get("schema_version") == 3,
+            "schema_4_preserved": controller().config.get("schema_version") == 4,
             "update_sentinel_preserved": UPDATE_SENTINEL.is_file(),
             "timer_active": controller().calendar_refresh_timer.isActive(),
             "timer_interval_ms": controller().calendar_refresh_timer.interval(),
@@ -750,7 +750,7 @@ def finalize_acceptance(dialog: Any) -> None:
                 "subscribed_error_visible",
                 "private_url_absent_from_source_rows",
                 "local_events_preserved",
-                "schema_3_preserved",
+                "schema_4_preserved",
                 "update_sentinel_preserved",
                 "timer_active",
             )

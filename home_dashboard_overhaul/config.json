@@ -1,12 +1,21 @@
 {
-  "schema_version": 3,
+  "schema_version": 6,
   "appearance": {
     "preset": "Sapphire Glass",
     "mode": "auto",
     "opacity": 88,
     "blur": 18,
-    "density": "comfortable",
     "text_scale": 100
+  },
+  "home_screen": {
+    "position": "top"
+  },
+  "layout": {
+    "order": [
+      "study_calendar",
+      "summary_metrics",
+      "bible_verse"
+    ]
   },
   "visibility": {
     "today": true,
@@ -19,7 +28,8 @@
   },
   "study": {
     "pace_unit": "seconds_per_card",
-    "show_eta": true
+    "show_eta": true,
+    "retention_target": 80
   },
   "new_cards": {
     "include_rescheduled": true
@@ -33,7 +43,13 @@
     "exclude_manual_reschedules": true,
     "exclude_deleted_cards": false,
     "excluded_deck_ids": [],
-    "show_due_forecast": true
+    "show_due_forecast": true,
+    "presets_by_theme": {
+      "Sapphire Glass": "Sapphire",
+      "Graphite": "Slate",
+      "Emerald": "Emerald",
+      "High Contrast": "Cyan"
+    }
   },
   "events": {
     "sort": "ascending",

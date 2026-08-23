@@ -1,86 +1,86 @@
-# Home Dashboard - Overhaul 1.5.3
+# Home Screen Dashboard 1.7.0
 
-This Anki 26.8 add-on provides a compact calendar-first Deck Browser dashboard.
-Its primary card combines a Month/Year review calendar, due forecast, integrated
-event details, an adaptive selected-day insight rail, and all nonduplicate study
-metrics. A rotating Bible verse is the only second card.
+Home Screen Dashboard is a calendar-first Deck Browser dashboard for Anki
+Desktop 26.8. Its production hierarchy is deliberately fixed:
 
-The Year heatmap opens on first use. Switching Month/Year is remembered without
-rerunning collection analytics or advancing Bible rotation. At full-screen Month
-widths, the calendar and a persistent date-details rail form one workspace; Year
-and smaller windows use the same in-flow details structure beneath the calendar.
-No details surface covers dates, statistics, Anki's toolbar, or the Bible card.
+1. Study Calendar with Month/Year controls, one shared calendar grid, separate
+   completion and due legends, and a compact context bar.
+2. Today’s Progress, Today’s Session, Last 7 Days, and All Time.
+3. A full-width Bible verse.
 
-Selected-date details begin with a compact contextual summary: past dates show
-Completed Reviews and New Cards Studied, today adds current Cards Due, and future
-dates emphasize Cards Due. Below it, today and past dates rank up to three cards
-by `Again` count across the complete Anki
-scheduling day, then by latest miss and card ID. Each row contains a sanitized
-question prompt, the full deck path, and `Again ×N`. For future dates it ranks up
-to three decks by review cards due. The primary action adapts to the state—card
-IDs use a controller-owned `cid:` query when available and otherwise fall back to
-the selected date’s validated Anki Browser query—while **Manage this date** and
-civil-date events remain unchanged. Days with no study, study without misses,
-deleted missed cards, no due work, or unavailable data use explicit nonnumeric
-states without removing date-scoped Browse or event management.
+The calendar context bar explicitly distinguishes the selected date, an event
+on that date, and the globally calculated next event. An event on the selected
+date opens that exact record for editing. Past/current dates expose Reviewed;
+future dates expose Due. Those date-appropriate Browser actions stay visible
+but disabled with an explanatory tooltip when no exact card set exists, while
+Most missed appears only after an eligible Again answer is confirmed. The
+dashboard does not render card previews, a selected-date details panel, a
+due-deck list, or a separate events column.
 
-Partial collection failures never appear as real zeroes: affected Today,
-remaining, buried, history, forecast, and date-summary layers use an em dash or
-an explicit unavailable state. If every Home section is hidden, a small recovery
-card remains so settings are always keyboard reachable.
+Calendar cells use one visual responsibility per state: completion volume is the
+authored heatmap fill, relative due volume is a quiet bottom band, an event is a
+diamond, Today is a compact date-number badge, selection is a 2 px border,
+keyboard focus is an external ring, and outside-month dates use muted text with
+a dashed border. Month and Year share the same day model and full-horizon due
+normalization. The due reference is the 90th percentile of positive forecast
+counts; square-root scaling maps load to low, medium, and high density/opacity
+without letting one outlier flatten the forecast.
 
-Month view reserves separate date-number and event rows, while Year uses stable
-intensity thresholds, weekday guides, and separate shape/pattern cues for events
-and scheduled due work. Today, selection, and keyboard focus remain independently
-visible across all presets.
-Hovering or focusing a date shows a compact preview: completed reviews and new
-cards studied for current/past dates, or cards due for future dates. The Today
-group reports Total Cards Studied, New Cards Studied, Time studied, Pace, and an
-optional local finish-clock ETA.
+The four dashboard themes are Sapphire Glass, Graphite, Emerald, and High
+Contrast. Calendar & data provides four independently saved completion ramps
+for each theme. Every ramp has authored light/dark empty, five-level, foreground,
+and outside-month tokens; the levels are not opacity variants of one accent.
 
-Today’s Progress adds a thin display-only bar directly below its heading. Its
-segments are Completed, New, Learning, and Review, in that order. Completion is
-the current scheduling-day answer count divided by that count plus the live actionable
-New, Learning, and Review queue. Its rows report Percent Complete, each queue,
-using the exact labels New remaining, Learning remaining, and Reviews remaining,
-followed by Total remaining. ETA in Today uses the day's pace from answer 10
-onward, otherwise lifetime pace; remaining new cards use their lifetime
-first-answer timing. A day with no answers and no actionable work, or unavailable
-Today/queue data, is shown as neutral rather than complete.
+Metric values are locale-formatted, tabular, right-aligned, and omitted when
+unsupported. At 1,320 px and wider, Month places a 2×2 metric rail beside the
+calendar. Intermediate layouts place the 2×2 grid below the calendar, narrow
+layouts use one card per row, and Year remains full width with fixed square
+cells and visible month labels. Last 7 Days includes New cards studied
+immediately after Cards studied. Today’s Progress uses a count-derived
+four-segment workload bar; buried cards remain outside the workload. ETA remains
+neutral, while retention uses the configured target to choose its semantic
+state.
 
-The separate Buried Cards group counts collection-wide new,
-learning/relearning, and review cards in both buried queues. Those counts never
-affect Today’s Progress, Total remaining, or ETA. Anki rollover semantics are
-documented on the Calendar settings page instead of occupying the date-details
-surface.
+Open settings from Anki’s Tools menu or the calendar gear. The editor has four
+pages: Dashboard, Events, Bible verse, and About & support. Dashboard combines
+Appearance, Content & study metrics, and Calendar & data in three scoped areas;
+visibility and study calculations are separated inside the middle area. At
+1,180 px and wider, Settings shows a vertical rail and contextual Dashboard or
+Bible preview; from 760–1,179 px it uses horizontal tabs with the preview behind
+Preview; below 760 px it uses a four-item selector. Events
+and About & support always use the full editor width. The production renderer
+powers the staged preview, with Current section / Full dashboard and Fit /
+Actual size controls. The preview is content-sized, Bible uses the selected
+staged verse, and only collection-backed Dashboard fallback data receives a
+Sample data badge. Events attach Edit, Archive/Restore, and Delete to each row's
+overflow menu and use a centered empty state when no events exist.
+Staged changes do not affect Home until Save.
 
-Open the editor from **Tools → Caleb M. Add-ons Settings → Home Dashboard -
-Overhaul settings**. Its shell and content dialogs follow the staged dashboard
-preset and light/dark choice immediately. Wide windows use a grouped navigation
-rail, editor, and contextual production-rendered preview; medium and compact
-windows collapse the preview behind a labeled toggle, and compact windows use a
-top section selector. Save remains disabled until the pure settings draft is
-dirty, Cancel/Escape/close protect unsaved work, and concurrent config changes
-are merged or surfaced instead of silently overwritten. Local events remain on
-the editor's **Events** page with their existing title-plus-civil-date format,
-automatic archival, restoration, and Save-bound deletion confirmation.
-Deck Browser-only Settings, Browse, Manage, and insight actions are disabled in
-the contextual preview, while Month/Year and period controls continue to work
-locally. Manual verse rotation includes an explicit staged **Use selected as
-current** action; the chosen verse persists across restart after Save.
+Bible color editing uses an explicit Theme color / Custom color choice, a
+validated #RRGGBB field, a swatch, and an inline contrast warning. Theme color
+hides and removes the custom controls from focus without discarding the stored value. Card-header
+resets are staged and offer Undo. The non-overlay footer shows Close or Discard
+changes alongside Save changes, while the header announces dirty, saving,
+saved, and failure states.
 
-The add-on migrates the effective settings of the five local
-source add-ons once, then remains paused until all five sources are disabled to
-prevent duplicate output.
+Dashboard loading begins with component-shaped skeletons, announces a delayed
+state after 2.5 seconds, and becomes a retryable failure with a diagnostics path
+after 12 seconds. Release restart evidence waits for the fully rendered
+dashboard and reads saved values back in both Home and Settings.
 
-Rollback is immediate: disable this add-on, re-enable the five originals, and
-restart Anki. The originals and their data are never modified or removed.
+Configuration schema 6 removes legacy selected-details and dashboard-preview
+slots, places summary metrics before the Bible, adds a retention target, and
+stores one heatmap preset per theme. Migration is idempotent and preserves
+unrelated settings and relative ordering.
 
-Full-day insights are queried directly from `revlog`, so they naturally span
-multiple sessions and app restarts. Every selected date uses a validated,
-stale-safe on-demand request; the contextual review/new/due summary renders
-immediately from the cached calendar snapshot. No session hook, persistence file,
-configuration field, migration, or schema bump is introduced; version 1.5.3
-remains on configuration schema 3.
+Buried counts follow the scheduler-relevant Progressbar method: only queues -2
+and -3 are included; suspended cards are excluded; New counts type 0; Learning
+counts types 1/3 only when due by the scheduler day or rollover cutoff according
+to the due representation; Review counts type 2 only when due by today.
 
-Copyright 2026. Licensed under AGPL-3.0-or-later. See `THIRD_PARTY_NOTICES.md`.
+The unified dashboard remains inactive while a legacy source add-on is enabled,
+preventing duplicate information and load-order conflicts. External-calendar
+source work remains deferred and is not packaged.
+
+Copyright 2026. Licensed under AGPL-3.0-or-later. See
+`THIRD_PARTY_NOTICES.md` for Scripture and upstream notices.

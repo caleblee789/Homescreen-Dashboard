@@ -1,0 +1,1318 @@
+{
+  "boundary": "Renderer matrix and native macOS exact-package evidence only. Spoken VoiceOver, Windows/Linux rendering, and true OS display scaling remain separate gates.",
+  "candidate": {
+    "file": "package/home-dashboard-overhaul-1.7.0.ankiaddon",
+    "sha256": "3cdfc800de85eaa9fc59f1b06ab9169c517256299c9f174b5709c6bfbaa17ee6"
+  },
+  "contact_sheet_count": 6,
+  "contact_sheets": [
+    {
+      "dimensions": [
+        2200,
+        4310
+      ],
+      "file": "contact-sheets/01-dashboard-sapphire-glass-100-percent.png",
+      "placements": [
+        {
+          "case_id": "VR-SG-L-M-C-100",
+          "image_bounds": [
+            62,
+            264,
+            622,
+            1164
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-SG-L-M-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-SG-L-M-W-100",
+          "image_bounds": [
+            698,
+            264,
+            2138,
+            1164
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-SG-L-M-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-SG-L-Y-C-100",
+          "image_bounds": [
+            62,
+            1292,
+            622,
+            2192
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-SG-L-Y-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-SG-L-Y-W-100",
+          "image_bounds": [
+            698,
+            1292,
+            2138,
+            2192
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-SG-L-Y-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-SG-D-M-C-100",
+          "image_bounds": [
+            62,
+            2320,
+            622,
+            3220
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-SG-D-M-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-SG-D-M-W-100",
+          "image_bounds": [
+            698,
+            2320,
+            2138,
+            3220
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-SG-D-M-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-SG-D-Y-C-100",
+          "image_bounds": [
+            62,
+            3348,
+            622,
+            4248
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-SG-D-Y-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-SG-D-Y-W-100",
+          "image_bounds": [
+            698,
+            3348,
+            2138,
+            4248
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-SG-D-Y-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        }
+      ],
+      "sha256": "111bd3eea60adf35e6d9a5b25ac080b02be80eb1577cb283dc6a29508f71a467",
+      "source_scale": 1.0,
+      "title": "Home Dashboard 1.7.0 \u00b7 Sapphire Glass"
+    },
+    {
+      "dimensions": [
+        2200,
+        4310
+      ],
+      "file": "contact-sheets/02-dashboard-graphite-100-percent.png",
+      "placements": [
+        {
+          "case_id": "VR-GR-L-M-C-100",
+          "image_bounds": [
+            62,
+            264,
+            622,
+            1164
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-GR-L-M-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-GR-L-M-W-100",
+          "image_bounds": [
+            698,
+            264,
+            2138,
+            1164
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-GR-L-M-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-GR-L-Y-C-100",
+          "image_bounds": [
+            62,
+            1292,
+            622,
+            2192
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-GR-L-Y-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-GR-L-Y-W-100",
+          "image_bounds": [
+            698,
+            1292,
+            2138,
+            2192
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-GR-L-Y-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-GR-D-M-C-100",
+          "image_bounds": [
+            62,
+            2320,
+            622,
+            3220
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-GR-D-M-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-GR-D-M-W-100",
+          "image_bounds": [
+            698,
+            2320,
+            2138,
+            3220
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-GR-D-M-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-GR-D-Y-C-100",
+          "image_bounds": [
+            62,
+            3348,
+            622,
+            4248
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-GR-D-Y-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-GR-D-Y-W-100",
+          "image_bounds": [
+            698,
+            3348,
+            2138,
+            4248
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-GR-D-Y-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        }
+      ],
+      "sha256": "144b365c533fcff185e78995f95a116bffa5f0d0d4ffc7af8f9bc8f1de414d4c",
+      "source_scale": 1.0,
+      "title": "Home Dashboard 1.7.0 \u00b7 Graphite"
+    },
+    {
+      "dimensions": [
+        2200,
+        4310
+      ],
+      "file": "contact-sheets/03-dashboard-emerald-100-percent.png",
+      "placements": [
+        {
+          "case_id": "VR-EM-L-M-C-100",
+          "image_bounds": [
+            62,
+            264,
+            622,
+            1164
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-EM-L-M-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-EM-L-M-W-100",
+          "image_bounds": [
+            698,
+            264,
+            2138,
+            1164
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-EM-L-M-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-EM-L-Y-C-100",
+          "image_bounds": [
+            62,
+            1292,
+            622,
+            2192
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-EM-L-Y-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-EM-L-Y-W-100",
+          "image_bounds": [
+            698,
+            1292,
+            2138,
+            2192
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-EM-L-Y-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-EM-D-M-C-100",
+          "image_bounds": [
+            62,
+            2320,
+            622,
+            3220
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-EM-D-M-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-EM-D-M-W-100",
+          "image_bounds": [
+            698,
+            2320,
+            2138,
+            3220
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-EM-D-M-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-EM-D-Y-C-100",
+          "image_bounds": [
+            62,
+            3348,
+            622,
+            4248
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-EM-D-Y-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-EM-D-Y-W-100",
+          "image_bounds": [
+            698,
+            3348,
+            2138,
+            4248
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-EM-D-Y-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        }
+      ],
+      "sha256": "b314f04dc82a99c0f31f917f3b5375a69b342ee8419f9b05a5eb2a8cd94b659b",
+      "source_scale": 1.0,
+      "title": "Home Dashboard 1.7.0 \u00b7 Emerald"
+    },
+    {
+      "dimensions": [
+        2200,
+        4310
+      ],
+      "file": "contact-sheets/04-dashboard-high-contrast-100-percent.png",
+      "placements": [
+        {
+          "case_id": "VR-HC-L-M-C-100",
+          "image_bounds": [
+            62,
+            264,
+            622,
+            1164
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-HC-L-M-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-HC-L-M-W-100",
+          "image_bounds": [
+            698,
+            264,
+            2138,
+            1164
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-HC-L-M-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-HC-L-Y-C-100",
+          "image_bounds": [
+            62,
+            1292,
+            622,
+            2192
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-HC-L-Y-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-HC-L-Y-W-100",
+          "image_bounds": [
+            698,
+            1292,
+            2138,
+            2192
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-HC-L-Y-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-HC-D-M-C-100",
+          "image_bounds": [
+            62,
+            2320,
+            622,
+            3220
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-HC-D-M-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-HC-D-M-W-100",
+          "image_bounds": [
+            698,
+            2320,
+            2138,
+            3220
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-HC-D-M-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-HC-D-Y-C-100",
+          "image_bounds": [
+            62,
+            3348,
+            622,
+            4248
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-HC-D-Y-C-100.png",
+          "source_dimensions": [
+            560,
+            900
+          ]
+        },
+        {
+          "case_id": "VR-HC-D-Y-W-100",
+          "image_bounds": [
+            698,
+            3348,
+            2138,
+            4248
+          ],
+          "scale": 1.0,
+          "source": "captures/VR-HC-D-Y-W-100.png",
+          "source_dimensions": [
+            1440,
+            900
+          ]
+        }
+      ],
+      "sha256": "bdef4ada3f54e3b2349f31a9245d8ac7846e1185e41c5c9f295dfd917ef19f57",
+      "source_scale": 1.0,
+      "title": "Home Dashboard 1.7.0 \u00b7 High Contrast"
+    },
+    {
+      "dimensions": [
+        3544,
+        4618
+      ],
+      "file": "contact-sheets/05-exact-package-full-screen-dashboard-100-percent.png",
+      "placements": [
+        {
+          "image_bounds": [
+            62,
+            264,
+            3482,
+            2346
+          ],
+          "label": "Month \u00b7 exact package \u00b7 full-screen dashboard",
+          "scale": 1.0,
+          "source": "native-full-screen/exact-package-full-screen-month.png",
+          "source_dimensions": [
+            3420,
+            2082
+          ]
+        },
+        {
+          "image_bounds": [
+            62,
+            2474,
+            3482,
+            4556
+          ],
+          "label": "Year \u00b7 exact package \u00b7 full-screen dashboard",
+          "scale": 1.0,
+          "source": "native-full-screen/exact-package-full-screen-year.png",
+          "source_dimensions": [
+            3420,
+            2082
+          ]
+        }
+      ],
+      "sha256": "c5f099f60fa2393369b3eb7b1d873a8a2c228bbebe5d1590130949459c6cbe76",
+      "source_scale": 1.0,
+      "title": "Exact-package Home Dashboard \u00b7 full screen"
+    },
+    {
+      "dimensions": [
+        2764,
+        7670
+      ],
+      "file": "contact-sheets/06-exact-package-settings-responsive-100-percent.png",
+      "placements": [
+        {
+          "image_bounds": [
+            62,
+            264,
+            2702,
+            2064
+          ],
+          "label": "Calendar settings \u00b7 wide",
+          "scale": 1.0,
+          "source": "native-settings/settings-wide-calendar.png",
+          "source_dimensions": [
+            2640,
+            1800
+          ]
+        },
+        {
+          "image_bounds": [
+            62,
+            2192,
+            2702,
+            3992
+          ],
+          "label": "Bible verse settings \u00b7 wide",
+          "scale": 1.0,
+          "source": "native-settings/settings-wide-bible-custom.png",
+          "source_dimensions": [
+            2640,
+            1800
+          ]
+        },
+        {
+          "image_bounds": [
+            482,
+            4120,
+            2282,
+            5920
+          ],
+          "label": "Settings \u00b7 intermediate",
+          "scale": 1.0,
+          "source": "native-settings/settings-medium-preview.png",
+          "source_dimensions": [
+            1800,
+            1800
+          ]
+        },
+        {
+          "image_bounds": [
+            762,
+            6048,
+            2002,
+            7608
+          ],
+          "label": "Settings \u00b7 narrow",
+          "scale": 1.0,
+          "source": "native-settings/settings-narrow.png",
+          "source_dimensions": [
+            1240,
+            1560
+          ]
+        }
+      ],
+      "sha256": "e70d18f58ca131f7dba42e04607a192cbd7bf7f0a04aaa616c3e899e8e7d6e37",
+      "source_scale": 1.0,
+      "title": "Exact-package Settings \u00b7 responsive layouts"
+    }
+  ],
+  "exact_package": {
+    "capture_kind": "native Qt/Anki from verified disposable sync-disabled profile",
+    "full_screen": [
+      {
+        "device_pixel_ratio": 2.0,
+        "dimensions": [
+          3420,
+          2082
+        ],
+        "file": "native-full-screen/exact-package-full-screen-month.png",
+        "label": "Month \u00b7 exact package \u00b7 full-screen dashboard",
+        "observed_view": "month",
+        "sha256": "e321f4ae631e9de8fa4dea408ef73373b25455fc584cf8f34913b50cb892ed89",
+        "source_filename": "isolated-main-window-year-maximized.png",
+        "ui_scale_percent": 100
+      },
+      {
+        "device_pixel_ratio": 2.0,
+        "dimensions": [
+          3420,
+          2082
+        ],
+        "file": "native-full-screen/exact-package-full-screen-year.png",
+        "label": "Year \u00b7 exact package \u00b7 full-screen dashboard",
+        "observed_view": "year",
+        "sha256": "5be8f094469b0ad3e9b81ee9be67f74a638c148d1f765f74f06011fc54518022",
+        "source_filename": "isolated-main-window-month-maximized.png",
+        "ui_scale_percent": 100
+      }
+    ],
+    "identity": {
+      "collection_inside_run_root": true,
+      "collection_path": "<disposable-base>/Codex QA HDO PR 20260822 2238/collection.anki2",
+      "expected_profile": "Codex QA HDO PR 20260822 2238",
+      "main_window_title": "Codex QA HDO PR 20260822 2238 - Anki",
+      "pid": 70059,
+      "profile": "Codex QA HDO PR 20260822 2238",
+      "profile_matches": true,
+      "run_root": "<disposable-base>",
+      "sync_auth_present": false
+    },
+    "runtime_report": {
+      "file": "runtime-reports/runtime-report.json",
+      "sha256": "1329360e84eca64be717b8ad4e565cf3cc89e1ba2591db877602cf0b5d93667e",
+      "status": "passed"
+    },
+    "settings": [
+      {
+        "device_pixel_ratio": 2.0,
+        "dimensions": [
+          2640,
+          1800
+        ],
+        "file": "native-settings/settings-wide-calendar.png",
+        "label": "Calendar settings \u00b7 wide",
+        "sha256": "4cc6fddc66aac61b966600a9cb8893005c1c8d1ba9ca37fa9b1434d1b392f64e",
+        "ui_scale_percent": 100
+      },
+      {
+        "device_pixel_ratio": 2.0,
+        "dimensions": [
+          2640,
+          1800
+        ],
+        "file": "native-settings/settings-wide-bible-custom.png",
+        "label": "Bible verse settings \u00b7 wide",
+        "sha256": "fc62a588b709ee0120c3ddcb3a2f6a1378f055c631b5c8b61b81ed48807f25bb",
+        "ui_scale_percent": 100
+      },
+      {
+        "device_pixel_ratio": 2.0,
+        "dimensions": [
+          1800,
+          1800
+        ],
+        "file": "native-settings/settings-medium-preview.png",
+        "label": "Settings \u00b7 intermediate",
+        "sha256": "f68283b420e9e20aeede6ab7d9c53d1208d32baafde935374079d7f68b380ac5",
+        "ui_scale_percent": 100
+      },
+      {
+        "device_pixel_ratio": 2.0,
+        "dimensions": [
+          1240,
+          1560
+        ],
+        "file": "native-settings/settings-narrow.png",
+        "label": "Settings \u00b7 narrow",
+        "sha256": "f921c5855757c5068a4561607a618b8e562eeda32eaec98a33029111b4deaf6a",
+        "ui_scale_percent": 100
+      }
+    ],
+    "source_filename_note": "The probe's two maximized source filenames reflected callback order; the normalized Month/Year names above follow the visually rendered view."
+  },
+  "generated_at": "2026-08-22T22:51:00-05:00",
+  "quality_status": "clean",
+  "release": "1.7.0",
+  "renderer_matrix": {
+    "capture_kind": "current production renderer in local headless Chrome",
+    "case_count": 32,
+    "cases": [
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-SG-L-M-C-100.png",
+        "id": "VR-SG-L-M-C-100",
+        "layout": "compact",
+        "mode": "light",
+        "sha256": "260365194294d95b001c5f6b7a10c197e9a567719ac9eeaaa221025d563c41f5",
+        "text_scale_percent": 100,
+        "theme": "Sapphire Glass",
+        "url": "http://127.0.0.1:8765/?theme=Sapphire+Glass&mode=light&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-SG-L-M-W-100.png",
+        "id": "VR-SG-L-M-W-100",
+        "layout": "wide",
+        "mode": "light",
+        "sha256": "8afe4fe927e8739f6a5bce94658ff2dcd200e0d164d245ed58512955a0b7058d",
+        "text_scale_percent": 100,
+        "theme": "Sapphire Glass",
+        "url": "http://127.0.0.1:8765/?theme=Sapphire+Glass&mode=light&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-SG-L-Y-C-100.png",
+        "id": "VR-SG-L-Y-C-100",
+        "layout": "compact",
+        "mode": "light",
+        "sha256": "6f6c3b4a54722ca61e6645e4cd7e0893f6e745ca64ee2646b023ebbbaa6a08f0",
+        "text_scale_percent": 100,
+        "theme": "Sapphire Glass",
+        "url": "http://127.0.0.1:8765/?theme=Sapphire+Glass&mode=light&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-SG-L-Y-W-100.png",
+        "id": "VR-SG-L-Y-W-100",
+        "layout": "wide",
+        "mode": "light",
+        "sha256": "db59f4cd30a8fc877fa10a890fc9a35ff4c8db5727863207043d4d6258419958",
+        "text_scale_percent": 100,
+        "theme": "Sapphire Glass",
+        "url": "http://127.0.0.1:8765/?theme=Sapphire+Glass&mode=light&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-SG-D-M-C-100.png",
+        "id": "VR-SG-D-M-C-100",
+        "layout": "compact",
+        "mode": "dark",
+        "sha256": "5bca0b2dee4dc7501cf564c39fca80ca9148f9326bc31b20a3dbab9d3f271fbf",
+        "text_scale_percent": 100,
+        "theme": "Sapphire Glass",
+        "url": "http://127.0.0.1:8765/?theme=Sapphire+Glass&mode=dark&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-SG-D-M-W-100.png",
+        "id": "VR-SG-D-M-W-100",
+        "layout": "wide",
+        "mode": "dark",
+        "sha256": "df18190540e45b9f0c6e460a2e5e5e1b249bab8338d591ecd052b6b73bce6e86",
+        "text_scale_percent": 100,
+        "theme": "Sapphire Glass",
+        "url": "http://127.0.0.1:8765/?theme=Sapphire+Glass&mode=dark&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-SG-D-Y-C-100.png",
+        "id": "VR-SG-D-Y-C-100",
+        "layout": "compact",
+        "mode": "dark",
+        "sha256": "dadadfa6fed9d6ad554e7c41c56a564c6fb3cf9cb113c23f12b689af5c355c75",
+        "text_scale_percent": 100,
+        "theme": "Sapphire Glass",
+        "url": "http://127.0.0.1:8765/?theme=Sapphire+Glass&mode=dark&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-SG-D-Y-W-100.png",
+        "id": "VR-SG-D-Y-W-100",
+        "layout": "wide",
+        "mode": "dark",
+        "sha256": "b66bf4a64d797e27fe24e7e1eb589293d42e2d505cdc54817a89e420e85d241d",
+        "text_scale_percent": 100,
+        "theme": "Sapphire Glass",
+        "url": "http://127.0.0.1:8765/?theme=Sapphire+Glass&mode=dark&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-GR-L-M-C-100.png",
+        "id": "VR-GR-L-M-C-100",
+        "layout": "compact",
+        "mode": "light",
+        "sha256": "213f7c7a03f7d0e76fb5ea0073e5823d7c99918dfebd01991e310a8aeba68c58",
+        "text_scale_percent": 100,
+        "theme": "Graphite",
+        "url": "http://127.0.0.1:8765/?theme=Graphite&mode=light&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-GR-L-M-W-100.png",
+        "id": "VR-GR-L-M-W-100",
+        "layout": "wide",
+        "mode": "light",
+        "sha256": "f8af29f1f6246cff96d7fa3fff6cd21e5c764b90e078fd49770ee437925036b7",
+        "text_scale_percent": 100,
+        "theme": "Graphite",
+        "url": "http://127.0.0.1:8765/?theme=Graphite&mode=light&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-GR-L-Y-C-100.png",
+        "id": "VR-GR-L-Y-C-100",
+        "layout": "compact",
+        "mode": "light",
+        "sha256": "5dcd51a0b0554ea6b3379326ecae3ad97df91b7544777539267b76e1c73246db",
+        "text_scale_percent": 100,
+        "theme": "Graphite",
+        "url": "http://127.0.0.1:8765/?theme=Graphite&mode=light&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-GR-L-Y-W-100.png",
+        "id": "VR-GR-L-Y-W-100",
+        "layout": "wide",
+        "mode": "light",
+        "sha256": "27be6a4a1d9f0db42d5419ff2cfc4cdc3d75bf935f8f996ea12d0b3d1dc1f936",
+        "text_scale_percent": 100,
+        "theme": "Graphite",
+        "url": "http://127.0.0.1:8765/?theme=Graphite&mode=light&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-GR-D-M-C-100.png",
+        "id": "VR-GR-D-M-C-100",
+        "layout": "compact",
+        "mode": "dark",
+        "sha256": "b9163d2e190c97975e4aed14118454d997749638a54872fd7539680d02f15b33",
+        "text_scale_percent": 100,
+        "theme": "Graphite",
+        "url": "http://127.0.0.1:8765/?theme=Graphite&mode=dark&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-GR-D-M-W-100.png",
+        "id": "VR-GR-D-M-W-100",
+        "layout": "wide",
+        "mode": "dark",
+        "sha256": "a5d93e1fa547f74e48076e66491f497bfbdfebb03f82031e09c4a84f1025458e",
+        "text_scale_percent": 100,
+        "theme": "Graphite",
+        "url": "http://127.0.0.1:8765/?theme=Graphite&mode=dark&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-GR-D-Y-C-100.png",
+        "id": "VR-GR-D-Y-C-100",
+        "layout": "compact",
+        "mode": "dark",
+        "sha256": "95ad61f135f26498ddd80cfd1ebbb4813f7a0049955dd2037e3ae5d20f6a2783",
+        "text_scale_percent": 100,
+        "theme": "Graphite",
+        "url": "http://127.0.0.1:8765/?theme=Graphite&mode=dark&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-GR-D-Y-W-100.png",
+        "id": "VR-GR-D-Y-W-100",
+        "layout": "wide",
+        "mode": "dark",
+        "sha256": "a917e42547bbc3a79e6fd0e0a7482f8ca27439543e5d84da87fffd592a4a14d0",
+        "text_scale_percent": 100,
+        "theme": "Graphite",
+        "url": "http://127.0.0.1:8765/?theme=Graphite&mode=dark&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-EM-L-M-C-100.png",
+        "id": "VR-EM-L-M-C-100",
+        "layout": "compact",
+        "mode": "light",
+        "sha256": "abbb577a17126fefc5237b29d4cb7cf154e6870f17e8625acdf12993e4a67d65",
+        "text_scale_percent": 100,
+        "theme": "Emerald",
+        "url": "http://127.0.0.1:8765/?theme=Emerald&mode=light&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-EM-L-M-W-100.png",
+        "id": "VR-EM-L-M-W-100",
+        "layout": "wide",
+        "mode": "light",
+        "sha256": "795375f6fe2da24fb52468c8889ddea855d94c45c861ddd65d9e48de30c0dcd8",
+        "text_scale_percent": 100,
+        "theme": "Emerald",
+        "url": "http://127.0.0.1:8765/?theme=Emerald&mode=light&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-EM-L-Y-C-100.png",
+        "id": "VR-EM-L-Y-C-100",
+        "layout": "compact",
+        "mode": "light",
+        "sha256": "8517fa80775536571f7dbe85ee5df984b72e971e104670aa622e75af0d5b3888",
+        "text_scale_percent": 100,
+        "theme": "Emerald",
+        "url": "http://127.0.0.1:8765/?theme=Emerald&mode=light&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-EM-L-Y-W-100.png",
+        "id": "VR-EM-L-Y-W-100",
+        "layout": "wide",
+        "mode": "light",
+        "sha256": "157cf7b361be5c34911af12569c4e2a07ad8f9acfa2c478cfeedb612b3695e8a",
+        "text_scale_percent": 100,
+        "theme": "Emerald",
+        "url": "http://127.0.0.1:8765/?theme=Emerald&mode=light&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-EM-D-M-C-100.png",
+        "id": "VR-EM-D-M-C-100",
+        "layout": "compact",
+        "mode": "dark",
+        "sha256": "27461b014c5f5e09fba962111ee1c69980b3b10afe362d027881c4f9e4578ed6",
+        "text_scale_percent": 100,
+        "theme": "Emerald",
+        "url": "http://127.0.0.1:8765/?theme=Emerald&mode=dark&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-EM-D-M-W-100.png",
+        "id": "VR-EM-D-M-W-100",
+        "layout": "wide",
+        "mode": "dark",
+        "sha256": "76fb39dca132a55224bda7d3cdba642590ed679508078177f92982d67d748540",
+        "text_scale_percent": 100,
+        "theme": "Emerald",
+        "url": "http://127.0.0.1:8765/?theme=Emerald&mode=dark&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-EM-D-Y-C-100.png",
+        "id": "VR-EM-D-Y-C-100",
+        "layout": "compact",
+        "mode": "dark",
+        "sha256": "6dc373b327d8b0895a0266200059304cc0436e0779695fa4ba0e30d9b598d5af",
+        "text_scale_percent": 100,
+        "theme": "Emerald",
+        "url": "http://127.0.0.1:8765/?theme=Emerald&mode=dark&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-EM-D-Y-W-100.png",
+        "id": "VR-EM-D-Y-W-100",
+        "layout": "wide",
+        "mode": "dark",
+        "sha256": "efeb7c867c5fa581833576323327fdc0e8d0a96c733f0e15e486ae3381f1c14b",
+        "text_scale_percent": 100,
+        "theme": "Emerald",
+        "url": "http://127.0.0.1:8765/?theme=Emerald&mode=dark&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-HC-L-M-C-100.png",
+        "id": "VR-HC-L-M-C-100",
+        "layout": "compact",
+        "mode": "light",
+        "sha256": "09921f588b7a4004bfbc57334e39571408e0a09a4bd446e1cdbc320a8eb06c77",
+        "text_scale_percent": 100,
+        "theme": "High Contrast",
+        "url": "http://127.0.0.1:8765/?theme=High+Contrast&mode=light&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-HC-L-M-W-100.png",
+        "id": "VR-HC-L-M-W-100",
+        "layout": "wide",
+        "mode": "light",
+        "sha256": "959ef10b5ed91df1acd1b355d1fb4c8077c05219b094ad41beb2241526d3313a",
+        "text_scale_percent": 100,
+        "theme": "High Contrast",
+        "url": "http://127.0.0.1:8765/?theme=High+Contrast&mode=light&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-HC-L-Y-C-100.png",
+        "id": "VR-HC-L-Y-C-100",
+        "layout": "compact",
+        "mode": "light",
+        "sha256": "8f038b488d42b1bde57f19f43804f1bcb16bbd46ab03836c3dd76c27cafb281f",
+        "text_scale_percent": 100,
+        "theme": "High Contrast",
+        "url": "http://127.0.0.1:8765/?theme=High+Contrast&mode=light&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-HC-L-Y-W-100.png",
+        "id": "VR-HC-L-Y-W-100",
+        "layout": "wide",
+        "mode": "light",
+        "sha256": "d7aa03274b1e643f76c373b2c4ac4ff2abf3b06ac7d272141c9783e7080661c6",
+        "text_scale_percent": 100,
+        "theme": "High Contrast",
+        "url": "http://127.0.0.1:8765/?theme=High+Contrast&mode=light&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-HC-D-M-C-100.png",
+        "id": "VR-HC-D-M-C-100",
+        "layout": "compact",
+        "mode": "dark",
+        "sha256": "6d5d6e20507afdc48b0918731143233919694f49dbcbdd5cd8a63c9b133dcbaa",
+        "text_scale_percent": 100,
+        "theme": "High Contrast",
+        "url": "http://127.0.0.1:8765/?theme=High+Contrast&mode=dark&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-HC-D-M-W-100.png",
+        "id": "VR-HC-D-M-W-100",
+        "layout": "wide",
+        "mode": "dark",
+        "sha256": "b80894e759c8fd7f8a6ef0f78c8d864635ac8b0426eb4b8468cc115698e6443b",
+        "text_scale_percent": 100,
+        "theme": "High Contrast",
+        "url": "http://127.0.0.1:8765/?theme=High+Contrast&mode=dark&view=month&scale=100",
+        "view": "month"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          560,
+          900
+        ],
+        "file": "captures/VR-HC-D-Y-C-100.png",
+        "id": "VR-HC-D-Y-C-100",
+        "layout": "compact",
+        "mode": "dark",
+        "sha256": "16634d10a79b92cd57b7bd93fc4f9358b94d0a78037dadb6bc713b6ec742a59e",
+        "text_scale_percent": 100,
+        "theme": "High Contrast",
+        "url": "http://127.0.0.1:8765/?theme=High+Contrast&mode=dark&view=year&scale=100",
+        "view": "year"
+      },
+      {
+        "browser_zoom_percent": 100,
+        "device_scale_factor": 1,
+        "dimensions": [
+          1440,
+          900
+        ],
+        "file": "captures/VR-HC-D-Y-W-100.png",
+        "id": "VR-HC-D-Y-W-100",
+        "layout": "wide",
+        "mode": "dark",
+        "sha256": "4198c3af765849f4a68597e3306770b540d506e88d426d7a5dad7efa6e497baa",
+        "text_scale_percent": 100,
+        "theme": "High Contrast",
+        "url": "http://127.0.0.1:8765/?theme=High+Contrast&mode=dark&view=year&scale=100",
+        "view": "year"
+      }
+    ],
+    "source": "../visual_regression_matrix_1_7_0.json",
+    "source_sha256": "0d759bc1a7b55d38720f11e497a211c07f2e207dcb0654c75488917aae76559c"
+  },
+  "scale_policy": {
+    "allowed_ui_scale_percent": [
+      100
+    ],
+    "excluded_ui_scales_percent": [
+      125,
+      150,
+      200
+    ],
+    "native_anki_application_scale_percent": 100,
+    "native_retina_device_pixel_ratio": 2.0,
+    "renderer_browser_zoom_percent": 100,
+    "renderer_device_scale_factor": 1,
+    "renderer_text_scale_percent": 100
+  },
+  "schema_version": 1,
+  "scope": "Updated final-release dashboard contact sheets at 100% only"
+}

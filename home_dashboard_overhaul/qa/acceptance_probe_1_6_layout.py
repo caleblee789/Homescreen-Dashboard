@@ -276,10 +276,10 @@ var root=document.getElementById('hdo-dashboard');
 var region=root&&root.querySelector('.hdo-calendar-region');
 var groups=root?Array.from(root.querySelectorAll('.hdo-stat-group')):[];
 var groupGrid=root&&root.querySelector('.hdo-stat-groups');
-var today=root&&root.querySelector('#hdo-today-title');
+var today=root&&root.querySelector('#hdo-session-title');
 var todayGroup=today&&today.closest('.hdo-stat-group');
 var todayStats=todayGroup?Array.from(todayGroup.querySelectorAll('.hdo-stat')):[];
-var progress=root&&root.querySelector('#hdo-remaining-title');
+var progress=root&&root.querySelector('#hdo-progress-title');
 var progressGroup=progress&&progress.closest('.hdo-stat-group');
 var progressStats=progressGroup?Array.from(progressGroup.querySelectorAll('.hdo-stat')):[];
 var progressBar=progressGroup&&progressGroup.querySelector('.hdo-progress-bar');
@@ -309,8 +309,8 @@ var result={
   todayMetricCount:todayStats.length,
   todayVisualRows:new Set(todayStats.map(function(item){return Math.round(item.getBoundingClientRect().top);})).size,
   todayLabels:todayStats.map(function(item){return item.querySelector('dt').textContent.trim();}),
-  todayValue:valueFor('Total Cards Studied'),
-  newCardsStudiedValue:valueFor('New Cards Studied'),
+  todayValue:valueFor('Cards studied'),
+  newCardsStudiedValue:valueFor('New cards'),
   paceValue:valueFor('Pace'),
   etaValue:valueFor('ETA'),
   etaCount:root?Array.from(root.querySelectorAll('.hdo-stat dt')).filter(function(item){return item.textContent.trim()==='ETA';}).length:0,
@@ -329,7 +329,7 @@ var result={
   progressValueNow:progressBar&&progressBar.getAttribute('aria-valuenow'),
   progressRole:progressBar&&progressBar.getAttribute('role'),
   progressInteractive:!!(progressBar&&(progressBar.hasAttribute('tabindex')||progressBar.onclick)),
-  buriedLabels:(root?Array.from(root.querySelectorAll('#hdo-buried-title + dl dt')):[]).map(function(item){return item.textContent.trim();}),
+  buriedSummary:(root&&root.querySelector('[data-hdo-buried-summary]'))?root.querySelector('[data-hdo-buried-summary]').textContent.trim():'',
   statValuesVisible:groups.every(function(group){return Array.from(group.querySelectorAll('dd')).every(function(value){var r=value.getBoundingClientRect();var g=group.getBoundingClientRect();return r.left>=g.left-1&&r.right<=g.right+1&&r.bottom<=g.bottom+1;});})
 };
 return JSON.stringify(result);
@@ -495,15 +495,26 @@ def wait_for_answers(expected: int, callback: Callable[[], None], attempt: int =
     try:
         controller = mw._home_dashboard_overhaul_controller
         snapshot = controller.snapshot
-        if snapshot and snapshot.today.answers == expected and not snapshot.errors:
+        facts = snapshot.facts if snapshot is not None else None
+        today = facts.today.value if facts is not None and facts.today.is_available else None
+        if today is not None and today.answers == expected:
             callback()
             return
         if attempt >= 50:
             raise RuntimeError(
-                "Snapshot did not reach {} answers; got {} with errors {}".format(
+                "Snapshot did not reach {} answers; got {} with availability {}".format(
                     expected,
-                    snapshot.today.answers if snapshot else None,
-                    snapshot.errors if snapshot else None,
+                    today.answers if today is not None else None,
+                    {
+                        name: getattr(state.status, "value", str(state.status))
+                        for name, state in (
+                            ("today", facts.today),
+                            ("queue", facts.queue),
+                            ("buried", facts.buried),
+                            ("events", facts.events),
+                            ("long_term", facts.long_term),
+                        )
+                    } if facts is not None else None,
                 )
             )
         if attempt % 6 == 5:
@@ -515,27 +526,33 @@ def wait_for_answers(expected: int, callback: Callable[[], None], attempt: int =
 
 def snapshot_values() -> dict[str, Any]:
     snapshot = mw._home_dashboard_overhaul_controller.snapshot
+    facts = snapshot.facts
+    if not all(state.is_available for state in (facts.today, facts.queue, facts.buried)):
+        raise RuntimeError("Snapshot metrics are not available")
+    today = facts.today.value
+    queue = facts.queue.value
+    buried = facts.buried.value
     return {
         "today": {
-            "answers": snapshot.today.answers,
-            "new_cards_studied": snapshot.today.new_cards_studied,
-            "seconds": snapshot.today.seconds,
-            "pace_value": snapshot.today.pace_value,
+            "answers": today.answers,
+            "new_cards_studied": today.new_cards_studied,
+            "seconds": today.seconds,
+            "pace_value": today.pace_value,
         },
         "remaining": {
-            "new": snapshot.queue.new,
-            "learning": snapshot.queue.learning,
-            "review": snapshot.queue.review,
-            "total": snapshot.queue.total,
-            "estimated_duration_seconds": snapshot.queue.estimated_duration_seconds,
+            "new": queue.new,
+            "learning": queue.learning,
+            "review": queue.review,
+            "total": queue.total,
+            "estimated_duration_seconds": queue.estimated_duration_seconds,
         },
         "buried": {
-            "new": snapshot.buried.new,
-            "learning": snapshot.buried.learning,
-            "review": snapshot.buried.review,
+            "new": buried.new,
+            "learning": buried.learning,
+            "review": buried.review,
         },
-        "activity_rows": len(snapshot.activity),
-        "errors": snapshot.errors,
+        "day_fact_rows": len(facts.days),
+        "revision": facts.revision,
     }
 
 
@@ -756,7 +773,7 @@ def restart_ready() -> None:
         "phase_marker_present": read_json(PHASE_PATH, {}).get("phase") == 1,
         "snapshot_persisted": RESULTS.get("snapshot_after_restart") == RESULTS.get("snapshot_at_10"),
         "view_persisted": controller.config["heatmap"]["calendar_view"] == "month",
-        "schema_3_persisted": controller.config.get("schema_version") == 3,
+        "schema_5_persisted": controller.config.get("schema_version") == 5,
         "show_eta_persisted": controller.config["study"].get("show_eta") is True,
         "sync_still_disabled": bool(RESULTS.get("gates", [{}])[-1].get("sync_gate")),
     }
@@ -776,9 +793,9 @@ def complete_acceptance() -> None:
     snapshot9 = RESULTS.get("snapshot_at_9", {})
     snapshot10 = RESULTS.get("snapshot_at_10", {})
     metrics = RESULTS.get("metrics", {})
-    required_titles = ["Today", "Today’s Progress", "Buried Cards", "Consistency"]
+    required_titles = ["Today’s Progress", "Today’s Session", "Last 7 Days", "All-Time"]
     required_today_labels = [
-        "Total Cards Studied", "New Cards Studied", "Time studied", "Pace", "ETA"
+        "Cards studied", "New cards", "Time", "Pace", "ETA"
     ]
     required_progress_labels = [
         "Percent Complete", "New remaining", "Learning remaining",
@@ -885,12 +902,11 @@ def complete_acceptance() -> None:
         ),
         "new_cards_studied_copy_passed": all(
             item.get("todayLabels") == required_today_labels
-            and item.get("buriedLabels") == ["New", "Learning", "Reviews"]
+            and item.get("buriedSummary") == "Buried: 3 new · 2 learning · 7 reviews"
             for item in metrics.values()
         ),
         "show_eta_settings_copy_passed": (
-            "Show ETA" in RESULTS.get("settings_dashboard_text", "")
-            and "Show ETA in Today’s Progress" not in RESULTS.get("settings_dashboard_text", "")
+            "Show estimated completion time" in RESULTS.get("settings_dashboard_text", "")
         ),
         "event_manager_opened_and_rendered_passed": (
             RESULTS.get("event_manager", {}).get("visible") is True

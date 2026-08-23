@@ -419,15 +419,26 @@ def wait_for_answers(expected: int, callback: Callable[[], None], attempt: int =
     try:
         controller = mw._home_dashboard_overhaul_controller
         snapshot = controller.snapshot
-        if snapshot and snapshot.today.answers == expected and not snapshot.errors:
+        facts = snapshot.facts if snapshot is not None else None
+        today = facts.today.value if facts is not None and facts.today.is_available else None
+        if today is not None and today.answers == expected:
             callback()
             return
         if attempt >= 50:
             raise RuntimeError(
-                "Snapshot did not reach {} answers; got {} with errors {}".format(
+                "Snapshot did not reach {} answers; got {} with availability {}".format(
                     expected,
-                    snapshot.today.answers if snapshot else None,
-                    snapshot.errors if snapshot else None,
+                    today.answers if today is not None else None,
+                    {
+                        name: getattr(state.status, "value", str(state.status))
+                        for name, state in (
+                            ("today", facts.today),
+                            ("queue", facts.queue),
+                            ("buried", facts.buried),
+                            ("events", facts.events),
+                            ("long_term", facts.long_term),
+                        )
+                    } if facts is not None else None,
                 )
             )
         if attempt % 6 == 5:
@@ -439,27 +450,33 @@ def wait_for_answers(expected: int, callback: Callable[[], None], attempt: int =
 
 def snapshot_values() -> dict[str, Any]:
     snapshot = mw._home_dashboard_overhaul_controller.snapshot
+    facts = snapshot.facts
+    if not all(state.is_available for state in (facts.today, facts.queue, facts.buried)):
+        raise RuntimeError("Snapshot metrics are not available")
+    today = facts.today.value
+    queue = facts.queue.value
+    buried = facts.buried.value
     return {
         "today": {
-            "answers": snapshot.today.answers,
-            "new_cards_studied": snapshot.today.new_cards_studied,
-            "seconds": snapshot.today.seconds,
-            "pace_value": snapshot.today.pace_value,
+            "answers": today.answers,
+            "new_cards_studied": today.new_cards_studied,
+            "seconds": today.seconds,
+            "pace_value": today.pace_value,
         },
         "remaining": {
-            "new": snapshot.queue.new,
-            "learning": snapshot.queue.learning,
-            "review": snapshot.queue.review,
-            "total": snapshot.queue.total,
-            "estimated_duration_seconds": snapshot.queue.estimated_duration_seconds,
+            "new": queue.new,
+            "learning": queue.learning,
+            "review": queue.review,
+            "total": queue.total,
+            "estimated_duration_seconds": queue.estimated_duration_seconds,
         },
         "buried": {
-            "new": snapshot.buried.new,
-            "learning": snapshot.buried.learning,
-            "review": snapshot.buried.review,
+            "new": buried.new,
+            "learning": buried.learning,
+            "review": buried.review,
         },
-        "activity_rows": len(snapshot.activity),
-        "errors": snapshot.errors,
+        "day_fact_rows": len(facts.days),
+        "revision": facts.revision,
     }
 
 
@@ -631,7 +648,7 @@ def restart_ready() -> None:
         "phase_marker_present": read_json(PHASE_PATH, {}).get("phase") == 1,
         "snapshot_persisted": RESULTS.get("snapshot_after_restart") == RESULTS.get("snapshot_at_10"),
         "view_persisted": controller.config["heatmap"]["calendar_view"] == "month",
-        "schema_3_persisted": controller.config.get("schema_version") == 3,
+        "schema_4_persisted": controller.config.get("schema_version") == 4,
         "show_eta_persisted": controller.config["study"].get("show_eta") is True,
         "sync_still_disabled": bool(RESULTS.get("gates", [{}])[-1].get("sync_gate")),
     }
