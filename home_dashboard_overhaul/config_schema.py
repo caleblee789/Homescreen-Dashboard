@@ -19,7 +19,7 @@ from .themes import (
 from .verse import load_default_quotes
 
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 PACKAGE_ROOT = Path(__file__).resolve().parent
 DEFAULT_CONFIG_PATH = PACKAGE_ROOT / "config.json"
 DEFAULT_VERSES_PATH = PACKAGE_ROOT / "default_verses.json"
@@ -129,8 +129,6 @@ def normalize_config(raw: object) -> Dict[str, Any]:
     source = raw if isinstance(raw, Mapping) else {}
     raw_visibility = source.get("visibility", {}) if isinstance(source, Mapping) else {}
     raw_visibility = raw_visibility if isinstance(raw_visibility, Mapping) else {}
-    raw_study = source.get("study", {}) if isinstance(source, Mapping) else {}
-    raw_study = raw_study if isinstance(raw_study, Mapping) else {}
     raw_introduced = source.get("introduced", {}) if isinstance(source, Mapping) else {}
     raw_introduced = raw_introduced if isinstance(raw_introduced, Mapping) else {}
     raw_new_cards = source.get("new_cards", {}) if isinstance(source, Mapping) else {}
@@ -162,11 +160,12 @@ def normalize_config(raw: object) -> Dict[str, Any]:
 
     study = config["study"]
     study["pace_unit"] = _choice(study.get("pace_unit"), {"seconds_per_card", "cards_per_minute"}, "seconds_per_card")
-    raw_show_eta = raw_study.get("show_eta", raw_study.get("show_estimate", study.get("show_eta")))
-    study["show_eta"] = _bool(raw_show_eta, True)
     study["retention_target"] = _int(study.get("retention_target"), 80, 50, 100)
     study.pop("pace_lookback_days", None)
     study.pop("new_card_weight", None)
+    # Schema 7 makes ETA a stable Today’s Session row. Drop both known
+    # preference spellings while preserving unrelated future study keys.
+    study.pop("show_eta", None)
     study.pop("show_estimate", None)
 
     new_cards = config["new_cards"]

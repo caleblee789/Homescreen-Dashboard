@@ -50,11 +50,13 @@ DEFERRED_SOURCE_FILES = frozenset({
 })
 DEFERRED_SOURCE_PREFIXES = ("_vendor/",)
 RELEASE_CONTRACT_FILES = (
-    "qa/calendar_surface_manifest.json",
-    "qa/visual_regression_matrix_1_8_0.json",
+    "qa/calendar_surface_manifest_1_8_1.json",
+    "qa/visual_regression_matrix_1_8_1.json",
+    "qa/ui-surface-registry_1_8_1.json",
+    "qa/capture_evidence_manifest_1_8_1.json",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
-FIXED_TIMESTAMP = (2026, 8, 21, 0, 0, 0)
+FIXED_TIMESTAMP = (2026, 8, 23, 0, 0, 0)
 
 
 def _json(relative: str) -> dict:
@@ -182,8 +184,8 @@ def _validate_theme_contract(namespace: dict) -> None:
         ) for suffix in ("fill", "text")},
         *{"heat_complete_{}".format(level) for level in range(6)},
         *{"heat_complete_text_{}".format(level) for level in range(6)},
-        *{"heat_due_bg_{}".format(level) for level in range(1, 6)},
-        *{"heat_due_mark_{}".format(level) for level in range(1, 6)},
+        *{"heat_due_bg_{}".format(level) for level in range(1, 4)},
+        *{"heat_due_mark_{}".format(level) for level in range(1, 4)},
         "progress_complete", "calendar_empty_bg",
         "calendar_outside_bg", "calendar_outside_text", "calendar_future_bg",
         "calendar_future_text", "calendar_footer_bg", "calendar_today_ring",
@@ -198,7 +200,7 @@ def _validate_theme_contract(namespace: dict) -> None:
             missing = sorted(required_semantic.difference(resolved))
             if missing:
                 raise ValueError("{} {} is missing semantic roles: {}".format(theme_name, mode, ", ".join(missing)))
-            for level in range(1, 6):
+            for level in range(1, 4):
                 if _contrast(resolved["heat_due_bg_{}".format(level)], resolved["ui_text_primary"]) < 4.5:
                     raise ValueError("{} {} due level {} fails text contrast".format(theme_name, mode, level))
             for text_role in ("ui_text_primary", "ui_text_secondary", "ui_text_tertiary"):
@@ -233,21 +235,23 @@ def _validate_visual_matrix(matrix: dict) -> None:
         "theme": ("Sapphire Glass", "Graphite", "Emerald", "High Contrast"),
         "mode": ("light", "dark"),
         "view": ("month", "year"),
-        "layout": ("compact", "wide"),
-        "text_scale": (100, 125, 150),
     }
     entries = matrix.get("cases")
-    if not isinstance(entries, list) or len(entries) != 96:
-        raise ValueError("visual regression matrix must contain exactly 96 cases")
+    if not isinstance(entries, list) or len(entries) != 16:
+        raise ValueError("visual regression matrix must contain exactly 16 primary cases")
     expected = set(itertools.product(*axes.values()))
     actual = {
-        (entry.get("theme"), entry.get("mode"), entry.get("view"), entry.get("layout"), entry.get("text_scale"))
+        (entry.get("theme"), entry.get("mode"), entry.get("view"))
         for entry in entries if isinstance(entry, dict)
     }
     if actual != expected or len(actual) != len(entries):
         raise ValueError("visual regression matrix must cover the exact Cartesian product once")
-    if len({entry.get("id") for entry in entries}) != 96:
+    if len({entry.get("id") for entry in entries}) != 16:
         raise ValueError("visual regression IDs must be unique")
+    if any(entry.get("text_scale") != 100 for entry in entries):
+        raise ValueError("visual regression matrix must be calibrated only at 100 percent")
+    if matrix.get("deferred_scales_percent") != [125, 150]:
+        raise ValueError("125 and 150 percent visual calibration must stay deferred")
 
 
 def validate_sources() -> dict:
@@ -267,21 +271,25 @@ def validate_sources() -> dict:
     manifest = _json("manifest.json")
     config = _json("config.json")
     verse_data = _json("default_verses.json")
-    surface_contract = _json("qa/calendar_surface_manifest.json")
-    visual_matrix = _json("qa/visual_regression_matrix_1_8_0.json")
+    surface_contract = _json("qa/calendar_surface_manifest_1_8_1.json")
+    visual_matrix = _json("qa/visual_regression_matrix_1_8_1.json")
+    capture_contract = _json("qa/capture_evidence_manifest_1_8_1.json")
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.0":
-        raise ValueError("release artifact must use semantic version 1.8.0")
+    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.1":
+        raise ValueError("release artifact must use semantic version 1.8.1")
     if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260800):
         raise ValueError("release must be pinned to Anki 26.8")
-    if config.get("schema_version") != 6:
-        raise ValueError("config schema must be version 6")
+    if config.get("schema_version") != 7:
+        raise ValueError("config schema must be version 7")
     if config.get("layout", {}).get("order") != ["study_calendar", "summary_metrics", "bible_verse"]:
         raise ValueError("default hierarchy must be Calendar, metrics, Bible")
     config_text = json.dumps(config, sort_keys=True)
-    for removed in ("selected_date_details", "selected_date_panel", "most_missed", "due_deck_breakdown"):
+    for removed in (
+        "selected_date_details", "selected_date_panel", "most_missed",
+        "due_deck_breakdown", "show_eta", "show_estimate",
+    ):
         if removed in config_text:
             raise ValueError("removed layout role remains in config: {}".format(removed))
     if config.get("study", {}).get("retention_target") != 80:
@@ -303,7 +311,7 @@ def validate_sources() -> dict:
             "queue IN (-2, -3)", "type IN (1, 3)", "due < 1000000000",
         ),
         "config_schema.py": (
-            "SCHEMA_VERSION = 6", "presets_by_theme", "retention_target",
+            "SCHEMA_VERSION = 7", "presets_by_theme", "retention_target",
             "summary_metrics", "bible_verse",
         ),
         "controller.py": (
@@ -321,6 +329,7 @@ def validate_sources() -> dict:
             "New cards studied", "hdo-progress-segment", "retention_target", "day_insight_payload",
             "hdo-loading-region--calendar", "The dashboard could not finish loading.",
             "hdo-context-action--primary", "hdo-host-theme", "dashboard-scroll-surface",
+            "No cards due", "_ProgressState", "today_session", "data-hdo-has-bible",
         ),
         "settings.py": (
             "Dashboard preview", "Open full preview", 'QLabel("Sample data")',
@@ -334,7 +343,7 @@ def validate_sources() -> dict:
         ),
         "web/dashboard.js": (
             "function buildCalendarTooltipRows", "function getSelectedDateCapabilities",
-            "function getNextUpcomingEvent", "function getDueLoadScale",
+            "function getNextUpcomingEvent", "function getContextEvent", "function getDueLoadScale",
             "function getDueLoadLevel", "function applyDocumentTheme", 'relation === "past" ? 0',
             'calendar.addEventListener("pointerover"', 'send("open_most_missed"',
             "function mountLoadingState", "Still loading your study data…",
@@ -342,11 +351,12 @@ def validate_sources() -> dict:
         ),
         "web/dashboard.css": (
             "hdo-calendar-footer", "hdo-calendar-card-action", "hdo-context-action--primary",
-            "width: min(94%, 820px)", "pointer-events: none", "min-width: min(232px",
-            "min-width: 440px", "min-width: 940px",
-            "minmax(0, 1fr) clamp(332px, 34cqi, 392px)",
-            "block-size: clamp(2px, 24%, 4px)", "var(--heat-due-mark-5)",
+            "width: min(1480px, calc(100vw - 64px))", "pointer-events: none", "min-width: min(220px",
+            "min-width: 640px", "min-width: 900px", "min-width: 1220px",
+            "minmax(0, 1fr) clamp(430px, 30cqi, 450px)",
+            "block-size: 2px", "block-size: 4px", "block-size: 6px", "var(--heat-due-mark-3)",
             "var(--progress-complete)", "hdo-event-marker", "hdo-loading-layout",
+            "hdo-year-weekday-label", 'data-hdo-background-image="true"',
         ),
     }
     for relative, markers in required.items():
@@ -371,8 +381,12 @@ def validate_sources() -> dict:
     _validate_theme_contract(runpy.run_path(str(ROOT / "themes.py")))
     _validate_visual_matrix(visual_matrix)
     criteria = surface_contract.get("acceptance_criteria")
-    if not isinstance(criteria, list) or len(criteria) != 42:
-        raise ValueError("corrected surface contract must encode all 42 acceptance criteria")
+    if not isinstance(criteria, list) or [item.get("id") for item in criteria] != list(range(1, 42)):
+        raise ValueError("corrected surface contract must encode criteria 1 through 41")
+    if capture_contract.get("primary_native_frames") != [
+        entry.get("id") for entry in visual_matrix.get("cases", [])
+    ]:
+        raise ValueError("capture contract primary IDs differ from the visual matrix")
 
     verses = verse_data.get("quote")
     if (

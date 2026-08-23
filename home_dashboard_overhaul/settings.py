@@ -2491,7 +2491,7 @@ class SettingsDialog(QDialog):
         add_visibility(
             "today",
             "Today’s session",
-            "Cards studied, new cards, time, pace, and the optional completion estimate.",
+            "Cards studied, new cards, time, pace, and ETA.",
         )
         add_visibility(
             "heatmap_metrics",
@@ -2535,19 +2535,6 @@ class SettingsDialog(QDialog):
             _field_label("Pace display", "Changes presentation only; the underlying study history is unchanged."),
             self.pace_unit,
         )
-        eta_row, self.show_eta = _switch_row(
-            "Show estimated completion time",
-            "Uses the same filtered workload and current pace. Requires Today’s session.",
-            self.staged["study"]["show_eta"],
-        )
-        dependent_form.addRow(eta_row)
-        self.eta_dependency = QLabel(
-            "Requires Today’s session. Your preference remains saved while unavailable."
-        )
-        self.eta_dependency.setObjectName("FieldHelp")
-        self.eta_dependency.setWordWrap(True)
-        self.eta_dependency.setBuddy(self.show_eta)
-        dependent_form.addRow(self.eta_dependency)
         self.retention_target = QSpinBox()
         self.retention_target.setRange(50, 100)
         self.retention_target.setSuffix(" %")
@@ -2568,7 +2555,6 @@ class SettingsDialog(QDialog):
         )
         for control in (
             self.pace_unit,
-            self.show_eta,
             self.retention_target,
             self.include_rescheduled,
         ):
@@ -3314,7 +3300,6 @@ class SettingsDialog(QDialog):
         ):
             spin.valueChanged.connect(self._schedule_preview)
         checks = list(self.visibility.values()) + [
-            self.show_eta,
             self.include_rescheduled,
             self.exclude_reschedules,
             self.exclude_deleted,
@@ -3385,7 +3370,7 @@ class SettingsDialog(QDialog):
             ("surface", tokens["ui_surface_1"], ""),
             ("accent", tokens["ui_accent"], ""),
             ("high completion", tokens["heat_complete_5"], ""),
-            ("Reviews Due", tokens["heat_due_bg_5"], tokens["heat_due_mark_5"]),
+            ("Reviews Due", tokens["heat_due_bg_3"], tokens["heat_due_mark_3"]),
         ]
         squares = " ".join(
             '<span style="background:{}; border:1px solid {}; border-bottom:{} solid {}; color:{};">&nbsp;&nbsp;&nbsp;&nbsp;</span>'.format(
@@ -3572,7 +3557,6 @@ class SettingsDialog(QDialog):
         state = self.draft.dependency_state
         if not state["bible.font_color"]:
             self._font_color_invalid = False
-        self.show_eta.setEnabled(state["study.show_eta"])
         self.visibility["events"].setEnabled(state["visibility.events"])
         self._update_forecast_range_visibility()
         self.font_color.setEnabled(state["bible.font_color"])
@@ -3587,7 +3571,6 @@ class SettingsDialog(QDialog):
         if hasattr(self, "custom_color_container"):
             self.custom_color_container.setVisible(state["bible.font_color"])
         self.events_dependency.setVisible(not state["visibility.events"])
-        self.eta_dependency.setVisible(not state["study.show_eta"])
 
     def _sync_draft(self) -> None:
         if self._building:
@@ -3697,7 +3680,6 @@ class SettingsDialog(QDialog):
             for key, box in self.visibility.items():
                 box.setChecked(bool(config["visibility"][key]))
             self._set_combo_data(self.pace_unit, config["study"]["pace_unit"])
-            self.show_eta.setChecked(bool(config["study"]["show_eta"]))
             self.retention_target.setValue(int(config["study"].get("retention_target", 80)))
             self.include_rescheduled.setChecked(
                 bool(config["new_cards"]["include_rescheduled"])
@@ -4120,7 +4102,6 @@ class SettingsDialog(QDialog):
             config["visibility"][key] = box.isChecked()
         config["study"].update(
             pace_unit=_combo_value(self.pace_unit, "seconds_per_card"),
-            show_eta=self.show_eta.isChecked(),
             retention_target=self.retention_target.value(),
         )
         config["new_cards"].update(include_rescheduled=self.include_rescheduled.isChecked())

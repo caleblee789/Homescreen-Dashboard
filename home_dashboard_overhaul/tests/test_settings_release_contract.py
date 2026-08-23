@@ -27,9 +27,9 @@ class SettingsReleaseContractTests(unittest.TestCase):
         cls.config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
         cls.manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
-    def test_release_metadata_and_schema_six_are_current(self) -> None:
-        self.assertEqual(self.manifest["human_version"], "1.8.0")
-        self.assertEqual(self.config["schema_version"], 6)
+    def test_release_metadata_and_schema_seven_are_current(self) -> None:
+        self.assertEqual(self.manifest["human_version"], "1.8.1")
+        self.assertEqual(self.config["schema_version"], 7)
         self.assertEqual(
             tuple(PRESETS),
             ("Sapphire Glass", "Graphite", "Emerald", "High Contrast"),
@@ -114,7 +114,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "var canvas = getComputedStyle(root).getPropertyValue('--ui-canvas')",
             "document.documentElement.style.background = canvas",
             "document.body.style.colorScheme = root.dataset.hdoColorMode || 'light'",
-            '("Reviews Due", tokens["heat_due_bg_5"], tokens["heat_due_mark_5"])',
+            '("Reviews Due", tokens["heat_due_bg_3"], tokens["heat_due_mark_3"])',
             "Open full preview",
             'QLabel("Sample data")',
             "representative_preview_snapshot",
@@ -276,6 +276,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "most missed preview",
             "selected-date panel position",
             "due-deck breakdown",
+            "show estimated completion time",
+            "show eta",
         ):
             self.assertNotIn(forbidden, lowered)
 

@@ -399,7 +399,6 @@ class SettingsDraft:
     def dependency_state(self) -> Dict[str, bool]:
         visibility = self.values["visibility"]
         return {
-            "study.show_eta": bool(visibility["today"]),
             "visibility.events": bool(visibility["heatmap"]),
             "heatmap.forecast_days": bool(self.values["heatmap"]["show_due_forecast"]),
             "bible.font_color": not bool(self.values["bible"]["theme_aware_color"]),

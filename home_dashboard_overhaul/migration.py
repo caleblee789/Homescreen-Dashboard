@@ -185,9 +185,9 @@ def _apply_new_counter(config: MutableMapping[str, Any], legacy: Mapping[str, An
 
 
 def _apply_more_stats(config: MutableMapping[str, Any], legacy: Mapping[str, Any]) -> None:
-    study = config["study"]
-    if isinstance(legacy.get("ShowTimeLeft"), bool):
-        study["show_eta"] = legacy["ShowTimeLeft"]
+    # The schema-7 dashboard always exposes the ETA row. The retired
+    # ShowTimeLeft preference is intentionally not imported.
+    del config, legacy
 
 
 def _apply_bible(config: MutableMapping[str, Any], legacy: Mapping[str, Any]) -> None:

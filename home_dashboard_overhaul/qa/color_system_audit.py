@@ -307,7 +307,7 @@ def contrast_audit() -> dict[str, Any]:
                     note="Layered gold marker uses a text-primary outline and one-pixel surface halo.",
                 )
 
-            for level in range(1, 6):
+            for level in range(1, 4):
                 due_bg_role = "heat_due_bg_{}".format(level)
                 due_mark_role = "heat_due_mark_{}".format(level)
                 due_bg = tokens[due_bg_role]
@@ -525,7 +525,7 @@ def changed_file_summary(root: Path = PACKAGE_ROOT) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "scope": "Current Home Dashboard 1.8.0 release-candidate worktree, excluding immutable generated evidence directories",
+        "scope": "Current Home Dashboard 1.8.1 release-candidate worktree, excluding immutable generated evidence directories",
         "file_count": len(files),
         "files": files,
     }

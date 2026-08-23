@@ -1,0 +1,1074 @@
+{
+  "captures": [
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-SG-L-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-SG-L-M",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "aaab49d8c0b6eb09081a82f8a5e8f8432af34d42a0df45a2d0248408561f0b95",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-SG-L-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-SG-L-Y",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "9d44c12bee36bb5221009b6313d0b0d7af8d9eafa52b475c9553feb4ab7bda0f",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-SG-D-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-SG-D-M",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "42a6cd620d68943d8eaa286e0812b9e12c63ba5b41a97fe238d622db378614db",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-SG-D-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-SG-D-Y",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "fa95681c87a0ffe6f06cb9e41a03d56e3cea57aa305b0412f1d3abaaf1243dc1",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-GR-L-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-GR-L-M",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "f173989ad7af9184856df77d68e26f8d1a91899810503ca04631e40aed936f17",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-GR-L-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-GR-L-Y",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "cd04c14351c3499b2348de1e1c720e5e871c820927a48fd12f73ab065b4f4083",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-GR-D-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-GR-D-M",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "ca87f77bf3fff7f6072f7d6f6e6531f7b7e8a75b76d1dd7cc4b3e89729d5373f",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-GR-D-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-GR-D-Y",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "d9e49c9c25cc33c3a2215386b16c451cd36af374ab6c988878880428759c4b03",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-EM-L-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-EM-L-M",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "d0b60ec3c38ae13d4457bb5e39728334891c083386e3760582739ace0ae52222",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-EM-L-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-EM-L-Y",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "f071bb306407167695bd18aa0126dcb74e6055befe2390bff53484cd34bb6969",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-EM-D-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-EM-D-M",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "a66fd8ffa4409f60eca897d193c99addff5005187be79ee08695a1b7a1857198",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-EM-D-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-EM-D-Y",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "0fbb6f407ea28a881bf5bddd0e2f34a4af2a968504afdee4d9d933f30c4b92ca",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-HC-L-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-HC-L-M",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "0b0ae2a6551a9f45a6fd6da7754ef53ecc56bafebb796fd68c379b56320241f5",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-HC-L-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-HC-L-Y",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "67077c002378cd3189f46a17760cb416ceb96501a18d0102d17319c91190384a",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-HC-D-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-HC-D-M",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "15abd3008602a4ec683c49ef328f9fb056ab051b5edd55d9529dbf72817ef892",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-HC-D-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-HC-D-Y",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "93268d5a3a3572fc519e766ac8f7cffe8159176ee81e298146cd315f7c1183b5",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/FRESH-SG-L-M.png",
+      "fixture": "fresh",
+      "id": "FRESH-SG-L-M",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "7bc9eaf8fe96f68c1eeeb372ebd3dbe3614be94bc6bc5860ebce21ba00be14c7",
+      "tags": [
+        "fresh_data",
+        "fresh_sapphire_light_month",
+        "missing_pace_eta",
+        "missing_retention",
+        "no_cards_due",
+        "zero_lifetime"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/FRESH-SG-L-Y.png",
+      "fixture": "fresh",
+      "id": "FRESH-SG-L-Y",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "da14255ea874e80da570f7d7d665a0c893690444abd8a2d31346004d0443efd3",
+      "tags": [
+        "empty_year",
+        "fresh_data",
+        "fresh_sapphire_light_year"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/FRESH-SG-D-M.png",
+      "fixture": "fresh",
+      "id": "FRESH-SG-D-M",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "7714b030a29cf24d0dbea50ec7704b948d699bc46ff0ddf99e25c29fdce95804",
+      "tags": [
+        "fresh_data",
+        "fresh_sapphire_dark_month",
+        "no_event",
+        "short_verse"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/FRESH-SG-D-Y.png",
+      "fixture": "fresh",
+      "id": "FRESH-SG-D-Y",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "4bc584d91f48618f96467903bf14d98987e0278dc772182bba4a7662ceda2268",
+      "tags": [
+        "empty_year",
+        "fresh_data",
+        "fresh_sapphire_dark_year"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1120,
+        940
+      ],
+      "file": "captures/RESP-SG-L-INTERMEDIATE.png",
+      "fixture": "populated",
+      "id": "RESP-SG-L-INTERMEDIATE",
+      "layout": "intermediate",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "4bb5f9c0bb27678403eb2132b0610be4cab99fb71dc807a7131d0452088dfa36",
+      "tags": [
+        "responsive",
+        "sapphire_light_intermediate"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1120,
+        940
+      ],
+      "file": "captures/RESP-SG-D-INTERMEDIATE.png",
+      "fixture": "populated",
+      "id": "RESP-SG-D-INTERMEDIATE",
+      "layout": "intermediate",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "7d0314e6475d0bc0d5bc73ad0d0fb3d44a8bec7afdee6286932f724dcc81cc16",
+      "tags": [
+        "responsive",
+        "sapphire_dark_intermediate"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        620,
+        980
+      ],
+      "file": "captures/RESP-SG-L-NARROW.png",
+      "fixture": "populated",
+      "id": "RESP-SG-L-NARROW",
+      "layout": "narrow",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "c831cd43e764080c00d2663ba6ef2fd2ac4cdd8114bc15afccf7f6df6a5120df",
+      "tags": [
+        "no_horizontal_scroll",
+        "responsive",
+        "sapphire_light_narrow"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        620,
+        980
+      ],
+      "file": "captures/RESP-SG-D-NARROW.png",
+      "fixture": "populated",
+      "id": "RESP-SG-D-NARROW",
+      "layout": "narrow",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "c280626ff49d6536d6c6ebfb45a0abb65a6b6134e454462b96c77b3c26c5ca91",
+      "tags": [
+        "no_horizontal_scroll",
+        "responsive",
+        "sapphire_dark_narrow"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        620,
+        980
+      ],
+      "file": "captures/RESP-HC-L-NARROW.png",
+      "fixture": "populated",
+      "id": "RESP-HC-L-NARROW",
+      "layout": "narrow",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "ec4bb9336198601c7a4b5fdcfc3a492b1f6126f8278638d5b31be924308690f8",
+      "tags": [
+        "high_contrast_light_narrow",
+        "no_horizontal_scroll",
+        "responsive"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        620,
+        980
+      ],
+      "file": "captures/RESP-HC-D-NARROW.png",
+      "fixture": "populated",
+      "id": "RESP-HC-D-NARROW",
+      "layout": "narrow",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "928c85d74009f74914f7735235eb867c881776da2cd888038967f32c7afd5dc9",
+      "tags": [
+        "high_contrast_dark_narrow",
+        "no_horizontal_scroll",
+        "responsive"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-COMBINED-TODAY.png",
+      "fixture": "combined-today",
+      "id": "STATE-COMBINED-TODAY",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "2f552b0463ee606e6c75d6c4d1a60bafc777995442c2f6b90198bf3156b67127",
+      "tags": [
+        "combined_state_markers",
+        "one_learning_card",
+        "partial_progress",
+        "reviewed_cards_action",
+        "today_completed_with_due",
+        "today_selected"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-SELECTED-EVENT.png",
+      "fixture": "selected-event",
+      "id": "STATE-SELECTED-EVENT",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "44a97e245d1f6b6758670563a006bc41907666eb9adf7151c7c88e5ad553982d",
+      "tags": [
+        "event_count",
+        "event_on_selected_date",
+        "footer_edit_action",
+        "footer_relationships",
+        "long_event_title",
+        "multiple_events"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-NEXT-EVENT-FUTURE.png",
+      "fixture": "next-event-future",
+      "id": "STATE-NEXT-EVENT-FUTURE",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "aed511ae48b6270809081f675c42d9e0d0ebd166ca99ce368a84e034a1f4da3a",
+      "tags": [
+        "due_cards_action",
+        "footer_relationships",
+        "future_selected",
+        "next_event"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-PAST-TOOLTIP.png",
+      "fixture": "populated",
+      "id": "STATE-PAST-TOOLTIP",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "0eeb3ef1b9496a47abb1daee847ee3aeec1718d8f88dde18fdde23e6e239dfbc",
+      "tags": [
+        "calendar_tooltip",
+        "historical_wording",
+        "most_missed_available",
+        "selected_past"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-FIVE-ROW-SUNDAY.png",
+      "fixture": "populated",
+      "id": "STATE-FIVE-ROW-SUNDAY",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "c995be8c6aba05a376a1cd78f4ec2f9acd55a74d098a62d2786e80079b02b09c",
+      "tags": [
+        "five_row_month",
+        "sunday_start"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-SIX-ROW-MONDAY.png",
+      "fixture": "very-large",
+      "id": "STATE-SIX-ROW-MONDAY",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "0dea99dfcefa50a4aa13c6b3f50c4c7e1fedd8833b0dc1987afe8f092034dada",
+      "tags": [
+        "large_streak",
+        "monday_start",
+        "six_row_month",
+        "very_large_counts"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-YEAR-BOUNDARIES.png",
+      "fixture": "year-boundaries",
+      "id": "STATE-YEAR-BOUNDARIES",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "60f9add1a5f569f0865cd5869866c4aa224c8fe73bcac5e20db5bd7a5580891a",
+      "tags": [
+        "populated_year",
+        "year_boundaries",
+        "year_weekday_references"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-COMPLETE-METRICS.png",
+      "fixture": "complete",
+      "id": "STATE-COMPLETE-METRICS",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "5e7458deda302c7a3333ba426f78cc51dcfe5b0fe3cb83cd2240b011014ce61d",
+      "tags": [
+        "complete_progress",
+        "eta_done_positive_workload",
+        "populated_rates"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BACKGROUND-SG-L.png",
+      "fixture": "populated",
+      "id": "BACKGROUND-SG-L",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "569dc00f3454c66cfceb112b64b9c5c58eebf3d63fef60e8e41c5b8d9b5cc51e",
+      "tags": [
+        "background_case",
+        "background_sapphire_light",
+        "conditional_scrim"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BACKGROUND-SG-D.png",
+      "fixture": "populated",
+      "id": "BACKGROUND-SG-D",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "ef319f0a5e2879f042e36f1b1af91f8905180f229bf1cd3813e837ca2c4448e3",
+      "tags": [
+        "background_case",
+        "background_sapphire_dark",
+        "conditional_scrim"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BACKGROUND-EM-L.png",
+      "fixture": "populated",
+      "id": "BACKGROUND-EM-L",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "cb9bc881cff3ec12b045f8dcceaaab6e7f90b85e79c7b772cf558ce37bedd780",
+      "tags": [
+        "background_case",
+        "background_emerald_light",
+        "conditional_scrim"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BACKGROUND-EM-D.png",
+      "fixture": "populated",
+      "id": "BACKGROUND-EM-D",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "6117c88104647780e4b15d0f5833e8835eda95f15b9ec57bbe5d01ceae67f129",
+      "tags": [
+        "background_case",
+        "background_emerald_dark",
+        "conditional_scrim"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BACKGROUND-REDUCED-OPACITY.png",
+      "fixture": "populated",
+      "id": "BACKGROUND-REDUCED-OPACITY",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "75a9a281aaabfa93221d5bb6c21c7f3b4959375131d8e9ce07d97afa6a5186b7",
+      "tags": [
+        "background_case",
+        "reduced_opacity",
+        "text_readability"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BIBLE-SHORT.png",
+      "fixture": "populated",
+      "id": "BIBLE-SHORT",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "4c2d5a17637a6847ae995ab2a8a85bc1d72d7194077dd9fa3b18953ce4966b64",
+      "tags": [
+        "bible_case",
+        "short_verse"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BIBLE-LONG.png",
+      "fixture": "long-verse",
+      "id": "BIBLE-LONG",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "d3e623a3d2b31906eddaa0e4769403188ca5fc400179281b8749c543c818ca49",
+      "tags": [
+        "bible_case",
+        "long_verse",
+        "no_truncation"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BIBLE-CUSTOM-FONT.png",
+      "fixture": "populated",
+      "id": "BIBLE-CUSTOM-FONT",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "5dd81e0d52daf97407d361492713e50cb26a14419498192fa2ee2c0c9bfb0efe",
+      "tags": [
+        "bible_case",
+        "custom_font"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BIBLE-DISABLED.png",
+      "fixture": "populated",
+      "id": "BIBLE-DISABLED",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "c55d6d6fefc353b00b428b00c6f30259fa5581561ee7362cc835a5dd190c9da7",
+      "tags": [
+        "bible_case",
+        "bible_disabled",
+        "no_bible_gap"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/RUNTIME-INITIAL-LOADING.png",
+      "fixture": "loading",
+      "id": "RUNTIME-INITIAL-LOADING",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "4e4e993c24cb22e7e255b1f915bf2af47d9410ffc85b933fac6efee9e1383757",
+      "tags": [
+        "initial_loading",
+        "runtime_state"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/RUNTIME-DELAYED-LOADING.png",
+      "fixture": "loading",
+      "id": "RUNTIME-DELAYED-LOADING",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "e266ad03094df8caeb4c977e841399df53501a9849c8aac5f67a348db7de0c10",
+      "tags": [
+        "delayed_loading",
+        "runtime_state"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/RUNTIME-FAILURE.png",
+      "fixture": "loading",
+      "id": "RUNTIME-FAILURE",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "f7fe37d1b232e42715e50fb59aa954bfc52341a8e1915daabf5382f400d01b07",
+      "tags": [
+        "loading_failure",
+        "runtime_state"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/RUNTIME-RETRY.png",
+      "fixture": "populated",
+      "id": "RUNTIME-RETRY",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sha256": "2e77f95ebf8164373a755ca32606c47c9289e7e3a356e3f27bb9442ba2957b5b",
+      "tags": [
+        "retry",
+        "runtime_state"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "year"
+    }
+  ],
+  "release": "1.8.1"
+}

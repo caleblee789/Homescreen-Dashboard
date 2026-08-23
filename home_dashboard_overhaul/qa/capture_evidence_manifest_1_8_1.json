@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "release": "1.8.1",
+  "status": "required-before-release",
+  "authority": "qa/calendar_surface_manifest_1_8_1.json",
+  "primary_matrix": "qa/visual_regression_matrix_1_8_1.json",
+  "reference_inputs": [
+    {
+      "id": "USER-NATIVE-WIDE-2026-08-23",
+      "kind": "native-deck-browser-screenshot",
+      "physical_pixels": [3420, 2146],
+      "sha256": "4105e5a19538048711f38500d7f8b1a77f343b11c07dacd7ca47cb574fbbe2e6",
+      "role": "geometry-calibration-only",
+      "may_count_as_acceptance_evidence": false,
+      "must_not_be_overwritten": true
+    },
+    {
+      "id": "RETAINED-1.8.0-CONTACT-SHEETS",
+      "kind": "historical-contact-sheet-set",
+      "path": "qa/release-evidence-1.8.0-2026-08-23/contact-sheets",
+      "role": "comparison-and-review-navigation-only",
+      "may_count_as_acceptance_evidence": false,
+      "must_not_be_overwritten": true
+    }
+  ],
+  "primary_native_frames": [
+    "PRIMARY-SG-L-M", "PRIMARY-SG-L-Y", "PRIMARY-SG-D-M", "PRIMARY-SG-D-Y",
+    "PRIMARY-GR-L-M", "PRIMARY-GR-L-Y", "PRIMARY-GR-D-M", "PRIMARY-GR-D-Y",
+    "PRIMARY-EM-L-M", "PRIMARY-EM-L-Y", "PRIMARY-EM-D-M", "PRIMARY-EM-D-Y",
+    "PRIMARY-HC-L-M", "PRIMARY-HC-L-Y", "PRIMARY-HC-D-M", "PRIMARY-HC-D-Y"
+  ],
+  "supplemental_frames": [
+    {"id":"FRESH-SG-L-M","fixture":"fresh","theme":"Sapphire Glass","mode":"light","view":"month","layout":"wide","tags":["fresh_data","fresh_sapphire_light_month","no_cards_due","missing_pace_eta","missing_retention","zero_lifetime"]},
+    {"id":"FRESH-SG-L-Y","fixture":"fresh","theme":"Sapphire Glass","mode":"light","view":"year","layout":"wide","tags":["fresh_data","fresh_sapphire_light_year","empty_year"]},
+    {"id":"FRESH-SG-D-M","fixture":"fresh","theme":"Sapphire Glass","mode":"dark","view":"month","layout":"wide","tags":["fresh_data","fresh_sapphire_dark_month","no_event","short_verse"]},
+    {"id":"FRESH-SG-D-Y","fixture":"fresh","theme":"Sapphire Glass","mode":"dark","view":"year","layout":"wide","tags":["fresh_data","fresh_sapphire_dark_year","empty_year"]},
+    {"id":"RESP-SG-L-INTERMEDIATE","fixture":"populated","theme":"Sapphire Glass","mode":"light","view":"month","layout":"intermediate","tags":["responsive","sapphire_light_intermediate"]},
+    {"id":"RESP-SG-D-INTERMEDIATE","fixture":"populated","theme":"Sapphire Glass","mode":"dark","view":"year","layout":"intermediate","tags":["responsive","sapphire_dark_intermediate"]},
+    {"id":"RESP-SG-L-NARROW","fixture":"populated","theme":"Sapphire Glass","mode":"light","view":"month","layout":"narrow","tags":["responsive","sapphire_light_narrow","no_horizontal_scroll"]},
+    {"id":"RESP-SG-D-NARROW","fixture":"populated","theme":"Sapphire Glass","mode":"dark","view":"year","layout":"narrow","tags":["responsive","sapphire_dark_narrow","no_horizontal_scroll"]},
+    {"id":"RESP-HC-L-NARROW","fixture":"populated","theme":"High Contrast","mode":"light","view":"month","layout":"narrow","tags":["responsive","high_contrast_light_narrow","no_horizontal_scroll"]},
+    {"id":"RESP-HC-D-NARROW","fixture":"populated","theme":"High Contrast","mode":"dark","view":"year","layout":"narrow","tags":["responsive","high_contrast_dark_narrow","no_horizontal_scroll"]},
+    {"id":"STATE-COMBINED-TODAY","fixture":"combined-today","theme":"Sapphire Glass","mode":"dark","view":"month","layout":"wide","tags":["combined_state_markers","today_completed_with_due","today_selected","one_learning_card","partial_progress","reviewed_cards_action"]},
+    {"id":"STATE-SELECTED-EVENT","fixture":"selected-event","theme":"Sapphire Glass","mode":"light","view":"month","layout":"wide","tags":["event_on_selected_date","event_count","multiple_events","footer_relationships","footer_edit_action","long_event_title"]},
+    {"id":"STATE-NEXT-EVENT-FUTURE","fixture":"next-event-future","theme":"Graphite","mode":"dark","view":"month","layout":"wide","tags":["next_event","future_selected","due_cards_action","footer_relationships"]},
+    {"id":"STATE-PAST-TOOLTIP","fixture":"past-tooltip","theme":"Emerald","mode":"light","view":"month","layout":"wide","tags":["calendar_tooltip","selected_past","historical_wording","most_missed_available"]},
+    {"id":"STATE-FIVE-ROW-SUNDAY","fixture":"five-row-sunday","theme":"Sapphire Glass","mode":"light","view":"month","layout":"wide","tags":["five_row_month","sunday_start"]},
+    {"id":"STATE-SIX-ROW-MONDAY","fixture":"six-row-monday","theme":"Sapphire Glass","mode":"dark","view":"month","layout":"wide","tags":["six_row_month","monday_start","very_large_counts","large_streak"]},
+    {"id":"STATE-YEAR-BOUNDARIES","fixture":"populated-year-boundaries","theme":"High Contrast","mode":"dark","view":"year","layout":"wide","tags":["populated_year","year_boundaries","year_weekday_references"]},
+    {"id":"STATE-COMPLETE-METRICS","fixture":"completed-workload","theme":"Sapphire Glass","mode":"dark","view":"month","layout":"wide","tags":["complete_progress","eta_done_positive_workload","populated_rates"]},
+    {"id":"BACKGROUND-SG-L","fixture":"background-image","theme":"Sapphire Glass","mode":"light","view":"month","layout":"wide","tags":["background_case","background_sapphire_light","conditional_scrim"]},
+    {"id":"BACKGROUND-SG-D","fixture":"background-image","theme":"Sapphire Glass","mode":"dark","view":"year","layout":"wide","tags":["background_case","background_sapphire_dark","conditional_scrim"]},
+    {"id":"BACKGROUND-EM-L","fixture":"background-image","theme":"Emerald","mode":"light","view":"month","layout":"wide","tags":["background_case","background_emerald_light","conditional_scrim"]},
+    {"id":"BACKGROUND-EM-D","fixture":"background-image","theme":"Emerald","mode":"dark","view":"year","layout":"wide","tags":["background_case","background_emerald_dark","conditional_scrim"]},
+    {"id":"BACKGROUND-REDUCED-OPACITY","fixture":"reduced-opacity","theme":"Graphite","mode":"dark","view":"month","layout":"wide","tags":["background_case","reduced_opacity","text_readability"]},
+    {"id":"BIBLE-SHORT","fixture":"short-verse","theme":"Sapphire Glass","mode":"light","view":"month","layout":"wide","tags":["bible_case","short_verse"]},
+    {"id":"BIBLE-LONG","fixture":"long-verse","theme":"Sapphire Glass","mode":"dark","view":"month","layout":"wide","tags":["bible_case","long_verse","no_truncation"]},
+    {"id":"BIBLE-CUSTOM-FONT","fixture":"custom-font","theme":"Emerald","mode":"light","view":"year","layout":"wide","tags":["bible_case","custom_font"]},
+    {"id":"BIBLE-DISABLED","fixture":"bible-disabled","theme":"High Contrast","mode":"dark","view":"year","layout":"wide","tags":["bible_case","bible_disabled","no_bible_gap"]},
+    {"id":"RUNTIME-INITIAL-LOADING","fixture":"initial-loading","theme":"Sapphire Glass","mode":"light","view":"month","layout":"wide","tags":["runtime_state","initial_loading"]},
+    {"id":"RUNTIME-DELAYED-LOADING","fixture":"delayed-loading","theme":"Sapphire Glass","mode":"dark","view":"month","layout":"wide","tags":["runtime_state","delayed_loading"]},
+    {"id":"RUNTIME-FAILURE","fixture":"loading-failure","theme":"High Contrast","mode":"light","view":"month","layout":"wide","tags":["runtime_state","loading_failure"]},
+    {"id":"RUNTIME-RETRY","fixture":"retry-loaded","theme":"High Contrast","mode":"dark","view":"year","layout":"wide","tags":["runtime_state","retry"]},
+    {"id":"RUNTIME-RESTART-PERSISTENCE","fixture":"restart-readback","theme":"Graphite","mode":"dark","view":"month","layout":"wide","tags":["runtime_state","restart","settings_persistence","calendar_view_persistence","theme_persistence","palette_persistence","visibility_persistence","clean_settings_state"]}
+  ],
+  "required_coverage_tags": [
+    "fresh_sapphire_light_month", "fresh_sapphire_light_year", "fresh_sapphire_dark_month", "fresh_sapphire_dark_year",
+    "populated_data", "sapphire_light_intermediate", "sapphire_dark_intermediate", "sapphire_light_narrow", "sapphire_dark_narrow", "high_contrast_light_narrow", "high_contrast_dark_narrow",
+    "calendar_tooltip", "combined_state_markers", "event_count", "footer_relationships", "reviewed_cards_action", "due_cards_action", "five_row_month", "six_row_month", "year_boundaries",
+    "no_cards_due", "partial_progress", "complete_progress", "one_learning_card", "very_large_counts", "missing_pace_eta", "missing_retention", "populated_rates", "large_streak", "zero_lifetime",
+    "background_sapphire_light", "background_sapphire_dark", "background_emerald_light", "background_emerald_dark", "reduced_opacity",
+    "short_verse", "long_verse", "custom_font", "bible_disabled",
+    "initial_loading", "delayed_loading", "loading_failure", "retry", "restart", "settings_persistence"
+  ],
+  "exact_package_requirements": [
+    "two_deterministic_builds_same_sha256",
+    "zip_integrity",
+    "member_allowlist_and_count",
+    "production_imports",
+    "source_archive_parity",
+    "exact_candidate_installed",
+    "fresh_sync_disabled_anki_26_8_1",
+    "unique_single_instance_key",
+    "identity_gates_before_interaction",
+    "same_run_root_and_key_after_restart"
+  ],
+  "deferred_unrun": [
+    "dedicated_125_percent_capture",
+    "dedicated_150_percent_capture",
+    "spoken_screen_reader_review",
+    "windows_validation",
+    "linux_validation",
+    "forced_colors_review",
+    "os_level_scaling_acceptance"
+  ]
+}

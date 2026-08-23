@@ -91,6 +91,9 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(completion.count("data-level="), 5)
         self.assertEqual(due.count("data-due-level="), 3)
         self.assertIn("Reviews due", due)
+        self.assertIn("Completed reviews", html)
+        self.assertIn('<span class="hdo-legend-endpoint">Low</span>', html)
+        self.assertIn('<span class="hdo-legend-endpoint">High</span>', html)
 
     def test_context_bar_has_selected_event_and_only_contextual_action_shells(self) -> None:
         html = render_dashboard(self.snapshot, self.config)
@@ -109,8 +112,11 @@ class RendererTests(unittest.TestCase):
         self.assertNotIn("<strong>Selected date:</strong>", context)
         self.assertIn("aria-label=\"Edit event\"", context)
         self.assertIn("<svg", context)
-        self.assertIn("View reviewed cards", (Path(__file__).resolve().parents[1] / "web" / "dashboard.js").read_text())
-        self.assertIn("View due cards", (Path(__file__).resolve().parents[1] / "web" / "dashboard.js").read_text())
+        script = (Path(__file__).resolve().parents[1] / "web" / "dashboard.js").read_text()
+        self.assertIn('primaryAction.textContent = "Reviewed cards"', script)
+        self.assertIn('primaryAction.textContent = "Due cards"', script)
+        self.assertIn("getContextEvent(state.events, state.selected, todayIso)", script)
+        self.assertIn('eventContext ? eventContext.relationship : "Next event"', script)
 
     def test_metric_group_order_rows_and_number_formatting(self) -> None:
         html = render_dashboard(self.snapshot, self.config)
@@ -133,7 +139,10 @@ class RendererTests(unittest.TestCase):
         self.assertNotIn("<dt>Percent complete</dt>", html)
         self.assertIn("data-hdo-progress-track", html)
         self.assertEqual(html.count("data-hdo-progress-segment="), 4)
-        self.assertIn("77% complete", html)
+        self.assertRegex(html, r'data-hdo-progress-state="in_progress"[^>]*>77%</span>')
+        session = html[html.index("Today’s Session"):html.index("Last 7 Days")]
+        for label in ("Cards studied", "New cards studied", "Time", "Pace", "ETA"):
+            self.assertIn("<dt>{}</dt>".format(label), session)
 
     def test_progress_uses_queue_counts_for_empty_complete_and_tiny_states(self) -> None:
         def rendered(today: TodayStats, queue: QueueStats) -> str:
@@ -145,7 +154,8 @@ class RendererTests(unittest.TestCase):
             return render_dashboard(replace(self.snapshot, facts=facts), self.config)
 
         empty = rendered(TodayStats(), QueueStats())
-        self.assertIn("No workload today. 0% complete.", empty)
+        self.assertIn('data-hdo-progress-state="no_cards_due"', empty)
+        self.assertIn('aria-label="No cards are due today.">No cards due</span>', empty)
 
         complete = rendered(TodayStats(7), QueueStats())
         self.assertIn('aria-valuenow="100"', complete)
@@ -164,7 +174,7 @@ class RendererTests(unittest.TestCase):
         html = render_dashboard(replace(self.snapshot, facts=facts), self.config)
         self.assertIn('aria-valuenow="60"', html)
         self.assertIn("60% complete", html)
-        self.assertIn('aria-label="60% complete">60% complete</span>', html)
+        self.assertRegex(html, r'aria-label="60% complete\.[^"]+">60%</span>')
         for key, count in (("completed", 186), ("new", 32), ("learning", 14), ("review", 78)):
             self.assertIn(
                 'data-hdo-progress-segment="{}" data-hdo-progress-count="{}"'.format(key, count),
@@ -229,24 +239,29 @@ class RendererTests(unittest.TestCase):
         self.assertIsNotNone(lifetime)
         self.assertEqual(lifetime.group(1), "")
 
-    def test_theme_paints_the_host_before_dashboard_markup(self) -> None:
+    def test_theme_styles_the_host_without_painting_its_background(self) -> None:
         html = render_dashboard(self.snapshot, self.config, anki_dark=False)
         self.assertLess(html.index('id="hdo-host-theme"'), html.index('id="hdo-dashboard"'))
         self.assertIn("html,body,#root,.dashboard-host,.dashboard-scroll-surface", html)
-        self.assertIn("background:#EEF3F8!important", html)
+        host_style = html.split('<style id="hdo-host-theme">', 1)[1].split("</style>", 1)[0]
+        host_rule = host_style.split("{", 1)[1].split("}", 1)[0]
+        self.assertNotIn("background", host_rule)
         self.assertIn("color-scheme:light", html)
         self.assertIn('data-hdo-theme="Sapphire Glass"', html)
         self.assertIn('data-hdo-color-mode="light"', html)
 
-    def test_unavailable_metrics_are_omitted_and_zero_values_remain(self) -> None:
+    def test_unavailable_metrics_keep_stable_rows_and_zero_values_remain_neutral(self) -> None:
         facts = replace(
             self.snapshot.facts,
             last_seven_days=ValueState.unavailable(AvailabilityReason.QUERY_FAILED),
         )
         html = render_dashboard(replace(self.snapshot, facts=facts), self.config)
-        self.assertNotIn("Last 7 Days", html)
+        self.assertIn("Last 7 Days", html)
         self.assertIn("Some dashboard data is unavailable", html)
-        self.assertNotIn("—", html)
+        recent = html[html.index("Last 7 Days"):html.index("All Time")]
+        for label in ("Cards studied", "New cards studied", "Retention", "Again rate"):
+            self.assertIn("<dt>{}</dt>".format(label), recent)
+        self.assertEqual(recent.count(">—</dd>"), 4)
 
         zero_recent = LastSevenDaysStats(
             cards_studied=0,
@@ -263,8 +278,10 @@ class RendererTests(unittest.TestCase):
         )
         recent = zero_html[zero_html.index("Last 7 Days"):zero_html.index("All Time")]
         self.assertEqual(recent.count(">0</dd>"), 2)
-        self.assertNotIn("Retention", recent)
-        self.assertNotIn("Again rate", recent)
+        self.assertIn("<dt>Retention</dt>", recent)
+        self.assertIn("<dt>Again rate</dt>", recent)
+        self.assertEqual(recent.count(">—</dd>"), 2)
+        self.assertNotIn("hdo-value--new", recent)
 
     def test_payload_is_capability_only_and_escapes_script_delimiters(self) -> None:
         event = replace(
@@ -281,6 +298,11 @@ class RendererTests(unittest.TestCase):
         for forbidden in ("card_ids", "browse_target", "browser_token", "primary_text", "secondary_text"):
             self.assertNotIn(forbidden, encoded)
         self.assertIsInstance(payload["due_load_reference"], float)
+        self.assertEqual(payload["presentation"]["progress"]["state"], "in_progress")
+        self.assertEqual(
+            tuple(payload["presentation"]["today_session"]),
+            ("cards_studied", "new_cards_studied", "time", "pace", "eta"),
+        )
 
     def test_day_insight_callback_contains_no_native_ids_or_preview_content(self) -> None:
         facts = self.snapshot.facts.for_date("2026-08-17")
@@ -320,6 +342,23 @@ class RendererTests(unittest.TestCase):
         self.assertIn("--heat-complete-text-5:{}".format(selected["heat_complete_text_5"]), html)
         self.assertRegex(html, r"--ui-card-background:#[0-9A-F]{6}")
         self.assertIn("data-hdo-high-contrast=\"false\"", html)
+
+        high_contrast = deepcopy(self.config)
+        high_contrast["appearance"].update({"preset": "High Contrast", "mode": "light", "opacity": 70})
+        high_html = render_dashboard(self.snapshot, high_contrast, anki_dark=False)
+        self.assertIn("--ui-card-background:#FFFFFF", high_html)
+
+    def test_bible_preference_maps_to_safe_clamp_and_hiding_removes_rail_slot(self) -> None:
+        config = deepcopy(self.config)
+        config["bible"]["font_size"] = "96px"
+        html = render_dashboard(self.snapshot, config)
+        self.assertIn("--hdo-verse-size:19.00px", html)
+        self.assertIn("--hdo-verse-long-size:17.10px", html)
+
+        config["visibility"]["bible"] = False
+        hidden = render_dashboard(self.snapshot, config)
+        self.assertNotIn("hdo-bible-card", hidden)
+        self.assertIn('data-hdo-has-metrics="true" data-hdo-has-bible="false"', hidden)
 
     def test_preview_reuses_the_production_components(self) -> None:
         normal = render_dashboard(self.snapshot, self.config)
@@ -368,10 +407,11 @@ class RendererTests(unittest.TestCase):
 
     def test_eta_formatter_handles_done_same_day_and_rollover(self) -> None:
         now = datetime(2026, 8, 17, 22, 30).astimezone()
-        self.assertEqual(_eta(None, now), "")
-        self.assertEqual(_eta(0, now), "Done")
-        self.assertIn("PM", _eta(60, now))
-        self.assertTrue(_eta(7200, now).startswith("Tomorrow,"))
+        self.assertEqual(_eta(None, None, now), "—")
+        self.assertEqual(_eta(0, 0, now), "—")
+        self.assertEqual(_eta(0, 7, now), "Done")
+        self.assertIn("PM", _eta(60, 7, now))
+        self.assertTrue(_eta(7200, 7, now).startswith("Tomorrow,"))
 
 
 if __name__ == "__main__":

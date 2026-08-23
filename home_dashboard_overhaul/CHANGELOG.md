@@ -1,5 +1,51 @@
 # Changelog
 
+## Unreleased
+
+## 1.8.1 — 2026-08-23
+
+- Recalibrated the native 100% Deck Browser layout to a 1,480 px maximum
+  dashboard, a 430–450 px statistics rail, 16 px shell gaps, compact 44–48 px
+  Month rows, and an unframed Year heatmap with readable week-aligned month
+  labels and Mon/Wed/Fri references. Container-width rules now move the rail
+  below the calendar near 1,220 px and use one card per row below 640 px.
+- Replaced competing calendar rings with one Today capsule or Year marker and
+  one 2 px selection outline. Completion remains the historical fill, due work
+  now maps the existing percentile reference to three presentation levels, and
+  2/4/6 px Month indicators can coexist with today, completion, selection, and
+  gold event markers.
+- Rebuilt the integrated footer around selected-date event precedence, the
+  exact `Event on this date` and `Next event` relationships, grouped title/date/
+  countdown/edit content, ellipsis-safe long titles, event counts, and the
+  shorter `Reviewed cards` and `Due cards` actions.
+- Made all statistics cards structurally stable across fresh, populated, zero,
+  completed, and partially unavailable data. True zero workload now reads
+  `No cards due`; Today’s Session always exposes Cards studied, New cards
+  studied, Time, Pace, and ETA; unavailable rates and estimates render `—`; and
+  semantic category colors apply only to positive values.
+- Added one shared progress presentation state for initial Python render and
+  live JavaScript updates. `Done` is now limited to completed nonzero workload,
+  while the exact-count Completed/New/Learning/Review bar and buried-card
+  exclusion remain unchanged.
+- Preserved the Bible font-size preference through a safe 15–19 px responsive
+  mapping, improved long-verse sizing and dark reference clarity, and removed
+  the entire rail gap when the Bible card is disabled.
+- Refined Sapphire, steel-accent Graphite dark, neutral-valued Emerald, and
+  fully opaque High Contrast through the existing semantic token system.
+  Native/default hosts remain transparent; a top-level scrim is activated only
+  when a real or deliberately injected QA background image is detected.
+- Upgraded configuration to schema 7. The retired `study.show_eta`,
+  `study.show_estimate`, and legacy `ShowTimeLeft` inputs are dropped while
+  unrelated unknown keys and all other saved preferences remain intact; ETA is
+  now a permanent Today’s Session row.
+- Added a 100%-only 1.8.1 native evidence contract with 16 mandatory
+  theme/mode/view Deck Browser frames and tagged supplemental coverage. The
+  prior 1.8.0 evidence and the user-supplied native geometry reference remain
+  immutable calibration history.
+- Fixed the Today’s Progress Buried total by reconciling cards already in
+  queues -2/-3 with due siblings Anki omits from its authoritative reviewer
+  queue, matching the accurate Progressbar counting model.
+
 ## 1.8.0 — 2026-08-23
 
 - Rebuilt the calendar footer as one integrated surface with explicit

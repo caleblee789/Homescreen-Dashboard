@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, dataclass, is_dataclass
 from datetime import date, datetime, timedelta
 from enum import Enum
 import html
 import json
+import re
 from typing import Any, Mapping, Sequence
 
 from .models import (
@@ -72,13 +73,39 @@ def _clock_time(value: datetime) -> str:
     return value.strftime("%I:%M %p").lstrip("0")
 
 
-def _eta(duration_seconds: int | None, now: datetime | None = None) -> str:
-    """Format an available ETA; unavailable estimates are omitted by callers."""
+UNAVAILABLE_TEXT = "—"
 
-    if duration_seconds is None:
-        return ""
+
+class _ProgressState(str, Enum):
+    NO_CARDS_DUE = "no_cards_due"
+    IN_PROGRESS = "in_progress"
+    COMPLETE = "complete"
+    UNAVAILABLE = "unavailable"
+
+
+@dataclass(frozen=True)
+class _ProgressPresentation:
+    state: _ProgressState
+    percent: int | None
+    completed: int
+    new: int
+    learning: int
+    review: int
+    remaining: int
+    workload: int
+
+
+def _eta(
+    duration_seconds: int | None,
+    original_workload: int | None,
+    now: datetime | None = None,
+) -> str:
+    """Format ETA without confusing an empty workload with completed work."""
+
+    if duration_seconds is None or original_workload is None:
+        return UNAVAILABLE_TEXT
     if duration_seconds <= 0:
-        return "Done"
+        return "Done" if original_workload > 0 else UNAVAILABLE_TEXT
     current = now or datetime.now().astimezone()
     if current.tzinfo is None:
         current = current.astimezone()
@@ -115,7 +142,11 @@ def _style(config: Mapping[str, Any], anki_dark: bool) -> str:
     theme = _resolved_theme(config, anki_dark)
     # Preserve the existing opacity preference without translucent data colors:
     # card surfaces are precomposited into opaque values over the theme canvas.
-    safe_opacity = max(91, int(appearance.get("opacity", 88))) / 100
+    safe_opacity = (
+        1.0
+        if theme["theme_name"] == "High Contrast"
+        else max(91, int(appearance.get("opacity", 88))) / 100
+    )
     rendered_surface = composite_color(
         theme["ui_surface_1"], theme["ui_canvas"], safe_opacity
     )
@@ -143,14 +174,14 @@ def _style(config: Mapping[str, Any], anki_dark: bool) -> str:
 
 
 def _host_surface_style(config: Mapping[str, Any], anki_dark: bool) -> str:
-    """Paint the controlled web canvas before the dashboard's first frame."""
+    """Apply host text, color-scheme, and scrollbar tokens without repainting it."""
 
     theme = _resolved_theme(config, anki_dark)
     mode = str(theme["color_mode"])
     return (
         '<style id="hdo-host-theme">'
         'html,body,#root,.dashboard-host,.dashboard-scroll-surface{{'
-        'min-height:100%;background:{}!important;color:{};color-scheme:{};}}'
+        'min-height:100%;color:{};color-scheme:{};}}'
         'html{{scrollbar-color:{} {};}}'
         'html::-webkit-scrollbar,body::-webkit-scrollbar,'
         '.dashboard-scroll-surface::-webkit-scrollbar{{width:8px;height:8px;}}'
@@ -163,7 +194,6 @@ def _host_surface_style(config: Mapping[str, Any], anki_dark: bool) -> str:
         'body{{overscroll-behavior-block:none;}}'
         '</style>'
     ).format(
-        _escape(theme["ui_canvas"]),
         _escape(theme["ui_text_primary"]),
         _escape(mode),
         _escape(theme["ui_scrollbar_thumb"]),
@@ -182,13 +212,29 @@ def _format_count(value: object) -> str:
         return "0"
 
 
-def _metric(label: str, value: object, metric_key: str, modifier: str = "") -> str:
+def _metric(
+    label: str,
+    value: object,
+    metric_key: str,
+    modifier: str = "",
+    *,
+    semantic: str = "",
+    semantic_value: int | float | None = None,
+    unavailable: bool = False,
+) -> str:
+    classes = [modifier] if modifier else []
+    if semantic and not unavailable and semantic_value is not None and semantic_value > 0:
+        classes.append("hdo-value--{}".format(semantic))
+    if unavailable:
+        classes.append("is-unavailable")
+    semantic_attr = ' data-hdo-semantic="{}"'.format(_escape(semantic)) if semantic else ""
     return (
-        '<div class="hdo-metric-row {}" data-hdo-primitive="{}">'
+        '<div class="hdo-metric-row {}" data-hdo-primitive="{}"{}>'
         '<dt>{}</dt><dd data-hdo-metric="{}">{}</dd></div>'
     ).format(
-        _escape(modifier),
+        _escape(" ".join(classes)),
         _dashboard_primitive("metric-row"),
+        semantic_attr,
         _escape(label),
         _escape(metric_key),
         _escape(value),
@@ -264,99 +310,197 @@ def _progress_segment(label: str, key: str, count: int, workload: int) -> str:
     )
 
 
+def _progress_presentation(snapshot: DashboardSnapshot) -> _ProgressPresentation:
+    today_state = _facts_state(snapshot, "today")
+    queue_state = _facts_state(snapshot, "queue")
+    if not today_state.is_available or not queue_state.is_available:
+        return _ProgressPresentation(
+            _ProgressState.UNAVAILABLE,
+            None,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
+    today: TodayStats = today_state.value
+    queue: QueueStats = queue_state.value
+    completed = max(0, int(today.answers))
+    new_remaining = max(0, int(queue.new))
+    learning_remaining = max(0, int(queue.learning))
+    review_remaining = max(0, int(queue.review))
+    remaining = new_remaining + learning_remaining + review_remaining
+    workload = completed + remaining
+    if workload == 0:
+        state = _ProgressState.NO_CARDS_DUE
+        percent = None
+    elif remaining == 0:
+        state = _ProgressState.COMPLETE
+        percent = 100
+    else:
+        state = _ProgressState.IN_PROGRESS
+        percent = _rounded_progress_percent(completed, workload)
+    return _ProgressPresentation(
+        state,
+        percent,
+        completed,
+        new_remaining,
+        learning_remaining,
+        review_remaining,
+        remaining,
+        workload,
+    )
+
+
+def _progress_heading(presentation: _ProgressPresentation) -> str:
+    if presentation.state == _ProgressState.NO_CARDS_DUE:
+        return "No cards due"
+    if presentation.percent is not None:
+        return "{}%".format(presentation.percent)
+    return UNAVAILABLE_TEXT
+
+
 def _progress_group(snapshot: DashboardSnapshot) -> str:
     today_state = _facts_state(snapshot, "today")
     queue_state = _facts_state(snapshot, "queue")
     buried_state = _facts_state(snapshot, "buried")
-    rows: list[str] = []
-    lead = ""
-    heading_meta = ""
+    presentation = _progress_presentation(snapshot)
+    percent = presentation.percent if presentation.percent is not None else 0
+    if presentation.state == _ProgressState.NO_CARDS_DUE:
+        composition = "No cards are due today."
+    elif presentation.state == _ProgressState.UNAVAILABLE:
+        composition = "Today’s workload is unavailable."
+    else:
+        composition = (
+            "{}% complete. Completed: {} ({}%); New remaining: {} ({}%); "
+            "Learning remaining: {} ({}%); Reviews remaining: {} ({}%)."
+        ).format(
+            percent,
+            _format_count(presentation.completed),
+            _progress_share(presentation.completed, presentation.workload),
+            _format_count(presentation.new),
+            _progress_share(presentation.new, presentation.workload),
+            _format_count(presentation.learning),
+            _progress_share(presentation.learning, presentation.workload),
+            _format_count(presentation.review),
+            _progress_share(presentation.review, presentation.workload),
+        )
+    heading = _progress_heading(presentation)
+    heading_meta = (
+        '<span class="hdo-progress-complete" data-hdo-metric="progress.percent" '
+        'data-hdo-progress-state="{}" aria-label="{}">{}</span>'
+    ).format(
+        _escape(presentation.state.value),
+        _escape(composition),
+        _escape(heading),
+    )
+    lead = (
+        '<div class="hdo-progress-track" data-hdo-progress-track '
+        'data-hdo-progress-state="{}" role="progressbar" '
+        'aria-label="Today’s workload composition" aria-valuemin="0" '
+        'aria-valuemax="100" aria-valuenow="{}" aria-valuetext="{}">{}</div>'
+    ).format(
+        _escape(presentation.state.value),
+        percent,
+        _escape(composition),
+        "".join((
+            _progress_segment("Completed", "completed", presentation.completed, presentation.workload),
+            _progress_segment("New remaining", "new", presentation.new, presentation.workload),
+            _progress_segment("Learning remaining", "learning", presentation.learning, presentation.workload),
+            _progress_segment("Reviews remaining", "review", presentation.review, presentation.workload),
+        )),
+    )
     if queue_state.is_available:
         queue: QueueStats = queue_state.value
         new_remaining = max(0, int(queue.new))
         learning_remaining = max(0, int(queue.learning))
         review_remaining = max(0, int(queue.review))
         remaining = new_remaining + learning_remaining + review_remaining
-        if today_state.is_available:
-            today: TodayStats = today_state.value
-            completed = max(0, int(today.answers))
-            workload = completed + remaining
-            percent = _rounded_progress_percent(completed, workload)
-            composition = (
-                "{}% complete. Completed: {} ({}%); New remaining: {} ({}%); "
-                "Learning remaining: {} ({}%); Reviews remaining: {} ({}%)."
-            ).format(
-                percent,
-                _format_count(completed),
-                _progress_share(completed, workload),
-                _format_count(new_remaining),
-                _progress_share(new_remaining, workload),
-                _format_count(learning_remaining),
-                _progress_share(learning_remaining, workload),
-                _format_count(review_remaining),
-                _progress_share(review_remaining, workload),
-            )
-            if workload == 0:
-                composition = "No workload today. 0% complete."
-            heading_meta = (
-                '<span class="hdo-progress-complete" data-hdo-metric="progress.percent" '
-                'aria-label="{}% complete">{}% complete</span>'
-            ).format(percent, percent)
-            lead = (
-                '<div class="hdo-progress-track" data-hdo-progress-track role="progressbar" '
-                'aria-label="Today’s workload composition" aria-valuemin="0" '
-                'aria-valuemax="100" aria-valuenow="{}" aria-valuetext="{}">{}</div>'
-            ).format(
-                percent,
-                _escape(composition),
-                "".join((
-                    _progress_segment("Completed", "completed", completed, workload),
-                    _progress_segment("New remaining", "new", new_remaining, workload),
-                    _progress_segment("Learning remaining", "learning", learning_remaining, workload),
-                    _progress_segment("Reviews remaining", "review", review_remaining, workload),
-                )),
-            )
-        rows.extend((
-            _metric("New remaining", _format_count(new_remaining), "queue.new", "hdo-value--new"),
-            _metric("Learning remaining", _format_count(learning_remaining), "queue.learning", "hdo-value--learning"),
-            _metric("Reviews remaining", _format_count(review_remaining), "queue.review", "hdo-value--review"),
+        rows = [
+            _metric("New remaining", _format_count(new_remaining), "queue.new", semantic="new", semantic_value=new_remaining),
+            _metric("Learning remaining", _format_count(learning_remaining), "queue.learning", semantic="learning", semantic_value=learning_remaining),
+            _metric("Reviews remaining", _format_count(review_remaining), "queue.review", semantic="review", semantic_value=review_remaining),
             _metric("Total remaining", _format_count(remaining), "queue.total"),
-        ))
+        ]
+    else:
+        rows = [
+            _metric(label, UNAVAILABLE_TEXT, key, semantic=semantic, unavailable=True)
+            for label, key, semantic in (
+                ("New remaining", "queue.new", "new"),
+                ("Learning remaining", "queue.learning", "learning"),
+                ("Reviews remaining", "queue.review", "review"),
+                ("Total remaining", "queue.total", ""),
+            )
+        ]
     if buried_state.is_available:
         buried: BuriedStats = buried_state.value
         buried_total = max(0, int(buried.new)) + max(0, int(buried.learning)) + max(0, int(buried.review))
-        rows.append(_metric("Buried", _format_count(buried_total), "buried.total", "hdo-value--buried"))
+        rows.append(_metric("Buried", _format_count(buried_total), "buried.total", semantic="buried", semantic_value=buried_total))
+    else:
+        rows.append(_metric("Buried", UNAVAILABLE_TEXT, "buried.total", semantic="buried", unavailable=True))
     return _stats_group("Today’s Progress", "hdo-progress", rows, lead, heading_meta)
 
 
-def _today_session_group(snapshot: DashboardSnapshot, show_eta: bool) -> str:
+def _today_session_presentation(snapshot: DashboardSnapshot) -> dict[str, str]:
     state = _facts_state(snapshot, "today")
     if not state.is_available:
-        return ""
+        return {
+            "cards_studied": UNAVAILABLE_TEXT,
+            "new_cards_studied": UNAVAILABLE_TEXT,
+            "time": UNAVAILABLE_TEXT,
+            "pace": UNAVAILABLE_TEXT,
+            "eta": UNAVAILABLE_TEXT,
+        }
     stats: TodayStats = state.value
-    rows = [
-        _metric("Cards studied", _format_count(stats.answers), "today.answers"),
-        _metric("New cards studied", _format_count(stats.new_cards_studied), "today.new_cards_studied", "hdo-value--new"),
-        _metric("Time", _duration(stats.seconds), "today.seconds"),
-    ]
     if stats.pace_value is not None:
         pace = (
             "{:.1f} cards/min".format(stats.pace_value)
             if stats.pace_unit == "cards_per_minute"
             else "{:.1f} sec/card".format(stats.pace_value)
         )
-        rows.append(_metric("Pace", pace, "today.pace"))
+    else:
+        pace = UNAVAILABLE_TEXT
     queue_state = _facts_state(snapshot, "queue")
-    if show_eta and queue_state.is_available:
+    if queue_state.is_available:
         queue: QueueStats = queue_state.value
-        eta = _eta(queue.estimated_duration_seconds)
-        if eta:
-            rows.append(_metric("ETA", eta, "queue.eta", "hdo-value--estimate"))
+        workload = max(0, int(stats.answers)) + max(0, int(queue.new)) + max(0, int(queue.learning)) + max(0, int(queue.review))
+        eta = _eta(queue.estimated_duration_seconds, workload)
+    else:
+        eta = UNAVAILABLE_TEXT
+    return {
+        "cards_studied": _format_count(stats.answers),
+        "new_cards_studied": _format_count(stats.new_cards_studied),
+        "time": _duration(stats.seconds),
+        "pace": pace,
+        "eta": eta,
+    }
+
+
+def _today_session_group(snapshot: DashboardSnapshot) -> str:
+    state = _facts_state(snapshot, "today")
+    presentation = _today_session_presentation(snapshot)
+    new_count = max(0, int(state.value.new_cards_studied)) if state.is_available else None
+    unavailable = not state.is_available
+    rows = [
+        _metric("Cards studied", presentation["cards_studied"], "today.answers", unavailable=unavailable),
+        _metric(
+            "New cards studied",
+            presentation["new_cards_studied"],
+            "today.new_cards_studied",
+            semantic="new",
+            semantic_value=new_count,
+            unavailable=unavailable,
+        ),
+        _metric("Time", presentation["time"], "today.seconds", unavailable=unavailable),
+        _metric("Pace", presentation["pace"], "today.pace", unavailable=presentation["pace"] == UNAVAILABLE_TEXT),
+        _metric("ETA", presentation["eta"], "queue.eta", "hdo-value--estimate", unavailable=presentation["eta"] == UNAVAILABLE_TEXT),
+    ]
     return _stats_group("Today’s Session", "hdo-session", rows)
 
 
 def _rate_text(value: RateMetric) -> str:
-    return "{}%".format(value.percent) if value.status == RateStatus.AVAILABLE and value.percent is not None else ""
+    return "{}%".format(value.percent) if value.status == RateStatus.AVAILABLE and value.percent is not None else UNAVAILABLE_TEXT
 
 
 def _retention_role(value: RateMetric, target: int | None) -> str:
@@ -383,25 +527,60 @@ def _again_role(value: RateMetric, retention_target: int | None) -> str:
 def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
     state = _facts_state(snapshot, "last_seven_days")
     if not state.is_available:
-        return ""
+        return _stats_group(
+            "Last 7 Days",
+            "hdo-last-seven",
+            [
+                _metric(label, UNAVAILABLE_TEXT, key, semantic=semantic, unavailable=True)
+                for label, key, semantic in (
+                    ("Cards studied", "last_seven_days.cards_studied", ""),
+                    ("New cards studied", "last_seven_days.new_cards_studied", "new"),
+                    ("Retention", "last_seven_days.retention", ""),
+                    ("Again rate", "last_seven_days.again_rate", ""),
+                )
+            ],
+        )
     stats: LastSevenDaysStats = state.value
     rows = [
         _metric("Cards studied", _format_count(stats.cards_studied), "last_seven_days.cards_studied"),
-        _metric("New cards studied", _format_count(stats.new_cards_studied), "last_seven_days.new_cards_studied", "hdo-value--new"),
+        _metric("New cards studied", _format_count(stats.new_cards_studied), "last_seven_days.new_cards_studied", semantic="new", semantic_value=stats.new_cards_studied),
     ]
     retention = _rate_text(stats.retention)
-    if retention:
-        rows.append(_metric("Retention", retention, "last_seven_days.retention", _retention_role(stats.retention, target)))
+    rows.append(_metric(
+        "Retention",
+        retention,
+        "last_seven_days.retention",
+        _retention_role(stats.retention, target),
+        unavailable=retention == UNAVAILABLE_TEXT,
+    ))
     again = _rate_text(stats.again_rate)
-    if again:
-        rows.append(_metric("Again rate", again, "last_seven_days.again_rate", _again_role(stats.again_rate, target)))
+    rows.append(_metric(
+        "Again rate",
+        again,
+        "last_seven_days.again_rate",
+        _again_role(stats.again_rate, target),
+        unavailable=again == UNAVAILABLE_TEXT,
+    ))
     return _stats_group("Last 7 Days", "hdo-last-seven", rows)
 
 
 def _all_time_group(snapshot: DashboardSnapshot, _target: int | None) -> str:
     state = _facts_state(snapshot, "long_term")
     if not state.is_available:
-        return ""
+        return _stats_group(
+            "All Time",
+            "hdo-all-time",
+            [
+                _metric(label, UNAVAILABLE_TEXT, key, unavailable=True)
+                for label, key in (
+                    ("Avg cards/day", "long_term.average_reviews_per_active_day"),
+                    ("Current streak", "long_term.current_streak"),
+                    ("Longest streak", "long_term.longest_streak"),
+                    ("Lifetime retention", "long_term.lifetime_retention"),
+                    ("Lifetime cards studied", "long_term.lifetime_cards_studied"),
+                )
+            ],
+        )
     stats: LongTermStats = state.value
     day_text = lambda count: "{} day{}".format(_format_count(count), "" if count == 1 else "s")
     rows = [
@@ -410,8 +589,12 @@ def _all_time_group(snapshot: DashboardSnapshot, _target: int | None) -> str:
         _metric("Longest streak", day_text(stats.longest_streak), "long_term.longest_streak"),
     ]
     retention = _rate_text(stats.lifetime_retention)
-    if retention:
-        rows.append(_metric("Lifetime retention", retention, "long_term.lifetime_retention"))
+    rows.append(_metric(
+        "Lifetime retention",
+        retention,
+        "long_term.lifetime_retention",
+        unavailable=retention == UNAVAILABLE_TEXT,
+    ))
     rows.append(_metric("Lifetime cards studied", _format_count(stats.lifetime_cards_studied), "long_term.lifetime_cards_studied"))
     return _stats_group("All Time", "hdo-all-time", rows)
 
@@ -424,7 +607,7 @@ def _metrics(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
     if visibility.get("remaining", True):
         groups.append(_progress_group(snapshot))
     if visibility.get("today", True):
-        groups.append(_today_session_group(snapshot, bool(config.get("study", {}).get("show_eta", True))))
+        groups.append(_today_session_group(snapshot))
     if visibility.get("heatmap_metrics", True):
         groups.extend((_last_seven_group(snapshot, target), _all_time_group(snapshot, target)))
     groups = [group for group in groups if group]
@@ -597,6 +780,10 @@ def dashboard_facts_payload(
             "last_seven_days": _value_state_payload(facts.last_seven_days),
             "long_term": _value_state_payload(facts.long_term),
         },
+        "presentation": {
+            "progress": _json_value(_progress_presentation(snapshot)),
+            "today_session": _today_session_presentation(snapshot),
+        },
         "retention_target": retention_target,
         "view": view,
         "week_start": week_start,
@@ -612,7 +799,7 @@ def _calendar_controls(config: Mapping[str, Any]) -> str:
         '<button type="button" data-hdo-view="year" aria-pressed="{}">Year</button></div>'
         '<div class="hdo-period-controls" aria-label="Calendar period">'
         '<button type="button" data-hdo-calendar="previous" aria-label="Previous period" title="Previous period">‹</button>'
-        '<button type="button" data-hdo-calendar="today">Today</button>'
+        '<button type="button" data-hdo-calendar="today" title="Go to today">Today</button>'
         '<button type="button" data-hdo-calendar="next" aria-label="Next period" title="Next period">›</button></div>'
         '<button type="button" class="hdo-settings" data-hdo-command="calendar-settings" '
         'aria-label="Calendar settings" title="Calendar settings">'
@@ -647,22 +834,22 @@ def _calendar(snapshot: DashboardSnapshot, config: Mapping[str, Any], selected_d
         'data-hdo-primitive="{}">'
         '<div class="hdo-calendar-legend" aria-label="Calendar legend">'
         '<div class="hdo-legend-group hdo-legend-completion">'
-        '<span class="hdo-legend-title">Completion</span>'
-        '<span class="hdo-legend-endpoint">Less</span>'
+        '<span class="hdo-legend-title">Completed reviews</span>'
+        '<span class="hdo-legend-endpoint">Low</span>'
         '<span class="hdo-legend-scale hdo-completion-legend" aria-hidden="true">'
         '<i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i><i data-level="5"></i>'
-        '</span><span class="hdo-legend-endpoint">More</span></div>'
+        '</span><span class="hdo-legend-endpoint">High</span></div>'
         '<div class="hdo-legend-group hdo-legend-due">'
         '<span class="hdo-legend-title">Reviews due</span>'
         '<span class="hdo-legend-scale hdo-due-legend" aria-hidden="true">'
-        '<i data-due-level="1"></i><i data-due-level="3"></i><i data-due-level="5"></i>'
+        '<i data-due-level="1"></i><i data-due-level="2"></i><i data-due-level="3"></i>'
         '</span></div>{}</div>'
         '<div class="hdo-calendar-context hdo-calendar-context-bar" aria-live="polite">'
         '<div class="hdo-selected-date-line">'
         '<span class="hdo-date-state-chip" data-hdo-date-state>Today</span>'
         '<time data-hdo-context-date></time></div>'
         '<div class="hdo-next-event-line" data-hdo-context-event>'
-        '<span class="hdo-context-label">Next event</span>'
+        '<span class="hdo-context-label" data-hdo-context-event-label>Next event</span>'
         '<span class="hdo-context-event-marker" data-hdo-event-marker aria-hidden="true" hidden></span>'
         '<span class="hdo-event-summary">'
         '<button type="button" class="hdo-event-title" data-hdo-open-events hidden></button>'
@@ -698,6 +885,15 @@ def _calendar(snapshot: DashboardSnapshot, config: Mapping[str, Any], selected_d
 def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
     bible = config["bible"]
     custom_color = "" if bible.get("theme_aware_color", True) else "color:{};".format(_escape(bible.get("font_color", "")))
+    raw_size = str(bible.get("font_size", "28px"))
+    try:
+        configured_size = int(raw_size[:-2]) if raw_size.endswith("px") else 28
+    except (TypeError, ValueError):
+        configured_size = 28
+    display_size = min(19.0, max(15.0, configured_size * 0.64))
+    long_size = min(display_size, max(14.75, display_size * 0.9))
+    plain_verse = html.unescape(re.sub(r"<[^>]+>", " ", snapshot.verse.body_html))
+    verse_class = "hdo-verse hdo-verse--long" if len(" ".join(plain_verse.split())) > 180 else "hdo-verse"
     reference = (
         '<footer class="hdo-verse-reference">{}</footer>'.format(snapshot.verse.reference_html)
         if snapshot.verse.reference_html
@@ -707,14 +903,16 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
         '<section class="hdo-card hdo-dashboard-panel hdo-bible-card" data-hdo-primitive="{}" '
         'aria-labelledby="hdo-bible-title"><p class="hdo-eyebrow">Bible Verse</p>'
         '<h2 id="hdo-bible-title" class="hdo-visually-hidden">Bible Verse</h2>'
-        '<blockquote class="hdo-verse" '
-        'style="{}--hdo-verse-font:{};--hdo-verse-size:{}">'
+        '<blockquote class="{}" '
+        'style="{}--hdo-verse-font:{};--hdo-verse-size:{:.2f}px;--hdo-verse-long-size:{:.2f}px">'
         '<div class="hdo-verse-body">{}</div></blockquote>{}</section>'
     ).format(
         _dashboard_primitive("bible-verse-card"),
+        verse_class,
         custom_color,
         _escape(bible.get("font_family", "Georgia, serif")),
-        _escape(bible.get("font_size", "28px")),
+        display_size,
+        long_size,
         snapshot.verse.body_html,
         reference,
     )
@@ -765,7 +963,10 @@ def render_dashboard(
     sections: list[str] = []
     if calendar or has_insights:
         rail = (
-            '<aside class="hdo-insight-rail" aria-label="Study insights">{}{}</aside>'.format(
+            '<aside class="hdo-insight-rail" aria-label="Study insights" '
+            'data-hdo-has-metrics="{}" data-hdo-has-bible="{}">{}{}</aside>'.format(
+                "true" if has_metrics else "false",
+                "true" if bible else "false",
                 metrics,
                 bible,
             )
@@ -793,7 +994,7 @@ def render_dashboard(
         'data-hdo-runtime-stack="{}" data-hdo-stack-position="{}" '
         'data-hdo-content-mode="{}" data-hdo-high-contrast="{}" '
         'data-hdo-calendar-view="{}" data-hdo-has-calendar="{}" data-hdo-has-metrics="{}" '
-        'data-hdo-has-insights="{}" '
+        'data-hdo-has-insights="{}" data-hdo-has-bible="{}" '
         'data-hdo-enlarged-text="{}" aria-busy="false" style="{}">'
         '<main class="hdo-stack">{}{}</main></div>'
     ).format(
@@ -809,6 +1010,7 @@ def render_dashboard(
         "true" if has_calendar else "false",
         "true" if has_metrics else "false",
         "true" if has_insights else "false",
+        "true" if bible else "false",
         "true" if int(render_config.get("appearance", {}).get("text_scale", 100)) >= 125 else "false",
         _style(render_config, anki_dark),
         _data_warning(snapshot, render_config),

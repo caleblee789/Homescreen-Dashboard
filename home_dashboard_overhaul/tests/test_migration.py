@@ -92,9 +92,9 @@ class MigrationTests(unittest.TestCase):
         self.assertTrue(migrated["migration"]["warnings"])
         self.assertEqual(migrated["study"], {
             "pace_unit": "seconds_per_card",
-            "show_eta": True,
             "retention_target": 80,
         })
+        self.assertNotIn("show_eta", json.dumps(migrated))
         self.assertTrue(migrated["new_cards"]["include_rescheduled"])
         self.assertEqual(migrated["heatmap"]["week_start"], 5)
         self.assertNotIn("introduced", migrated)
@@ -114,7 +114,7 @@ class MigrationTests(unittest.TestCase):
             with self.subTest(palette=palette):
                 self.mw.col.synced["colors"] = palette
                 migrated, _state = prepare_migration(self.mw, {})
-                self.assertEqual(migrated["schema_version"], 6)
+                self.assertEqual(migrated["schema_version"], 7)
                 self.assertEqual(migrated["appearance"]["preset"], "Sapphire Glass")
                 self.assertNotIn("density", migrated["appearance"])
                 self.assertEqual(normalize_config(migrated), migrated)

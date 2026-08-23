@@ -1,86 +1,96 @@
 # Release visual contract
 
-Status: final 1.8.0 offline implementation contract. This document defines the
-source and package gates for the release; it does not claim live Anki, human
-accessibility, or cross-platform acceptance.
+Status: Home Screen Dashboard 1.8.1 native 100% release contract.
 
-## Authority
+## Authority and provenance
 
-The machine-readable authorities are:
+The current machine-readable authorities are:
 
-- `qa/calendar_surface_manifest.json`: 25 canonical surfaces and 42 required
-  finalization criteria.
-- `qa/ui-surface-registry.json`: exact-once ownership and fixture mapping.
-- `qa/visual_regression_matrix_1_8_0.json`: the exact 96-case product matrix of
-  four themes, light/dark mode, Month/Year, compact/wide, and 100/125/150% text.
+- `qa/calendar_surface_manifest_1_8_1.json`: layout, component, behavior, and
+  acceptance requirements.
+- `qa/ui-surface-registry_1_8_1.json`: exact-once surface ownership and fixture
+  mapping.
+- `qa/visual_regression_matrix_1_8_1.json`: 16 mandatory native Deck Browser
+  frames covering four themes, light/dark, and Month/Year at 100% text scale.
+- `qa/capture_evidence_manifest_1_8_1.json`: tagged fresh/populated,
+  responsive, state, background, Bible, lifecycle, and persistence evidence.
 
-The immutable `qa/live-ui-acceptance-1.5.3-release-2026-08-15/` directory is a
-historical comparison baseline only. It must not be changed, regenerated, or
-presented as evidence for 1.8.0.
+The user-supplied 3420×2146 native screenshot is geometry calibration input.
+The retained 1.8.0 contact sheets are comparison and navigation material. They
+must not be overwritten or represented as newly generated 1.8.1 evidence.
+The complete `qa/release-evidence-1.8.0-2026-08-23/` directory remains
+immutable history.
 
-## Required composition
+## Native 100% composition
 
-- Month and Year use one shared calendar-and-insight shell. At 940 CSS pixels
-  and wider, the calendar sits beside a fixed-order 2×2 metrics grid and Bible
-  card; at 440–939 pixels the insight rail follows the calendar; below 440
-  pixels the metrics use one column.
-- The calendar footer is one integrated surface containing distinct Completion,
-  Reviews Due, and Event legend groups; selected-date context; the next event
-  and edit action; and only the exact Browser actions applicable to that date.
-- Card previews, the large selected-date panel, due-deck lists, a separate
-  selected-date events column, and reserved layout slots for those surfaces are
-  prohibited.
-- Year renders the complete January-through-December week grid with readable
-  month labels and uses only an internal scroller below its minimum width.
-- Settings retains the four-page responsive shell, staged changes, production
-  previews, per-row event actions, and explicit Theme color versus Custom color
-  handling.
+- The dashboard uses `min(1480px, calc(100vw - 64px))` with 24 px top and
+  32 px bottom margins.
+- At about 1,220 component pixels and above, the calendar sits left of a
+  430–450 px rail. Four equal statistics cards form a 2×2 grid and the Bible
+  card sits beneath both rail columns.
+- From 900–1,219 px the calendar becomes full width and the rail follows it.
+  Below about 640 px statistics use one column and controls/footer stack with
+  no horizontal scrolling.
+- Month uses compact 44–48 px rows (42–46 px under height pressure). Year uses
+  an unframed wrapper up to about 940 px with wide cells near 14 px, week-column
+  month labels, and Mon/Wed/Fri references.
+- No whole-dashboard transform or zoom is permitted. The legend and selected-
+  date footer remain visible under height pressure.
 
-## Color and state contract
+## Calendar and data states
 
-- Sapphire Glass, Graphite, Emerald, and High Contrast each provide complete
-  light and dark token sets for canvas, three surface levels, borders, text,
-  controls, focus, shadows, progress, and calendar overlays.
-- New, Learning, Review, Buried, Success, Warning, Danger, and Event semantics
-  remain stable across themes. The active theme accent is reserved for theme
-  identity and primary interaction emphasis.
-- Completion uses six explicit opaque levels with level-specific readable date
-  text. Reviews Due uses five explicit soft violet backgrounds plus a stronger
-  fixed-height bottom marker. It must remain distinguishable without hue alone.
-- Today, Selected, keyboard focus, adjacent-month status, completion, Reviews
-  Due, and Event are independent layers. Combined states must retain every
-  applicable cue.
-- Components consume semantic variables. Unclassified component-level color
-  literals, blanket disabled opacity, brightness filters, and diffuse colored
-  card glows fail the release gate.
-- The active theme paints `html`, `body`, the dashboard host, its scroll surface,
-  unused viewport space, and overscroll before dashboard content is visible.
+- Historical completion owns the cell fill. Today owns one number capsule in
+  Month or one inner marker in Year. Selection owns exactly one 2 px outline.
+- Due workload keeps the existing raw calculations and percentile reference,
+  then maps to presentation levels 0–3. Month uses 2/4/6 px bottom indicators;
+  Year uses a compact bottom marker. Due may coexist with today and completion.
+- Events remain gold/orange in every theme; multiple events use one compact
+  count. The legend says Completed reviews and presents three matching due
+  samples.
+- One delegated 220–260 px tooltip uses historical or future wording and stays
+  inside the viewport.
+- The integrated footer gives selected-date events precedence (`Event on this
+  date`), otherwise presents the global `Next event`. Date, title, countdown,
+  count, and pencil edit affordance remain grouped. Actions are exactly
+  `Reviewed cards` and `Due cards`; Most missed remains conditional.
 
-## Automated release gate
+## Statistics, Bible, themes, and background
 
-The 1.8.0 release requires:
+- Today’s Progress distinguishes no cards due, in progress, complete, and
+  unavailable. The exact-count bar contains Completed, New, Learning, and
+  Review; buried cards remain separate.
+- Today’s Session always has five rows. Last 7 Days and All Time retain their
+  rate rows when unavailable. Positive semantic values are colored; zero is
+  neutral; unavailable is a muted em dash. Python initial rendering and live
+  JavaScript updates consume the same derived presentation payload.
+- The Bible preference maps into a safe responsive text clamp, long verses are
+  never truncated, and disabling the card also removes its rail gap.
+- Themes extend the existing semantic token system. Routine Emerald values are
+  neutral, Graphite dark uses steel hierarchy, High Contrast surfaces are
+  opaque, and study/event/status semantics remain stable.
+- The default/native host receives no add-on-painted global canvas. A top-level
+  scrim is activated only when a real or QA-injected background image is
+  detected.
 
-- the complete Python and JavaScript suites;
-- `qa/validate_revised_ui_contract.py` passing the exact 25/42/96 contracts;
-- `qa/color_system_audit.py` reporting zero unclassified component colors and
-  no failed contrast pair;
-- source compilation and valid JSON/Markdown links;
-- a deterministic 24-file `.ankiaddon` with safe paths, fixed timestamps,
-  manifest/version consistency, checksum verification, and source/archive byte
-  parity;
-- absence of QA tools, generated evidence, deferred calendar modules, local
-  user data, caches, credentials, and machine-specific paths from the archive;
-- `git diff --check` and the final repository secret/path review.
+## Automated and exact-package release gate
 
-The retained 100%-scale reference images may be composed into contact sheets
-offline. Their metadata must state their provenance and cannot describe the
-1.8.0 archive as live-tested unless the image was captured from those exact
-bytes.
+The 1.8.1 gate requires the Python and JavaScript suites, the current contract
+validator, color audit, source checks, deterministic double build, safe 24-file
+allowlist, archive integrity, imports, source/archive parity, and a final secret
+and machine-path audit.
 
-## Explicitly unverified
+The exact candidate archive must then run in a fresh sync-disabled disposable
+Anki 26.8.1 base/profile with a unique single-instance key. Process, profile,
+add-on, filesystem, window, and disconnected-sync identity are verified before
+interaction. The same run root and key are reused for restart/persistence
+readback. The user’s normal Anki process is never focused, resized, closed, or
+otherwise controlled.
 
-The 1.8.0 workflow does not launch Anki. It therefore does not claim live
-startup, native WebView behavior, restart persistence, spoken VoiceOver,
-Windows/Linux rendering, operating-system forced colors, device-specific
-behavior, or non-100% operating-system display scaling. These remain separate
-acceptance gates and must stay unchecked in release reporting.
+## Acceptance boundaries
+
+The native run and its machine-readable reports support macOS Anki 26.8.1 at
+100% dashboard text scale. Dedicated 125%/150% captures, spoken screen-reader
+review, Windows, Linux, forced-colors review, and OS-level scaling acceptance
+are deferred and must be reported as unrun. Existing keyboard and inexpensive
+accessibility regressions remain preserved, but they are not new 1.8.1 release
+gates.

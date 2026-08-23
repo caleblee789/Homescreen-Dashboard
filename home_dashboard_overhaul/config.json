@@ -1,5 +1,5 @@
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "appearance": {
     "preset": "Sapphire Glass",
     "mode": "auto",
@@ -28,7 +28,6 @@
   },
   "study": {
     "pace_unit": "seconds_per_card",
-    "show_eta": true,
     "retention_target": 80
   },
   "new_cards": {

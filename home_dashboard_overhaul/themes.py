@@ -83,17 +83,17 @@ SEMANTIC_PALETTES: Mapping[str, Mapping[str, str]] = {
 }
 
 
-# Reviews Due is a stable semantic visualization.  The background carries
-# presence while the fixed-height bottom marker carries the five intensities.
+# Reviews Due is a stable semantic visualization. The neutral background
+# carries presence while the compact bottom marker carries three intensities.
 PROJECTED_DUE_SCALES: Mapping[str, tuple[str, ...]] = {
-    "light": ("", "#F5F2F7", "#F0EBF4", "#E9E2EE", "#E1D7E7", "#D7C9DF"),
-    "dark": ("", "#24202A", "#2C2634", "#352D3F", "#40354B", "#4C3E58"),
+    "light": ("", "#F4F2F5", "#F1EEF3", "#EDE9F0"),
+    "dark": ("", "#242329", "#27242D", "#2B2632"),
 }
 
 
 REVIEWS_DUE_INDICATORS: Mapping[str, tuple[str, ...]] = {
-    "light": ("", "#9C89AE", "#8F78A4", "#846B9A", "#765A8D", "#65487C"),
-    "dark": ("", "#89719D", "#947AA7", "#A187B2", "#AF95BF", "#BDA4CC"),
+    "light": ("", "#9C89AE", "#846B9A", "#65487C"),
+    "dark": ("", "#89719D", "#A187B2", "#BDA4CC"),
 }
 
 
@@ -153,13 +153,13 @@ CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "ui_surface_2": "#152234",
             "ui_surface_3": "#1B2A3D",
             "ui_border_subtle": "#24364A",
-            "ui_border_default": "#334A62",
-            "ui_border_strong": "#57718D",
+            "ui_border_default": "#3A526B",
+            "ui_border_strong": "#617B96",
             "ui_text_primary": "#F3F6FA",
-            "ui_text_secondary": "#B9C6D4",
-            "ui_text_tertiary": "#8799AC",
+            "ui_text_secondary": "#C2CEDB",
+            "ui_text_tertiary": "#92A3B5",
             "ui_text_disabled": "#637487",
-            "ui_eyebrow": "#8BAED1",
+            "ui_eyebrow": "#9ABBDD",
             "ui_accent": "#63A7F5",
             "ui_accent_hover": "#7BB6F8",
             "ui_accent_pressed": "#478CD8",
@@ -208,11 +208,11 @@ CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "ui_text_tertiary": "#939CA6",
             "ui_text_disabled": "#69737D",
             "ui_eyebrow": "#AAB2BB",
-            "ui_accent": "#C8D0D8",
-            "ui_accent_hover": "#DCE2E8",
-            "ui_accent_pressed": "#AEB8C2",
-            "ui_accent_soft": "#2A3138",
-            "ui_accent_border": "#65717D",
+            "ui_accent": "#9DB1C5",
+            "ui_accent_hover": "#B4C5D6",
+            "ui_accent_pressed": "#849BAF",
+            "ui_accent_soft": "#29343F",
+            "ui_accent_border": "#60788E",
             "ui_on_accent": "#151A1F",
             "ui_focus": "#7CB2F0",
             "progress_complete": "#9BA6B1",
@@ -243,12 +243,12 @@ CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
         },
         "dark": {
             "ui_canvas": "#0B100E",
-            "ui_surface_1": "#121816",
-            "ui_surface_2": "#171F1B",
-            "ui_surface_3": "#1D2721",
-            "ui_border_subtle": "#26332C",
-            "ui_border_default": "#36473D",
-            "ui_border_strong": "#5C7164",
+            "ui_surface_1": "#111A16",
+            "ui_surface_2": "#17241D",
+            "ui_surface_3": "#203129",
+            "ui_border_subtle": "#2A3B32",
+            "ui_border_default": "#3C5145",
+            "ui_border_strong": "#687E70",
             "ui_text_primary": "#F2F7F4",
             "ui_text_secondary": "#BBCAC1",
             "ui_text_tertiary": "#8E9F95",
@@ -270,8 +270,8 @@ CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "ui_surface_1": "#FFFFFF",
             "ui_surface_2": "#F7F8F9",
             "ui_surface_3": "#EDEFF1",
-            "ui_border_subtle": "#BBC2C9",
-            "ui_border_default": "#6B7580",
+            "ui_border_subtle": "#8C969F",
+            "ui_border_default": "#515B65",
             "ui_border_strong": "#20262D",
             "ui_text_primary": "#000000",
             "ui_text_secondary": "#262D34",
@@ -292,7 +292,7 @@ CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "ui_surface_1": "#080A0D",
             "ui_surface_2": "#0E1115",
             "ui_surface_3": "#161A20",
-            "ui_border_subtle": "#3A424B",
+            "ui_border_subtle": "#626C76",
             "ui_border_default": "#7B8590",
             "ui_border_strong": "#C7CDD4",
             "ui_text_primary": "#FFFFFF",
@@ -333,11 +333,11 @@ def _heat_tokens(theme_name: str, variant: str, core: Mapping[str, str]) -> Them
         **{"heat_complete_text_{}".format(level): color for level, color in enumerate(complete_text)},
         **{
             "heat_due_bg_{}".format(level): PROJECTED_DUE_SCALES[variant][level]
-            for level in range(1, 6)
+            for level in range(1, 4)
         },
         **{
             "heat_due_mark_{}".format(level): REVIEWS_DUE_INDICATORS[variant][level]
-            for level in range(1, 6)
+            for level in range(1, 4)
         },
     }
 
