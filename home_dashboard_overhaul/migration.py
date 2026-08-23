@@ -16,11 +16,13 @@ from .verse import quote_fingerprint
 
 LEGACY_IDS = ("1771074083", "635082046", "1556734708", "1143540799", "290511870")
 PALETTE_MAP = {
-    "lime": "Emerald",
-    "olive": "Sandstone",
+    # Schema 5 deliberately does not retain or approximate legacy palettes.
+    # Every legacy alias enters the same predictable Sapphire fallback.
+    "lime": "Sapphire Glass",
+    "olive": "Sapphire Glass",
     "ice": "Sapphire Glass",
-    "magenta": "Violet",
-    "flame": "Amber",
+    "magenta": "Sapphire Glass",
+    "flame": "Sapphire Glass",
 }
 
 
@@ -149,7 +151,7 @@ def _apply_heatmap(config: MutableMapping[str, Any], synced: Mapping[str, Any], 
     heatmap = config["heatmap"]
     palette = synced.get("colors")
     if isinstance(palette, str):
-        appearance["preset"] = PALETTE_MAP.get(palette.lower(), appearance["preset"])
+        appearance["preset"] = PALETTE_MAP.get(palette.lower(), "Sapphire Glass")
     # Schema 2 removes the legacy continuous nine-month presentation.  Either
     # legacy mode opens in the complete Year view after migration.
     heatmap["calendar_view"] = "year"

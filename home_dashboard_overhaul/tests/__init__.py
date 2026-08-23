@@ -1,2 +1,1 @@
-"""Home Dashboard test suite."""
-
+"""Home Screen Dashboard test suite."""

@@ -10,11 +10,11 @@ from pathlib import Path
 import re
 from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Tuple
 
-from .themes import PRESETS
+from .themes import DEFAULT_HEATMAP_PRESETS, HEATMAP_PRESETS, PRESETS
 from .verse import load_default_quotes
 
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 6
 PACKAGE_ROOT = Path(__file__).resolve().parent
 DEFAULT_CONFIG_PATH = PACKAGE_ROOT / "config.json"
 DEFAULT_VERSES_PATH = PACKAGE_ROOT / "default_verses.json"
@@ -140,8 +140,13 @@ def normalize_config(raw: object) -> Dict[str, Any]:
     appearance["mode"] = _choice(appearance.get("mode"), {"auto", "light", "dark"}, "auto")
     appearance["opacity"] = _int(appearance.get("opacity"), 88, 70, 100)
     appearance["blur"] = _int(appearance.get("blur"), 18, 0, 32)
-    appearance["density"] = _choice(appearance.get("density"), {"compact", "comfortable", "spacious"}, "comfortable")
-    appearance["text_scale"] = _int(appearance.get("text_scale"), 100, 90, 125)
+    # Layout density remains retired. Drop the known legacy
+    # key while the deep merge continues to preserve unrelated future keys.
+    appearance.pop("density", None)
+    appearance["text_scale"] = _int(appearance.get("text_scale"), 100, 90, 150)
+
+    home_screen = config["home_screen"]
+    home_screen["position"] = _choice(home_screen.get("position"), {"top", "bottom"}, "top")
 
     visibility = config["visibility"]
     if "buried" not in raw_visibility and "introduced" in raw_visibility:
@@ -154,6 +159,7 @@ def normalize_config(raw: object) -> Dict[str, Any]:
     study["pace_unit"] = _choice(study.get("pace_unit"), {"seconds_per_card", "cards_per_minute"}, "seconds_per_card")
     raw_show_eta = raw_study.get("show_eta", raw_study.get("show_estimate", study.get("show_eta")))
     study["show_eta"] = _bool(raw_show_eta, True)
+    study["retention_target"] = _int(study.get("retention_target"), 80, 50, 100)
     study.pop("pace_lookback_days", None)
     study.pop("new_card_weight", None)
     study.pop("show_estimate", None)
@@ -187,6 +193,20 @@ def normalize_config(raw: object) -> Dict[str, Any]:
     heatmap["exclude_manual_reschedules"] = _bool(heatmap.get("exclude_manual_reschedules"), True)
     heatmap["exclude_deleted_cards"] = _bool(heatmap.get("exclude_deleted_cards"), False)
     heatmap["show_due_forecast"] = _bool(heatmap.get("show_due_forecast"), True)
+    raw_theme_presets = raw_heatmap.get("presets_by_theme", {})
+    raw_theme_presets = raw_theme_presets if isinstance(raw_theme_presets, Mapping) else {}
+    legacy_heatmap_preset = raw_heatmap.get("preset", raw_heatmap.get("heatmap_preset"))
+    presets_by_theme: Dict[str, str] = {}
+    for theme_name in PRESETS:
+        candidate = raw_theme_presets.get(theme_name, legacy_heatmap_preset)
+        presets_by_theme[theme_name] = _choice(
+            candidate,
+            HEATMAP_PRESETS[theme_name].keys(),
+            DEFAULT_HEATMAP_PRESETS[theme_name],
+        )
+    heatmap["presets_by_theme"] = presets_by_theme
+    heatmap.pop("preset", None)
+    heatmap.pop("heatmap_preset", None)
     raw_decks = heatmap.get("excluded_deck_ids", [])
     deck_ids: List[int] = []
     if isinstance(raw_decks, list):
@@ -198,6 +218,37 @@ def normalize_config(raw: object) -> Dict[str, Any]:
             if deck_id > 0 and deck_id not in deck_ids:
                 deck_ids.append(deck_id)
     heatmap["excluded_deck_ids"] = deck_ids
+
+    # Schema 6 retires the previous large selected-date/details surface and
+    # its reserved slots. Preserve unrelated future keys, but remove the
+    # exact known legacy identifiers and force the only supported ordering.
+    visibility.pop("selected_date", None)
+    visibility.pop("most_missed", None)
+    visibility.pop("due_decks", None)
+    layout = config.get("layout")
+    if not isinstance(layout, MutableMapping):
+        layout = {}
+        config["layout"] = layout
+    if isinstance(layout, MutableMapping):
+        for key in ("selected_date_panel", "selected_date_details", "most_missed", "due_deck_breakdown"):
+            layout.pop(key, None)
+        removed_slots = {
+            "selected_date_panel",
+            "selected_date_details",
+            "most_missed",
+            "most_missed_preview",
+            "due_deck_breakdown",
+            "date_events_column",
+        }
+        raw_order = layout.get("order", [])
+        order = [
+            str(item)
+            for item in raw_order
+            if isinstance(item, str) and item not in removed_slots
+        ] if isinstance(raw_order, list) else []
+        canonical = ("study_calendar", "summary_metrics", "bible_verse")
+        unrelated = [item for item in order if item not in canonical]
+        layout["order"] = list(canonical) + unrelated
 
     events = config["events"]
     events["sort"] = _choice(events.get("sort"), {"ascending", "descending"}, "ascending")
@@ -255,7 +306,7 @@ def archive_expired_events(config: MutableMapping[str, Any], today: date | None 
 def analytics_config_fingerprint(config: Mapping[str, Any]) -> str:
     """Fingerprint only settings that change collection analytics.
 
-    Calendar view, theme, density, visibility, events, and Bible presentation
+    Calendar view, theme, visibility, events, and Bible presentation
     are render-only preferences.  Excluding them prevents a Month/Year switch
     or visual save from repeating collection SQL.
     """

@@ -1,0 +1,39 @@
+{
+  "schema_version": 18,
+  "release": "1.7.0",
+  "authority": "qa/calendar_surface_manifest.json",
+  "visual_matrix": "qa/visual_regression_matrix_1_7_0.json",
+  "exact_once": true,
+  "surfaces": [
+    {"id":"CAL-MONTH-WIDE","owner":"DashboardCalendar","fixture":"canonical-populated"},
+    {"id":"CAL-MONTH-COMPACT","owner":"DashboardCalendar","fixture":"canonical-populated"},
+    {"id":"CAL-YEAR-WIDE","owner":"DashboardCalendar","fixture":"canonical-populated"},
+    {"id":"CAL-YEAR-COMPACT","owner":"DashboardCalendar","fixture":"canonical-populated"},
+    {"id":"CTX-PAST-REVIEWED","owner":"CalendarContextBar","fixture":"past-reviews-again"},
+    {"id":"CTX-PAST-EMPTY","owner":"CalendarContextBar","fixture":"past-zero"},
+    {"id":"CTX-TODAY-REVIEWED","owner":"CalendarContextBar","fixture":"today-reviews"},
+    {"id":"CTX-TODAY-DUE","owner":"CalendarContextBar","fixture":"today-due-only"},
+    {"id":"CTX-FUTURE-DUE","owner":"CalendarContextBar","fixture":"future-due"},
+    {"id":"CTX-FUTURE-EMPTY","owner":"CalendarContextBar","fixture":"future-zero-unsupported"},
+    {"id":"TIP-HISTORY","owner":"CalendarTooltip","fixture":"history-and-event"},
+    {"id":"TIP-FORECAST","owner":"CalendarTooltip","fixture":"forecast-and-event"},
+    {"id":"METRICS-WIDE","owner":"SummaryMetricsGrid","fixture":"canonical-populated"},
+    {"id":"METRICS-MEDIUM","owner":"SummaryMetricsGrid","fixture":"canonical-populated"},
+    {"id":"METRICS-COMPACT","owner":"SummaryMetricsGrid","fixture":"canonical-populated"},
+    {"id":"BIBLE","owner":"BibleVerseCard","fixture":"long-verse"},
+    {"id":"SETTINGS-WIDE","owner":"SettingsDialog","fixture":"calendar-data"},
+    {"id":"SETTINGS-MEDIUM","owner":"SettingsDialog","fixture":"calendar-data"},
+    {"id":"SETTINGS-NARROW","owner":"SettingsDialog","fixture":"bible-color"},
+    {"id":"SETTINGS-HEATMAP","owner":"HeatmapPresetCards","fixture":"all-presets"},
+    {"id":"SETTINGS-BIBLE-COLOR","owner":"BibleColorControl","fixture":"theme-aware-and-custom"},
+    {"id":"DATA-PARTIAL","owner":"Dashboard","fixture":"typed-partial"},
+    {"id":"DATA-LOADING","owner":"Dashboard","fixture":"loading"},
+    {"id":"DATA-QUERY-FAILURE","owner":"Dashboard","fixture":"query-failure"}
+  ],
+  "prohibited_fixture_kinds": [
+    "selected-date-details-panel",
+    "due-deck-breakdown",
+    "dashboard-most-missed-preview",
+    "card-answer-preview"
+  ]
+}

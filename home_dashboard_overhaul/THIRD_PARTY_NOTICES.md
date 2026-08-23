@@ -1,6 +1,6 @@
 # Third-party notices and acknowledgements
 
-Home Dashboard - Overhaul is an independently authored integration. It does not
+Home Screen Dashboard is an independently authored integration. It does not
 copy the Review Heatmap presentation layer, D3, Cal-Heatmap, icons, or vendored
 framework code.
 
@@ -10,9 +10,9 @@ The calendar-history concept and filter semantics were informed by Review
 Heatmap by Glutanimate. The prior add-on is licensed under AGPLv3 with additional
 terms. No code or visual assets from that package are distributed here.
 
-Based on the Anki add-on Review Heatmap by Glutanimate.
-[Support Glutanimate's work](https://www.patreon.com/glutanimate) and view the
-[Review Heatmap source](https://github.com/glutanimate/review-heatmap).
+Based on the Anki add-on Review Heatmap by Glutanimate. The
+[Review Heatmap source](https://github.com/glutanimate/review-heatmap) is
+available under its published license terms.
 
 ## Bible verse data
 

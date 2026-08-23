@@ -1,310 +1,166 @@
 "use strict";
 
 const assert = require("assert");
+const fs = require("fs");
+const path = require("path");
 const model = require("../web/dashboard.js");
 
-const year = model.yearRange(new Date(2026, 0, 1), 0);
-assert.strictEqual(year.weeks, 53);
-assert.strictEqual(model.isoDate(year.start), "2026-01-01");
-assert.strictEqual(model.isoDate(year.end), "2026-12-31");
+const available = (value) => ({ status: "available", value, reason: "" });
+const unavailable = (reason) => ({ status: "unavailable", value: null, reason });
 
-const february = model.monthRange(new Date(2026, 1, 1), 0);
-const januaryLeap = model.monthRange(new Date(2028, 0, 1), 0);
-const februaryLeap = model.monthRange(new Date(2028, 1, 1), 0);
-assert.strictEqual(february.weeks, 5);
-assert.strictEqual(januaryLeap.weeks, 6);
-assert.strictEqual(model.isoDate(januaryLeap.end), "2028-01-31");
-assert.strictEqual(model.isoDate(februaryLeap.end), "2028-02-29");
+// Civil-date parsing and period geometry stay timezone-safe and exhaustive.
+assert.strictEqual(model.isoDate(model.parseDate("2026-08-17")), "2026-08-17");
+assert.strictEqual(model.parseDate("2026-02-29"), null);
+assert.strictEqual(model.parseDate("2028-02-29") instanceof Date, true);
+assert.strictEqual(model.parseDate("2026-2-9"), null);
+assert.strictEqual(model.isoDate(model.addDays(model.parseDate("2026-12-31"), 1)), "2027-01-01");
+assert.strictEqual(model.dayDifference(model.parseDate("2027-01-01"), model.parseDate("2026-12-31")), 1);
 
-assert.strictEqual(model.isoDate(model.navigate(new Date(2026, 11, 1), "month", 1)), "2027-01-01");
-assert.strictEqual(model.isoDate(model.navigate(new Date(2026, 7, 1), "year", -1)), "2025-08-01");
-assert.deepStrictEqual(model.weekdayOrder(0), [1, 2, 3, 4, 5, 6, 0]);
-assert.deepStrictEqual(model.weekdayOrder(6), [0, 1, 2, 3, 4, 5, 6]);
+const fourWeek = model.monthRange(model.parseDate("2021-02-15"), 0);
+const leapMonth = model.monthRange(model.parseDate("2028-02-15"), 0);
+const sixWeek = model.monthRange(model.parseDate("2026-08-17"), 0);
+assert.strictEqual(fourWeek.rows, 4);
+assert.strictEqual(leapMonth.rows, 5);
+assert.strictEqual(sixWeek.rows, 6);
 for (let weekStart = 0; weekStart < 7; weekStart += 1) {
-  const order = model.weekdayOrder(weekStart);
-  assert.strictEqual(order.length, 7);
-  assert.strictEqual(new Set(order).size, 7);
-  const range = model.monthRange(new Date(2026, 7, 1), weekStart);
-  assert(range.weeks === 5 || range.weeks === 6);
-  assert.strictEqual(model.dayDifference(range.displayEnd, range.displayStart) + 1, range.weeks * 7);
+  const dates = model.calendarRangeDates("month", model.parseDate("2026-08-17"), weekStart);
+  assert([28, 35, 42].includes(dates.length));
+  assert.strictEqual(new Set(dates).size, dates.length);
 }
+assert.strictEqual(model.calendarRangeDates("year", model.parseDate("2026-08-17"), 0).length, 365);
+assert.strictEqual(model.calendarRangeDates("year", model.parseDate("2028-08-17"), 0).length, 366);
+assert.strictEqual(model.yearRange(model.parseDate("2026-08-17"), 0).weeks, 53);
+assert.strictEqual(model.isoDate(model.navigate(model.parseDate("2026-12-01"), "month", 1)), "2027-01-01");
+assert.strictEqual(model.isoDate(model.navigate(model.parseDate("2026-08-01"), "year", -1)), "2025-08-01");
 
-assert.strictEqual(model.intensityLevel(0, 100), 0);
-assert.strictEqual(model.intensityLevel(100, 100), 5);
-assert(model.intensityLevel(5, 100) >= 1);
-const stableThresholds = model.intensityThresholds([1, 2, 3, 5, 8, 13, 21, 34, 55, 89]);
-assert.deepStrictEqual(stableThresholds, [2, 5, 13, 34, 89]);
-assert.strictEqual(model.intensityLevel(13, stableThresholds), 3);
-assert.strictEqual(model.intensityLevel(13, stableThresholds), model.intensityLevel(13, stableThresholds));
-
-const grouped = model.groupEvents([
-  { id: "b", date: "2026-08-13", name: "Beta" },
-  { id: "a", date: "2026-08-13", name: "Alpha" },
-  { id: "c", date: "2026-08-13", name: "Gamma" },
-  { id: "bad", date: "2026-02-30", name: "Invalid" }
-]);
-assert.deepStrictEqual(grouped["2026-08-13"].map((item) => item.name), ["Alpha", "Beta", "Gamma"]);
+// Event grouping is inert, deterministic, and upcoming-event selection is
+// relative to local Today—not the selected calendar date.
+const events = [
+  { id: "later", date: "2026-09-01", name: "Later event" },
+  { id: "b", date: "2026-08-28", name: "Pediatric NBME" },
+  { id: "a", date: "2026-08-28", name: "Alpha" },
+  { id: "past", date: "2026-08-01", name: "Past" },
+  { id: "invalid", date: "2026-02-30", name: "Invalid" },
+  { id: "blank", date: "2026-08-19", name: "  " }
+];
+const grouped = model.groupEvents(events);
+assert.deepStrictEqual(grouped["2026-08-28"].map((entry) => entry.name), ["Alpha", "Pediatric NBME"]);
 assert.strictEqual(grouped["2026-02-30"], undefined);
-const noEvents = model.monthEventDisplay([]);
-assert.deepStrictEqual(noEvents, { visible: [], overflow: 0 });
-const oneEvent = model.monthEventDisplay(grouped["2026-08-13"].slice(0, 1));
-assert.deepStrictEqual(oneEvent.visible.map((item) => item.name), ["Alpha"]);
-assert.strictEqual(oneEvent.overflow, 0);
-const twoEvents = model.monthEventDisplay(grouped["2026-08-13"].slice(0, 2));
-assert.deepStrictEqual(twoEvents.visible.map((item) => item.name), ["Alpha", "Beta"]);
-assert.strictEqual(twoEvents.overflow, 0);
-const threeEvents = model.monthEventDisplay(grouped["2026-08-13"]);
-assert.deepStrictEqual(threeEvents.visible.map((item) => item.name), ["Alpha", "Beta"]);
-assert.strictEqual(threeEvents.overflow, 1);
-const fourEvents = model.monthEventDisplay(grouped["2026-08-13"].concat([{ id: "d", date: "2026-08-13", name: "Delta" }]));
-assert.strictEqual(fourEvents.visible.length, 2);
-assert.strictEqual(fourEvents.overflow, 2);
-assert.deepStrictEqual(model.monthEventDisplay(grouped["2026-08-13"], 0), { visible: [], overflow: 3 });
-assert.deepStrictEqual(model.monthEventDisplay(grouped["2026-08-13"], 1).visible.map((item) => item.name), ["Alpha"]);
+const upcoming = model.getNextUpcomingEvent(events, "2026-08-17");
+assert.strictEqual(upcoming.event.id, "a");
+assert.strictEqual(upcoming.additional, 1);
+assert.strictEqual(model.getNextUpcomingEvent(events, "2026-09-02"), null);
 
-assert.strictEqual(
-  model.isoDate(model.selectionForMonth(new Date(2026, 1, 1), new Date(2026, 0, 31), new Date(2026, 7, 13))),
-  "2026-02-28"
-);
-assert.strictEqual(
-  model.isoDate(model.selectionForMonth(new Date(2028, 1, 1), new Date(2028, 0, 31), new Date(2026, 7, 13))),
-  "2028-02-29"
-);
-assert.strictEqual(
-  model.isoDate(model.selectionForMonth(new Date(2026, 7, 1), null, new Date(2026, 7, 13))),
-  "2026-08-13"
-);
-assert.strictEqual(
-  model.isoDate(model.selectionForMonth(new Date(2026, 8, 1), null, new Date(2026, 7, 13))),
-  "2026-09-01"
-);
-assert.strictEqual(model.detailsPresentation("month", 1150, 1054), "rail");
-assert.strictEqual(model.detailsPresentation("month", 1149, 1054), "inline");
-assert.strictEqual(model.detailsPresentation("month", 1150, 1053), "inline");
-assert.strictEqual(model.detailsPresentation("month", 1180), "rail");
-assert.strictEqual(model.detailsPresentation("year", 3420, 3420), "inline");
-assert.strictEqual(model.sidebarCollapsed("rail", false, false), true);
-assert.strictEqual(model.sidebarCollapsed("rail", true, false), false);
-assert.strictEqual(model.sidebarCollapsed("rail", false, true), false);
-assert.strictEqual(model.sidebarCollapsed("inline", false, false), false);
-assert.strictEqual(model.arrowMove("month", "ArrowRight"), 1);
-assert.strictEqual(model.arrowMove("month", "ArrowDown"), 7);
-assert.strictEqual(model.arrowMove("year", "ArrowRight"), 7);
-assert.strictEqual(model.arrowMove("year", "ArrowDown"), 1);
-assert.strictEqual(model.arrowMove("year", "ArrowLeft"), -7);
-assert.strictEqual(model.arrowMove("year", "ArrowUp"), -1);
-
-const label = model.popoverLabel("2026-08-13", 12, 7, grouped["2026-08-13"], "en-US", 2, "2026-08-13");
-assert(label.includes("12 completed reviews"));
-assert(label.includes("7 cards due"));
-assert(label.includes("3 events"));
-const accessibleLabel = model.popoverLabel("2026-08-13", 12, 7, grouped["2026-08-13"], "en-US", 2, "2026-08-13");
-assert(accessibleLabel.includes("2 new cards studied"));
-const retrospectivePreview = model.dayPreview("2026-08-12", "2026-08-13", 12, 2, 7, "en-US");
-assert(retrospectivePreview.date.includes("Aug 12, 2026"));
-assert.strictEqual(retrospectivePreview.summary, "12 completed reviews · 2 new cards studied");
-const currentPreview = model.dayPreview("2026-08-13", "2026-08-13", 1, 1, 9, "en-US");
-assert.strictEqual(currentPreview.summary, "1 completed review · 1 new card studied · 9 cards due");
-const prospectivePreview = model.dayPreview("2026-08-14", "2026-08-13", 0, 0, 7, "en-US");
-assert.strictEqual(prospectivePreview.summary, "7 cards due");
-const singularDuePreview = model.dayPreview("2026-08-14", "2026-08-13", 0, 0, 1, "en-US");
-assert.strictEqual(singularDuePreview.summary, "1 card due");
-assert.deepStrictEqual(model.dayPreview("bad", "2026-08-13", 0, 0, 0, "en-US"), { date: "Invalid date", summary: "" });
-const pastDetails = model.dateDetailsViewModel("2026-08-12", "2026-08-13", 4, 2, 9, 0);
-assert.strictEqual(pastDetails.relation, "past");
-assert.strictEqual(pastDetails.showCompleted, true);
-assert.strictEqual(pastDetails.showNew, true);
-assert.strictEqual(pastDetails.showDue, false);
-const todayDetails = model.dateDetailsViewModel("2026-08-13", "2026-08-13", 4, 2, 9, 3);
+// Exact selected-date action truth table.
+function day(date, completed, due, again) {
+  return {
+    date,
+    reviews_completed: completed,
+    reviews_due: due,
+    again_count: again,
+    new_cards_studied: available(0),
+    events: available([])
+  };
+}
+const today = "2026-08-17";
 assert.deepStrictEqual(
-  [todayDetails.showCompleted, todayDetails.showNew, todayDetails.showDue],
-  [true, true, true]
+  model.getSelectedDateCapabilities(day("2026-08-07", available(5), unavailable("forecast_out_of_range"), available(1)), today),
+  { primary: "reviewed", primaryEnabled: true, primaryReason: "", mostMissedCandidate: true }
 );
-assert(todayDetails.summaryParts.includes("3 events"));
-const futureDetails = model.dateDetailsViewModel("2026-08-14", "2026-08-13", 4, 2, 9, 1);
 assert.deepStrictEqual(
-  [futureDetails.showCompleted, futureDetails.showNew, futureDetails.showDue],
-  [false, false, true]
+  model.getSelectedDateCapabilities(day("2026-08-07", available(0), unavailable("forecast_out_of_range"), available(0)), today),
+  { primary: "reviewed", primaryEnabled: false, primaryReason: "No reviewed cards are available for this date.", mostMissedCandidate: false }
 );
-assert.strictEqual(model.dateDetailsViewModel("bad", "2026-08-13", 0, 0, 0, 0).valid, false);
-const unavailableDetails = model.dateDetailsViewModel(
-  "2026-08-13", "2026-08-13", 0, 0, 0, 0,
-  { history: false, forecast: false, forecastEnabled: true }
+assert.deepStrictEqual(
+  model.getSelectedDateCapabilities(day(today, available(5), available(12), available(0)), today),
+  { primary: "reviewed", primaryEnabled: true, primaryReason: "", mostMissedCandidate: false }
 );
-assert.strictEqual(unavailableDetails.historyAvailable, false);
-assert.strictEqual(unavailableDetails.forecastAvailable, false);
-assert(unavailableDetails.summaryParts.includes("Study history unavailable"));
-assert(unavailableDetails.summaryParts.includes("Due forecast unavailable"));
-const forecastDisabledDetails = model.dateDetailsViewModel(
-  "2026-08-14", "2026-08-13", 0, 0, 0, 0,
-  { history: true, forecast: false, forecastEnabled: false }
+assert.deepStrictEqual(
+  model.getSelectedDateCapabilities(day(today, available(0), available(12), available(0)), today),
+  { primary: "reviewed", primaryEnabled: false, primaryReason: "No reviewed cards are available for this date.", mostMissedCandidate: false }
 );
-assert.strictEqual(forecastDisabledDetails.showDue, false);
-assert.strictEqual(model.isoDate(model.addDays(new Date(2026, 11, 31), 1)), "2027-01-01");
-
-const troubleInsight = model.insightViewModel({
-  kind: "trouble_cards",
-  browse_action: "trouble_cards",
-  items: [
-    { primary_text: "One" },
-    { primary_text: "Two" },
-    { primary_text: "Three" },
-    { primary_text: "Four" }
-  ]
-}, "2026-08-13", "2026-08-13");
-assert.strictEqual(troubleInsight.title, "Cards most missed today");
-assert.strictEqual(troubleInsight.buttonLabel, "Browse these cards");
-assert.strictEqual(troubleInsight.items.length, 3);
-
-const currentEmptyInsight = model.insightViewModel({
-  kind: "trouble_cards",
-  empty_reason: "today_no_answers",
-  browse_action: "today",
-  items: []
-}, "2026-08-13", "2026-08-13");
-assert.strictEqual(currentEmptyInsight.message, "No cards studied today yet.");
-assert.strictEqual(currentEmptyInsight.supporting, "Start reviewing to see cards that you are missing repeatedly.");
-assert.strictEqual(currentEmptyInsight.buttonLabel, "Browse today’s cards");
-
-const pastEmptyInsight = model.insightViewModel({
-  kind: "trouble_cards",
-  empty_reason: "past_no_answers",
-  browse_action: "none",
-  items: []
-}, "2026-08-12", "2026-08-13");
-assert.strictEqual(pastEmptyInsight.message, "No cards were studied on this date.");
-assert.strictEqual(pastEmptyInsight.buttonLabel, "Browse this day’s cards");
-
-const noAgainInsight = model.insightViewModel({
-  kind: "trouble_cards",
-  empty_reason: "no_again",
-  browse_action: "today",
-  items: []
-}, "2026-08-13", "2026-08-13");
-assert.strictEqual(noAgainInsight.message, "No cards were missed today.");
-assert.strictEqual(noAgainInsight.buttonLabel, "Browse today’s cards");
-
-const deletedInsight = model.insightViewModel({
-  kind: "trouble_cards",
-  empty_reason: "deleted_misses",
-  browse_action: "day",
-  items: []
-}, "2026-08-12", "2026-08-13");
-assert.strictEqual(deletedInsight.message, "Cards missed on this date are no longer available.");
-assert.strictEqual(deletedInsight.buttonLabel, "Browse this day’s cards");
-
-const futureInsight = model.insightViewModel({
-  kind: "future_due_decks",
-  browse_action: "future_due",
-  items: [{ primary_text: "Pediatrics", count_label: "8 cards due" }]
-}, "2026-08-14", "2026-08-13");
-assert.strictEqual(futureInsight.title, "Top due decks");
-assert.strictEqual(futureInsight.buttonLabel, "Browse due cards");
-
-const futureEmptyInsight = model.insightViewModel({
-  kind: "future_due_decks",
-  empty_reason: "no_due",
-  browse_action: "none",
-  items: []
-}, "2026-08-14", "2026-08-13");
-assert.strictEqual(futureEmptyInsight.message, "No review cards are due on this date.");
-assert.strictEqual(futureEmptyInsight.buttonLabel, "Browse due cards");
-
-const unavailableInsight = model.insightViewModel({
-  kind: "unavailable",
-  empty_reason: "unavailable",
-  items: []
-}, "2026-08-13", "2026-08-13");
-assert.strictEqual(unavailableInsight.message, "Study insight unavailable.");
-assert.strictEqual(unavailableInsight.buttonLabel, "Browse today’s cards");
-
-const previewInsight = model.insightViewModel({
-  kind: "unavailable",
-  empty_reason: "preview_only",
-  browse_action: "none",
-  items: []
-}, "2026-08-13", "2026-08-13");
-assert.strictEqual(previewInsight.message, "Detailed study insight is available on the Deck Browser.");
-assert.strictEqual(previewInsight.buttonLabel, "");
-
-const reconciledInsight = model.insightViewModel({
-  kind: "trouble_cards",
-  empty_reason: "today_no_answers",
-  browse_action: "today",
-  items: []
-}, "2026-08-13", "2026-08-13", 9);
-assert.strictEqual(reconciledInsight.message, "No cards were missed today.");
-
-const outOfRangeInsight = model.insightViewModel({
-  kind: "future_due_decks",
-  empty_reason: "forecast_out_of_range",
-  browse_action: "future_due",
-  items: []
-}, "2028-02-15", "2026-08-13", 0);
-assert.strictEqual(outOfRangeInsight.forecastUnavailable, true);
-assert.strictEqual(outOfRangeInsight.supporting, "You can still browse that date directly.");
-
-const bridgeTimers = [];
-let bridgeReady = false;
-let bridgeDispatches = 0;
-let bridgeUnavailable = 0;
-let bridgeDispatched = 0;
-model.dispatchWhenReady(
-  function () {
-    if (!bridgeReady) return false;
-    bridgeDispatches += 1;
-    return true;
-  },
-  function () { return true; },
-  function (callback, delay) { bridgeTimers.push({ callback, delay }); },
-  function () { bridgeDispatched += 1; },
-  function () { bridgeUnavailable += 1; },
-  4,
-  50
+assert.deepStrictEqual(
+  model.getSelectedDateCapabilities(day("2026-08-18", unavailable("history_out_of_range"), available(12), unavailable("history_out_of_range")), today),
+  { primary: "due", primaryEnabled: true, primaryReason: "", mostMissedCandidate: false }
 );
-assert.strictEqual(bridgeDispatches, 0);
-assert.strictEqual(bridgeDispatched, 0);
-assert.strictEqual(bridgeUnavailable, 0);
-assert.strictEqual(bridgeTimers.length, 1);
-assert.strictEqual(bridgeTimers[0].delay, 50);
-bridgeReady = true;
-bridgeTimers.shift().callback();
-assert.strictEqual(bridgeDispatches, 1);
-assert.strictEqual(bridgeDispatched, 1);
-assert.strictEqual(bridgeUnavailable, 0);
-assert.strictEqual(bridgeTimers.length, 0);
-
-const exhaustedTimers = [];
-let exhaustedUnavailable = 0;
-model.dispatchWhenReady(
-  function () { return false; },
-  function () { return true; },
-  function (callback) { exhaustedTimers.push(callback); },
-  function () { assert.fail("unavailable bridge must not report a dispatch"); },
-  function () { exhaustedUnavailable += 1; },
-  2,
-  50
+assert.deepStrictEqual(
+  model.getSelectedDateCapabilities(day("2026-08-18", unavailable("history_out_of_range"), available(0), unavailable("history_out_of_range")), today),
+  { primary: "due", primaryEnabled: false, primaryReason: "No cards are due on this date.", mostMissedCandidate: false }
 );
-assert.strictEqual(exhaustedUnavailable, 0);
-assert.strictEqual(exhaustedTimers.length, 1);
-exhaustedTimers.shift()();
-assert.strictEqual(exhaustedUnavailable, 1);
-assert.strictEqual(exhaustedTimers.length, 0);
-
-const cancelledTimers = [];
-let requestCurrent = true;
-let cancelledUnavailable = 0;
-model.dispatchWhenReady(
-  function () { return false; },
-  function () { return requestCurrent; },
-  function (callback) { cancelledTimers.push(callback); },
-  function () { assert.fail("cancelled request must not dispatch"); },
-  function () { cancelledUnavailable += 1; },
-  2,
-  50
+assert.deepStrictEqual(
+  model.getSelectedDateCapabilities(day("2027-08-18", unavailable("history_out_of_range"), unavailable("forecast_out_of_range"), unavailable("history_out_of_range")), today),
+  { primary: "due", primaryEnabled: false, primaryReason: "Due-card data is unavailable for this date.", mostMissedCandidate: false }
 );
-requestCurrent = false;
-cancelledTimers.shift()();
-assert.strictEqual(cancelledUnavailable, 0);
+
+// Tooltip rows obey temporal applicability, omit unsupported data, and format
+// singular/plural labels and locale numbers.
+const pastTooltip = model.buildCalendarTooltipRows({
+  date: "2026-08-07",
+  reviews_completed: available(1),
+  new_cards_studied: available(0),
+  reviews_due: unavailable("forecast_out_of_range"),
+  events: available([])
+}, today, "en-US");
+assert(pastTooltip.heading.includes("Aug"));
+assert.deepStrictEqual(pastTooltip.rows.map((row) => row.label), ["Completed reviews", "New cards studied"]);
+assert.deepStrictEqual(pastTooltip.rows.map((row) => row.value), ["1", "0"]);
+
+const futureTooltip = model.buildCalendarTooltipRows({
+  date: "2026-09-14",
+  reviews_completed: unavailable("history_out_of_range"),
+  new_cards_studied: unavailable("history_out_of_range"),
+  reviews_due: available(1234),
+  events: available([{ id: "exam", name: "Pediatric NBME", date: "2026-09-14" }])
+}, today, "en-US");
+assert.deepStrictEqual(futureTooltip.rows.map((row) => row.label), ["Reviews due", "Event"]);
+assert.deepStrictEqual(futureTooltip.rows.map((row) => row.value), ["1,234", "Pediatric NBME"]);
+
+const unsupportedTooltip = model.buildCalendarTooltipRows({
+  date: "2027-09-14",
+  reviews_completed: unavailable("history_out_of_range"),
+  new_cards_studied: unavailable("history_out_of_range"),
+  reviews_due: unavailable("forecast_out_of_range"),
+  events: available([])
+}, today, "en-US");
+assert.deepStrictEqual(unsupportedTooltip.rows, []);
+assert.strictEqual(model.pluralLabel(1, "en-US", "Card", "Cards"), "Card");
+assert.strictEqual(model.pluralLabel(0, "en-US", "Card", "Cards"), "Cards");
+assert.strictEqual(model.formatNumber(322120, "en-US"), "322,120");
+
+// Robust due normalization ignores zeroes and caps outliers at p90.
+assert.strictEqual(model.getDueLoadScale([0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10000]), 9);
+assert.strictEqual(model.getDueLoadScale([0, 0, 0]), 0);
+assert.strictEqual(model.getDueLoadScale([5, 5, 5]), 5);
+assert.strictEqual(model.getDueOverlayHeight(0, 100, "month"), 0);
+assert.strictEqual(model.getDueOverlayHeight(10000, 100, "month"), 6);
+assert.strictEqual(model.getDueOverlayHeight(25, 100, "month"), 6);
+assert.strictEqual(model.getDueOverlayHeight(1, 100, "year"), 100);
+assert.strictEqual(model.getDueLoadLevel(1, 100), "low");
+assert.strictEqual(model.getDueLoadLevel(16, 100), "medium");
+assert.strictEqual(model.getDueLoadLevel(49, 100), "high");
+
+const thresholds = model.intensityThresholds([0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]);
+assert.deepStrictEqual(thresholds, [2, 5, 13, 34, 89]);
+assert.strictEqual(model.intensityLevel(0, thresholds), 0);
+assert.strictEqual(model.intensityLevel(13, thresholds), 3);
+assert.strictEqual(model.intensityLevel(1000, thresholds), 5);
+
+// Source guards cover the shared interaction/performance architecture.
+const js = fs.readFileSync(path.join(__dirname, "../web/dashboard.js"), "utf8");
+const css = fs.readFileSync(path.join(__dirname, "../web/dashboard.css"), "utf8");
+for (const forbidden of ["Outside due forecast", "Outside study history", "No events", "Select a date for details", "Expand preview"]) {
+  assert(!js.includes(forbidden));
+}
+assert(js.includes('calendar.addEventListener("pointerover"'));
+assert(js.includes('calendar.addEventListener("focusin"'));
+assert(js.includes('calendar.addEventListener("keydown"'));
+assert(!js.includes("cell.addEventListener"));
+assert(js.includes("state.selected = isoDate(state.anchor)"));
+assert(js.includes("modelCache: new Map()"));
+assert(js.includes("state.mostMissed[day.date] = null"));
+assert(css.includes("pointer-events: none"));
+assert(css.includes("min-width: min(232px"));
+assert(css.includes("max-width: min(260px"));
+assert(css.includes("grid-template-columns: minmax(760px, 1fr) minmax(500px, .46fr)"));
 
 console.log("calendar model tests passed");

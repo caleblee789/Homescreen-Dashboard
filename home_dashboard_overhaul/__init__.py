@@ -1,4 +1,4 @@
-"""Home Dashboard - Overhaul add-on entry point."""
+"""Home Screen Dashboard add-on entry point."""
 
 from __future__ import annotations
 

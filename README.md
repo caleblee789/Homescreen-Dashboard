@@ -1,119 +1,121 @@
-# Home Dashboard - Overhaul
+# Home Screen Dashboard
 
-Home Dashboard - Overhaul combines the useful home-screen information from five
-local Anki add-ons into one responsive, configurable dashboard for Anki 26.8.
+Home Screen Dashboard 1.7.0 is a calendar-first, responsive Deck Browser
+dashboard for Anki Desktop 26.8. It combines study history, due work, local
+events, progress metrics, and a rotating Bible verse without patching Anki's
+private Deck Browser or statistics classes.
 
-Version 1.5.3 uses a centered 1680 CSS-pixel full-screen canvas. Month becomes a
-calendar-plus-details workspace at desktop width, while Year and smaller layouts
-use one non-overlapping in-flow details panel. Native settings follow Anki's
-palette and reflow from a 56/44 editor-preview split to a vertical workspace.
-Compact date hover/focus previews show reviews and new cards studied for
-current/past dates, then switch to due counts for future dates. Today contains
-five rows—Total Cards Studied, New Cards Studied, Time studied, Pace, and ETA—
-while Today’s Progress adds a thin segmented view of completed answers and the
-live actionable queue plus five remaining-work rows. Local event management
-remains on the existing Events settings page.
+![Home Screen Dashboard 1.7.0 in Month view](home_dashboard_overhaul/qa/final-release-dashboard-overhaul-2026-08-22-2237/live-captures/isolated-main-window-month-maximized.png)
 
-Selected-date details pair a compact contextual summary with an adaptive Study
-Insight rail. Past dates show Completed Reviews and New Cards Studied, today adds
-Cards Due, and future dates emphasize Cards Due. Today and past dates rank up to
-three cards by complete scheduling-day `Again` answers, including every review
-session before rollover;
-future dates rank the three decks contributing the most due review cards. Trouble
-cards show a plain-text question prompt, full deck path, and `Again ×N`. Browser
-targets are retained by the controller, and the card action uses Anki's supported
-`cid:` search without exposing card IDs to the webview. Empty days, successful
-days without misses, deleted cards, disabled/out-of-range forecasts, and query
-failures each have an explicit state. Events and **Manage this date** remain tied
-to the selected civil-calendar date.
+## What it includes
 
-Partial collection failures render as unavailable instead of plausible zeroes,
-and hiding every Home section leaves a small keyboard-reachable recovery card.
-Year keyboard movement follows the visual and accessibility grid, contextual
-Settings previews expose only actions that can work inside a preview, and manual
-verse rotation has an explicit staged current-verse action.
+- A shared Month/Year study calendar with authored completion heatmaps, a quiet
+  due-load band, event diamonds, keyboard navigation, and collision-aware
+  tooltips.
+- A compact context bar that distinguishes the selected date, an event on that
+  date, and the globally calculated next event. Exact Reviewed or Due Browser
+  actions remain visible for their date type and explain when no matching cards
+  are available; Most missed appears only after an eligible Again answer.
+- Four metric cards—Today’s Progress, Today’s Session, Last 7 Days, and All
+  Time—followed by a full-width Bible verse.
+- A count-derived four-segment workload bar for completed answers and remaining
+  New, Learning, and Review cards. Buried cards remain outside that workload.
+- Four dashboard themes and four independently saved completion palettes per
+  theme, with light/dark variants and contrast-checked text colors.
+- Local event creation, editing, archive/restore, deletion, and exact-event
+  routing. External calendar sources remain deferred and are not packaged.
 
-The dashboard has one canonical Deck Browser renderer with two surfaces:
+At 1,320 CSS pixels and wider, Month places the calendar beside a 2×2 metric
+rail. Intermediate widths place the 2×2 metrics below the calendar; narrow
+widths use one metric card per row. Year remains full width with square cells,
+visible month labels, and horizontal scrolling before cells become too small.
 
-1. a Study Calendar card with Month/Year views, completed-review intensity, due
-   forecast, adaptive full-day insights, event markers/details, and compact
-   Today, Today’s Progress, Buried Cards, and Consistency metric groups; and
-2. a rotating Bible verse card directly below it.
+## Settings and persistence
 
-Year is the first-run view. The last Month/Year choice persists independently of
-analytics, while each new Anki session returns the viewed period to today.
+Open **Tools → Home Screen Dashboard settings** or use the calendar gear. The
+responsive editor has four pages: Dashboard, Events, Bible verse, and About &
+support. Dashboard settings are grouped into Appearance, Content & study
+metrics, and Calendar & data.
 
-The implementation is intentionally independent of the five source add-ons. It
-does not modify, move, or delete them. On first run it reads their effective
-settings and event/rotation data where available, stores a local migration
-snapshot, and keeps its dashboard inactive until the legacy add-ons are disabled.
+Settings are staged until **Save changes**. The production renderer powers the
+Dashboard and Bible previews, and schema 6 migration is idempotent: it removes
+retired dashboard slots while preserving unrelated keys, events, verse data,
+and supported preferences. The dashboard remains inactive while any of the five
+legacy source add-ons is enabled, preventing duplicate panels and load-order
+conflicts.
+
+## Install
+
+1. Download the verified
+   [`home-dashboard-overhaul-1.7.0.ankiaddon`](home_dashboard_overhaul/qa/final-release-dashboard-overhaul-2026-08-22-2237/package/home-dashboard-overhaul-1.7.0.ankiaddon).
+2. In Anki, open **Tools → Add-ons → Install from file** and choose the archive.
+3. Restart Anki, then disable the legacy source add-ons if the activation card
+   identifies any that are still enabled.
+
+The release is pinned to Anki Desktop 26.8 (`min_point_version` and
+`max_point_version` 260800).
 
 ## Build and test
 
-Use Python 3.10 or newer for the complete zero-skip suite. Python 3.9 can run the
-active-package tests but skips the deferred iCalendar dependency cases.
+Use Python 3.10 or newer for the zero-skip suite:
 
 ```sh
-python3 -m unittest discover -s home_dashboard_overhaul/tests -v
+python3 -m unittest discover -s home_dashboard_overhaul/tests -p 'test_*.py' -v
 node home_dashboard_overhaul/tests/calendar_model_test.js
+python3 home_dashboard_overhaul/qa/validate_revised_ui_contract.py
 python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
-The build script produces a deterministic, allowlisted archive in
-`home_dashboard_overhaul/dist/` and immediately verifies every archived byte.
-The 1.5.3 distribution contains no external-calendar UI, runtime, vendored
-dependencies, or source registry. The repository retains that future work under
-[`deferred/calendar_sources_vnext/`](deferred/calendar_sources_vnext/) and in
-source-only QA modules and fixtures beside the active source, including
-`calendar_*.py`, `event_manager.py`, `vendor-requirements.lock`, and `_vendor/`.
-None is imported by the active integration or included in the package allowlist;
-the package validator rejects every deferred module and `_vendor/` entry.
+The deterministic builder writes an allowlisted archive to
+`home_dashboard_overhaul/dist/`, verifies archive integrity and fixed
+timestamps, and checks every packaged byte against the source tree. Deferred
+calendar modules, vendored calendar dependencies, QA tools, and local user data
+are excluded from the package.
 
 ## Release acceptance
 
-Version 1.5.3 is the accepted automated release candidate. Its sole canonical
-release-status record is
-[`docs/release_acceptance_1.5.3.md`](docs/release_acceptance_1.5.3.md). The
-deterministic archive has SHA-256
-`68705bc06dabd277130600f14db0c8dc907dc3b39177778a784aaaa275d01dee`.
-Exact-package Calendar, Settings, and Insights acceptance passed across 61 raw
-captures in three fresh, sync-disabled Anki 26.8.1 profiles, initially and after
-controlled restart. The canonical reports, archive, screenshots, and 20 review
-sheets are retained under
+The final 1.7.0 archive contains 24 allowlisted files and has SHA-256:
+
+```text
+3cdfc800de85eaa9fc59f1b06ab9169c517256299c9f174b5709c6bfbaa17ee6
+```
+
+Current offline validation passes 177 Python tests with Python 3.12, the
+JavaScript calendar model, the 24-surface/28-criterion/96-case UI contract, and
+a byte-identical deterministic rebuild. The retained
+[`final-release-dashboard-overhaul-2026-08-22-2237`](home_dashboard_overhaul/qa/final-release-dashboard-overhaul-2026-08-22-2237/README.md)
+bundle records a passing exact-package run in a fresh sync-disabled Anki 26.8.1
+profile, eight live captures, and verified Month, Year, and responsive Settings
+states. The release probe used only its disposable collection. A distinct
+normal-profile Anki process was observed after the probe had exited; it was not
+used for validation and was left untouched.
+
+The companion
+[`100% contact-sheet set`](home_dashboard_overhaul/qa/final-release-contact-sheets-100-percent-2026-08-22-2248/README.md)
+retains 32 renderer captures across every theme, light/dark mode, Month/Year
+view, and compact/wide layout, plus the exact-package dashboard and Settings
+captures. Six full-resolution sheets preserve every source image at 1:1 scale.
+
+Automated semantics, focus, keyboard, contrast, sizing, containment, and the
+macOS Retina runtime passed. Spoken VoiceOver review and native Windows
+high-DPI review remain separate human/platform gates and are not claimed.
+
+The immutable 1.5.3 release evidence remains available for historical
+comparison under
 [`home_dashboard_overhaul/qa/live-ui-acceptance-1.5.3-release-2026-08-15/`](home_dashboard_overhaul/qa/live-ui-acceptance-1.5.3-release-2026-08-15/).
-Automated accessibility checks passed; a spoken VoiceOver listening pass remains
-human-required and is not claimed complete.
 
-The rejected 1.5.2 candidate and its failure are retained in
-[`docs/release_acceptance_1.5.2.md`](docs/release_acceptance_1.5.2.md). Earlier
-machine-local QA runs remain available in the development workspace but are
-intentionally excluded from repository publication. Their hashes and pass labels
-must not be used to accept 1.5.3; the sanitized 1.5.3 bundle above is the only
-canonical live evidence.
+## Project layout
 
-Today’s Progress is display-only. Its rows are Percent Complete, New remaining,
-Learning remaining, Reviews remaining, and Total remaining. Its percentage is
-completed answers divided by completed answers plus the current New, Learning,
-and Review queues. Buried cards remain visible only in their separate group and
-never affect progress, total remaining, or ETA.
+- `home_dashboard_overhaul/`: packaged add-on source and user documentation
+- `home_dashboard_overhaul/tests/`: offline behavior and release-contract tests
+- `home_dashboard_overhaul/qa/`: machine-readable contracts, capture tools, and
+  retained release evidence
+- `deferred/calendar_sources_vnext/`: source-only external-calendar work that is
+  intentionally excluded from 1.7.0
 
-The insight rail is derived directly from `revlog` and the current cards table.
-It adds no session recorder, persistence file, migration, or configuration field;
-configuration remains schema 3. Insights are loaded on demand and cached only for
-the active profile/data generation, while the contextual summary is available
-immediately from the normal calendar snapshot.
+## License and notices
 
-## Compatibility
-
-The release target is Anki Desktop 26.8. The add-on uses the current Deck Browser
-render hook, background collection operations, namespaced web assets, and one
-strictly scoped webview command channel. It does not patch private Deck Browser or
-statistics classes.
-
-## Source references and licensing
-
-The five preserved source copies and their baseline hashes are documented in
-[`docs/reference_baseline.md`](docs/reference_baseline.md). This project is
-licensed under AGPL-3.0-or-later. See
+The add-on is licensed under AGPL-3.0-or-later. See
+[`home_dashboard_overhaul/LICENSE.txt`](home_dashboard_overhaul/LICENSE.txt) and
 [`home_dashboard_overhaul/THIRD_PARTY_NOTICES.md`](home_dashboard_overhaul/THIRD_PARTY_NOTICES.md)
-for acknowledgements and data notices.
+for the complete license, Scripture notice, and upstream acknowledgements.

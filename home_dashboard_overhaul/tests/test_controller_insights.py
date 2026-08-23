@@ -1,40 +1,90 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import date, datetime, timedelta
 import importlib
 import json
+from pathlib import Path
 import sys
+import tempfile
 from types import ModuleType, SimpleNamespace
 import unittest
 
-# Load the package once while aqt is unavailable so its add-on entry point stays
-# inert, then install the narrow fakes needed to exercise controller caching.
-from home_dashboard_overhaul.models import DayInsight, InsightItem
+from home_dashboard_overhaul.models import (
+    BrowseTarget,
+    BrowseTargetKind,
+    DayInsight,
+)
+from home_dashboard_overhaul.tests.fixtures import sample_snapshot
+
+
+class HookList(list):
+    pass
 
 
 class FakeAddonManager:
+    def __init__(self) -> None:
+        self.writes = []
+
     def addonFromModule(self, _name):
         return "home_dashboard_overhaul"
 
     def getConfig(self, _package):
         return {}
 
+    def writeConfig(self, package, config):
+        self.writes.append((package, deepcopy(config)))
+
+
+class FakeSwitch:
+    def __init__(self, table) -> None:
+        self.table = table
+
+    def setChecked(self, checked):
+        if checked is False:
+            self.table.notes_mode = False
+
+
+class FakeTable:
+    def __init__(self, notes_mode=False) -> None:
+        self.notes_mode = notes_mode
+
+    def is_notes_mode(self):
+        return self.notes_mode
+
 
 class FakeBrowser:
-    def __init__(self) -> None:
+    def __init__(self, hooks, notes_mode=False) -> None:
+        self.hooks = hooks
         self.searches = []
+        self.contexts = []
+        self.table = FakeTable(notes_mode)
+        self._switch = FakeSwitch(self.table)
 
     def search_for(self, query):
+        context = SimpleNamespace(
+            browser=self,
+            search=query,
+            ids=None,
+            order=True,
+            reverse=True,
+        )
+        for hook in list(self.hooks.browser_will_search):
+            hook(context)
         self.searches.append(query)
+        self.contexts.append(context)
 
 
 class FakeDialogs:
-    def __init__(self) -> None:
+    def __init__(self, hooks) -> None:
+        self.hooks = hooks
         self.opened = []
+        self.next_notes_mode = False
 
     def open(self, name, _parent):
-        browser = FakeBrowser()
+        browser = FakeBrowser(self.hooks, self.next_notes_mode)
         self.opened.append((name, browser))
+        self.next_notes_mode = False
         return browser
 
 
@@ -71,24 +121,34 @@ class FakeQueryOp:
     def complete(self):
         self.success(self.op(self.parent.col))
 
+    def fail(self, error=None):
+        if self.failure_callback:
+            self.failure_callback(error or RuntimeError("failure"))
 
-class ControllerInsightTests(unittest.TestCase):
+
+class ControllerCapabilityTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.saved_modules = {
-            name: sys.modules.get(name)
-            for name in (
-                "aqt",
-                "aqt.deckbrowser",
-                "aqt.operations",
-                "aqt.theme",
-                "home_dashboard_overhaul.controller",
-            )
-        }
+        names = (
+            "aqt", "aqt.deckbrowser", "aqt.operations", "aqt.theme",
+            "home_dashboard_overhaul.controller",
+        )
+        cls.saved_modules = {name: sys.modules.get(name) for name in names}
+        hooks = SimpleNamespace(
+            browser_will_search=HookList(),
+            deck_browser_will_render_content=HookList(),
+            webview_will_set_content=HookList(),
+            webview_did_receive_js_message=HookList(),
+            profile_did_open=HookList(),
+            profile_will_close=HookList(),
+            reviewer_did_answer_card=HookList(),
+            operation_did_execute=HookList(),
+            state_did_change=HookList(),
+        )
         aqt = ModuleType("aqt")
         aqt.__path__ = []
-        aqt.gui_hooks = SimpleNamespace()
-        aqt.dialogs = FakeDialogs()
+        aqt.gui_hooks = hooks
+        aqt.dialogs = FakeDialogs(hooks)
         cutoff = int((datetime.now().astimezone() + timedelta(days=1)).timestamp())
         aqt.mw = SimpleNamespace(
             addonManager=FakeAddonManager(),
@@ -107,6 +167,7 @@ class ControllerInsightTests(unittest.TestCase):
             "aqt.theme": theme,
         })
         cls.aqt = aqt
+        sys.modules.pop("home_dashboard_overhaul.controller", None)
         cls.module = importlib.import_module("home_dashboard_overhaul.controller")
 
     @classmethod
@@ -120,98 +181,159 @@ class ControllerInsightTests(unittest.TestCase):
     def setUp(self) -> None:
         FakeQueryOp.pending.clear()
         self.aqt.dialogs.opened.clear()
+        self.aqt.gui_hooks.browser_will_search.clear()
+        self.rotation_directory = tempfile.TemporaryDirectory()
+        self.original_rotation = self.module.ROTATION_STATE_PATH
+        self.module.ROTATION_STATE_PATH = Path(self.rotation_directory.name) / "rotation.json"
         self.controller = self.module.DashboardController()
         self.original_collector = self.module.collect_day_insight
 
     def tearDown(self) -> None:
         self.module.collect_day_insight = self.original_collector
+        self.module.ROTATION_STATE_PATH = self.original_rotation
+        self.rotation_directory.cleanup()
 
     @staticmethod
-    def _insight(selected: date) -> DayInsight:
+    def most_missed_insight() -> DayInsight:
+        facts = sample_snapshot(date(2026, 8, 17)).facts.for_date("2026-08-17")
         return DayInsight(
-            date=selected.isoformat(),
-            study_date=selected.isoformat(),
-            valid_answer_count=4,
-            again_count=2,
-            insight_kind="trouble_cards",
-            items=[InsightItem("Prompt", "Deck", 2, "Again ×2")],
-            browse_action="trouble_cards",
-            browser_query="cid:123,456",
+            date=facts.date,
+            browse_target=facts.most_missed_target,
+            day_facts=facts,
         )
 
-    def test_malformed_dates_ranges_and_request_ids_are_rejected(self) -> None:
-        parser = self.controller._parse_bridge_date
-        self.assertIsNone(parser("not-a-date"))
-        self.assertIsNone(parser((date.today() + timedelta(days=36501)).isoformat()))
-        self.assertEqual(parser(date.today().isoformat()), date.today())
+    def test_bridge_routes_calendar_settings_and_exact_event_editor(self) -> None:
+        calls = []
+        self.controller.open_settings = lambda *args: calls.append(args)
+        context = FakeDeckBrowser()
+        calendar = "hdo:" + json.dumps({"command": "settings", "payload": {"page": "calendar_data"}})
+        event = "hdo:" + json.dumps({
+            "command": "settings",
+            "payload": {"page": "events", "date": "2026-08-28", "event_id": "exam-42"},
+        })
+        self.controller.on_bridge_message((False, None), calendar, context)
+        self.controller.on_bridge_message((False, None), event, context)
+        self.assertEqual(calls, [
+            ("calendar_data",),
+            ("events", "2026-08-28", "exam-42"),
+        ])
+
+    def test_bridge_routes_loading_diagnostics_to_about_support(self) -> None:
+        calls = []
+        self.controller.open_settings = lambda *args: calls.append(args)
+        context = FakeDeckBrowser()
+        diagnostics = "hdo:" + json.dumps({"command": "diagnostics", "payload": {}})
+
+        self.controller.on_bridge_message((False, None), diagnostics, context)
+
+        self.assertEqual(calls, [("about_support",)])
+
+    def test_reviewed_and_due_actions_use_only_cached_exact_day_targets(self) -> None:
+        snapshot = sample_snapshot(date(2026, 8, 17))
+        self.controller.snapshot = snapshot
+        self.controller.cache_key = self.controller._key()
+        self.controller.open_day_in_browser("2026-08-17")
+        browser = self.aqt.dialogs.opened[-1][1]
+        self.assertEqual(browser.searches, [snapshot.facts.for_date("2026-08-17").browse_target.query])
+        self.controller.open_day_in_browser("2026-08-18")
+        due_browser = self.aqt.dialogs.opened[-1][1]
+        self.assertEqual(due_browser.searches, [snapshot.facts.for_date("2026-08-18").browse_target.query])
+        before = len(self.aqt.dialogs.opened)
+        self.controller.open_day_in_browser("2026-08-16")
+        # The fixture has review activity on the past date, so an exact Browser opens.
+        self.assertEqual(len(self.aqt.dialogs.opened), before + 1)
+        self.controller.open_day_in_browser("bad")
+        self.assertEqual(len(self.aqt.dialogs.opened), before + 1)
+
+    def test_most_missed_browser_retains_again_answer_id_rank(self) -> None:
+        target = BrowseTarget(
+            BrowseTargetKind.MOST_MISSED,
+            "cid:42,7,11",
+            True,
+            (42, 7, 11),
+        )
+        self.aqt.dialogs.next_notes_mode = True
+        self.controller._open_browser_target(target)
+        browser = self.aqt.dialogs.opened[-1][1]
+        self.assertFalse(browser.table.is_notes_mode())
+        self.assertEqual(browser.contexts[-1].ids, (42, 7, 11))
+        self.assertFalse(browser.contexts[-1].order)
+        self.assertFalse(browser.contexts[-1].reverse)
+        self.assertEqual(self.aqt.gui_hooks.browser_will_search, [])
+
+    def test_ordinary_browser_target_does_not_override_user_sort(self) -> None:
+        target = BrowseTarget(BrowseTargetKind.REVIEWED, "cid:5,6", True, (5, 6))
+        self.controller._open_browser_target(target)
+        context = self.aqt.dialogs.opened[-1][1].contexts[-1]
+        self.assertIsNone(context.ids)
+        self.assertTrue(context.order)
+
+    def test_selected_day_capability_is_coalesced_cached_and_then_opens(self) -> None:
+        selected = date(2026, 8, 17)
+        self.controller.selected_date = selected.isoformat()
+        insight = self.most_missed_insight()
+        calls = []
+        self.module.collect_day_insight = lambda *_args, **_kwargs: calls.append(selected) or insight
+        context = FakeDeckBrowser()
+        self.controller.open_most_missed_in_browser(context, selected.isoformat())
+        self.controller.open_most_missed_in_browser(context, selected.isoformat())
+        self.assertEqual(len(FakeQueryOp.pending), 1)
+        self.assertEqual(len(self.controller.inflight_insights), 1)
+        FakeQueryOp.pending[0].complete()
+        self.assertEqual(calls, [selected])
+        self.assertEqual(len(self.aqt.dialogs.opened), 1)
+        opened = self.aqt.dialogs.opened[-1][1]
+        self.assertEqual(opened.contexts[-1].ids, insight.browse_target.card_ids)
+
+        self.controller.open_most_missed_in_browser(context, selected.isoformat())
+        self.assertEqual(len(FakeQueryOp.pending), 1)
+        self.assertEqual(len(self.aqt.dialogs.opened), 2)
+
+    def test_most_missed_rejects_nonselected_date_and_query_failure(self) -> None:
+        context = FakeDeckBrowser()
+        self.controller.selected_date = "2026-08-17"
+        self.controller.open_most_missed_in_browser(context, "2026-08-16")
+        self.assertEqual(FakeQueryOp.pending, [])
+        self.controller.open_most_missed_in_browser(context, "not-a-date")
+        self.assertEqual(FakeQueryOp.pending, [])
+
+        self.module.collect_day_insight = lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("boom"))
+        self.controller.open_most_missed_in_browser(context, "2026-08-17")
+        FakeQueryOp.pending[-1].fail()
+        self.assertEqual(self.aqt.dialogs.opened, [])
+
+    def test_day_capability_delivery_never_serializes_ids_or_card_content(self) -> None:
+        context = FakeDeckBrowser()
+        insight = self.most_missed_insight()
+        self.controller._deliver_day_insight(context, 9, insight)
+        script = context.web.scripts[-1]
+        self.assertIn("receiveDayInsight", script)
+        self.assertIn('"most_missed_available":true', script)
+        for forbidden in ("100002", "card_ids", "browse_target", "primary_text", "answer_html"):
+            self.assertNotIn(forbidden, script)
+
+    def test_date_and_request_validation_fail_closed(self) -> None:
+        self.assertIsNone(self.controller._parse_bridge_date("not-a-date"))
+        self.assertIsNone(self.controller._parse_bridge_date((date.today() + timedelta(days=36501)).isoformat()))
+        self.assertEqual(self.controller._parse_bridge_date(date.today().isoformat()), date.today())
         for invalid in (None, True, 0, -1, 2_147_483_648, "1"):
             self.assertFalse(self.controller._valid_request_id(invalid))
         self.assertTrue(self.controller._valid_request_id(1))
 
-        context = FakeDeckBrowser()
-        message = "hdo:" + json.dumps({
-            "command": "date_insight",
-            "payload": {"date": "not-a-date", "request_id": 1},
-        })
-        self.controller.on_bridge_message((False, None), message, context)
-        self.assertEqual(FakeQueryOp.pending, [])
-
-    def test_one_background_query_serves_waiters_then_cache_and_browser(self) -> None:
-        selected = date.today() - timedelta(days=1)
-        expected = self._insight(selected)
-        self.module.collect_day_insight = lambda *_args: expected
-        first = FakeDeckBrowser()
-        second = FakeDeckBrowser()
-        self.controller.request_day_insight(first, selected, 1)
-        self.controller.request_day_insight(second, selected, 2)
-        self.assertEqual(len(FakeQueryOp.pending), 1)
-        FakeQueryOp.pending[0].complete()
-        self.assertEqual(len(first.web.scripts), 1)
-        self.assertEqual(len(second.web.scripts), 1)
-        self.assertNotIn("cid:123,456", first.web.scripts[0])
-        self.assertNotIn("browser_query", first.web.scripts[0])
-
-        cached = FakeDeckBrowser()
-        self.controller.request_day_insight(cached, selected, 3)
-        self.assertEqual(len(FakeQueryOp.pending), 1)
-        self.assertEqual(len(cached.web.scripts), 1)
-        self.controller.open_day_in_browser(selected.isoformat())
-        self.assertEqual(self.aqt.dialogs.opened[-1][0], "Browser")
-        self.assertEqual(self.aqt.dialogs.opened[-1][1].searches, ["cid:123,456"])
-
-    def test_open_day_falls_back_to_date_scoped_search_without_cached_target(self) -> None:
-        scheduling_date = self.module.scheduling_today(self.aqt.mw.col.sched.day_cutoff)
-        self.controller.open_day_in_browser((scheduling_date - timedelta(days=1)).isoformat())
-        targetless = DayInsight(
-            date=scheduling_date.isoformat(),
-            study_date=scheduling_date.isoformat(),
-            insight_kind="trouble_cards",
-            empty_reason="past_no_answers",
+    def test_profile_open_retries_a_loading_render_after_collection_ready(self) -> None:
+        calls = []
+        self.controller._load_profile_config = lambda: calls.append("load")
+        self.controller._schedule_refresh = lambda *args, **kwargs: calls.append(
+            (args, kwargs)
         )
-        self.controller.insight_cache[(self.controller._key(), scheduling_date.isoformat())] = targetless
-        self.controller.open_day_in_browser(scheduling_date.isoformat())
+
+        self.controller.on_profile_open()
+
+        self.assertEqual(calls[0], "load")
         self.assertEqual(
-            [browser.searches for _name, browser in self.aqt.dialogs.opened],
-            [["prop:rated=-1"], ["(prop:rated=0 or prop:due=0)"]],
+            calls[1],
+            (("profile_open_ready",), {"delay_ms": 0, "invalidate_on_apply": False}),
         )
-
-    def test_generation_change_discards_stale_response_and_profile_close_clears_cache(self) -> None:
-        selected = date.today() - timedelta(days=1)
-        expected = self._insight(selected)
-        self.module.collect_day_insight = lambda *_args: expected
-        context = FakeDeckBrowser()
-        self.controller.request_day_insight(context, selected, 1)
-        pending = FakeQueryOp.pending[0]
-        self.controller.invalidate()
-        pending.complete()
-        self.assertEqual(context.web.scripts, [])
-        self.assertEqual(self.controller.insight_cache, {})
-
-        current_key = self.controller._key()
-        self.controller.insight_cache[(current_key, selected.isoformat())] = expected
-        self.controller.on_profile_close()
-        self.assertEqual(self.controller.insight_cache, {})
-        self.assertEqual(self.controller.inflight_insights, {})
 
 
 if __name__ == "__main__":
