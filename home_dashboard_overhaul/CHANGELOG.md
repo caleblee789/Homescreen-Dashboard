@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+## 1.8.2 — 2026-08-23
+
+- Rebuilt the 100% dashboard around a 1,320 px maximum, 16 px minimum side
+  margins, 22 px top spacing, 12 px component gaps, and 72 px native-footer
+  clearance. Calendar and rail heights are independent; Month stays naturally
+  five or six rows and Year remains content-driven.
+- Replaced the 1,220/900/640 responsive thresholds with container breakpoints
+  at 940 and 440 px. The rail is side by side at 940 px and above, a 2x2 grid
+  from 440–939 px, and one column below 440 px. Only Year scrolls internally
+  below 320 px.
+- Corrected Month and continuous 53-column Year state layering, neutral future
+  cells, due strips, event markers/counts, legend, compact footer, adjacent
+  event pencil, tonal card action, and collision-aware 190–220 px tooltip.
+- Replaced the segmented workload visualization with one 14 px completion bar
+  and explicit `No cards scheduled`, `All clear`, `100% complete`, active
+  percentage, and unavailable states.
+- Finalized the four metric cards. The scheduler-authoritative current buried
+  total moved into Today’s Session beside Cards studied, New cards studied,
+  Time spent, Pace, and ETA; `visibility.buried` was retired.
+- Added compact time/ETA display, stable large-number handling,
+  content-responsive Bible sizing, intentional fresh/empty/complete fixtures,
+  and retained-data refresh failure with Retry. Initial and live rendering now
+  consume the same presentation fields.
+- Centralized theme and semantic tokens. Sapphire Glass alone applies
+  component translucency and real backdrop blur; Graphite, Emerald, and High
+  Contrast remain opaque, with no High Contrast decorative shadow. Host
+  wallpaper and Anki chrome remain unpainted and unmodified.
+- Upgraded configuration to schema 8. Opacity now normalizes to 94–100 with a
+  96 default, blur to 0–16 px with a 12 px default, and both controls disable
+  outside Sapphire Glass. Migration clamps schema-7 values, removes
+  `visibility.buried`, preserves unrelated settings, and retains valid stored
+  Month/Year choice from first render through hard restart.
+- Expanded the fail-closed 100% release contract to nine exact widths and 48
+  native captures, including `RUNTIME-RESTART-PERSISTENCE`, one overview, and
+  13 detail sheets. Retained 1.8.0/1.8.1 evidence and the supplied screenshot
+  remain immutable calibration history.
+
 ## 1.8.1 — 2026-08-23
 
 - Recalibrated the native 100% Deck Browser layout to a 1,480 px maximum

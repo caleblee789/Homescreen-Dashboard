@@ -1,0 +1,1235 @@
+{
+  "captures": [
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-SG-L-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-SG-L-M",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "026a52cf0fc2e936fb1f1c56d35a03496762f504283c80fd4b45fe6bb2761b50",
+      "tags": [
+        "container_1320",
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-SG-L-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-SG-L-Y",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "2658b235e71a04f665326341588645619bf50916c2ac9c168b640581091c5254",
+      "tags": [
+        "container_1100",
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-SG-D-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-SG-D-M",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "84229df5859d7bc81dbe33c20bc08ed37b51c1b5762ad8f1457fa340c66f0185",
+      "tags": [
+        "container_940",
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-SG-D-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-SG-D-Y",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "1950eb5f8805fe1a40f4ad3eff992b8270530563617809b29f9277b41ce0ef62",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-GR-L-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-GR-L-M",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 22,
+      "sha256": "c31a8d70175831a2bef73a644e395cb49a5a4ff1f975ecf9a3537c42c1c68ec6",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-GR-L-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-GR-L-Y",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "73e5686b40b46d4996d21fc265fd3a017a902778e3a3da0311c0df8d960e9676",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-GR-D-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-GR-D-M",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 22,
+      "sha256": "150854088979759bfabf74062bbf78e4c265e528bd3456af7b85306353c6588c",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-GR-D-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-GR-D-Y",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "81b66505369cc981db7b0e8ac34eebddded46603c7c87b1b56b3514cc1d1fc85",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-EM-L-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-EM-L-M",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 23,
+      "sha256": "576bc6959b8c510eb4539314b4f452705abfa8bc2e81bfbeb0b39ba536598e66",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-EM-L-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-EM-L-Y",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "b89aa4cfbcdc058b1d319ae2588e69701eeab922b020d69dbf21fbcd6a330c7d",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-EM-D-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-EM-D-M",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 22,
+      "sha256": "1eb6c27d4e7858981adf145bc3485defe0db0b207351f449cd8a024cd20d147a",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-EM-D-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-EM-D-Y",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "9e54ac085b0fee1faf4330e8aa213c508e1a191e5bebde03374519f54b615d3b",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-HC-L-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-HC-L-M",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 22,
+      "sha256": "8ef5f8ff964bd9c9d169d0b8bf318f7633e64f0988fde7d03b8a6282af7ca346",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-HC-L-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-HC-L-Y",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "79ee12e769210f0ec60fadafff53daa3740b0eaddea6b28a7cd8be19a8e1d808",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-HC-D-M.png",
+      "fixture": "populated",
+      "id": "PRIMARY-HC-D-M",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 21,
+      "sha256": "78553db8a74de26cdfd285c040d4baec3d14c30829454dc3ebfc55fa3960a14e",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/PRIMARY-HC-D-Y.png",
+      "fixture": "populated",
+      "id": "PRIMARY-HC-D-Y",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 23,
+      "sha256": "47e9ff7d34e0989e5ef79ee2e7edf2758e3af7c1fa0bd1dc4e3e7aa25e38c8a1",
+      "tags": [
+        "populated_data",
+        "primary_native"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/FRESH-SG-L-M.png",
+      "fixture": "fresh",
+      "id": "FRESH-SG-L-M",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "f9ca5b1dc85a55007dafcb174fac9bc08a51578cf226c128be6eed95f1b60a26",
+      "tags": [
+        "fresh_data",
+        "fresh_sapphire_light_month",
+        "missing_pace_eta",
+        "missing_retention",
+        "no_cards_scheduled",
+        "zero_lifetime"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/FRESH-SG-L-Y.png",
+      "fixture": "fresh",
+      "id": "FRESH-SG-L-Y",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "17bd0ee7ea629258ed7298742a9075db1f4a2d122a7fc4d8b05fd2dd99d61716",
+      "tags": [
+        "empty_year",
+        "fresh_data",
+        "fresh_sapphire_light_year"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/FRESH-SG-D-M.png",
+      "fixture": "historical-all-clear",
+      "id": "FRESH-SG-D-M",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "c3b9b69ad4a9ca3a9ccf4e68e1f7b0df56b36a7080734cf250ad41ae31bf1392",
+      "tags": [
+        "all_clear",
+        "fresh_sapphire_dark_month",
+        "no_event",
+        "short_verse"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/FRESH-SG-D-Y.png",
+      "fixture": "fresh",
+      "id": "FRESH-SG-D-Y",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "0098c92df7e6d6ccb8581dba41bdf82caf10fac8239053049503749ab1904e68",
+      "tags": [
+        "empty_year",
+        "fresh_data",
+        "fresh_sapphire_dark_year"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1120,
+        940
+      ],
+      "file": "captures/RESP-SG-L-INTERMEDIATE.png",
+      "fixture": "populated",
+      "id": "RESP-SG-L-INTERMEDIATE",
+      "layout": "intermediate",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "d1dd0b6aac34df4eb020d31abf07cb505d8f7cdc0c6b2c2f07b1e9a1b9a8d896",
+      "tags": [
+        "container_939",
+        "metrics_2x2",
+        "responsive",
+        "sapphire_light_intermediate"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1120,
+        940
+      ],
+      "file": "captures/RESP-SG-D-INTERMEDIATE.png",
+      "fixture": "populated",
+      "id": "RESP-SG-D-INTERMEDIATE",
+      "layout": "intermediate",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "172031c4ef2fdf5696c4d4e0c580ac46b2e53bd6a3aec635a6c21faaf6a89846",
+      "tags": [
+        "container_620",
+        "metrics_2x2",
+        "responsive",
+        "sapphire_dark_intermediate"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1120,
+        940
+      ],
+      "file": "captures/RESP-SG-L-NARROW.png",
+      "fixture": "populated",
+      "id": "RESP-SG-L-NARROW",
+      "layout": "intermediate",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "e4adffe134b388a52607902f68800825dfc7442821bf3486ea23a478f042ebe4",
+      "tags": [
+        "container_440",
+        "metrics_2x2",
+        "no_horizontal_scroll",
+        "responsive",
+        "sapphire_light_narrow"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        620,
+        980
+      ],
+      "file": "captures/RESP-SG-D-NARROW.png",
+      "fixture": "populated",
+      "id": "RESP-SG-D-NARROW",
+      "layout": "narrow",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "9fbd4d9faaed62d073db38fd77044d24f54b7245292d8c041e1611d5e40498b8",
+      "tags": [
+        "container_439",
+        "metrics_1x4",
+        "no_horizontal_scroll",
+        "responsive",
+        "sapphire_dark_narrow"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        620,
+        980
+      ],
+      "file": "captures/RESP-HC-L-NARROW.png",
+      "fixture": "populated",
+      "id": "RESP-HC-L-NARROW",
+      "layout": "narrow",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "63835d7cc68f39c85bd6707a7a5dd1a2ad38b0320fb64c48338d48a545c6986d",
+      "tags": [
+        "container_320",
+        "high_contrast_light_narrow",
+        "month_no_internal_scroll",
+        "no_horizontal_scroll",
+        "responsive"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        620,
+        980
+      ],
+      "file": "captures/RESP-HC-D-NARROW.png",
+      "fixture": "populated",
+      "id": "RESP-HC-D-NARROW",
+      "layout": "narrow",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "06c6a4cb2115c5322b0f2bff0a84a420353a985c7f7a39c38de2affcf646fad3",
+      "tags": [
+        "container_319",
+        "high_contrast_dark_narrow",
+        "no_horizontal_scroll",
+        "responsive",
+        "year_only_internal_scroll"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-COMBINED-TODAY.png",
+      "fixture": "combined-today",
+      "id": "STATE-COMBINED-TODAY",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "8f0692f79e0e2171b9d248ac2e6878dd8ffb1c0bed7461235a097dc0b9312614",
+      "tags": [
+        "combined_state_markers",
+        "one_learning_card",
+        "partial_progress",
+        "reviewed_cards_action",
+        "today_completed_with_due",
+        "today_selected"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-SELECTED-EVENT.png",
+      "fixture": "selected-event",
+      "id": "STATE-SELECTED-EVENT",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "69589e4c230c0e881cf47b558ece711696c273fafd8754fdc0d9ae56ab6ec4ba",
+      "tags": [
+        "event_count",
+        "event_on_selected_date",
+        "footer_edit_action",
+        "footer_relationships",
+        "long_event_title",
+        "multiple_events"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-NEXT-EVENT-FUTURE.png",
+      "fixture": "next-event-future",
+      "id": "STATE-NEXT-EVENT-FUTURE",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 22,
+      "sha256": "50031f390ad49e3e9e547f6bfc32723753cecc7a3c0149ce69d9d8e5c3c393ec",
+      "tags": [
+        "due_cards_action",
+        "footer_relationships",
+        "future_selected",
+        "next_event"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-PAST-TOOLTIP.png",
+      "fixture": "populated",
+      "id": "STATE-PAST-TOOLTIP",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "340b0933a33da5b3981fd704c096cddc3e1b19a7d93341a1f76ecee652aac3b8",
+      "tags": [
+        "calendar_tooltip",
+        "historical_wording",
+        "most_missed_available",
+        "selected_past"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-FIVE-ROW-SUNDAY.png",
+      "fixture": "populated",
+      "id": "STATE-FIVE-ROW-SUNDAY",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "0a9006df8dcc5b7818fdc0241c63ff393ac28b09be31cd611b450dced9d1dee6",
+      "tags": [
+        "five_row_month",
+        "sunday_start"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-SIX-ROW-MONDAY.png",
+      "fixture": "very-large",
+      "id": "STATE-SIX-ROW-MONDAY",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "20c47de4a9971912d1d015db7b243236c9a6b517c55ffd318439093de7d5879a",
+      "tags": [
+        "large_streak",
+        "monday_start",
+        "six_row_month",
+        "very_large_counts"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-YEAR-BOUNDARIES.png",
+      "fixture": "year-boundaries",
+      "id": "STATE-YEAR-BOUNDARIES",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "5d3abfa66c5fa57d8684229901e206d4afc78d6d179f6bc7450cb368161daf3c",
+      "tags": [
+        "populated_year",
+        "year_boundaries",
+        "year_weekday_references"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/STATE-COMPLETE-METRICS.png",
+      "fixture": "complete",
+      "id": "STATE-COMPLETE-METRICS",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "07cc2fedb185ec838e774f3478e29917af61e046d560c8b01c2be294afb90fdc",
+      "tags": [
+        "complete_progress",
+        "eta_done_positive_workload",
+        "populated_rates"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BACKGROUND-SG-L.png",
+      "fixture": "populated",
+      "id": "BACKGROUND-SG-L",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "1e758a51af06f01b1865af578b14620def04603b372b99592086475d27351790",
+      "tags": [
+        "background_case",
+        "component_only_theming",
+        "host_wallpaper_unchanged",
+        "native_host_unchanged"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BACKGROUND-SG-D.png",
+      "fixture": "populated",
+      "id": "BACKGROUND-SG-D",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "257aadf7d5ef4ec4941cda821d69132f081a8e3e98031941c08a735fa1636beb",
+      "tags": [
+        "background_case",
+        "component_only_theming",
+        "host_wallpaper_unchanged",
+        "native_host_unchanged"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BACKGROUND-EM-L.png",
+      "fixture": "populated",
+      "id": "BACKGROUND-EM-L",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "5686f3074387a63950a20803cd38556e13dece7bdf426c669999bc56f8310252",
+      "tags": [
+        "background_case",
+        "component_only_theming",
+        "host_wallpaper_unchanged",
+        "native_host_unchanged",
+        "opaque_non_sapphire"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BACKGROUND-EM-D.png",
+      "fixture": "populated",
+      "id": "BACKGROUND-EM-D",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "3ad6e683eb421a38cd4ccad2d9f3b71b9d3b211710431eeefc107ed92aa1f653",
+      "tags": [
+        "background_case",
+        "component_only_theming",
+        "host_wallpaper_unchanged",
+        "native_host_unchanged",
+        "opaque_non_sapphire"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BACKGROUND-REDUCED-OPACITY.png",
+      "fixture": "populated",
+      "id": "BACKGROUND-REDUCED-OPACITY",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "b2cdd099cd8308afefefc4bcce419ad814905980a6112d581afea0cfa978a9bd",
+      "tags": [
+        "background_case",
+        "blur_16",
+        "component_only_theming",
+        "native_host_unchanged",
+        "opacity_94",
+        "reduced_opacity",
+        "sapphire_only_glass",
+        "text_readability"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BIBLE-SHORT.png",
+      "fixture": "populated",
+      "id": "BIBLE-SHORT",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "d69cd15e7713eb765effbd4584ce174e3011f72541442f0ddbd27774c68ec197",
+      "tags": [
+        "bible_case",
+        "short_verse",
+        "year_height_independent_of_bible"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BIBLE-LONG.png",
+      "fixture": "long-verse",
+      "id": "BIBLE-LONG",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "65b1f49ab7a1bebef4e12c8fa42cd91ab3b74a100adb903f1e54652b0448f6e8",
+      "tags": [
+        "bible_case",
+        "long_verse",
+        "no_truncation",
+        "year_height_independent_of_bible"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BIBLE-CUSTOM-FONT.png",
+      "fixture": "populated",
+      "id": "BIBLE-CUSTOM-FONT",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "a54132fb7ee47a40b74ad431ce4689ebe2d5929dd61ac0c775eae2f51a3d4a06",
+      "tags": [
+        "bible_case",
+        "custom_font"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/BIBLE-DISABLED.png",
+      "fixture": "populated",
+      "id": "BIBLE-DISABLED",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "39c79b5b3b3c2dbe7db27707d7b1459ea8ab3d2bb7f0b5518dcf033b128d8a2f",
+      "tags": [
+        "bible_case",
+        "bible_disabled",
+        "no_bible_gap",
+        "year_height_independent_of_bible"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/RUNTIME-INITIAL-LOADING.png",
+      "fixture": "loading",
+      "id": "RUNTIME-INITIAL-LOADING",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 23,
+      "sha256": "ae78c71408048e05ecee24bc14bb717a846866637ce03222157b7398af611f53",
+      "tags": [
+        "initial_loading",
+        "runtime_state"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/RUNTIME-DELAYED-LOADING.png",
+      "fixture": "loading",
+      "id": "RUNTIME-DELAYED-LOADING",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "bf9fc8655c49afbb938ebacf91ee4f95c3112dd57e4195c99d32d042f7741286",
+      "tags": [
+        "delayed_loading",
+        "runtime_state"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QMainWindow.grab-low-color-fallback",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1018
+      ],
+      "file": "captures/RUNTIME-FAILURE.png",
+      "fixture": "loading",
+      "id": "RUNTIME-FAILURE",
+      "layout": "wide",
+      "mode": "light",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 14,
+      "sha256": "1d37c51758061fd0d849901aeba5ad7b307ba533eae830af6cbf3b16e77dd396",
+      "tags": [
+        "initial_failure_copy",
+        "loading_failure",
+        "progress_unavailable",
+        "retry_and_diagnostics_actions",
+        "runtime_state"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "month"
+    },
+    {
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1050
+      ],
+      "file": "captures/RUNTIME-RETRY.png",
+      "fixture": "populated",
+      "id": "RUNTIME-RETRY",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-initial.json",
+      "sampled_color_count": 24,
+      "sha256": "cbcd7f94428e32a903f46812b83da273939e5edf24b7f18b35f72629940aac36",
+      "tags": [
+        "refresh_failure_status",
+        "retained_prior_data",
+        "retry_retained_data",
+        "runtime_state"
+      ],
+      "text_scale_percent": 100,
+      "theme": "High Contrast",
+      "ui_scale_percent": 100,
+      "view": "year"
+    },
+    {
+      "capture_method": "QMainWindow.grab-isolated-restart",
+      "device_pixel_ratio": 1.0,
+      "dimensions": [
+        1920,
+        1018
+      ],
+      "file": "captures/RUNTIME-RESTART-PERSISTENCE.png",
+      "fixture": "populated",
+      "id": "RUNTIME-RESTART-PERSISTENCE",
+      "layout": "wide",
+      "mode": "dark",
+      "native_report": "reports/runtime-report-restart.json",
+      "sampled_color_count": 24,
+      "sha256": "c1ece9c078d532c9761bce1bcaa596d19769b02a395760ee134365972aeb6310",
+      "tags": [
+        "blur_persistence",
+        "calendar_view_persistence",
+        "clean_settings_state",
+        "no_waiver",
+        "opacity_persistence",
+        "palette_persistence",
+        "restart",
+        "runtime_state",
+        "settings_persistence",
+        "theme_persistence",
+        "visibility_persistence"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year"
+    }
+  ],
+  "release": "1.8.2"
+}

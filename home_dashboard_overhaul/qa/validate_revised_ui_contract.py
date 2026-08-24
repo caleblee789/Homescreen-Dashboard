@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the machine-readable Home Dashboard 1.8.1 UI contract.
+"""Validate the machine-readable Home Dashboard 1.8.2 UI contract.
 
 This is a source-contract check. Exact-package native evidence is validated by
 the release evidence assembler after the disposable Anki run.
@@ -26,14 +26,14 @@ def _read(root: Path, name: str) -> dict:
 
 def validate(root: Path = ROOT) -> List[str]:
     errors: List[str] = []
-    manifest = _read(root, "calendar_surface_manifest_1_8_1.json")
-    matrix = _read(root, "visual_regression_matrix_1_8_1.json")
-    registry = _read(root, "ui-surface-registry_1_8_1.json")
-    capture = _read(root, "capture_evidence_manifest_1_8_1.json")
+    manifest = _read(root, "calendar_surface_manifest_1_8_2.json")
+    matrix = _read(root, "visual_regression_matrix_1_8_2.json")
+    registry = _read(root, "ui-surface-registry_1_8_2.json")
+    capture = _read(root, "capture_evidence_manifest_1_8_2.json")
 
-    if manifest.get("release") != "1.8.1" or manifest.get("schema_version") != 7:
-        errors.append("surface manifest must describe release 1.8.1 / schema 7")
-    if manifest.get("contract") != "native-100-percent-refinement-2026-08-23":
+    if manifest.get("release") != "1.8.2" or manifest.get("schema_version") != 8:
+        errors.append("surface manifest must describe release 1.8.2 / schema 8")
+    if manifest.get("contract") != "final-ui-correction-native-100-percent-2026-08-23":
         errors.append("surface manifest has the wrong governing contract")
     if manifest.get("dashboard_order") != [
         "study_calendar", "summary_metrics", "bible_verse"
@@ -42,8 +42,8 @@ def validate(root: Path = ROOT) -> List[str]:
 
     manifest_ids = [item.get("id") for item in manifest.get("canonical_surfaces", [])]
     registry_ids = [item.get("id") for item in registry.get("surfaces", [])]
-    if len(manifest_ids) < 38 or len(set(manifest_ids)) != len(manifest_ids):
-        errors.append("canonical surfaces must contain at least 38 unique IDs")
+    if len(manifest_ids) < 41 or len(set(manifest_ids)) != len(manifest_ids):
+        errors.append("canonical surfaces must contain at least 41 unique IDs")
     if registry_ids != manifest_ids or registry.get("exact_once") is not True:
         errors.append("surface registry does not exactly mirror the authority manifest")
 
@@ -73,6 +73,9 @@ def validate(root: Path = ROOT) -> List[str]:
         errors.append("every primary visual case must use 100 percent text scale")
     if matrix.get("deferred_scales_percent") != [125, 150]:
         errors.append("125 and 150 percent must remain explicitly deferred")
+    expected_widths = [1320, 1100, 940, 939, 620, 440, 439, 320, 319]
+    if matrix.get("required_container_width_assertions") != expected_widths:
+        errors.append("responsive width assertions are not the exact release set")
 
     if capture.get("primary_native_frames") != case_ids:
         errors.append("capture manifest primary frame order differs from the visual matrix")
@@ -86,6 +89,20 @@ def validate(root: Path = ROOT) -> List[str]:
     missing_tags = sorted(set(capture.get("required_coverage_tags", [])) - tags)
     if missing_tags:
         errors.append("capture plan has uncovered tags: {}".format(", ".join(missing_tags)))
+    if capture.get("responsive_assertion_widths") != expected_widths:
+        errors.append("capture plan responsive assertions differ from the UI contract")
+    if capture.get("native_frame_count") != {"initial": 47, "restart": 1, "total": 48}:
+        errors.append("capture plan must contain 47 initial frames plus one restart frame")
+    if capture.get("contact_sheet_output", {}).get("detail_sheet_count") != 13:
+        errors.append("capture plan must produce exactly 13 readable detail sheets")
+    restart = next(
+        (item for item in supplemental if item.get("id") == "RUNTIME-RESTART-PERSISTENCE"),
+        None,
+    )
+    if restart is None or "no_waiver" not in restart.get("tags", []):
+        errors.append("restart persistence is missing or permits a waiver")
+    if "waived" in json.dumps(capture).casefold():
+        errors.append("capture contract still contains a restart waiver")
     references = capture.get("reference_inputs", [])
     if not references or any(
         item.get("may_count_as_acceptance_evidence") is not False
@@ -108,10 +125,15 @@ def validate(root: Path = ROOT) -> List[str]:
 
     old_manifest = _read(root, "calendar_surface_manifest.json")
     old_matrix = _read(root, "visual_regression_matrix_1_8_0.json")
+    retained_181 = _read(root, "calendar_surface_manifest_1_8_1.json")
     if old_manifest.get("release") != "1.8.0" or old_matrix.get("release") != "1.8.0":
         errors.append("retained 1.8.0 contract history was modified")
+    if retained_181.get("release") != "1.8.1" or retained_181.get("schema_version") != 7:
+        errors.append("retained 1.8.1 contract history was modified")
     if not (root / "qa" / "release-evidence-1.8.0-2026-08-23").is_dir():
         errors.append("retained 1.8.0 release evidence is missing")
+    if not (root / "qa" / "release-evidence-1.8.1-2026-08-23").is_dir():
+        errors.append("retained 1.8.1 release evidence is missing")
 
     return errors
 
@@ -124,7 +146,7 @@ def main() -> int:
         return 1
     print(
         "Revised UI contract: PASS "
-        "(1.8.1 schema 7, 16 primary native cases, tagged supplemental evidence)"
+        "(1.8.2 schema 8, 48 native frames, 9 exact widths, no restart waiver)"
     )
     return 0
 

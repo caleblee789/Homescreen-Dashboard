@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "release": "1.8.2",
+  "implementation_commit": "b3a37fdf09fea7b30a273b1b3b6b53a9aa578581",
+  "status": "passed",
+  "automated_validation": {
+    "python_unit_tests": {
+      "command": "python3.12 -m unittest discover -s home_dashboard_overhaul/tests -p 'test_*.py'",
+      "passed": 197,
+      "skipped": 0,
+      "failed": 0,
+      "status": "passed"
+    },
+    "javascript_calendar_model": {
+      "command": "node home_dashboard_overhaul/tests/calendar_model_test.js",
+      "status": "passed"
+    },
+    "ui_contract": {
+      "command": "python3.12 home_dashboard_overhaul/qa/validate_revised_ui_contract.py",
+      "release": "1.8.2",
+      "config_schema": 8,
+      "primary_native_cases": 16,
+      "native_capture_count": 48,
+      "exact_container_widths": [
+        1320,
+        1100,
+        940,
+        939,
+        620,
+        440,
+        439,
+        320,
+        319
+      ],
+      "restart_waiver": false,
+      "status": "passed"
+    },
+    "color_system": {
+      "command": "python3.12 home_dashboard_overhaul/qa/color_system_audit.py --output home_dashboard_overhaul/dist/color-audit-1.8.2",
+      "contrast_checks": 582,
+      "contrast_failures": 0,
+      "component_hardcoded_colors": 0,
+      "status": "passed"
+    },
+    "source_checks": {
+      "compilation": "passed",
+      "pure_archive_imports": "passed",
+      "link_review": "passed",
+      "secret_review": "passed",
+      "git_diff_check": "passed"
+    }
+  },
+  "package_validation": {
+    "sha256": "f1a3eddcd47f259b9b7c7645f5f355de1849711034361623498476973e7b2a70",
+    "deterministic_build_count": 2,
+    "deterministic_checksums_match": true,
+    "zip_integrity": "passed",
+    "safe_paths": "passed",
+    "member_count": 24,
+    "member_allowlist": "passed",
+    "production_imports": "passed",
+    "source_archive_parity": "passed",
+    "installed_archive_member_parity": "passed"
+  },
+  "native_validation": {
+    "anki_version": "26.8.1",
+    "host": "actual isolated Anki main Deck Browser",
+    "sync_identity": "disabled-and-disconnected",
+    "ui_scale_percent": 100,
+    "text_scale_percent": 100,
+    "capture_count": 48,
+    "initial_capture_count": 47,
+    "restart_capture_count": 1,
+    "primary_capture_count": 16,
+    "supplemental_capture_count": 32,
+    "normal_anki_process": "alive-and-untouched",
+    "month_five_row_height_px": 461.66,
+    "month_six_row_height_px": 508.66,
+    "wide_year_height_px": 306.78,
+    "maximum_year_height_difference_across_bible_states_px": 0,
+    "status": "passed"
+  },
+  "restart_persistence": {
+    "identity_gates": "passed",
+    "status": "passed",
+    "waiver": false,
+    "capture_generated": true,
+    "capture_id": "RUNTIME-RESTART-PERSISTENCE",
+    "persisted_fields": [
+      "calendar_view",
+      "theme",
+      "mode",
+      "palette",
+      "visibility",
+      "opacity",
+      "blur",
+      "week_start",
+      "settings_clean_state"
+    ]
+  },
+  "evidence": {
+    "overview_sheets": 1,
+    "detail_sheets": 13,
+    "capture_coverage": "complete-exactly-once",
+    "status": "accepted"
+  },
+  "deferred_unrun": [
+    "dedicated_125_percent_capture",
+    "dedicated_150_percent_capture",
+    "spoken_screen_reader_review",
+    "windows_validation",
+    "linux_validation",
+    "forced_colors_review",
+    "os_level_scaling_acceptance"
+  ]
+}

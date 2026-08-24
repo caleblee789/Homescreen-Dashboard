@@ -152,19 +152,28 @@ def _apply_heatmap(config: MutableMapping[str, Any], synced: Mapping[str, Any], 
     palette = synced.get("colors")
     if isinstance(palette, str):
         appearance["preset"] = PALETTE_MAP.get(palette.lower(), "Sapphire Glass")
-    # Schema 2 removes the legacy continuous nine-month presentation.  Either
-    # legacy mode opens in the complete Year view after migration.
-    heatmap["calendar_view"] = "year"
-    heatmap["history_days"] = synced.get("limhist") or 0
-    legacy_forecast = synced.get("limfcst")
-    if legacy_forecast == 0:
-        heatmap["forecast_days"] = 730
-        warnings.append("Review Heatmap's unlimited forecast was capped at 730 days to avoid invalid far-future scheduling data.")
-    elif isinstance(legacy_forecast, int):
-        heatmap["forecast_days"] = legacy_forecast
-    heatmap["exclude_deleted_cards"] = bool(synced.get("limcdel", False))
-    heatmap["exclude_manual_reschedules"] = bool(synced.get("limresched", True))
-    heatmap["excluded_deck_ids"] = list(synced.get("limdecks", [])) if isinstance(synced.get("limdecks"), list) else []
+    # ``normalize_config()`` has already translated a legacy calendar mode to
+    # Year while preserving a valid modern Month/Year preference. Do not
+    # replace that controller-owned value during a first-run legacy import.
+    if "limhist" in synced:
+        heatmap["history_days"] = synced.get("limhist") or 0
+    if "limfcst" in synced:
+        legacy_forecast = synced.get("limfcst")
+        if legacy_forecast == 0:
+            heatmap["forecast_days"] = 730
+            warnings.append("Review Heatmap's unlimited forecast was capped at 730 days to avoid invalid far-future scheduling data.")
+        elif isinstance(legacy_forecast, int):
+            heatmap["forecast_days"] = legacy_forecast
+    if "limcdel" in synced:
+        heatmap["exclude_deleted_cards"] = bool(synced.get("limcdel"))
+    if "limresched" in synced:
+        heatmap["exclude_manual_reschedules"] = bool(synced.get("limresched"))
+    if "limdecks" in synced:
+        heatmap["excluded_deck_ids"] = (
+            list(synced.get("limdecks", []))
+            if isinstance(synced.get("limdecks"), list)
+            else []
+        )
     raw_date = synced.get("limdate")
     if isinstance(raw_date, (int, float)) and raw_date > 0:
         heatmap["ignore_before"] = datetime.fromtimestamp(raw_date).astimezone().date().isoformat()

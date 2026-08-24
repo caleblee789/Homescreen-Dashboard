@@ -1,0 +1,224 @@
+{
+  "schema_version": 22,
+  "release": "1.8.2",
+  "authority": "qa/calendar_surface_manifest_1_8_2.json",
+  "visual_matrix": "qa/visual_regression_matrix_1_8_2.json",
+  "exact_once": true,
+  "surfaces": [
+    {
+      "id": "CAL-MONTH-WIDE",
+      "owner": "DashboardCalendar",
+      "fixture": "populated-wide-month"
+    },
+    {
+      "id": "CAL-MONTH-INTERMEDIATE",
+      "owner": "DashboardCalendar",
+      "fixture": "populated-intermediate-month"
+    },
+    {
+      "id": "CAL-MONTH-NARROW",
+      "owner": "DashboardCalendar",
+      "fixture": "populated-narrow-month"
+    },
+    {
+      "id": "CAL-YEAR-WIDE",
+      "owner": "DashboardCalendar",
+      "fixture": "populated-wide-year"
+    },
+    {
+      "id": "CAL-YEAR-INTERMEDIATE",
+      "owner": "DashboardCalendar",
+      "fixture": "populated-intermediate-year"
+    },
+    {
+      "id": "CAL-YEAR-NARROW",
+      "owner": "DashboardCalendar",
+      "fixture": "populated-narrow-year"
+    },
+    {
+      "id": "CAL-COMBINED-STATES",
+      "owner": "CalendarDay",
+      "fixture": "today-completion-due-selection-event"
+    },
+    {
+      "id": "CAL-EVENT-COUNT",
+      "owner": "CalendarDay",
+      "fixture": "multiple-events"
+    },
+    {
+      "id": "CAL-FIVE-ROW",
+      "owner": "MonthGrid",
+      "fixture": "five-row-month"
+    },
+    {
+      "id": "CAL-SIX-ROW",
+      "owner": "MonthGrid",
+      "fixture": "six-row-month"
+    },
+    {
+      "id": "CAL-WEEK-STARTS",
+      "owner": "DashboardCalendar",
+      "fixture": "sunday-and-monday-start"
+    },
+    {
+      "id": "CAL-YEAR-BOUNDARIES",
+      "owner": "YearGrid",
+      "fixture": "empty-and-populated-year"
+    },
+    {
+      "id": "CAL-TOOLTIP-HISTORY",
+      "owner": "CalendarTooltip",
+      "fixture": "historical-date"
+    },
+    {
+      "id": "CAL-TOOLTIP-FUTURE",
+      "owner": "CalendarTooltip",
+      "fixture": "future-date-event"
+    },
+    {
+      "id": "CTX-FRESH",
+      "owner": "CalendarFooter",
+      "fixture": "no-event-no-actions"
+    },
+    {
+      "id": "CTX-NEXT-EVENT",
+      "owner": "CalendarFooter",
+      "fixture": "global-next-event"
+    },
+    {
+      "id": "CTX-SELECTED-EVENT",
+      "owner": "CalendarFooter",
+      "fixture": "event-on-selected-date"
+    },
+    {
+      "id": "CTX-MULTIPLE-EVENTS",
+      "owner": "CalendarFooter",
+      "fixture": "multiple-events-long-title"
+    },
+    {
+      "id": "CTX-REVIEWED",
+      "owner": "CalendarFooter",
+      "fixture": "past-or-today-reviewed"
+    },
+    {
+      "id": "CTX-DUE",
+      "owner": "CalendarFooter",
+      "fixture": "future-due"
+    },
+    {
+      "id": "METRICS-ZERO",
+      "owner": "SummaryMetricsGrid",
+      "fixture": "no-cards-due"
+    },
+    {
+      "id": "METRICS-PARTIAL",
+      "owner": "SummaryMetricsGrid",
+      "fixture": "partial-workload"
+    },
+    {
+      "id": "METRICS-COMPLETE",
+      "owner": "SummaryMetricsGrid",
+      "fixture": "completed-nonzero-workload"
+    },
+    {
+      "id": "METRICS-TINY",
+      "owner": "SummaryMetricsGrid",
+      "fixture": "one-learning-card"
+    },
+    {
+      "id": "METRICS-UNAVAILABLE",
+      "owner": "SummaryMetricsGrid",
+      "fixture": "missing-pace-eta-retention"
+    },
+    {
+      "id": "METRICS-STRESS",
+      "owner": "SummaryMetricsGrid",
+      "fixture": "large-counts-and-streaks"
+    },
+    {
+      "id": "BIBLE-SHORT",
+      "owner": "BibleVerseCard",
+      "fixture": "short-verse"
+    },
+    {
+      "id": "BIBLE-LONG",
+      "owner": "BibleVerseCard",
+      "fixture": "long-verse"
+    },
+    {
+      "id": "BIBLE-CUSTOM-FONT",
+      "owner": "BibleVerseCard",
+      "fixture": "custom-font"
+    },
+    {
+      "id": "BIBLE-DISABLED",
+      "owner": "BibleVerseCard",
+      "fixture": "disabled-no-gap"
+    },
+    {
+      "id": "BACKGROUND-NATIVE",
+      "owner": "DashboardCanvas",
+      "fixture": "native-transparent-host"
+    },
+    {
+      "id": "BACKGROUND-IMAGE",
+      "owner": "DashboardCanvas",
+      "fixture": "host-wallpaper-unchanged-component-glass-only"
+    },
+    {
+      "id": "BACKGROUND-OPACITY",
+      "owner": "DashboardCanvas",
+      "fixture": "sapphire-component-opacity-only"
+    },
+    {
+      "id": "DATA-LOADING",
+      "owner": "DashboardLifecycle",
+      "fixture": "initial-loading"
+    },
+    {
+      "id": "DATA-DELAYED",
+      "owner": "DashboardLifecycle",
+      "fixture": "delayed-loading"
+    },
+    {
+      "id": "DATA-FAILURE",
+      "owner": "DashboardLifecycle",
+      "fixture": "failure-and-retry"
+    },
+    {
+      "id": "SETTINGS-PERSISTENCE",
+      "owner": "SettingsDialog",
+      "fixture": "restart-readback"
+    },
+    {
+      "id": "THEMES-PRIMARY",
+      "owner": "DashboardThemeSystem",
+      "fixture": "sixteen-primary-native-frames"
+    },
+    {
+      "id": "RESPONSIVE-EXACT-WIDTHS",
+      "owner": "DashboardLayout",
+      "fixture": "1320-1100-940-939-620-440-439-320-319"
+    },
+    {
+      "id": "DATA-RETAINED-RETRY",
+      "owner": "DashboardLifecycle",
+      "fixture": "refresh-failure-with-prior-data"
+    },
+    {
+      "id": "CAL-FIRST-RENDER-VIEW",
+      "owner": "DashboardController",
+      "fixture": "stored-month-or-year-before-first-render"
+    }
+  ],
+  "prohibited_fixture_kinds": [
+    "selected-date-details-panel",
+    "due-deck-breakdown",
+    "dashboard-most-missed-preview",
+    "card-answer-preview",
+    "whole-dashboard-transform-or-zoom",
+    "host-wallpaper-scrim-or-mask",
+    "non-sapphire-component-transparency",
+    "restart-persistence-waiver"
+  ]
+}

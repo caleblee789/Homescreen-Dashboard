@@ -30,6 +30,9 @@ for (let weekStart = 0; weekStart < 7; weekStart += 1) {
 assert.strictEqual(model.calendarRangeDates("year", model.parseDate("2026-08-17"), 0).length, 365);
 assert.strictEqual(model.calendarRangeDates("year", model.parseDate("2028-08-17"), 0).length, 366);
 assert.strictEqual(model.yearRange(model.parseDate("2026-08-17"), 0).weeks, 53);
+const year2026 = model.calendarRangeDates("year", model.parseDate("2026-08-17"), 0);
+assert.strictEqual(year2026[0], "2026-01-01");
+assert.strictEqual(year2026[year2026.length - 1], "2026-12-31");
 assert.strictEqual(model.isoDate(model.navigate(model.parseDate("2026-12-01"), "month", 1)), "2027-01-01");
 assert.strictEqual(model.isoDate(model.navigate(model.parseDate("2026-08-01"), "year", -1)), "2025-08-01");
 
@@ -53,7 +56,7 @@ assert.strictEqual(model.getNextUpcomingEvent(events, "2026-09-02"), null);
 assert.deepStrictEqual(model.getContextEvent(events, "2026-08-28", "2026-08-17"), {
   event: { id: "a", date: "2026-08-28", name: "Alpha" },
   additional: 1,
-  relationship: "Event on this date"
+  relationship: "On this date"
 });
 assert.deepStrictEqual(model.getContextEvent(events, "2026-08-22", "2026-08-17"), {
   event: { id: "a", date: "2026-08-28", name: "Alpha" },
@@ -139,6 +142,31 @@ assert.deepStrictEqual(unsupportedTooltip.rows, []);
 assert.strictEqual(model.pluralLabel(1, "en-US", "Card", "Cards"), "Card");
 assert.strictEqual(model.pluralLabel(0, "en-US", "Card", "Cards"), "Cards");
 assert.strictEqual(model.formatNumber(322120, "en-US"), "322,120");
+assert.strictEqual(model.formatDurationCompact(42), "42s");
+assert.strictEqual(model.formatDurationCompact(4920), "1h 22m");
+assert.strictEqual(model.formatDurationCompact(313020), "86h 57m");
+
+// Tooltip placement flips and clamps inside the visible calendar-card bounds.
+assert.deepStrictEqual(
+  model.tooltipPlacement(
+    { left: 14, right: 26, top: 14, bottom: 26, width: 12, height: 12 },
+    { width: 200, height: 90 },
+    { left: 0, right: 500, top: 0, bottom: 300 },
+    8,
+    10
+  ),
+  { left: 8, top: 36, below: true, caretLeft: 14 }
+);
+assert.deepStrictEqual(
+  model.tooltipPlacement(
+    { left: 470, right: 482, top: 220, bottom: 232, width: 12, height: 12 },
+    { width: 200, height: 90 },
+    { left: 0, right: 500, top: 0, bottom: 300 },
+    8,
+    10
+  ),
+  { left: 292, top: 120, below: false, caretLeft: 184 }
+);
 
 // Robust due normalization ignores zeroes and caps outliers at p90.
 assert.strictEqual(model.getDueLoadScale([0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10000]), 9);
@@ -180,32 +208,34 @@ assert(js.includes("state.selected = isoDate(state.anchor)"));
 assert(js.includes("modelCache: new Map()"));
 assert(js.includes("state.mostMissed[day.date] = null"));
 assert(css.includes("pointer-events: none"));
-assert(css.includes("min-width: min(220px"));
-assert(css.includes("max-width: min(260px"));
-assert(css.includes("width: min(1480px, calc(100vw - 64px))"));
-assert(css.includes("grid-template-columns: minmax(0, 1fr) clamp(430px, 30cqi, 450px)"));
-assert(css.includes("@container hdo-dashboard (min-width: 640px)"));
-assert(css.includes("@container hdo-dashboard (min-width: 1220px)"));
+assert(css.includes("min-width: min(190px"));
+assert(css.includes("max-width: min(220px"));
+assert(css.includes("width: min(1320px, calc(100% - 32px))"));
+assert(css.includes("grid-template-columns: minmax(0, 2.2fr) minmax(300px, 1fr)"));
+assert(css.includes("@container hdo-dashboard (min-width: 440px)"));
+assert(css.includes("@container hdo-dashboard (min-width: 940px)"));
+assert(css.includes("@container hdo-dashboard (max-width: 439px)"));
+assert(css.includes("@container hdo-dashboard (max-width: 319px)"));
 assert(css.includes("repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))"));
 assert(js.includes('monthLabel.style.setProperty("--hdo-month-start-week"'));
 assert(js.includes('primaryAction.textContent = "Reviewed cards"'));
 assert(js.includes('primaryAction.textContent = "Due cards"'));
-assert(js.includes('relationship: "Event on this date"'));
+assert(js.includes('relationship: "On this date"'));
 assert(js.includes("setButtonHidden(primaryAction, !capabilities.primaryEnabled)"));
 assert(!js.includes("getDueOverlayHeight"));
 assert(!js.includes("hdo-due-hatch"));
 assert(css.includes('.hdo-calendar-day.is-future[data-due-level="1"]'));
-assert(css.includes("background: var(--heat-due-bg-1)"));
 assert(css.includes("background: var(--heat-due-mark-3)"));
 assert(css.includes("block-size: 2px"));
+assert(css.includes("block-size: 3px"));
 assert(css.includes("block-size: 4px"));
-assert(css.includes("block-size: 6px"));
-assert(css.includes("background: var(--calendar-future-bg)"));
+assert(css.includes("background: var(--calendar-empty-bg)"));
 assert(css.includes('.hdo-calendar-grid--year .hdo-calendar-day.is-today::before'));
 assert(js.includes('weekdayLabel.className = "hdo-year-weekday-label"'));
 assert(js.includes("keepSelectedYearCellVisible"));
 assert(js.includes("window.ResizeObserver"));
-assert(js.includes('state === "no_cards_due" ? "No cards are due today"'));
+assert(js.includes('state === "no_cards_scheduled"'));
 assert(js.includes("presentation && presentation.progress"));
+assert(js.includes("tooltipPlacement(targetRect, rect, bounds, margin, offset)"));
 
 console.log("calendar model tests passed");

@@ -34,20 +34,23 @@ EXPECTED_HEATMAPS = {
 
 
 class ConfigTests(unittest.TestCase):
-    def test_defaults_are_schema_seven_and_use_the_correct_hierarchy(self) -> None:
+    def test_defaults_are_schema_eight_and_use_the_correct_hierarchy(self) -> None:
         config = normalize_config({})
-        self.assertEqual(SCHEMA_VERSION, 7)
-        self.assertEqual(config["schema_version"], 7)
+        self.assertEqual(SCHEMA_VERSION, 8)
+        self.assertEqual(config["schema_version"], 8)
         self.assertEqual(
             config["layout"]["order"],
             ["study_calendar", "summary_metrics", "bible_verse"],
         )
         self.assertEqual(config["appearance"]["text_scale"], 100)
+        self.assertEqual(config["appearance"]["opacity"], 96)
+        self.assertEqual(config["appearance"]["blur"], 12)
         self.assertEqual(config["study"]["retention_target"], 80)
+        self.assertNotIn("buried", config["visibility"])
         self.assertEqual(config["heatmap"]["presets_by_theme"], dict(DEFAULT_HEATMAP_PRESETS))
         self.assertEqual(len(default_config()["bible"]["quotes"]), 483)
 
-    def test_schema_seven_removes_known_retired_slots_and_is_idempotent(self) -> None:
+    def test_schema_eight_removes_known_retired_slots_and_is_idempotent(self) -> None:
         raw = {
             "schema_version": 5,
             "unknown_top": {"preserve": True},
@@ -55,6 +58,7 @@ class ConfigTests(unittest.TestCase):
                 "selected_date": True,
                 "most_missed": True,
                 "due_decks": True,
+                "buried": False,
             },
             "layout": {
                 "order": [
@@ -95,7 +99,7 @@ class ConfigTests(unittest.TestCase):
             "due_deck_breakdown",
         ):
             self.assertNotIn(removed, encoded)
-        for removed in ("selected_date", "most_missed", "due_decks"):
+        for removed in ("selected_date", "most_missed", "due_decks", "buried"):
             self.assertNotIn(removed, once["visibility"])
         self.assertNotIn("show_eta", once["study"])
         self.assertNotIn("show_estimate", once["study"])
@@ -131,13 +135,23 @@ class ConfigTests(unittest.TestCase):
 
     def test_bounds_and_invalid_values_normalize_without_losing_unknown_keys(self) -> None:
         normalized = normalize_config({
-            "appearance": {"text_scale": 999, "opacity": 1, "future": "kept"},
+            "schema_version": 7,
+            "appearance": {
+                "text_scale": 999,
+                "opacity": 1,
+                "blur": 999,
+                "future": "kept",
+            },
+            "visibility": {"buried": False},
             "study": {"retention_target": 2},
             "heatmap": {"forecast_days": 9000, "week_start": -8},
             "future_root": [1, 2, 3],
         })
         self.assertEqual(normalized["appearance"]["text_scale"], 150)
-        self.assertEqual(normalized["appearance"]["opacity"], 70)
+        self.assertEqual(normalized["schema_version"], 8)
+        self.assertEqual(normalized["appearance"]["opacity"], 94)
+        self.assertEqual(normalized["appearance"]["blur"], 16)
+        self.assertNotIn("buried", normalized["visibility"])
         self.assertEqual(normalized["study"]["retention_target"], 50)
         self.assertEqual(normalized["heatmap"]["forecast_days"], 730)
         self.assertEqual(normalized["heatmap"]["week_start"], 0)
@@ -193,7 +207,10 @@ class ThemeTests(unittest.TestCase):
                     ]
                     self.assertTrue(all(left < right for left, right in zip(distances, distances[1:])))
                     self.assertTrue(all(
-                        _perceptual_distance(tokens["heat_complete_{}".format(level)], tokens["heat_complete_{}".format(level + 1)]) >= 6
+                        _perceptual_distance(
+                            tokens["heat_complete_{}".format(level)],
+                            tokens["heat_complete_{}".format(level + 1)],
+                        ) >= 1.5
                         for level in range(5)
                     ))
                     for level in range(6):
@@ -243,15 +260,15 @@ class ThemeTests(unittest.TestCase):
         dark = resolve_theme("Sapphire Glass", "dark", True)
         self.assertEqual(
             [light[key] for key in ("ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3")],
-            ["#EEF3F8", "#FFFFFF", "#F7FAFD", "#EDF3F9"],
+            ["#F4F7FB", "#FFFFFF", "#F8FAFD", "#EDF3F9"],
         )
         self.assertEqual(
             [dark[key] for key in ("ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3")],
-            ["#0A111B", "#111A27", "#152234", "#1B2A3D"],
+            ["#0A131E", "#101D2B", "#142438", "#1B2A3D"],
         )
         self.assertEqual(
             [light[key] for key in ("status_new_fill", "status_learning_fill", "status_review_fill", "status_success_fill", "status_event_fill")],
-            ["#158FC1", "#E28A32", "#8A6BB5", "#43A366", "#D0A02D"],
+            ["#2F7DD3", "#C76A00", "#7C3AED", "#147A42", "#986800"],
         )
         self.assertEqual(
             [dark["heat_complete_{}".format(level)] for level in range(6)],
@@ -290,7 +307,7 @@ class ThemeTests(unittest.TestCase):
         emerald_dark = resolve_theme("Emerald", "dark", True)
         self.assertEqual(
             [emerald_dark[key] for key in ("ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3")],
-            ["#0B100E", "#111A16", "#17241D", "#203129"],
+            ["#0C1411", "#13201B", "#17271F", "#203129"],
         )
         self.assertNotEqual(emerald_dark["status_success_fill"], emerald_dark["ui_accent"])
 

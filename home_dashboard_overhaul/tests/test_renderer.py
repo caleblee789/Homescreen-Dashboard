@@ -24,12 +24,15 @@ from home_dashboard_overhaul.models import (
     VerseContent,
 )
 from home_dashboard_overhaul.renderer import (
+    _duration,
+    _duration_compact,
     _eta,
     calendar_range_payload,
     dashboard_facts_payload,
     day_insight_payload,
     render_activation_required,
     render_dashboard,
+    render_failure,
     render_loading,
 )
 from home_dashboard_overhaul.tests.fixtures import sample_snapshot
@@ -138,32 +141,67 @@ class RendererTests(unittest.TestCase):
         self.assertNotIn("<dt>Active days</dt>", html)
         self.assertNotIn("<dt>Percent complete</dt>", html)
         self.assertIn("data-hdo-progress-track", html)
-        self.assertEqual(html.count("data-hdo-progress-segment="), 4)
-        self.assertRegex(html, r'data-hdo-progress-state="in_progress"[^>]*>77%</span>')
+        self.assertNotIn("data-hdo-progress-segment=", html)
+        self.assertRegex(html, r'data-hdo-progress-state="in_progress"[^>]*aria-valuenow="77"')
+        self.assertIn(">77% complete</span>", html)
         session = html[html.index("Today’s Session"):html.index("Last 7 Days")]
-        for label in ("Cards studied", "New cards studied", "Time", "Pace", "ETA"):
+        for label in (
+            "Cards studied", "New cards studied", "Cards buried",
+            "Time spent", "Pace", "ETA",
+        ):
             self.assertIn("<dt>{}</dt>".format(label), session)
+        self.assertNotIn("<dt>Buried</dt>", html[html.index("Today’s Progress"):html.index("Today’s Session")])
 
-    def test_progress_uses_queue_counts_for_empty_complete_and_tiny_states(self) -> None:
-        def rendered(today: TodayStats, queue: QueueStats) -> str:
+    def test_progress_distinguishes_fresh_clear_complete_in_progress_and_unavailable(self) -> None:
+        def rendered(
+            today: TodayStats,
+            queue: ValueState[QueueStats],
+            *,
+            history: bool = True,
+        ) -> str:
+            recent = self.snapshot.facts.last_seven_days
+            lifetime = self.snapshot.facts.long_term
+            if not history:
+                recent = ValueState.available(LastSevenDaysStats())
+                lifetime = ValueState.available(LongTermStats())
             facts = replace(
                 self.snapshot.facts,
                 today=ValueState.available(today),
-                queue=ValueState.available(queue),
+                queue=queue,
+                last_seven_days=recent,
+                long_term=lifetime,
             )
             return render_dashboard(replace(self.snapshot, facts=facts), self.config)
 
-        empty = rendered(TodayStats(), QueueStats())
-        self.assertIn('data-hdo-progress-state="no_cards_due"', empty)
-        self.assertIn('aria-label="No cards are due today.">No cards due</span>', empty)
+        fresh = rendered(TodayStats(), ValueState.available(QueueStats()), history=False)
+        self.assertIn('data-hdo-progress-state="no_cards_scheduled"', fresh)
+        self.assertIn('>No cards scheduled</span>', fresh)
+        self.assertIn('data-hdo-progress-track data-hdo-progress-state="no_cards_scheduled"', fresh)
+        self.assertIn('aria-valuetext="No cards scheduled" hidden', fresh)
 
-        complete = rendered(TodayStats(7), QueueStats())
+        clear = rendered(TodayStats(), ValueState.available(QueueStats()))
+        self.assertIn('data-hdo-progress-state="all_clear"', clear)
+        self.assertIn('>All clear</span>', clear)
+
+        complete = rendered(TodayStats(7), ValueState.available(QueueStats()))
+        self.assertIn('data-hdo-progress-state="complete"', complete)
         self.assertIn('aria-valuenow="100"', complete)
+        self.assertIn('>100% complete</span>', complete)
 
-        tiny = rendered(TodayStats(999), QueueStats(new=1, learning=1, review=1, total=999))
-        self.assertIn('data-hdo-progress-segment="learning" data-hdo-progress-count="1"', tiny)
+        tiny = rendered(
+            TodayStats(999),
+            ValueState.available(QueueStats(new=1, learning=1, review=1, total=999)),
+        )
         self.assertIn("<dt>Total remaining</dt><dd data-hdo-metric=\"queue.total\">3</dd>", tiny)
-        self.assertNotIn("is-visually-tiny", tiny)
+        self.assertNotIn("data-hdo-progress-segment", tiny)
+
+        unavailable = rendered(
+            TodayStats(7),
+            ValueState.unavailable(AvailabilityReason.QUERY_FAILED),
+        )
+        self.assertIn('data-hdo-progress-state="unavailable"', unavailable)
+        self.assertIn('>Unavailable</span>', unavailable)
+        self.assertNotIn('aria-valuetext="0% complete"', unavailable)
 
     def test_progress_example_uses_one_310_card_denominator(self) -> None:
         facts = replace(
@@ -174,13 +212,9 @@ class RendererTests(unittest.TestCase):
         html = render_dashboard(replace(self.snapshot, facts=facts), self.config)
         self.assertIn('aria-valuenow="60"', html)
         self.assertIn("60% complete", html)
-        self.assertRegex(html, r'aria-label="60% complete\.[^"]+">60%</span>')
-        for key, count in (("completed", 186), ("new", 32), ("learning", 14), ("review", 78)):
-            self.assertIn(
-                'data-hdo-progress-segment="{}" data-hdo-progress-count="{}"'.format(key, count),
-                html,
-            )
-        self.assertIn("Completed: 186 (60%)", html)
+        self.assertIn('aria-valuetext="60% complete"', html)
+        self.assertIn('--hdo-progress-percent:60%', html)
+        self.assertNotIn("data-hdo-progress-segment", html)
 
     def test_release_stress_values_and_long_verse_render_without_truncation(self) -> None:
         facts = replace(
@@ -235,18 +269,14 @@ class RendererTests(unittest.TestCase):
         lower_recent = lower_html[lower_html.index("Last 7 Days"):lower_html.index("All Time")]
         self.assertIn('<div class="hdo-metric-row hdo-value--success"', lower_recent)
         all_time = html[html.index("All Time"):]
-        lifetime = re.search(r'<div class="hdo-metric-row ([^"]*)"[^>]*><dt>Lifetime retention</dt>', all_time)
+        lifetime = re.search(r'<div class="hdo-metric-row ([^"]*)"[^>]*><dt>Retention</dt>', all_time)
         self.assertIsNotNone(lifetime)
         self.assertEqual(lifetime.group(1), "")
 
-    def test_theme_styles_the_host_without_painting_its_background(self) -> None:
+    def test_theme_preserves_the_entire_host_canvas(self) -> None:
         html = render_dashboard(self.snapshot, self.config, anki_dark=False)
-        self.assertLess(html.index('id="hdo-host-theme"'), html.index('id="hdo-dashboard"'))
-        self.assertIn("html,body,#root,.dashboard-host,.dashboard-scroll-surface", html)
-        host_style = html.split('<style id="hdo-host-theme">', 1)[1].split("</style>", 1)[0]
-        host_rule = host_style.split("{", 1)[1].split("}", 1)[0]
-        self.assertNotIn("background", host_rule)
-        self.assertIn("color-scheme:light", html)
+        self.assertNotIn('id="hdo-host-theme"', html)
+        self.assertNotIn("html,body,#root", html)
         self.assertIn('data-hdo-theme="Sapphire Glass"', html)
         self.assertIn('data-hdo-color-mode="light"', html)
 
@@ -280,7 +310,7 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(recent.count(">0</dd>"), 2)
         self.assertIn("<dt>Retention</dt>", recent)
         self.assertIn("<dt>Again rate</dt>", recent)
-        self.assertEqual(recent.count(">—</dd>"), 2)
+        self.assertEqual(recent.count(">N/A</dd>"), 2)
         self.assertNotIn("hdo-value--new", recent)
 
     def test_payload_is_capability_only_and_escapes_script_delimiters(self) -> None:
@@ -298,11 +328,19 @@ class RendererTests(unittest.TestCase):
         for forbidden in ("card_ids", "browse_target", "browser_token", "primary_text", "secondary_text"):
             self.assertNotIn(forbidden, encoded)
         self.assertIsInstance(payload["due_load_reference"], float)
-        self.assertEqual(payload["presentation"]["progress"]["state"], "in_progress")
+        self.assertEqual(payload["presentation"]["progress"], {
+            "status": "in_progress",
+            "fill_percent": 77,
+        })
         self.assertEqual(
             tuple(payload["presentation"]["today_session"]),
-            ("cards_studied", "new_cards_studied", "time", "pace", "eta"),
+            (
+                "cards_studied", "new_cards_studied", "cards_buried",
+                "time_spent", "pace", "eta",
+            ),
         )
+        self.assertEqual(payload["presentation"]["today_session"]["cards_buried"], "12")
+        self.assertEqual(payload["presentation"]["today_session"]["time_spent"], "4 hr 6 min")
 
     def test_day_insight_callback_contains_no_native_ids_or_preview_content(self) -> None:
         facts = self.snapshot.facts.for_date("2026-08-17")
@@ -334,7 +372,7 @@ class RendererTests(unittest.TestCase):
 
     def test_selected_heatmap_tokens_and_safe_opacity_are_rendered(self) -> None:
         config = deepcopy(self.config)
-        config["appearance"].update({"preset": "Graphite", "mode": "dark", "opacity": 70})
+        config["appearance"].update({"preset": "Graphite", "mode": "dark", "opacity": 94})
         config["heatmap"]["presets_by_theme"]["Graphite"] = "Plum"
         html = render_dashboard(self.snapshot, config, anki_dark=False)
         selected = HEATMAP_PRESETS["Graphite"]["Plum"]["dark"]
@@ -344,16 +382,37 @@ class RendererTests(unittest.TestCase):
         self.assertIn("data-hdo-high-contrast=\"false\"", html)
 
         high_contrast = deepcopy(self.config)
-        high_contrast["appearance"].update({"preset": "High Contrast", "mode": "light", "opacity": 70})
+        high_contrast["appearance"].update({"preset": "High Contrast", "mode": "light", "opacity": 94})
         high_html = render_dashboard(self.snapshot, high_contrast, anki_dark=False)
         self.assertIn("--ui-card-background:#FFFFFF", high_html)
+        self.assertIn("--hdo-card-backdrop-filter:none", high_html)
+
+        sapphire = deepcopy(self.config)
+        sapphire["appearance"].update({"preset": "Sapphire Glass", "mode": "light", "opacity": 96, "blur": 12})
+        sapphire_html = render_dashboard(self.snapshot, sapphire, anki_dark=False)
+        self.assertIn("rgba(255, 255, 255, 0.96)", sapphire_html)
+        self.assertIn("--hdo-card-backdrop-filter:blur(12px) saturate(1.08)", sapphire_html)
 
     def test_bible_preference_maps_to_safe_clamp_and_hiding_removes_rail_slot(self) -> None:
         config = deepcopy(self.config)
         config["bible"]["font_size"] = "96px"
         html = render_dashboard(self.snapshot, config)
-        self.assertIn("--hdo-verse-size:19.00px", html)
-        self.assertIn("--hdo-verse-long-size:17.10px", html)
+        self.assertIn("--hdo-verse-size:16.00px", html)
+        self.assertIn('class="hdo-verse hdo-verse--medium"', html)
+
+        short = render_dashboard(
+            replace(self.snapshot, verse=VerseContent("Faith.", "Hebrews 11:1")),
+            config,
+        )
+        self.assertIn('class="hdo-verse hdo-verse--short"', short)
+        self.assertIn("--hdo-verse-size:17.00px", short)
+
+        long = render_dashboard(
+            replace(self.snapshot, verse=VerseContent("Grace " * 50, "Reference")),
+            config,
+        )
+        self.assertIn('class="hdo-verse hdo-verse--long"', long)
+        self.assertIn("--hdo-verse-size:15.00px", long)
 
         config["visibility"]["bible"] = False
         hidden = render_dashboard(self.snapshot, config)
@@ -388,19 +447,24 @@ class RendererTests(unittest.TestCase):
         loading = render_loading(self.config)
         self.assertIn("Loading your study dashboard", loading)
         self.assertIn('aria-busy="true"', loading)
-        calendar_region = loading.split('hdo-loading-region--calendar">', 1)[1].split(
+        calendar_grid = loading.split('hdo-loading-calendar-grid">', 1)[1].split(
             "</div>", 1
         )[0]
-        metrics_region = loading.split('hdo-loading-region--metrics">', 1)[1].split(
-            "</div>", 1
-        )[0]
-        self.assertEqual(calendar_region.count("<span></span>"), 28)
-        self.assertEqual(metrics_region.count("<span></span>"), 4)
+        self.assertEqual(calendar_grid.count("<span></span>"), 53)
+        self.assertEqual(loading.count("hdo-loading-metric-card"), 4)
         self.assertIn('data-hdo-loading-message', loading)
         self.assertIn('data-hdo-loading-failure hidden', loading)
-        self.assertIn("The dashboard could not finish loading.", loading)
+        self.assertIn("Dashboard could not load", loading)
+        self.assertIn(
+            "The dashboard data could not be loaded. Retry or open diagnostics for details.",
+            loading,
+        )
         self.assertIn('data-hdo-command="retry"', loading)
         self.assertIn('data-hdo-command="diagnostics"', loading)
+        failure = render_failure(self.config)
+        self.assertIn('data-hdo-load-state="failure" aria-busy="false"', failure)
+        self.assertIn('data-hdo-loading-skeleton aria-hidden="true" hidden', failure)
+        self.assertNotIn('data-hdo-loading-failure hidden', failure)
         activation = render_activation_required(["1771074083"], self.config)
         self.assertIn("Review Heatmap", activation)
         self.assertNotIn("1771074083", activation)
@@ -412,6 +476,14 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(_eta(0, 7, now), "Done")
         self.assertIn("PM", _eta(60, 7, now))
         self.assertTrue(_eta(7200, 7, now).startswith("Tomorrow,"))
+
+    def test_time_formatting_uses_readable_and_compact_presentations(self) -> None:
+        self.assertEqual(_duration(0), "0 min")
+        self.assertEqual(_duration(42), "42 sec")
+        self.assertEqual(_duration(4_920), "1 hr 22 min")
+        self.assertEqual(_duration(313_020), "86 hr 57 min")
+        self.assertEqual(_duration_compact(4_920), "1h 22m")
+        self.assertEqual(_duration_compact(313_020), "86h 57m")
 
 
 if __name__ == "__main__":

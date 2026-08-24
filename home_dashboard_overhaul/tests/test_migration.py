@@ -114,10 +114,29 @@ class MigrationTests(unittest.TestCase):
             with self.subTest(palette=palette):
                 self.mw.col.synced["colors"] = palette
                 migrated, _state = prepare_migration(self.mw, {})
-                self.assertEqual(migrated["schema_version"], 7)
+                self.assertEqual(migrated["schema_version"], 8)
                 self.assertEqual(migrated["appearance"]["preset"], "Sapphire Glass")
                 self.assertNotIn("density", migrated["appearance"])
                 self.assertEqual(normalize_config(migrated), migrated)
+
+    def test_schema_seven_upgrade_clamps_glass_and_preserves_calendar_view(self) -> None:
+        current = normalize_config({
+            "schema_version": 7,
+            "appearance": {"opacity": 70, "blur": 28, "future": "kept"},
+            "heatmap": {"calendar_view": "month"},
+            "visibility": {"buried": False},
+            "future_root": {"value": 7},
+            "migration": {"completed": True},
+        })
+        migrated, state = prepare_migration(self.mw, current)
+        self.assertIsNone(state)
+        self.assertEqual(migrated["schema_version"], 8)
+        self.assertEqual(migrated["appearance"]["opacity"], 94)
+        self.assertEqual(migrated["appearance"]["blur"], 16)
+        self.assertEqual(migrated["appearance"]["future"], "kept")
+        self.assertEqual(migrated["heatmap"]["calendar_view"], "month")
+        self.assertNotIn("buried", migrated["visibility"])
+        self.assertEqual(migrated["future_root"], {"value": 7})
 
     def test_legacy_guard_reports_only_enabled_ids(self) -> None:
         self.manager.enabled["1556734708"] = False

@@ -27,9 +27,12 @@ class SettingsReleaseContractTests(unittest.TestCase):
         cls.config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
         cls.manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
-    def test_release_metadata_and_schema_seven_are_current(self) -> None:
-        self.assertEqual(self.manifest["human_version"], "1.8.1")
-        self.assertEqual(self.config["schema_version"], 7)
+    def test_release_metadata_and_schema_eight_are_current(self) -> None:
+        self.assertEqual(self.manifest["human_version"], "1.8.2")
+        self.assertEqual(self.config["schema_version"], 8)
+        self.assertEqual(self.config["appearance"]["opacity"], 96)
+        self.assertEqual(self.config["appearance"]["blur"], 12)
+        self.assertNotIn("buried", self.config["visibility"])
         self.assertEqual(
             tuple(PRESETS),
             ("Sapphire Glass", "Graphite", "Emerald", "High Contrast"),
@@ -223,9 +226,23 @@ class SettingsReleaseContractTests(unittest.TestCase):
             '"Count manually rescheduled cards as newly studied"',
             '"Retention status target"',
             '"Card background opacity"',
+            '"Controls Sapphire Glass component transparency without changing Anki’s wallpaper or deck list."',
+            '"Cards studied, new cards, currently buried cards, time spent, pace, and ETA."',
             '"Study totals and due dates recalculate after saving."',
         ):
             self.assertIn(marker, self.settings)
+
+    def test_glass_controls_use_schema_eight_ranges_and_disable_outside_sapphire(self) -> None:
+        for marker in (
+            '94, 100, appearance["opacity"], " %"',
+            '0, 16, int(appearance.get("blur", 12)), " px"',
+            'enabled = _combo_value(self.preset, "Sapphire Glass") == "Sapphire Glass"',
+            'for widget in (self.opacity_slider, self.opacity, self.blur_slider, self.blur):',
+            'widget.setEnabled(enabled)',
+            'Other themes use fully opaque component surfaces.',
+        ):
+            self.assertIn(marker, self.settings)
+        self.assertNotIn('self.visibility["buried"]', self.settings)
 
     def test_legacy_anchor_focus_cannot_override_the_settled_scroll_position(self) -> None:
         anchor_source = self.settings.split("def _scroll_dashboard_anchor", 1)[1].split(
