@@ -1,0 +1,287 @@
+{
+  "schema_version": 3,
+  "release": "1.8.3",
+  "authority": "native-deck-browser-100-percent",
+  "primary_case_count": 16,
+  "text_scale_percent": 100,
+  "native_reference_window": {
+    "physical_pixels": [
+      3420,
+      2214
+    ],
+    "device_pixel_ratio": 2,
+    "logical_pixels": [
+      1710,
+      1107
+    ],
+    "sha256": "a53963d27305bfe531fdd56ebc675ccf25b8be58276636b4a8c4a7380e701c57",
+    "role": "geometry-calibration-only",
+    "may_count_as_acceptance_evidence": false
+  },
+  "axes": {
+    "theme": [
+      "Sapphire Glass",
+      "Graphite",
+      "Emerald",
+      "High Contrast"
+    ],
+    "mode": [
+      "light",
+      "dark"
+    ],
+    "view": [
+      "month",
+      "year"
+    ]
+  },
+  "cases": [
+    {
+      "id": "PRIMARY-SG-L-M",
+      "theme": "Sapphire Glass",
+      "mode": "light",
+      "view": "month",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "sapphire_light_month",
+        "populated_data",
+        "container_1240"
+      ]
+    },
+    {
+      "id": "PRIMARY-SG-L-Y",
+      "theme": "Sapphire Glass",
+      "mode": "light",
+      "view": "year",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "sapphire_light_year",
+        "populated_data",
+        "container_1100"
+      ]
+    },
+    {
+      "id": "PRIMARY-SG-D-M",
+      "theme": "Sapphire Glass",
+      "mode": "dark",
+      "view": "month",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "sapphire_dark_month",
+        "populated_data",
+        "container_1040"
+      ]
+    },
+    {
+      "id": "PRIMARY-SG-D-Y",
+      "theme": "Sapphire Glass",
+      "mode": "dark",
+      "view": "year",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "sapphire_dark_year",
+        "populated_data"
+      ]
+    },
+    {
+      "id": "PRIMARY-GR-L-M",
+      "theme": "Graphite",
+      "mode": "light",
+      "view": "month",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "graphite_light_month",
+        "populated_data"
+      ]
+    },
+    {
+      "id": "PRIMARY-GR-L-Y",
+      "theme": "Graphite",
+      "mode": "light",
+      "view": "year",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "graphite_light_year",
+        "populated_data"
+      ]
+    },
+    {
+      "id": "PRIMARY-GR-D-M",
+      "theme": "Graphite",
+      "mode": "dark",
+      "view": "month",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "graphite_dark_month",
+        "populated_data"
+      ]
+    },
+    {
+      "id": "PRIMARY-GR-D-Y",
+      "theme": "Graphite",
+      "mode": "dark",
+      "view": "year",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "graphite_dark_year",
+        "populated_data"
+      ]
+    },
+    {
+      "id": "PRIMARY-EM-L-M",
+      "theme": "Emerald",
+      "mode": "light",
+      "view": "month",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "emerald_light_month",
+        "populated_data"
+      ]
+    },
+    {
+      "id": "PRIMARY-EM-L-Y",
+      "theme": "Emerald",
+      "mode": "light",
+      "view": "year",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "emerald_light_year",
+        "populated_data"
+      ]
+    },
+    {
+      "id": "PRIMARY-EM-D-M",
+      "theme": "Emerald",
+      "mode": "dark",
+      "view": "month",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "emerald_dark_month",
+        "populated_data"
+      ]
+    },
+    {
+      "id": "PRIMARY-EM-D-Y",
+      "theme": "Emerald",
+      "mode": "dark",
+      "view": "year",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "emerald_dark_year",
+        "populated_data"
+      ]
+    },
+    {
+      "id": "PRIMARY-HC-L-M",
+      "theme": "High Contrast",
+      "mode": "light",
+      "view": "month",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "high_contrast_light_month",
+        "populated_data"
+      ]
+    },
+    {
+      "id": "PRIMARY-HC-L-Y",
+      "theme": "High Contrast",
+      "mode": "light",
+      "view": "year",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "high_contrast_light_year",
+        "populated_data"
+      ]
+    },
+    {
+      "id": "PRIMARY-HC-D-M",
+      "theme": "High Contrast",
+      "mode": "dark",
+      "view": "month",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "high_contrast_dark_month",
+        "populated_data"
+      ]
+    },
+    {
+      "id": "PRIMARY-HC-D-Y",
+      "theme": "High Contrast",
+      "mode": "dark",
+      "view": "year",
+      "fixture": "populated",
+      "layout": "wide",
+      "text_scale": 100,
+      "tags": [
+        "primary_native",
+        "high_contrast_dark_year",
+        "populated_data"
+      ]
+    }
+  ],
+  "deferred_scales_percent": [
+    125,
+    150
+  ],
+  "notes": [
+    "Every primary case is a distinct native Deck Browser frame at 100 percent.",
+    "Supplemental state frames may cover multiple tags but never replace a primary case.",
+    "The supplied screenshot and retained 1.8.0, 1.8.1, and 1.8.2 contact sheets are calibration references, not 1.8.3 acceptance evidence.",
+    "Exact responsive assertions cover nine representative dashboard container widths; only Year below 480px may scroll internally."
+  ],
+  "required_container_width_assertions": [
+    1240,
+    1100,
+    1040,
+    1039,
+    620,
+    479,
+    419,
+    320,
+    319
+  ]
+}

@@ -73,7 +73,7 @@ class CorrectedStaticAssetTests(unittest.TestCase):
             self.css,
             r"\.hdo-event-summary\s*\{[^}]*flex:\s*1 1 auto;",
         )
-        self.assertIn("text-overflow: ellipsis", self.css)
+        self.assertIn("text-overflow: clip", self.css)
 
     def test_compact_surfaces_omit_internal_boundary_copy_and_placeholders(self) -> None:
         sources = self.renderer + self.js
@@ -155,32 +155,33 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("!important", selected_rule)
         self.assertNotIn("box-shadow", selected_rule)
         self.assertIn(".hdo-calendar-day.is-selected:focus-visible", self.css)
-        for height in ("block-size: 2px", "block-size: 3px", "block-size: 4px"):
+        for height in ("block-size: 3px", "block-size: 4px"):
             self.assertIn(height, self.css)
         year_marker = self.css.split(".hdo-calendar-grid--year .hdo-event-marker {", 1)[1].split("}", 1)[0]
         self.assertIn("height: 4px", year_marker)
         self.assertIn("width: 4px", year_marker)
 
     def test_shared_shell_uses_release_container_breakpoints_and_geometry(self) -> None:
-        self.assertIn("width: min(1320px, calc(100% - 32px))", self.css)
+        self.assertIn("width: min(1240px, calc(100% - 32px))", self.css)
         self.assertIn("margin: 22px auto 0", self.css)
-        self.assertIn("padding: 0 0 72px", self.css)
-        self.assertIn("scroll-padding-bottom: 72px", self.css)
+        self.assertIn("--hdo-native-footer-height: 42px", self.css)
+        self.assertIn("--hdo-native-footer-gap: 24px", self.css)
+        self.assertIn("padding: 0 0 var(--hdo-bottom-clearance)", self.css)
+        self.assertIn("scroll-padding-bottom: var(--hdo-bottom-clearance)", self.css)
         self.assertIn("grid-template-columns: minmax(0, 1fr);", self.css)
-        self.assertIn("@container hdo-dashboard (min-width: 440px)", self.css)
-        self.assertIn("grid-template-columns: repeat(2, minmax(0, 1fr));", self.css)
-        self.assertIn("@container hdo-dashboard (min-width: 940px)", self.css)
-        self.assertIn("grid-template-columns: minmax(0, 2.2fr) minmax(300px, 1fr);", self.css)
-        self.assertIn("@container hdo-dashboard (max-width: 439px)", self.css)
+        self.assertIn("@container hdo-dashboard (min-width: 420px)", self.css)
+        self.assertIn("repeat(auto-fit, minmax(min(100%, 180px), 1fr))", self.css)
+        self.assertIn("@container hdo-dashboard (min-width: 1040px)", self.css)
+        self.assertIn("grid-template-columns: minmax(0, 2.05fr) minmax(372px, .95fr);", self.css)
+        self.assertIn("@container hdo-dashboard (max-width: 419px)", self.css)
         for retired in ("640px", "900px", "1220px"):
             self.assertNotIn("hdo-dashboard (min-width: {})".format(retired), self.css)
         self.assertNotIn('data-hdo-calendar-view="year"] .hdo-summary-metrics-grid', self.css)
         self.assertNotIn('data-hdo-calendar-view="month"] .hdo-summary-metrics-grid', self.css)
         self.assertNotRegex(self.css, r"grid-template-columns:\s*repeat\(3")
         self.assertIn("font-variant-numeric: tabular-nums", self.css)
-        self.assertIn("grid-template-rows: repeat(4, auto)", self.css)
         stat_title_rule = self.css.split(".hdo-statistics-card h3 {", 1)[1].split("}", 1)[0]
-        self.assertIn("font-size: calc(11px * var(--hdo-scale))", stat_title_rule)
+        self.assertIn("font-size: calc(10.5px * var(--hdo-scale))", stat_title_rule)
         self.assertIn("white-space: nowrap", stat_title_rule)
         progress_title_rule = self.css.split(".hdo-progress-card h3 {", 1)[1].split("}", 1)[0]
         self.assertIn("letter-spacing: 0", progress_title_rule)
@@ -195,7 +196,8 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("overflow-wrap: anywhere", progress_chip_rule)
         self.assertIn("white-space: normal", progress_chip_rule)
         progress_rule = self.css.split(".hdo-progress-track {", 1)[1].split("}", 1)[0]
-        self.assertIn("height: 14px", progress_rule)
+        self.assertIn("min-block-size: 14px", progress_rule)
+        self.assertEqual(self.html.count("data-hdo-progress-label"), 2)
 
     def test_live_canvas_is_transparent_while_cards_and_preview_remain_themed(self) -> None:
         root_rule = self.css.split("#hdo-dashboard {", 1)[1].split("}", 1)[0]
@@ -204,6 +206,9 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         )[1].split("}", 1)[0]
         apply_document_theme = self.js.split(
             "function applyDocumentTheme(root) {", 1
+        )[1].split("function mount()", 1)[0]
+        scroll_clearance = self.js.split(
+            "function applyDocumentScrollClearance(root) {", 1
         )[1].split("function mount()", 1)[0]
 
         self.assertIn("background: transparent", root_rule)
@@ -214,6 +219,9 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertNotIn("style.background", apply_document_theme)
         self.assertNotIn("backgroundImage", apply_document_theme)
         self.assertIn('root.dataset.hdoHostPreserved = "true"', apply_document_theme)
+        self.assertIn("document.scrollingElement", scroll_clearance)
+        self.assertIn('setProperty("scroll-padding-block-end", "66px")', scroll_clearance)
+        self.assertNotIn('setProperty("overflow-x"', scroll_clearance)
 
     def test_year_grid_is_fluid_and_month_labels_use_week_columns(self) -> None:
         year = self.css.split(".hdo-calendar-grid--year {", 1)[1].split("}", 1)[0]
@@ -230,28 +238,44 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         for label in ('label: "Mon"', 'label: "Wed"', 'label: "Fri"'):
             self.assertIn(label, self.js)
         self.assertEqual(self.css.count("overflow-x: auto"), 1)
-        narrow_scroll = self.css.split("@container hdo-dashboard (max-width: 319px)", 1)[1]
+        narrow_scroll = self.css.split("@container hdo-dashboard (max-width: 479px)", 1)[1]
         self.assertIn('data-hdo-calendar-view="year"] .hdo-calendar-grid-frame', narrow_scroll)
         self.assertIn("overflow-x: auto", narrow_scroll)
+        self.assertIn("min-width: 580px", narrow_scroll)
+        self.assertIn("padding-inline: 12px", narrow_scroll)
+        self.assertIn("height: 5px", narrow_scroll)
 
     def test_footer_is_compact_tonal_and_keeps_event_editing_adjacent(self) -> None:
-        self.assertIn('grid-template-areas: "date event edit action"', self.css)
-        compact = self.css.split("@container hdo-calendar (max-width: 699px)", 1)[1]
-        self.assertIn('"date edit action"', compact)
-        self.assertIn('"event event event"', compact)
-        smallest = compact.split("@container hdo-calendar (max-width: 410px)", 1)[1].split(
-            "@container hdo-calendar (max-width: 699px) and", 1
-        )[0]
-        self.assertIn('"date edit action"', smallest)
-        self.assertIn('"event event event"', smallest)
-        self.assertNotIn('"date date"', smallest)
-        self.assertNotIn('"action action"', smallest)
+        self.assertIn('grid-template-areas: "date event actions"', self.css)
+        compact = self.css.split("@container hdo-calendar (max-width: 759px)", 1)[1]
+        self.assertIn('"date actions"', compact)
+        self.assertIn('"event event"', compact)
+        smallest = self.css.split("@container hdo-calendar (max-width: 419px)", 1)[1]
+        self.assertIn('"date date"', smallest)
+        self.assertIn('"event event"', smallest)
+        self.assertIn('". actions"', smallest)
+        self.assertIn("overflow-wrap: anywhere", compact)
+        self.assertIn("white-space: normal", compact)
         label_rule = self.css.split(".hdo-context-label {", 1)[1].split("}", 1)[0]
         self.assertIn("white-space: nowrap", label_rule)
         action_rule = self.css.split(".hdo-calendar-card-action {", 1)[1].split("}", 1)[0]
         self.assertIn("background: var(--ui-accent-soft)", action_rule)
         self.assertIn("border-color: var(--ui-accent-border)", action_rule)
         self.assertIn("height: 32px", action_rule)
+        event_title_rule = self.css.split(".hdo-event-title {", 1)[1].split("}", 1)[0]
+        self.assertIn("overflow-wrap: anywhere", event_title_rule)
+        self.assertIn("white-space: normal", event_title_rule)
+        self.assertNotIn("text-overflow: ellipsis", event_title_rule)
+
+    def test_refresh_failure_is_one_timestamped_full_width_banner(self) -> None:
+        self.assertEqual(
+            self.js.count('warning.className = "hdo-data-warning hdo-refresh-warning"'),
+            1,
+        )
+        self.assertIn('if (root.querySelector(".hdo-refresh-warning")) return;', self.js)
+        self.assertIn("root.dataset.hdoLastUpdatedAt", self.js)
+        self.assertIn("Refresh failed. Showing data last updated at", self.js)
+        self.assertIn("last_updated_at", self.html)
 
     def test_no_component_specific_hex_colors_or_remote_dependencies(self) -> None:
         self.assertIsNone(re.search(r"#[0-9a-fA-F]{3,8}\b", self.css))

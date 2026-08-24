@@ -239,6 +239,30 @@ class ControllerCapabilityTests(unittest.TestCase):
 
         self.assertEqual(calls, [("about_support",)])
 
+    def test_year_scroll_position_survives_a_controller_rerender(self) -> None:
+        message = "hdo:" + json.dumps({
+            "command": "calendar_year_scroll",
+            "payload": {"left": 137.5},
+        })
+        self.controller.on_bridge_message((False, None), message, FakeDeckBrowser())
+        self.assertEqual(self.controller.year_scroll_left, 137.5)
+
+        self.controller.snapshot = sample_snapshot(date(2026, 8, 17))
+        self.controller.cache_key = self.controller._key()
+        content = SimpleNamespace(stats="")
+        self.controller.on_deck_browser_render(FakeDeckBrowser(), content)
+        self.assertIn('"year_scroll_left":137.5', content.stats)
+
+    def test_today_selection_requests_one_fresh_year_centering_pass(self) -> None:
+        self.controller.year_scroll_left = 137.5
+        current = self.controller._scheduler_date()
+        self.assertIsNotNone(current)
+
+        self.controller.set_calendar_selection(current.isoformat(), True)
+
+        self.assertTrue(self.controller.selection_follows_today)
+        self.assertIsNone(self.controller.year_scroll_left)
+
     def test_reviewed_and_due_actions_use_only_cached_exact_day_targets(self) -> None:
         snapshot = sample_snapshot(date(2026, 8, 17))
         self.controller.snapshot = snapshot

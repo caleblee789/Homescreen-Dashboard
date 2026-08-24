@@ -50,14 +50,14 @@ DEFERRED_SOURCE_FILES = frozenset({
 })
 DEFERRED_SOURCE_PREFIXES = ("_vendor/",)
 RELEASE_CONTRACT_FILES = (
-    "qa/calendar_surface_manifest_1_8_2.json",
-    "qa/visual_regression_matrix_1_8_2.json",
-    "qa/ui-surface-registry_1_8_2.json",
-    "qa/capture_evidence_manifest_1_8_2.json",
-    "qa/runtime_probe_release_1_8_2_manifest.json",
+    "qa/calendar_surface_manifest_1_8_4.json",
+    "qa/visual_regression_matrix_1_8_4.json",
+    "qa/ui-surface-registry_1_8_4.json",
+    "qa/capture_evidence_manifest_1_8_4.json",
+    "qa/runtime_probe_release_1_8_4_manifest.json",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
-FIXED_TIMESTAMP = (2026, 8, 23, 0, 0, 0)
+FIXED_TIMESTAMP = (2026, 8, 24, 0, 0, 0)
 
 
 def _json(relative: str) -> dict:
@@ -272,14 +272,14 @@ def validate_sources() -> dict:
     manifest = _json("manifest.json")
     config = _json("config.json")
     verse_data = _json("default_verses.json")
-    surface_contract = _json("qa/calendar_surface_manifest_1_8_2.json")
-    visual_matrix = _json("qa/visual_regression_matrix_1_8_2.json")
-    capture_contract = _json("qa/capture_evidence_manifest_1_8_2.json")
+    surface_contract = _json("qa/calendar_surface_manifest_1_8_4.json")
+    visual_matrix = _json("qa/visual_regression_matrix_1_8_4.json")
+    capture_contract = _json("qa/capture_evidence_manifest_1_8_4.json")
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.2":
-        raise ValueError("release artifact must use semantic version 1.8.2")
+    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.4":
+        raise ValueError("release artifact must use semantic version 1.8.4")
     if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260800):
         raise ValueError("release must be pinned to Anki 26.8")
     if config.get("schema_version") != 8:
@@ -310,6 +310,7 @@ def validate_sources() -> dict:
         "analytics.py": (
             "due_load_reference", "math.ceil(len(forecast_counts) * .90)",
             "queue IN (-2, -3)", "type IN (1, 3)", "due < 1000000000",
+            "deck_due_tree", "_limited_new_for_deck_node", "GROUP BY did",
         ),
         "config_schema.py": (
             "SCHEMA_VERSION = 8", "presets_by_theme", "retention_target",
@@ -354,17 +355,21 @@ def validate_sources() -> dict:
             'calendar.addEventListener("pointerover"', 'send("open_most_missed"',
             "function mountLoadingState", "Still loading your study data...",
             "progress.fill_percent", "today.cards_buried", "today.time_spent",
-            'send("diagnostics", {})',
+            'send("diagnostics", {})', "document.scrollingElement",
+            'relationship: "No event on this date"', 'editEvent.title = "Add event"',
+            "setYearScrollPosition", "state.yearScrollLeft = yearScrollFrame.scrollLeft",
+            "root.dataset.hdoLastUpdatedAt",
         ),
         "web/dashboard.css": (
             "hdo-calendar-footer", "hdo-calendar-card-action", "hdo-context-action--primary",
-            "width: min(1320px, calc(100% - 32px))", "margin: 22px auto 0",
-            "padding: 0 0 72px", "pointer-events: none",
+            "width: min(1240px, calc(100% - 32px))", "margin: 22px auto 0",
+            "padding: 0 0 var(--hdo-bottom-clearance)", "pointer-events: none",
             "min-width: min(190px", "max-width: min(220px",
-            "@container hdo-dashboard (min-width: 440px)",
-            "@container hdo-dashboard (min-width: 940px)",
-            "@container hdo-dashboard (max-width: 319px)",
-            "height: 14px", "var(--heat-due-mark-3)", "var(--progress-complete)",
+            "@container hdo-dashboard (min-width: 420px)",
+            "@container hdo-dashboard (min-width: 1040px)",
+            "@container hdo-dashboard (max-width: 419px)",
+            "@container hdo-dashboard (max-width: 479px)", "min-width: 580px",
+            "min-block-size: 14px", "var(--heat-due-mark-3)", "var(--progress-complete)",
             "hdo-event-marker", "hdo-loading-layout", "backdrop-filter",
             "hdo-year-weekday-label", "background: transparent",
         ),
@@ -391,8 +396,21 @@ def validate_sources() -> dict:
     _validate_theme_contract(runpy.run_path(str(ROOT / "themes.py")))
     _validate_visual_matrix(visual_matrix)
     criteria = surface_contract.get("acceptance_criteria")
-    if not isinstance(criteria, list) or [item.get("id") for item in criteria] != list(range(1, 42)):
-        raise ValueError("corrected surface contract must encode criteria 1 through 41")
+    if not isinstance(criteria, list) or [item.get("id") for item in criteria] != list(range(1, 43)):
+        raise ValueError("corrected surface contract must encode criteria 1 through 42")
+    if any(contract.get("release") != version for contract in (
+        surface_contract, visual_matrix, capture_contract
+    )):
+        raise ValueError("release contracts must match the manifest version")
+    if capture_contract.get("runtime_smoke_requirements") != {
+        "active_head_deck": "A",
+        "raw_new_cards_per_head_minimum": 40,
+        "remaining_limits": {"A": 3, "B": 7},
+        "expected_unexcluded_new_remaining": 10,
+        "expected_excluding_b_new_remaining": 3,
+        "restart_expected_new_remaining": 10,
+    }:
+        raise ValueError("multi-deck new-limit runtime smoke contract is incomplete")
     if capture_contract.get("primary_native_frames") != [
         entry.get("id") for entry in visual_matrix.get("cases", [])
     ]:

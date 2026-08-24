@@ -84,6 +84,16 @@ def _clock_time(value: datetime) -> str:
     return value.strftime("%I:%M %p").lstrip("0")
 
 
+def _last_updated_label(value: str) -> str:
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return ""
+    if parsed.tzinfo is None:
+        parsed = parsed.astimezone()
+    return _clock_time(parsed.astimezone())
+
+
 UNAVAILABLE_TEXT = "—"
 N_A_TEXT = "N/A"
 
@@ -333,15 +343,19 @@ def _progress_group(snapshot: DashboardSnapshot) -> str:
     lead = (
         '<div class="hdo-progress-track" data-hdo-progress-track '
         'data-hdo-progress-state="{}" role="progressbar" aria-valuemin="0" '
-        'aria-valuemax="100" aria-valuenow="{}" aria-valuetext="{}"{}>'
-        '<span class="hdo-progress-fill" data-hdo-progress-fill style="--hdo-progress-percent:{}%"></span>'
-        '<span class="hdo-progress-label" data-hdo-progress-label>{}</span></div>'
+        'aria-valuemax="100" aria-valuenow="{}" aria-valuetext="{}"{} '
+        'style="--hdo-progress-percent:{}%">'
+        '<span class="hdo-progress-fill" data-hdo-progress-fill></span>'
+        '<span class="hdo-progress-label hdo-progress-label--track" data-hdo-progress-label>{}</span>'
+        '<span class="hdo-progress-label hdo-progress-label--fill" '
+        'data-hdo-progress-label-fill aria-hidden="true">{}</span></div>'
     ).format(
         _escape(presentation.state.value),
         percent,
         _escape(presentation.label),
         "" if has_fill else " hidden",
         percent,
+        _escape(presentation.label),
         _escape(presentation.label),
     )
     if queue_state.is_available:
@@ -706,6 +720,8 @@ def dashboard_facts_payload(
     config: Mapping[str, Any],
     selected_date: str = "",
     facts_revision: int = 0,
+    last_updated_at: str = "",
+    year_scroll_left: float | None = None,
 ) -> dict[str, Any]:
     facts = snapshot.facts
     preview_date = _selected_iso(config.get("_preview_selected_date"))
@@ -736,6 +752,12 @@ def dashboard_facts_payload(
         "day_cutoff_iso": facts.next_rollover,
         "source_revision": facts.revision,
         "revision": max(0, int(facts_revision)),
+        "last_updated_at": str(last_updated_at or ""),
+        "year_scroll_left": (
+            max(0.0, float(year_scroll_left))
+            if isinstance(year_scroll_left, (int, float)) and not isinstance(year_scroll_left, bool)
+            else None
+        ),
         "due_load_reference": max(0.0, float(facts.due_load_reference)),
         "statistics": {
             "today": _value_state_payload(facts.today),
@@ -778,8 +800,22 @@ def _calendar_controls(config: Mapping[str, Any]) -> str:
     ).format("true" if view == "month" else "false", "true" if view == "year" else "false")
 
 
-def _calendar(snapshot: DashboardSnapshot, config: Mapping[str, Any], selected_date: str, facts_revision: int) -> str:
-    payload = dashboard_facts_payload(snapshot, config, selected_date, facts_revision)
+def _calendar(
+    snapshot: DashboardSnapshot,
+    config: Mapping[str, Any],
+    selected_date: str,
+    facts_revision: int,
+    last_updated_at: str,
+    year_scroll_left: float | None,
+) -> str:
+    payload = dashboard_facts_payload(
+        snapshot,
+        config,
+        selected_date,
+        facts_revision,
+        last_updated_at,
+        year_scroll_left,
+    )
     event_legend = (
         '<div class="hdo-legend-group hdo-legend-event">'
         '<i class="hdo-legend-event-marker" aria-hidden="true"></i><span>Event</span></div>'
@@ -814,10 +850,10 @@ def _calendar(snapshot: DashboardSnapshot, config: Mapping[str, Any], selected_d
         '<i data-due-level="1"></i><i data-due-level="2"></i><i data-due-level="3"></i>'
         '</span></div>{}</div>'
         '<div class="hdo-calendar-context hdo-calendar-context-bar" aria-live="polite">'
-        '<div class="hdo-selected-date-line">'
+        '<div class="hdo-selected-date-line hdo-calendar-footer__date-context">'
         '<span class="hdo-date-state-chip" data-hdo-date-state>Today</span>'
         '<time data-hdo-context-date></time></div>'
-        '<div class="hdo-next-event-line" data-hdo-context-event>'
+        '<div class="hdo-next-event-line hdo-calendar-footer__event" data-hdo-context-event>'
         '<span class="hdo-context-label" data-hdo-context-event-label>Next event</span>'
         '<span class="hdo-context-event-marker" data-hdo-event-marker aria-hidden="true" hidden></span>'
         '<span class="hdo-event-summary">'
@@ -825,13 +861,13 @@ def _calendar(snapshot: DashboardSnapshot, config: Mapping[str, Any], selected_d
         '<span class="hdo-event-meta" data-hdo-event-meta hidden></span>'
         '<span class="hdo-event-more" data-hdo-event-more hidden></span>'
         '<span class="hdo-event-empty" data-hdo-event-empty>No upcoming event</span></span></div>'
+        '<div class="hdo-context-actions hdo-calendar-footer__actions">'
         '<button type="button" class="hdo-edit-event-button hdo-icon-button" data-hdo-edit-event '
         'aria-label="Edit event" title="Edit event" hidden>'
         '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
         '<path d="m4 16.8-.8 4 4-.8L18.6 8.6l-3.2-3.2L4 16.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
         '<path d="m13.8 7 3.2 3.2M3.8 20.2h16.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'
         '</svg></button>'
-        '<div class="hdo-context-actions">'
         '<button type="button" class="hdo-context-action hdo-calendar-card-action hdo-context-action--primary" data-hdo-primary-action hidden></button>'
         '<button type="button" class="hdo-context-action" data-hdo-most-missed hidden>Most missed</button>'
         '</div></div></footer>'
@@ -921,6 +957,8 @@ def render_dashboard(
     selected_date: str = "",
     facts_revision: int = 0,
     refresh_error: bool = False,
+    last_updated_at: str = "",
+    year_scroll_left: float | None = None,
 ) -> str:
     render_config = dict(config)
     if preview:
@@ -929,7 +967,14 @@ def render_dashboard(
     visibility = render_config["visibility"]
     has_calendar = bool(visibility.get("heatmap", True))
     calendar = (
-        _calendar(snapshot, render_config, selected_date, facts_revision)
+        _calendar(
+            snapshot,
+            render_config,
+            selected_date,
+            facts_revision,
+            last_updated_at,
+            year_scroll_left,
+        )
         if has_calendar
         else ""
     )
@@ -962,9 +1007,22 @@ def render_dashboard(
                 _dashboard_primitive("recovery-card")
             )
         )
-    payload = dashboard_facts_payload(snapshot, render_config, selected_date, facts_revision)
+    payload = dashboard_facts_payload(
+        snapshot,
+        render_config,
+        selected_date,
+        facts_revision,
+        last_updated_at,
+        year_scroll_left,
+    )
     if not visibility.get("heatmap", True):
         sections.append('<script type="application/json" class="hdo-dashboard-data">{}</script>'.format(_safe_json(payload)))
+    last_updated_label = _last_updated_label(last_updated_at)
+    refresh_copy = (
+        "Refresh failed. Showing data last updated at {}.".format(last_updated_label)
+        if last_updated_label
+        else "Refresh failed. Showing previously loaded data."
+    )
     return _host_surface_style(render_config, anki_dark) + (
         '<div id="hdo-dashboard" class="hdo-dashboard dashboard-host dashboard-scroll-surface{}" data-hdo-preview="{}" '
         'data-hdo-theme="{}" data-hdo-color-mode="{}" '
@@ -972,7 +1030,8 @@ def render_dashboard(
         'data-hdo-content-mode="{}" data-hdo-high-contrast="{}" '
         'data-hdo-calendar-view="{}" data-hdo-has-calendar="{}" data-hdo-has-metrics="{}" '
         'data-hdo-has-insights="{}" data-hdo-has-bible="{}" '
-        'data-hdo-enlarged-text="{}" aria-busy="false" style="{}">'
+        'data-hdo-enlarged-text="{}" data-hdo-last-updated-at="{}" '
+        'aria-busy="false" style="{}">'
         '<main class="hdo-stack">{}{}{}</main></div>'
     ).format(
         " hdo-dashboard--preview" if preview else "",
@@ -989,12 +1048,13 @@ def render_dashboard(
         "true" if has_insights else "false",
         "true" if bible else "false",
         "true" if int(render_config.get("appearance", {}).get("text_scale", 100)) >= 125 else "false",
+        _escape(last_updated_at),
         _style(render_config, anki_dark),
         (
             '<div class="hdo-data-warning hdo-refresh-warning" role="alert">'
-            '<span>Refresh failed. Showing previously loaded data.</span>'
+            '<span>{}</span>'
             '<button type="button" data-hdo-command="retry">Retry</button></div>'
-            if refresh_error else ""
+            .format(_escape(refresh_copy)) if refresh_error else ""
         ),
         _data_warning(snapshot, render_config),
         "".join(sections),
@@ -1045,7 +1105,8 @@ def _runtime_placeholder(
         '<p class="hdo-eyebrow">Home Screen Dashboard</p><h2>Dashboard could not load</h2>'
         '<p>The dashboard data could not be loaded. Retry or open diagnostics for details.</p>'
         '<div class="hdo-loading-actions">'
-        '<button type="button" data-hdo-command="retry">Retry</button>'
+        '<button type="button" class="hdo-context-action hdo-context-action--primary" '
+        'data-hdo-command="retry">Retry</button>'
         '<button type="button" data-hdo-command="diagnostics">Open diagnostics</button>'
         '</div></section>'
         '</main></div>'

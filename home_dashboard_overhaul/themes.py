@@ -109,15 +109,15 @@ REVIEWS_DUE_INDICATORS: Mapping[str, tuple[str, ...]] = {
 
 COMPLETION_SCALES: Mapping[str, Mapping[str, tuple[str, ...]]] = {
     "Sapphire Glass": {
-        "light": ("#F8FAFD", "#EEF4FB", "#D7E7F6", "#AFCDEA", "#78A8D2", "#356F9F"),
+        "light": ("#F8FAFD", "#E7F0FA", "#D7E7F6", "#AFCDEA", "#78A8D2", "#356F9F"),
         "dark": ("#172434", "#1F3449", "#2B4B66", "#3B6C90", "#5A96BE", "#87BCD9"),
     },
     "Graphite": {
-        "light": ("#F7F8FA", "#F1F3F5", "#DCE1E5", "#BAC2C9", "#8D99A3", "#5F6C76"),
+        "light": ("#F7F8FA", "#E9EDF1", "#DCE1E5", "#BAC2C9", "#8D99A3", "#5F6C76"),
         "dark": ("#20252B", "#2B3239", "#3C4650", "#58636D", "#7E8994", "#ADB6BF"),
     },
     "Emerald": {
-        "light": ("#F8FAF9", "#EDF7F1", "#D1EBDD", "#A7D7BE", "#69B38E", "#287A55"),
+        "light": ("#F8FAF9", "#E5F3EB", "#D1EBDD", "#A7D7BE", "#69B38E", "#287A55"),
         "dark": ("#17231D", "#1D3427", "#28503A", "#397052", "#58A074", "#85C89C"),
     },
     "High Contrast": {
@@ -196,14 +196,14 @@ CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "ui_text_tertiary": "#646E77",
             "ui_text_disabled": "#979FA8",
             "ui_eyebrow": "#5D6670",
-            "ui_accent": "#506579",
-            "ui_accent_hover": "#303840",
-            "ui_accent_pressed": "#232A31",
-            "ui_accent_soft": "#E9ECEF",
-            "ui_accent_border": "#8B949D",
+            "ui_accent": "#566B80",
+            "ui_accent_hover": "#465B70",
+            "ui_accent_pressed": "#3B4D60",
+            "ui_accent_soft": "#E7EBEF",
+            "ui_accent_border": "#8799AB",
             "ui_on_accent": "#FFFFFF",
-            "ui_focus": "#4C7FC4",
-            "progress_complete": "#4A535D",
+            "ui_focus": "#566B80",
+            "progress_complete": "#566B80",
         },
         "dark": {
             "ui_canvas": "#101214",
@@ -252,19 +252,19 @@ CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "progress_complete": "#137C55",
         },
         "dark": {
-            "ui_canvas": "#0C1411",
-            "ui_surface_1": "#13201B",
-            "ui_surface_2": "#17271F",
-            "ui_surface_3": "#203129",
-            "ui_border_subtle": "#2A3B32",
-            "ui_border_default": "#294538",
+            "ui_canvas": "#0B1210",
+            "ui_surface_1": "#101B17",
+            "ui_surface_2": "#14231C",
+            "ui_surface_3": "#17251F",
+            "ui_border_subtle": "#294137",
+            "ui_border_default": "#345444",
             "ui_border_strong": "#687E70",
             "ui_text_primary": "#F2F7F4",
             "ui_text_secondary": "#BBCAC1",
             "ui_text_tertiary": "#8E9F95",
             "ui_text_disabled": "#65766C",
             "ui_eyebrow": "#74B38D",
-            "ui_accent": "#39C887",
+            "ui_accent": "#3CCF8E",
             "ui_accent_hover": "#58CF94",
             "ui_accent_pressed": "#2FA76B",
             "ui_accent_soft": "#173328",
@@ -356,6 +356,13 @@ def _heat_tokens(theme_name: str, variant: str, core: Mapping[str, str]) -> Them
 
 def _build_theme(theme_name: str, variant: str) -> Theme:
     core = dict(CORE_PALETTES[theme_name][variant])
+    skeleton_opacity = .10 if variant == "light" else .16
+    core["ui_skeleton_base"] = composite_color(
+        core["ui_accent"], core["ui_surface_2"], skeleton_opacity
+    )
+    core["ui_skeleton_highlight"] = composite_color(
+        core["ui_accent"], core["ui_surface_2"], skeleton_opacity * 1.8
+    )
     core["ui_shadow_card"] = (
         "none" if theme_name == "High Contrast"
         else "0 1px 2px rgba(16, 24, 40, 0.05), 0 8px 20px rgba(16, 24, 40, 0.05)"

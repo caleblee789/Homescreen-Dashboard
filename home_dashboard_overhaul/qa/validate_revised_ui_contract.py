@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the machine-readable Home Dashboard 1.8.2 UI contract.
+"""Validate the machine-readable Home Dashboard 1.8.4 UI contract.
 
 This is a source-contract check. Exact-package native evidence is validated by
 the release evidence assembler after the disposable Anki run.
@@ -26,14 +26,14 @@ def _read(root: Path, name: str) -> dict:
 
 def validate(root: Path = ROOT) -> List[str]:
     errors: List[str] = []
-    manifest = _read(root, "calendar_surface_manifest_1_8_2.json")
-    matrix = _read(root, "visual_regression_matrix_1_8_2.json")
-    registry = _read(root, "ui-surface-registry_1_8_2.json")
-    capture = _read(root, "capture_evidence_manifest_1_8_2.json")
+    manifest = _read(root, "calendar_surface_manifest_1_8_4.json")
+    matrix = _read(root, "visual_regression_matrix_1_8_4.json")
+    registry = _read(root, "ui-surface-registry_1_8_4.json")
+    capture = _read(root, "capture_evidence_manifest_1_8_4.json")
 
-    if manifest.get("release") != "1.8.2" or manifest.get("schema_version") != 8:
-        errors.append("surface manifest must describe release 1.8.2 / schema 8")
-    if manifest.get("contract") != "final-ui-correction-native-100-percent-2026-08-23":
+    if manifest.get("release") != "1.8.4" or manifest.get("schema_version") != 8:
+        errors.append("surface manifest must describe release 1.8.4 / schema 8")
+    if manifest.get("contract") != "multi-deck-new-limit-correction-native-100-percent-2026-08-24":
         errors.append("surface manifest has the wrong governing contract")
     if manifest.get("dashboard_order") != [
         "study_calendar", "summary_metrics", "bible_verse"
@@ -48,8 +48,8 @@ def validate(root: Path = ROOT) -> List[str]:
         errors.append("surface registry does not exactly mirror the authority manifest")
 
     criteria = manifest.get("acceptance_criteria", [])
-    if [item.get("id") for item in criteria] != list(range(1, 42)):
-        errors.append("acceptance criteria must contain exact IDs 1 through 41")
+    if [item.get("id") for item in criteria] != list(range(1, 43)):
+        errors.append("acceptance criteria must contain exact IDs 1 through 42")
     if any(not item.get("tags") or not str(item.get("requirement", "")).strip() for item in criteria):
         errors.append("every acceptance criterion needs tags and requirement text")
 
@@ -73,7 +73,7 @@ def validate(root: Path = ROOT) -> List[str]:
         errors.append("every primary visual case must use 100 percent text scale")
     if matrix.get("deferred_scales_percent") != [125, 150]:
         errors.append("125 and 150 percent must remain explicitly deferred")
-    expected_widths = [1320, 1100, 940, 939, 620, 440, 439, 320, 319]
+    expected_widths = [1240, 1100, 1040, 1039, 620, 479, 419, 320, 319]
     if matrix.get("required_container_width_assertions") != expected_widths:
         errors.append("responsive width assertions are not the exact release set")
 
@@ -91,10 +91,19 @@ def validate(root: Path = ROOT) -> List[str]:
         errors.append("capture plan has uncovered tags: {}".format(", ".join(missing_tags)))
     if capture.get("responsive_assertion_widths") != expected_widths:
         errors.append("capture plan responsive assertions differ from the UI contract")
-    if capture.get("native_frame_count") != {"initial": 47, "restart": 1, "total": 48}:
-        errors.append("capture plan must contain 47 initial frames plus one restart frame")
-    if capture.get("contact_sheet_output", {}).get("detail_sheet_count") != 13:
-        errors.append("capture plan must produce exactly 13 readable detail sheets")
+    if capture.get("native_frame_count") != {"initial": 55, "restart": 1, "total": 56}:
+        errors.append("capture plan must contain 55 initial frames plus one restart frame")
+    if capture.get("contact_sheet_output", {}).get("detail_sheet_count") != 15:
+        errors.append("capture plan must produce exactly 15 readable detail sheets")
+    if capture.get("runtime_smoke_requirements") != {
+        "active_head_deck": "A",
+        "raw_new_cards_per_head_minimum": 40,
+        "remaining_limits": {"A": 3, "B": 7},
+        "expected_unexcluded_new_remaining": 10,
+        "expected_excluding_b_new_remaining": 3,
+        "restart_expected_new_remaining": 10,
+    }:
+        errors.append("multi-deck new-limit runtime smoke contract is incomplete")
     restart = next(
         (item for item in supplemental if item.get("id") == "RUNTIME-RESTART-PERSISTENCE"),
         None,
@@ -126,14 +135,24 @@ def validate(root: Path = ROOT) -> List[str]:
     old_manifest = _read(root, "calendar_surface_manifest.json")
     old_matrix = _read(root, "visual_regression_matrix_1_8_0.json")
     retained_181 = _read(root, "calendar_surface_manifest_1_8_1.json")
+    retained_182 = _read(root, "calendar_surface_manifest_1_8_2.json")
+    retained_183 = _read(root, "calendar_surface_manifest_1_8_3.json")
     if old_manifest.get("release") != "1.8.0" or old_matrix.get("release") != "1.8.0":
         errors.append("retained 1.8.0 contract history was modified")
     if retained_181.get("release") != "1.8.1" or retained_181.get("schema_version") != 7:
         errors.append("retained 1.8.1 contract history was modified")
+    if retained_182.get("release") != "1.8.2" or retained_182.get("schema_version") != 8:
+        errors.append("retained 1.8.2 contract history was modified")
+    if retained_183.get("release") != "1.8.3" or retained_183.get("schema_version") != 8:
+        errors.append("retained 1.8.3 contract history was modified")
     if not (root / "qa" / "release-evidence-1.8.0-2026-08-23").is_dir():
         errors.append("retained 1.8.0 release evidence is missing")
     if not (root / "qa" / "release-evidence-1.8.1-2026-08-23").is_dir():
         errors.append("retained 1.8.1 release evidence is missing")
+    if not (root / "qa" / "release-evidence-1.8.2-2026-08-23").is_dir():
+        errors.append("retained 1.8.2 release evidence is missing")
+    if not (root / "qa" / "release-evidence-1.8.3-2026-08-23").is_dir():
+        errors.append("retained 1.8.3 release evidence is missing")
 
     return errors
 
@@ -146,7 +165,7 @@ def main() -> int:
         return 1
     print(
         "Revised UI contract: PASS "
-        "(1.8.2 schema 8, 48 native frames, 9 exact widths, no restart waiver)"
+        "(1.8.4 schema 8, 56 native frames, 9 representative widths, no restart waiver)"
     )
     return 0
 

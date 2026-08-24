@@ -1,0 +1,112 @@
+{
+  "archive": "package/home-dashboard-overhaul-1.8.4.ankiaddon",
+  "installed_archive_member_parity": "passed",
+  "manifest_version": "1.8.4",
+  "member_allowlist_count": 24,
+  "member_count": 24,
+  "members": [
+    {
+      "path": "__init__.py",
+      "sha256": "17aec78da575b56963586c2a062a3ed0339132780e456d11b56c350dc2dbcba0"
+    },
+    {
+      "path": "analytics.py",
+      "sha256": "dd7bc20de630a9ce2f887da6a1c6a52cdbb8b1900ef762fc2d880e58f04109da"
+    },
+    {
+      "path": "insights.py",
+      "sha256": "2246bdc7aead2b10f9fced9bc9aab8cb8db00f251f3850ce1ec3ac54a6734a93"
+    },
+    {
+      "path": "config.json",
+      "sha256": "2d8bfb1a8a646ca50eb7322c7cd3542e833f556c5349cd43488d8c5a02179cfd"
+    },
+    {
+      "path": "config.md",
+      "sha256": "c564aceb3fd72ec1d257198a903e1721b9938236a386e81139935571183d282e"
+    },
+    {
+      "path": "config_schema.py",
+      "sha256": "8e9d9600d1411ba3c1c554497ea7f7ef94af1f178b02cbd15405e16905fdca97"
+    },
+    {
+      "path": "controller.py",
+      "sha256": "a02224a48586b45fc8b0b6b954f90d13753927212dea22e17d3973a665902c6b"
+    },
+    {
+      "path": "default_verses.json",
+      "sha256": "000f62d94c557c364c4ecb025967f28214b2c29c3f84c94cef652364623b7f93"
+    },
+    {
+      "path": "LICENSE.txt",
+      "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef"
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "259af7a033cf626552ca135952f2515a12d7c387989f36087413773b035b5100"
+    },
+    {
+      "path": "migration.py",
+      "sha256": "aa721c9e11a1f083e0d92124b62ac0402fd4adcf9044c2741436b19761b16861"
+    },
+    {
+      "path": "models.py",
+      "sha256": "d57ed48a2d0375f51ff489a06ed453526cd5f3d170bcaee8caf7e520fa25d366"
+    },
+    {
+      "path": "README.md",
+      "sha256": "70b3acee744099f01b789731de02c42469ca04a637f290ac8c622132252326f8"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "95aca263479b9e70dec2b2cc0658643f0a76f8c750c4f9e509fc130900439001"
+    },
+    {
+      "path": "renderer.py",
+      "sha256": "1d4b98215def810744149ba8e167f2be236af1a738dcb8f4bbd750f73e5c046d"
+    },
+    {
+      "path": "settings.py",
+      "sha256": "62bf13da7e08310cd4dfe3a6a7c74cee1e8317bcaf21b88f74345c70d24358a0"
+    },
+    {
+      "path": "settings_model.py",
+      "sha256": "5325a5b45c810e75b79c993a82fe786d40ca9f36cac26d6d6307ad1e4a613bac"
+    },
+    {
+      "path": "themes.py",
+      "sha256": "8cef22df3230e6115a49bd8d2e3454222ffaa063e0b6a5e3e34ad8656a170f9e"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "sha256": "d602445375095c77d347b05822fb08974a42ab79527227de1080d4f272d87b4e"
+    },
+    {
+      "path": "ui_primitives.py",
+      "sha256": "f7b590a675c377ef835baa4d7d18755ef45bd55bf48d6ad2335656f287a38046"
+    },
+    {
+      "path": "verse.py",
+      "sha256": "3d79067ab17a9d8502421e5dddc484a65c1618fe0400f346654388f59d0d98b4"
+    },
+    {
+      "path": "web/dashboard.css",
+      "sha256": "c491120abd8e07345fd239c69563908f696b5518555934af1394fe1a46635e0a"
+    },
+    {
+      "path": "web/dashboard.js",
+      "sha256": "ded5b3eb5a3b35a2bfaef358e0a14004e73ca6d6e3af749b02481d5b0a5a7aeb"
+    },
+    {
+      "path": "user_files/README.txt",
+      "sha256": "d89b8dfcc3b3f626a7ecf2b6e593b7713655bbfaccc6fea3ea393bdde965e53f"
+    }
+  ],
+  "release": "1.8.4",
+  "safe_paths": "passed",
+  "sha256": "aba2bc24dd5b2fe8320460211b1244c00da18ff96f208f5cfa94fc862c99fbbe",
+  "source_archive_byte_parity": "passed",
+  "status": "passed",
+  "successful_exact_candidate_loading": "passed",
+  "unsafe_members": []
+}

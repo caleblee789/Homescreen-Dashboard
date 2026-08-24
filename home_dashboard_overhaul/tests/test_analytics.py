@@ -63,6 +63,7 @@ class FakeDB:
         self.history_sql = ""
         self.lifetime_sql = ""
         self.today_new_sql = ""
+        self.remaining_sql = ""
 
     def first(self, sql, *args):
         if "queue = 1" in sql and "type = 3" in sql and "group_concat(id)" in sql:
@@ -86,16 +87,27 @@ class FakeDB:
             self.history_queries += 1
             self.history_sql = sql
             return list(self.history)
+        if "GROUP BY did" in sql and "queue = 0 AND type = 0" in sql:
+            self.remaining_sql = sql
+            if self.remaining and isinstance(self.remaining[0], (tuple, list)):
+                return list(self.remaining)
+            return [(1, self.remaining[0], self.remaining[1])]
         if "FROM cards" in sql:
             return list(self.forecast)
         return []
 
 
 class DueTree:
-    def __init__(self, new=8, learning=10, review=124) -> None:
+    def __init__(self, new=8, learning=10, review=124, deck_id=1, children=()) -> None:
+        self.deck_id = deck_id
         self.new_count = new
         self.learn_count = learning
         self.review_count = review
+        self.children = tuple(children)
+
+
+def due_tree_root(*children):
+    return SimpleNamespace(deck_id=0, new_count=0, children=tuple(children))
 
 
 class Scheduler:
@@ -103,7 +115,16 @@ class Scheduler:
     day_cutoff = int(datetime(2026, 8, 14, 4).timestamp())
 
     def __init__(self, due_tree=None) -> None:
-        self.due_tree = due_tree or DueTree()
+        if due_tree is None:
+            self.due_tree = due_tree_root(
+                DueTree(new=10_000, deck_id=1),
+                DueTree(new=10_000, deck_id=2),
+                DueTree(new=10_000, deck_id=99),
+            )
+        elif getattr(due_tree, "deck_id", None) == 0:
+            self.due_tree = due_tree
+        else:
+            self.due_tree = due_tree_root(due_tree)
 
     def deck_due_tree(self):
         return self.due_tree
@@ -379,6 +400,88 @@ class SnapshotTests(unittest.TestCase):
     def test_eta_rounds_up_to_a_whole_minute(self) -> None:
         queue = _queue(FakeCollection(remaining=(1, 0)), 10.0, 61.0, 0)
         self.assertEqual(queue.estimated_duration_seconds, 120)
+
+    def test_new_remaining_obeys_ankis_scheduler_daily_limit(self) -> None:
+        class MultiDeckScheduler:
+            today = Scheduler.today
+            day_cutoff = Scheduler.day_cutoff
+
+            def get_queued_cards(self, *, fetch_limit):
+                raise AssertionError("the active-deck queue must not cap the dashboard")
+
+            def deck_due_tree(self):
+                return due_tree_root(
+                    DueTree(new=3, deck_id=1),
+                    DueTree(new=7, deck_id=2),
+                )
+
+        col = FakeCollection(remaining=[(1, 40, 1), (2, 40, 1)])
+        col.sched = MultiDeckScheduler()
+
+        queue = _queue(col, 10.0, 20.0, 5)
+
+        self.assertEqual((queue.new, queue.learning, queue.review), (10, 2, 5))
+        self.assertEqual(queue.total, 17)
+        self.assertEqual(queue.estimated_duration_seconds, 300)
+
+    def test_new_remaining_applies_parent_child_limits_and_exclusions_once(self) -> None:
+        head_a = DueTree(
+            new=8,
+            deck_id=1,
+            children=(
+                DueTree(new=3, deck_id=11),
+                DueTree(new=5, deck_id=12),
+            ),
+        )
+        head_b = DueTree(new=6, deck_id=2)
+        col = FakeCollection(remaining=[
+            (1, 2, 0),
+            (11, 8, 0),
+            (12, 8, 0),
+            (2, 10, 0),
+        ])
+        col.sched = Scheduler(due_tree_root(head_a, head_b))
+
+        all_decks = _queue(col, 10.0, 10.0, 0)
+        without_child = _queue(
+            col,
+            10.0,
+            10.0,
+            0,
+            FilterScope(excluded_deck_ids=(11,)),
+        )
+
+        self.assertEqual(all_decks.new, 14)
+        self.assertEqual(without_child.new, 13)
+
+    def test_new_remaining_honors_consumed_and_zero_daily_limits(self) -> None:
+        col = FakeCollection(remaining=[(1, 20, 0), (2, 20, 0)])
+        col.sched = Scheduler(due_tree_root(
+            DueTree(new=2, deck_id=1),
+            DueTree(new=0, deck_id=2),
+        ))
+
+        queue = _queue(col, 10.0, 10.0, 0)
+
+        self.assertEqual((queue.new, queue.total), (2, 2))
+
+    def test_due_tree_failure_makes_progress_unavailable_without_raw_fallback(self) -> None:
+        class BrokenDueTreeScheduler:
+            today = Scheduler.today
+            day_cutoff = Scheduler.day_cutoff
+
+            def deck_due_tree(self):
+                raise RuntimeError("due tree failed")
+
+        col = FakeCollection(remaining=[(1, 40, 0)])
+        col.sched = BrokenDueTreeScheduler()
+
+        facts = collect_dashboard_facts(col, normalize_config({}), date(2026, 8, 13))
+
+        self.assertEqual(
+            (facts.queue.status, facts.queue.reason, facts.queue.value),
+            (ValueStatus.UNAVAILABLE, AvailabilityReason.QUERY_FAILED, None),
+        )
 
     def test_forecast_only_is_preserved_in_canonical_day_facts(self) -> None:
         snapshot = collect_snapshot(FakeCollection(history=[]), normalize_config({}), VerseContent())
@@ -684,7 +787,7 @@ class CanonicalFactsTests(unittest.TestCase):
 
     def test_progress_uses_same_raw_review_demand_and_disjoint_scoped_new_learning(self) -> None:
         col = self._sqlite_collection()
-        col.sched.due_tree = DueTree(2, 1, 1)
+        col.sched.due_tree = due_tree_root(DueTree(2, 1, 1))
         col.db.connection.executemany(
             "INSERT INTO cards (id, did, queue, due, type) VALUES (?, ?, ?, ?, ?)",
             [
@@ -763,7 +866,12 @@ class CanonicalFactsTests(unittest.TestCase):
         )
 
     def test_scheduler_tree_review_count_is_never_used_as_due_fallback(self) -> None:
-        incomplete_tree = SimpleNamespace(new_count=2, learn_count=1)
+        incomplete_tree = SimpleNamespace(
+            deck_id=1,
+            new_count=2,
+            learn_count=1,
+            children=(),
+        )
         col = FakeCollection(due_tree=incomplete_tree)
         facts = collect_dashboard_facts(col, normalize_config({}), date(2026, 8, 13))
 
@@ -960,7 +1068,7 @@ class CanonicalFactsTests(unittest.TestCase):
 
     def test_live_mutation_recompute_table(self) -> None:
         col = self._sqlite_collection()
-        col.sched.due_tree = DueTree(0, 0, 1)
+        col.sched.due_tree = due_tree_root(DueTree(0, 0, 1))
         col.db.connection.execute(
             "INSERT INTO cards (id, did, queue, due, type) VALUES (1, 1, 2, 500, 2)"
         )

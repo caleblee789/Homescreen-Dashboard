@@ -1,99 +1,96 @@
 # Release visual contract
 
-Status: Home Screen Dashboard 1.8.2 native 100% release contract.
+Status: Home Screen Dashboard 1.8.4 native UI 100% release contract.
 
-## Authority and provenance
+## Authority and retained history
 
 The current machine-readable authorities are:
 
-- `qa/calendar_surface_manifest_1_8_2.json`: layout, component, behavior, and
-  acceptance requirements.
-- `qa/ui-surface-registry_1_8_2.json`: exact-once surface ownership and fixture
-  mapping.
-- `qa/visual_regression_matrix_1_8_2.json`: 16 mandatory native Deck Browser
-  theme/mode/view frames at 100% text scale.
-- `qa/capture_evidence_manifest_1_8_2.json`: 48 required fresh, populated,
-  responsive, state, background, Bible, lifecycle, and restart frames.
+- `qa/calendar_surface_manifest_1_8_4.json`
+- `qa/ui-surface-registry_1_8_4.json`
+- `qa/visual_regression_matrix_1_8_4.json`
+- `qa/capture_evidence_manifest_1_8_4.json`
 
-The supplied 3420x2214 screenshot is geometry calibration input only. Retained
-1.8.0 and 1.8.1 packages, reports, captures, and contact sheets are immutable
-history. They must not be overwritten or represented as new 1.8.2 evidence.
+The supplied 3420×2214 screenshot and the complete 1.8.0 through 1.8.3
+packages, reports, captures, and contact sheets are immutable calibration
+history. They must not be overwritten or represented as new 1.8.4 evidence.
 
-## Native 100% composition
+## Native UI 100% composition
 
-- The dashboard is at most 1,320 px wide, keeps at least 16 px side margins,
-  starts 22 px below the host content edge, uses 12–14 px grid gaps, and keeps
-  a 72 px bottom safe area above Anki's footer.
-- At 940 px and above, calendar and insight rail are side by side. From
-  440–939 px, the calendar is followed by a 2x2 metric grid. Below 440 px,
-  metrics form one column.
-- Calendar and rail have no shared-height coupling. Month naturally differs
-  between five and six rows. Year remains content-driven at approximately
-  285–310 px in the wide layout and may differ by at most 2 px across Bible
-  short, long, and disabled states.
-- Month never scrolls internally. Only the continuous 53-column Year grid may
-  scroll horizontally, and only below 320 px. The document itself never
-  overflows horizontally and keeps normal vertical scrolling.
+- The dashboard is at most 1,240 px wide and leaves 66 px beneath its content
+  for Anki's 42 px native controls plus a 24 px gap.
+- Anki's actual `document.scrollingElement` owns vertical scrolling. The
+  dashboard adds no nested vertical scroller, fixed or sticky positioning, or
+  page-level horizontal overflow.
+- Calendar and rail remain side by side from 1,040 px; the rail is at least
+  372 px wide. From 420–1,039 px the calendar, auto-fitting metrics, and Bible
+  stack. Below 420 px the narrow density uses one metric column.
+- The footer has separate date, event, and action regions: one row from 760 px,
+  two rows from 420–759 px, and three rows below 420 px. Dates and event titles
+  wrap when needed.
+- Year is fully visible without horizontal scrolling at 480 px and above.
+  Below 480 px, Year alone uses a 580 px minimum internal region with 12 px
+  edge padding, a 5 px scrollbar, and subtle edge fades. January, the current
+  month, and December remain reachable; initial/Today centering and preserved
+  manual scroll position are required.
+- Month remains content-driven, including unequal five- and six-row heights.
+  Bible growth, font scope, and disabled state do not determine Year height.
 
-The exact container widths under automated and native evidence are 1320, 1100,
-940, 939, 620, 440, 439, 320, and 319 px.
+Representative container widths are 1240, 1100, 1040, 1039, 620, 479, 419,
+320, and 319 px. Capture subtitles record native dimensions, container width,
+computed density, and UI 100%.
 
-## Calendar and data states
+## Meaning and visual states
 
-- Future cells remain neutral and can carry a due strip. Completion fill,
-  Today, selection, due level, event marker/count, hover, and keyboard focus
-  have deterministic, composable ownership.
-- Year is one continuous 53-column grid with corrected month boundaries and
-  labels. The legend matches completion, three due levels, and events.
-- The footer keeps legend and context compact, groups the selected or next
-  event with its adjacent pencil, and uses a tonal `Reviewed cards` or `Due
-  cards` action only when an exact target exists. Below 700 px it remains a
-  deliberate two-row grid: chip/date/pencil/action first, event summary second.
-- One delegated tooltip is 190–220 px wide, collision-aware, keyboard
-  reachable, and constrained to the viewport.
+- Today uses `Next event`. A selected date with an event uses `On this date`;
+  one without an event uses `No event on this date`. The event action switches
+  between `Edit event` and `Add event`; Reviewed and Due actions remain
+  secondary.
+- Progress uses one readable completion bar. Wide labels remain on one line,
+  and values stay tabular and right-aligned.
+- Month due strips remain inset, event markers retain safe top/right placement,
+  and Year due indicators remain visible but restrained. Legend meaning does
+  not change.
+- Graphite owns slate interaction accents while New cards retain semantic blue.
+  Emerald Dark uses the final neutral-green surface set. High Contrast remains
+  opaque.
+- Dashboard-owned surfaces may be transparent where designed, but `html`,
+  `body`, the Deck Browser, native controls, and external pink/purple
+  compatibility backgrounds are never altered.
+- Initial and delayed skeleton geometry remains stable. Initial failure uses a
+  400–440 px panel, 20 px padding, and 32 px actions. Retained-data refresh
+  failure uses one full-width banner containing one `last_updated_at`
+  timestamp.
 
-## Statistics, Bible, lifecycle, and themes
+## Minimal release gate
 
-- Today's Progress uses one 12–14 px completion bar containing `N% complete`.
-  It distinguishes `No cards scheduled`, `All clear`, `100% complete`, active
-  progress, and unavailable state without inventing a percentage.
-- Today's Session exposes Cards studied, New cards studied, Cards buried, Time
-  spent, Pace, and ETA. The Buried value is the existing scheduler-authoritative
-  current total, not historical buried analytics. The remaining card groups
-  use the final row order recorded in the surface manifest.
-- Large values remain stable; time and ETA switch to compact presentation
-  before type shrinks. Bible height follows content without changing Year
-  geometry, and disabling Bible removes the rail slot.
-- Initial loading preserves layout, delayed loading uses the exact status copy,
-  initial failure exposes Retry and diagnostics, and a failed refresh retains
-  the previously loaded dashboard with Retry.
-- Sapphire Glass alone receives component-level translucency and real backdrop
-  blur. Graphite, Emerald, and High Contrast remain opaque. High Contrast has
-  no decorative transparency or shadow. No theme paints, masks, recolors, or
-  scrims the host wallpaper, deck list, toolbar, footer, or surrounding canvas.
+Before the visual smoke cases, create two independent head decks with at least
+40 new cards each and remaining daily limits of 3 and 7. Keep head A selected:
+the production dashboard must show 10 New remaining, then 3 when head B is
+excluded. The same unexcluded 10-card result must survive the single restart.
 
-## Automated and exact-package release gate
+Run the repository's Python suite once and JavaScript suite once, with targeted
+regressions only for footer meaning/actions, bottom clearance/no page overflow,
+Year centering/scroll preservation, the single timestamped refresh banner, and
+version/manifest/capture consistency.
 
-The 1.8.2 gate requires the complete Python and JavaScript suites, current
-contract validator, color/contrast and hardcoded-color audits, compilation and
-import checks, link/secret review, and `git diff --check`.
+Build `home-dashboard-overhaul-1.8.4.ankiaddon` once. Verify only version,
+the 24-member allowlist, safe paths, successful exact-package loading, and
+source/archive parity.
 
-The 24-file allowlisted archive is built twice and must have identical SHA-256,
-safe paths, valid ZIP integrity, valid imports, and byte-for-byte source parity.
-That exact archive must run in a fresh sync-disabled disposable Anki 26.8.1
-base/profile with process, package, filesystem, profile, window, and sync
-identity verified before interaction. A hard restart of the same profile and
-single-instance identity must preserve Month/Year, theme, mode, palette,
-visibility, glass settings, week start, and a clean normalized Settings state.
-No restart waiver is allowed.
+Install that exact archive in one fresh disposable sync-disabled Anki 26.8
+profile. After identity confirmation, perform one bounded smoke pass and one
+restart covering initial load, bottom scrolling, narrow footer readability,
+January/current-month/December Year access, failure/retry timestamp behavior,
+and Year-view persistence.
 
-Acceptance requires all 48 native captures, including
-`RUNTIME-RESTART-PERSISTENCE`, one complete overview, and 13 readable detail
-sheets. The restart frame belongs on the runtime sheet. Background fixtures
-simulate a host wallpaper while proving that only dashboard components change.
+The new evidence package must contain 55 initial captures plus
+`RUNTIME-RESTART-PERSISTENCE`, one overview, and 15 detail sheets. Every
+capture ID appears exactly once in the detail sheets. Review the overview and
+changed/critical captures; exhaustive pixel review of unchanged states is not
+required.
 
 ## Deferred and unrun
 
-Dedicated 125%/150% captures, spoken screen-reader review, Windows, Linux,
-forced-colors review, and OS-level scaling acceptance remain deferred and must
-be reported as unrun and unclaimed.
+VoiceOver, forced-colors, Windows/Linux, non-100% scaling, and OS-level scaling
+acceptance remain deferred and must be reported as unrun and unclaimed.

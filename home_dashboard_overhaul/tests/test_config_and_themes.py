@@ -307,9 +307,15 @@ class ThemeTests(unittest.TestCase):
         emerald_dark = resolve_theme("Emerald", "dark", True)
         self.assertEqual(
             [emerald_dark[key] for key in ("ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3")],
-            ["#0C1411", "#13201B", "#17271F", "#203129"],
+            ["#0B1210", "#101B17", "#14231C", "#17251F"],
         )
+        self.assertEqual(emerald_dark["ui_border_subtle"], "#294137")
+        self.assertEqual(emerald_dark["ui_accent"], "#3CCF8E")
         self.assertNotEqual(emerald_dark["status_success_fill"], emerald_dark["ui_accent"])
+
+        graphite_light = resolve_theme("Graphite", "light", False)
+        self.assertEqual(graphite_light["ui_accent"], "#566B80")
+        self.assertNotEqual(graphite_light["ui_accent"], graphite_light["status_new_fill"])
 
         graphite_dark = resolve_theme("Graphite", "dark", True)
         self.assertEqual(graphite_dark["progress_complete"], "#9BA6B1")
@@ -319,6 +325,11 @@ class ThemeTests(unittest.TestCase):
         for mode in ("light", "dark"):
             high_contrast = resolve_theme("High Contrast", mode, mode == "dark")
             self.assertEqual(high_contrast["ui_shadow_card"], "none")
+
+    def test_light_level_one_heat_colors_match_the_release_palette(self) -> None:
+        self.assertEqual(resolve_theme("Sapphire Glass", "light", False)["heat_complete_1"], "#E7F0FA")
+        self.assertEqual(resolve_theme("Graphite", "light", False)["heat_complete_1"], "#E9EDF1")
+        self.assertEqual(resolve_theme("Emerald", "light", False)["heat_complete_1"], "#E5F3EB")
 
 
 if __name__ == "__main__":

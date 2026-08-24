@@ -1,0 +1,272 @@
+{
+  "authority": "native-deck-browser-100-percent",
+  "captures": {
+    "RUNTIME-RESTART-PERSISTENCE": {
+      "capture_method": "QMainWindow.grab-isolated-restart",
+      "dashboard_container_width": 1240,
+      "density": "wide",
+      "device_pixel_ratio": 2.0,
+      "dom": {
+        "bible": {
+          "bottom": 638.77,
+          "height": 142.57,
+          "left": 1086.13,
+          "right": 1475,
+          "top": 496.2,
+          "width": 388.87
+        },
+        "bibleFontSize": "16px",
+        "bibleOverflow": false,
+        "biblePresent": true,
+        "bodyBackgroundImage": "none",
+        "bodyOverflowX": 0,
+        "calendar": {
+          "bottom": 480.85,
+          "height": 298.85,
+          "left": 235,
+          "right": 1074.13,
+          "top": 182,
+          "width": 839.13
+        },
+        "calendarCellCount": 365,
+        "cardBackdrop": "blur(12px) saturate(1.08)",
+        "cardSurfaceOpacity": "0.96",
+        "contextDateClipped": false,
+        "contextDateLocalized": "",
+        "contextDateText": "Sun, Aug 23, 2026",
+        "contextDateWraps": false,
+        "contextEventLabel": "Next event",
+        "contextEventMeta": "Thu, Sep 3 \u00b7 in 11 days",
+        "contextEventTitle": "Pediatrics review",
+        "currentMonthCell": {
+          "bottom": 369.1,
+          "height": 11.73,
+          "left": 749.63,
+          "right": 761.36,
+          "top": 357.37,
+          "width": 11.73
+        },
+        "decemberCell": {
+          "bottom": 339.62,
+          "height": 11.73,
+          "left": 1044.39,
+          "right": 1056.13,
+          "top": 327.88,
+          "width": 11.73
+        },
+        "density": "wide",
+        "documentBottomReached": true,
+        "documentOverflowX": 0,
+        "documentScrollMaximum": 0,
+        "documentScrollPaddingBlockEnd": "66px",
+        "documentScrollTop": 0,
+        "editEventTitle": "Edit event",
+        "editEventVisible": true,
+        "eventMoreText": "",
+        "eventTitleClipped": false,
+        "eventTitleWraps": false,
+        "footerGridTemplateAreas": "\"date event actions\"",
+        "footerOverlapArea": 0,
+        "footerRowCount": 1,
+        "frame": {
+          "bottom": 383.85,
+          "height": 121.2,
+          "left": 253,
+          "right": 1056.13,
+          "top": 262.66,
+          "width": 803.13
+        },
+        "frameOverflowMode": "visible",
+        "frameOverflowX": 0,
+        "hostPreserved": "true",
+        "januaryCell": {
+          "bottom": 339.62,
+          "height": 11.73,
+          "left": 278,
+          "right": 289.73,
+          "top": 327.88,
+          "width": 11.73
+        },
+        "lastUpdatedAt": "2026-08-23T20:14:00-05:00",
+        "layoutSideBySide": true,
+        "layoutStacked": false,
+        "loadState": "",
+        "loading": false,
+        "loadingFailureActionHeights": [],
+        "loadingFailureActions": [],
+        "loadingFailureCopy": "",
+        "loadingFailureHeading": "",
+        "loadingFailurePanel": null,
+        "loadingFailureVisible": false,
+        "loadingMessage": "",
+        "loadingSkeletonVisible": false,
+        "mode": "dark",
+        "primaryActionText": "Reviewed cards",
+        "progressLabelCount": 2,
+        "progressText": "60% complete",
+        "qaBackgroundImage": "",
+        "qaContainerWidth": "",
+        "rail": {
+          "bottom": 638.77,
+          "height": 456.77,
+          "left": 1086.13,
+          "right": 1475,
+          "top": 182,
+          "width": 388.87
+        },
+        "railWidth": 388.87,
+        "ready": true,
+        "refreshRetryVisible": false,
+        "refreshStatus": "",
+        "refreshWarning": "",
+        "refreshWarningCount": 0,
+        "root": {
+          "bottom": 704.77,
+          "height": 522.77,
+          "left": 235,
+          "right": 1475,
+          "top": 182,
+          "width": 1240
+        },
+        "rootAriaBusy": "false",
+        "rootBackground": "rgba(0, 0, 0, 0)",
+        "rootMarginTop": "22px",
+        "rootPaddingBottom": "66px",
+        "rootPosition": "relative",
+        "rootScrollOwner": "documentElement",
+        "selectedCount": 1,
+        "statisticColumns": 2,
+        "statisticsCardCount": 4,
+        "theme": "Sapphire Glass",
+        "view": "year",
+        "viewport": {
+          "height": 954,
+          "width": 1710
+        },
+        "yearMonthLabels": [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec"
+        ],
+        "yearScrollLeft": 0,
+        "yearScrollMaximum": 0
+      },
+      "file": "captures/RUNTIME-RESTART-PERSISTENCE.png",
+      "fixture": "populated",
+      "layout": "wide",
+      "logical_frame": {
+        "height": 1073,
+        "width": 1710,
+        "x": 0,
+        "y": 34
+      },
+      "mode": "dark",
+      "native_window_dimensions": [
+        1710,
+        1073
+      ],
+      "physical_pixels": [
+        3420,
+        2082
+      ],
+      "production_deck_browser_mount": true,
+      "sampled_color_count": 24,
+      "sha256": "b465ecab8235ab9b8276fe1c8d934d76fb5bf7b55a4c935ee95ddf08ea5ffac2",
+      "state_label": "",
+      "tags": [
+        "runtime_state",
+        "restart",
+        "calendar_view_persistence",
+        "clean_settings_state",
+        "no_waiver"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year",
+      "window_title": "Codex QA HDO 1.8.3 Final D - Anki",
+      "window_title_matches_profile": true
+    }
+  },
+  "errors": [],
+  "identity": {
+    "addons_inside_run_root": true,
+    "anki_version": "26.8.1",
+    "auto_sync": false,
+    "candidate": {
+      "candidate": "/Users/test/Documents/ChatGPT.nosync/Homescreen Statistics Overhaul/home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.3.ankiaddon",
+      "candidate_sha256": "3b40664ff34ae94ff86a2f22dd5e6eb552e3ca4f233380a141f821c44a1c1e67",
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.3",
+      "member_count": 24
+    },
+    "candidate_addon_root": "/private/tmp/anki-release-qa.08q5myml/addons21/home_dashboard_overhaul",
+    "collection_inside_run_root": true,
+    "collection_path": "/private/tmp/anki-release-qa.08q5myml/Codex QA HDO 1.8.3 Final D/collection.anki2",
+    "excluded_normal_pid": null,
+    "excluded_normal_pid_alive": false,
+    "excluded_normal_process_state": "none-present-at-prelaunch",
+    "gated_before_window_interaction": true,
+    "media_sync": false,
+    "pid": 68967,
+    "probe_addon_root": "/private/tmp/anki-release-qa.08q5myml/addons21/zz_hdo_release_1_8_3_probe",
+    "processes_are_distinct": true,
+    "profile": "Codex QA HDO 1.8.3 Final D",
+    "profile_matches": true,
+    "run_root": "/private/tmp/anki-release-qa.08q5myml",
+    "single_instance_key_fingerprint": "f88075c962ff",
+    "sync_credentials_present": false,
+    "sync_identity": "disabled-and-disconnected",
+    "window_title": "Codex QA HDO 1.8.3 Final D - Anki",
+    "window_title_matches_profile": true
+  },
+  "matrix": {
+    "all_100_percent": true,
+    "case_count": 1,
+    "case_ids": [
+      "RUNTIME-RESTART-PERSISTENCE"
+    ],
+    "host": "actual isolated Anki main Deck Browser",
+    "primary_count": 0,
+    "renderer": "exact installed production controller and renderer"
+  },
+  "persistence_readback": {
+    "calendar_view": "year",
+    "calendar_view_expected": "year",
+    "calendar_view_matches_expected": true,
+    "schema_version": 8,
+    "settings_state": "clean",
+    "status": "passed"
+  },
+  "release": "1.8.3",
+  "scale_policy": {
+    "deferred_ui_scales_percent": [
+      125,
+      150
+    ],
+    "text_scale_percent": 100,
+    "ui_scale_percent": 100
+  },
+  "schema_version": 2,
+  "screen": {
+    "available_geometry": [
+      0,
+      34,
+      1710,
+      1073
+    ],
+    "device_pixel_ratio": 2.0,
+    "name": "Built-in Retina Display"
+  },
+  "stage": "restart",
+  "status": "passed"
+}

@@ -1,0 +1,575 @@
+{
+  "schema_version": 8,
+  "release": "1.8.3",
+  "contract": "final-corrections-native-100-percent-2026-08-23",
+  "dashboard_order": [
+    "study_calendar",
+    "summary_metrics",
+    "bible_verse"
+  ],
+  "wide_architecture": {
+    "minimum_container_width": 1040,
+    "dashboard_maximum_width": 1240,
+    "minimum_page_side_margin": 16,
+    "top_spacing": 22,
+    "native_control_height": 42,
+    "native_control_gap": 24,
+    "bottom_safe_area": 66,
+    "calendar_to_rail_gap": [
+      12,
+      14
+    ],
+    "metric_gap": [
+      10,
+      12
+    ],
+    "bible_gap": [
+      10,
+      12
+    ],
+    "columns": "minmax(0, 2.05fr) minmax(372px, 0.95fr)"
+  },
+  "responsive_contract": [
+    {
+      "id": "wide",
+      "minimum": 1040,
+      "calendar": "left",
+      "statistics": "right_2x2",
+      "bible": "below_statistics",
+      "year_internal_scroll": false
+    },
+    {
+      "id": "intermediate",
+      "minimum": 420,
+      "maximum": 1039,
+      "calendar": "first_full_width",
+      "statistics": "below_2x2",
+      "bible": "below_statistics_full_width",
+      "year_internal_scroll": "below_480_only"
+    },
+    {
+      "id": "narrow",
+      "maximum": 419,
+      "calendar": "first_full_width",
+      "statistics": "below_1x4",
+      "bible": "below_statistics_full_width",
+      "page_vertical_scroll": true,
+      "year_internal_scroll": true,
+      "only_internal_scroll_surface": "year_heatmap"
+    }
+  ],
+  "canonical_surfaces": [
+    {
+      "id": "CAL-MONTH-WIDE",
+      "owner": "DashboardCalendar",
+      "fixture": "populated-wide-month"
+    },
+    {
+      "id": "CAL-MONTH-INTERMEDIATE",
+      "owner": "DashboardCalendar",
+      "fixture": "populated-intermediate-month"
+    },
+    {
+      "id": "CAL-MONTH-NARROW",
+      "owner": "DashboardCalendar",
+      "fixture": "populated-narrow-month"
+    },
+    {
+      "id": "CAL-YEAR-WIDE",
+      "owner": "DashboardCalendar",
+      "fixture": "populated-wide-year"
+    },
+    {
+      "id": "CAL-YEAR-INTERMEDIATE",
+      "owner": "DashboardCalendar",
+      "fixture": "populated-intermediate-year"
+    },
+    {
+      "id": "CAL-YEAR-NARROW",
+      "owner": "DashboardCalendar",
+      "fixture": "populated-narrow-year"
+    },
+    {
+      "id": "CAL-COMBINED-STATES",
+      "owner": "CalendarDay",
+      "fixture": "today-completion-due-selection-event"
+    },
+    {
+      "id": "CAL-EVENT-COUNT",
+      "owner": "CalendarDay",
+      "fixture": "multiple-events"
+    },
+    {
+      "id": "CAL-FIVE-ROW",
+      "owner": "MonthGrid",
+      "fixture": "five-row-month"
+    },
+    {
+      "id": "CAL-SIX-ROW",
+      "owner": "MonthGrid",
+      "fixture": "six-row-month"
+    },
+    {
+      "id": "CAL-WEEK-STARTS",
+      "owner": "DashboardCalendar",
+      "fixture": "sunday-and-monday-start"
+    },
+    {
+      "id": "CAL-YEAR-BOUNDARIES",
+      "owner": "YearGrid",
+      "fixture": "empty-and-populated-year"
+    },
+    {
+      "id": "CAL-TOOLTIP-HISTORY",
+      "owner": "CalendarTooltip",
+      "fixture": "historical-date"
+    },
+    {
+      "id": "CAL-TOOLTIP-FUTURE",
+      "owner": "CalendarTooltip",
+      "fixture": "future-date-event"
+    },
+    {
+      "id": "CTX-FRESH",
+      "owner": "CalendarFooter",
+      "fixture": "no-event-no-actions"
+    },
+    {
+      "id": "CTX-NEXT-EVENT",
+      "owner": "CalendarFooter",
+      "fixture": "global-next-event"
+    },
+    {
+      "id": "CTX-SELECTED-EVENT",
+      "owner": "CalendarFooter",
+      "fixture": "event-on-selected-date"
+    },
+    {
+      "id": "CTX-MULTIPLE-EVENTS",
+      "owner": "CalendarFooter",
+      "fixture": "multiple-events-long-title"
+    },
+    {
+      "id": "CTX-REVIEWED",
+      "owner": "CalendarFooter",
+      "fixture": "past-or-today-reviewed"
+    },
+    {
+      "id": "CTX-DUE",
+      "owner": "CalendarFooter",
+      "fixture": "future-due"
+    },
+    {
+      "id": "METRICS-ZERO",
+      "owner": "SummaryMetricsGrid",
+      "fixture": "no-cards-due"
+    },
+    {
+      "id": "METRICS-PARTIAL",
+      "owner": "SummaryMetricsGrid",
+      "fixture": "partial-workload"
+    },
+    {
+      "id": "METRICS-COMPLETE",
+      "owner": "SummaryMetricsGrid",
+      "fixture": "completed-nonzero-workload"
+    },
+    {
+      "id": "METRICS-TINY",
+      "owner": "SummaryMetricsGrid",
+      "fixture": "one-learning-card"
+    },
+    {
+      "id": "METRICS-UNAVAILABLE",
+      "owner": "SummaryMetricsGrid",
+      "fixture": "missing-pace-eta-retention"
+    },
+    {
+      "id": "METRICS-STRESS",
+      "owner": "SummaryMetricsGrid",
+      "fixture": "large-counts-and-streaks"
+    },
+    {
+      "id": "BIBLE-SHORT",
+      "owner": "BibleVerseCard",
+      "fixture": "short-verse"
+    },
+    {
+      "id": "BIBLE-LONG",
+      "owner": "BibleVerseCard",
+      "fixture": "long-verse"
+    },
+    {
+      "id": "BIBLE-CUSTOM-FONT",
+      "owner": "BibleVerseCard",
+      "fixture": "custom-font"
+    },
+    {
+      "id": "BIBLE-DISABLED",
+      "owner": "BibleVerseCard",
+      "fixture": "disabled-no-gap"
+    },
+    {
+      "id": "BACKGROUND-NATIVE",
+      "owner": "DashboardCanvas",
+      "fixture": "native-transparent-host"
+    },
+    {
+      "id": "BACKGROUND-IMAGE",
+      "owner": "DashboardCanvas",
+      "fixture": "host-wallpaper-unchanged-component-glass-only"
+    },
+    {
+      "id": "BACKGROUND-OPACITY",
+      "owner": "DashboardCanvas",
+      "fixture": "sapphire-component-opacity-only"
+    },
+    {
+      "id": "DATA-LOADING",
+      "owner": "DashboardLifecycle",
+      "fixture": "initial-loading"
+    },
+    {
+      "id": "DATA-DELAYED",
+      "owner": "DashboardLifecycle",
+      "fixture": "delayed-loading"
+    },
+    {
+      "id": "DATA-FAILURE",
+      "owner": "DashboardLifecycle",
+      "fixture": "failure-and-retry"
+    },
+    {
+      "id": "SETTINGS-PERSISTENCE",
+      "owner": "SettingsDialog",
+      "fixture": "restart-readback"
+    },
+    {
+      "id": "THEMES-PRIMARY",
+      "owner": "DashboardThemeSystem",
+      "fixture": "sixteen-primary-native-frames"
+    },
+    {
+      "id": "RESPONSIVE-EXACT-WIDTHS",
+      "owner": "DashboardLayout",
+      "fixture": "1240-1100-1040-1039-620-479-419-320-319"
+    },
+    {
+      "id": "DATA-RETAINED-RETRY",
+      "owner": "DashboardLifecycle",
+      "fixture": "refresh-failure-with-prior-data"
+    },
+    {
+      "id": "CAL-FIRST-RENDER-VIEW",
+      "owner": "DashboardController",
+      "fixture": "stored-month-or-year-before-first-render"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": 1,
+      "tags": [
+        "geometry"
+      ],
+      "requirement": "The dashboard is at most 1240px wide with at least 16px side margins, 22px top spacing, 12-14px major gaps, and 66px of bottom clearance for 42px native controls plus a 24px gap."
+    },
+    {
+      "id": 2,
+      "tags": [
+        "geometry",
+        "responsive"
+      ],
+      "requirement": "At 1040px and wider the calendar and a right rail remain side by side, with the rail at least 372px wide and its metric cards top-aligned."
+    },
+    {
+      "id": 3,
+      "tags": [
+        "responsive"
+      ],
+      "requirement": "From 420px through 1039px the calendar, auto-fitting metric grid with an approximately 180px minimum card width, and Bible card stack in that order."
+    },
+    {
+      "id": 4,
+      "tags": [
+        "responsive"
+      ],
+      "requirement": "Below 420px the calendar footer uses three readable rows, the metric cards use one column, content remains vertically scrollable, and cards do not clip."
+    },
+    {
+      "id": 5,
+      "tags": [
+        "responsive",
+        "year_geometry"
+      ],
+      "requirement": "At 480px and above the full Year has no horizontal scrolling; below 480px only the approximately 580px-wide Year heatmap may scroll, with 12px edge padding, a restrained 5px scrollbar, and subtle edge fades."
+    },
+    {
+      "id": 6,
+      "tags": [
+        "year_geometry",
+        "bible"
+      ],
+      "requirement": "Year height remains content-driven and independent of Bible disabled, short, and long states."
+    },
+    {
+      "id": 7,
+      "tags": [
+        "month_geometry"
+      ],
+      "requirement": "Five-row Month views remain naturally shorter than six-row views without forcing equal calendar heights."
+    },
+    {
+      "id": 8,
+      "tags": [
+        "year_geometry"
+      ],
+      "requirement": "Year remains one continuous 53-column presentation with aligned month labels, January and December fully reachable, initial or explicit-Today centering on the current month, and preserved manual scroll position across rerenders."
+    },
+    {
+      "id": 9,
+      "tags": [
+        "calendar_states",
+        "due_levels"
+      ],
+      "requirement": "Completed reviews own cell fill, future cells stay neutral, and due demand uses only the three-level bottom-strip treatment."
+    },
+    {
+      "id": 10,
+      "tags": [
+        "calendar_states",
+        "accessibility"
+      ],
+      "requirement": "Outside-month, future, completion, due, event, today, selected, hover, and focus states follow one deterministic visual and keyboard layering order."
+    },
+    {
+      "id": 11,
+      "tags": [
+        "events"
+      ],
+      "requirement": "Events use compact gold markers approximately 5px from the top and right edges, multiple events use a separate count badge, and markers never overlap dates."
+    },
+    {
+      "id": 12,
+      "tags": [
+        "legend"
+      ],
+      "requirement": "The legend uses Completed reviews with Low and High endpoints, three matching Reviews due samples, and one Event marker."
+    },
+    {
+      "id": 13,
+      "tags": [
+        "tooltip"
+      ],
+      "requirement": "One delegated 190-220px tooltip flips and shifts within the calendar and viewport, avoids the source cell where possible, and works in Month and Year."
+    },
+    {
+      "id": 14,
+      "tags": [
+        "calendar_controls"
+      ],
+      "requirement": "Month and Year form one segmented control; previous, Today, and next form a second cohesive group with a separate settings control."
+    },
+    {
+      "id": 15,
+      "tags": [
+        "footer"
+      ],
+      "requirement": "The footer divides date, event, and action regions; it uses one row at 760px and above, two rows from 420px through 759px, and three rows below 420px, while long localized dates wrap instead of clipping."
+    },
+    {
+      "id": 16,
+      "tags": [
+        "footer"
+      ],
+      "requirement": "The footer says Next event for Today, On this date for a selected date with an event, and No event on this date otherwise; its action switches between Add event and Edit event while Reviewed and Due actions cannot displace the date or event title."
+    },
+    {
+      "id": 17,
+      "tags": [
+        "progress_partial"
+      ],
+      "requirement": "Today progress is one readable completion bar containing N% complete across both filled and unfilled portions, never a segmented workload visualization."
+    },
+    {
+      "id": 18,
+      "tags": [
+        "progress_zero",
+        "progress_complete",
+        "progress_unavailable"
+      ],
+      "requirement": "No cards scheduled, All clear, 100% complete, and unavailable are distinct states; no unavailable state invents a percentage."
+    },
+    {
+      "id": 19,
+      "tags": [
+        "stable_rows"
+      ],
+      "requirement": "Today’s Progress contains New remaining, Learning remaining, Reviews remaining, and Total remaining."
+    },
+    {
+      "id": 20,
+      "tags": [
+        "stable_rows"
+      ],
+      "requirement": "Today’s Session contains Cards studied, New cards studied, Cards buried, Time spent, Pace, and ETA."
+    },
+    {
+      "id": 21,
+      "tags": [
+        "buried",
+        "migration"
+      ],
+      "requirement": "Cards buried remains the scheduler-authoritative current total, has no historical analytics, and visibility.buried is removed."
+    },
+    {
+      "id": 22,
+      "tags": [
+        "stable_rows"
+      ],
+      "requirement": "Last 7 Days contains Cards studied, New cards studied, Retention, and Again rate."
+    },
+    {
+      "id": 23,
+      "tags": [
+        "stable_rows"
+      ],
+      "requirement": "All Time contains Avg cards/day, Current streak, Longest streak, Retention, and Cards studied."
+    },
+    {
+      "id": 24,
+      "tags": [
+        "large_numbers",
+        "time_formatting"
+      ],
+      "requirement": "Wide metric labels remain on one line at or above the supplied typography minimums; tabular right-aligned values stay stable and time or ETA uses compact readable copy when necessary."
+    },
+    {
+      "id": 25,
+      "tags": [
+        "render_parity"
+      ],
+      "requirement": "Initial Python rendering and live JavaScript updates consume the same progress, session, time, and footer presentation contract."
+    },
+    {
+      "id": 26,
+      "tags": [
+        "fresh_data"
+      ],
+      "requirement": "A new profile uses deliberate empty-history treatment with No cards scheduled and N/A rates rather than looking partially broken."
+    },
+    {
+      "id": 27,
+      "tags": [
+        "progress_zero",
+        "progress_complete"
+      ],
+      "requirement": "Historical all-clear and completed-positive-workload states remain visually and semantically distinct, including ETA Done only for completed positive work."
+    },
+    {
+      "id": 28,
+      "tags": [
+        "bible"
+      ],
+      "requirement": "Bible height is content-driven, long text is not truncated below 14px, custom font affects verse text only, and disabled state leaves no gap."
+    },
+    {
+      "id": 29,
+      "tags": [
+        "themes"
+      ],
+      "requirement": "All palettes derive from centralized thematic and semantic tokens; Graphite interactions use its slate accent family while semantic blue remains reserved for New cards."
+    },
+    {
+      "id": 30,
+      "tags": [
+        "themes",
+        "sapphire_glass"
+      ],
+      "requirement": "Only Sapphire Glass uses component-level 94-100 opacity and real 0-16px backdrop blur."
+    },
+    {
+      "id": 31,
+      "tags": [
+        "themes"
+      ],
+      "requirement": "Emerald Dark uses page #0B1210, card #101B17, raised card #14231C, empty cell #17251F, subtle border #294137, and accent #3CCF8E; Graphite and Emerald surfaces remain opaque."
+    },
+    {
+      "id": 32,
+      "tags": [
+        "themes",
+        "high_contrast"
+      ],
+      "requirement": "High Contrast uses opaque crisp surfaces with no decorative transparency or shadows."
+    },
+    {
+      "id": 33,
+      "tags": [
+        "background"
+      ],
+      "requirement": "The add-on never creates, recolors, masks, blurs, or scrims the host wallpaper, native deck list, toolbar, footer, or surrounding Anki canvas."
+    },
+    {
+      "id": 34,
+      "tags": [
+        "migration",
+        "settings"
+      ],
+      "requirement": "Schema 8 clamps schema-7 opacity and blur, defaults to 96 and 12, removes visibility.buried, preserves unrelated settings, and disables glass controls outside Sapphire."
+    },
+    {
+      "id": 35,
+      "tags": [
+        "persistence"
+      ],
+      "requirement": "A valid stored Month or Year value loads before first render, changes only on explicit user selection, and is reused for loading, refresh, retry, theme, settings save, and restart."
+    },
+    {
+      "id": 36,
+      "tags": [
+        "loading"
+      ],
+      "requirement": "Initial and delayed loading reserve the selected Month or Year geometry, use clearly visible skeletons, and say Still loading your study data... without changing dimensions."
+    },
+    {
+      "id": 37,
+      "tags": [
+        "loading"
+      ],
+      "requirement": "Initial failure uses an approximately 400-440px panel with 20px padding and 32px Retry plus Open diagnostics actions, without a fake zero snapshot."
+    },
+    {
+      "id": 38,
+      "tags": [
+        "loading",
+        "retry"
+      ],
+      "requirement": "Refresh or retry with prior data keeps that dashboard visible, shows Refreshing..., then exposes exactly one full-width failure banner containing one last_updated_at timestamp without discarding the last successful data."
+    },
+    {
+      "id": 39,
+      "tags": [
+        "package"
+      ],
+      "requirement": "The 1.8.3 archive is built once and verifies version, the 24-member allowlist, safe paths, successful loading, and byte-for-byte source parity."
+    },
+    {
+      "id": 40,
+      "tags": [
+        "native_identity",
+        "native_evidence",
+        "persistence"
+      ],
+      "requirement": "The exact archive runs in one fresh sync-disabled Anki 26.8 profile with one restart, produces 55 initial frames plus RUNTIME-RESTART-PERSISTENCE, one overview and 15 detail sheets, and restart persistence has no waiver."
+    },
+    {
+      "id": 41,
+      "tags": [
+        "acceptance_boundaries"
+      ],
+      "requirement": "The supplied screenshot and retained 1.8.0/1.8.1/1.8.2 evidence remain unchanged calibration history; VoiceOver, forced colors, Windows/Linux, non-100% scaling, and OS scaling stay explicitly deferred and unclaimed."
+    }
+  ],
+  "visual_matrix": "qa/visual_regression_matrix_1_8_3.json",
+  "capture_manifest": "qa/capture_evidence_manifest_1_8_3.json"
+}

@@ -20,14 +20,15 @@ list, and native footer remain untouched; there is no host scrim or custom
 background preference in this add-on.
 `appearance.text_scale` accepts 90–150.
 
-At the 100% release target, the dashboard uses a 1,320 px maximum width, 16 px
-minimum side margins, 22 px top spacing, 12 px component gaps, and 72 px bottom
-safe area. Calendar and rail stay side by side from 940 component pixels; from
-440–939 px the calendar is followed by a 2x2 metric grid; below 440 px metrics
-use one column. Month never scrolls internally. The continuous 53-column Year
-view is the only internal horizontal scroller and only below 320 px. Dedicated
-125% and 150% visual calibration is deferred, but saved scale values remain
-supported.
+At the 100% release target, the dashboard uses a 1,240 px maximum width, 16 px
+minimum side margins, 22 px top spacing, 12–14 px component gaps, and 66 px of
+bottom clearance for Anki's 42 px native controls plus a 24 px gap. Calendar
+and rail stay side by side from 1,040 component pixels, with the rail at least
+372 px wide; below that they stack and the metric grid auto-fits cards around a
+180 px minimum. Narrow density begins below 420 px. Month never scrolls
+internally. The continuous 53-column Year view is the only internal horizontal
+scroller and only below 480 px. Non-100% visual calibration is deferred, but
+saved scale values remain supported.
 
 `heatmap.presets_by_theme` stores an independent completion ramp for every
 dashboard theme:
@@ -56,8 +57,10 @@ render, refresh, retry, settings saves, and restart.
 
 The integrated calendar footer has no visibility or placement setting. It
 always belongs to the calendar card and combines the Completion, Reviews due,
-and Event legend groups with a Today/Selected date chip and the global next
-event. Past/current dates with studied cards expose Reviewed cards and
+and Event legend groups with a Today/Selected date chip. Today uses `Next
+event`; a selected date uses `On this date` or `No event on this date`, and the
+event control switches between `Edit event` and `Add event`. Past/current dates
+with studied cards expose Reviewed cards and
 supported future dates expose Due cards; the action is hidden when its
 exact card set is empty or unavailable. It uses the solid theme
 tonal treatment. Most missed remains hidden until an
