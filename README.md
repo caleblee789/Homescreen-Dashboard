@@ -26,9 +26,12 @@ Browser or statistics classes.
 
 ## Install
 
-Install the verified `home-dashboard-overhaul-1.8.5.ankiaddon` from the 1.8.5
-release evidence through **Tools → Add-ons → Install from file**, then restart
-Anki. Disable any legacy source add-ons named by the activation card.
+Install the verified
+[`home-dashboard-overhaul-1.8.5.ankiaddon`](home_dashboard_overhaul/qa/release-evidence-1.8.5-2026-08-24/package/home-dashboard-overhaul-1.8.5.ankiaddon)
+from the [1.8.5 native release evidence](home_dashboard_overhaul/qa/release-evidence-1.8.5-2026-08-24/README.md)
+through **Tools → Add-ons → Install from file**, then restart Anki. Its SHA-256
+is `2eb15cfd1c001f5eafa2e412f4a814aa4a683d7c5b372305b44e48f4627792f1`.
+Disable any legacy source add-ons named by the activation card.
 
 The manifest supports Anki Desktop 26.8 (`min_point_version` and
 `max_point_version` 260800).
@@ -56,6 +59,14 @@ The current machine-readable release authorities are:
 - [ui-surface-registry_1_8_5.json](home_dashboard_overhaul/qa/ui-surface-registry_1_8_5.json)
 - [visual_regression_matrix_1_8_5.json](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_5.json)
 - [capture_evidence_manifest_1_8_5.json](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_5.json)
+
+The [complete 1.8.5 evidence set](home_dashboard_overhaul/qa/release-evidence-1.8.5-2026-08-24/README.md)
+retains the exact 24-member archive, 97 contract-owned native captures, all 18
+detail sheets, an [overview contact sheet](home_dashboard_overhaul/qa/release-evidence-1.8.5-2026-08-24/contact-sheets/contact-sheet-00-overview.png),
+restart-persistence results, archive parity, and four-gate isolation reports.
+The [1.8.3 Settings contact-sheet baseline](home_dashboard_overhaul/qa/settings-menu-contact-sheets-1.8.3-2026-08-23-2222/capture-manifest.json)
+is preserved separately as historical design evidence with 21 raw captures and
+six presentation sheets.
 
 The 1.8.0 through 1.8.4 packages and evidence remain immutable historical
 comparison material. VoiceOver, Windows, Linux, forced-colors, DPR 1, and true

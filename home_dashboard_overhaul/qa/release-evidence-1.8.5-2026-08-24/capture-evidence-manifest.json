@@ -1,0 +1,75 @@
+{
+  "contact_sheets": {
+    "details": 18,
+    "exact_once_detail_coverage": true,
+    "overview": 1
+  },
+  "deferred_unrun": [
+    "voiceover_review",
+    "windows_validation",
+    "linux_validation",
+    "forced_colors_review",
+    "device_pixel_ratio_1",
+    "os_display_scaling"
+  ],
+  "isolation": {
+    "all_four_gates_repeated_after_restart": true,
+    "initial": {
+      "candidate": {
+        "candidate": "/Users/test/Documents/ChatGPT.nosync/Homescreen Statistics Overhaul/home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.5.ankiaddon",
+        "candidate_sha256": "2eb15cfd1c001f5eafa2e412f4a814aa4a683d7c5b372305b44e48f4627792f1",
+        "installed_member_parity": "passed",
+        "manifest_version": "1.8.5",
+        "member_count": 24
+      },
+      "collection_path": "/private/tmp/anki-release-qa.pxjhow7_/Codex QA HDO 1.8.5 Final 20260824-1805/collection.anki2",
+      "gated_before_window_interaction": true,
+      "gates": {
+        "filesystem": true,
+        "process": true,
+        "sync": true,
+        "window": true
+      },
+      "profile": "Codex QA HDO 1.8.5 Final 20260824-1805",
+      "run_root": "/private/tmp/anki-release-qa.pxjhow7_",
+      "status": "passed",
+      "window_title": "Codex QA HDO 1.8.5 Final 20260824-1805 - Anki"
+    },
+    "restart": {
+      "candidate": {
+        "candidate": "/Users/test/Documents/ChatGPT.nosync/Homescreen Statistics Overhaul/home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.5.ankiaddon",
+        "candidate_sha256": "2eb15cfd1c001f5eafa2e412f4a814aa4a683d7c5b372305b44e48f4627792f1",
+        "installed_member_parity": "passed",
+        "manifest_version": "1.8.5",
+        "member_count": 24
+      },
+      "collection_path": "/private/tmp/anki-release-qa.pxjhow7_/Codex QA HDO 1.8.5 Final 20260824-1805/collection.anki2",
+      "gated_before_window_interaction": true,
+      "gates": {
+        "filesystem": true,
+        "process": true,
+        "sync": true,
+        "window": true
+      },
+      "profile": "Codex QA HDO 1.8.5 Final 20260824-1805",
+      "run_root": "/private/tmp/anki-release-qa.pxjhow7_",
+      "status": "passed",
+      "window_title": "Codex QA HDO 1.8.5 Final 20260824-1805 - Anki"
+    }
+  },
+  "native_captures": {
+    "initial": 95,
+    "restart": 2,
+    "total": 97
+  },
+  "package": {
+    "member_count": 24,
+    "path": "package/home-dashboard-overhaul-1.8.5.ankiaddon",
+    "sha256": "2eb15cfd1c001f5eafa2e412f4a814aa4a683d7c5b372305b44e48f4627792f1",
+    "source_archive_byte_parity": "passed"
+  },
+  "release": "1.8.5",
+  "restart_persistence": "passed",
+  "schema_version": 3,
+  "status": "passed"
+}

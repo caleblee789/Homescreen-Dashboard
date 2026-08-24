@@ -1,0 +1,218 @@
+{
+  "file_count": 42,
+  "files": [
+    {
+      "file": "CHANGELOG.md",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "README.md",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "analytics.py",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "calendar_repository.py",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "config.md",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "config_schema.py",
+      "group": "Color-system implementation",
+      "status": " M"
+    },
+    {
+      "file": "controller.py",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "docs/qa/release-visual-contract.md",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "manifest.json",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "qa/color_system_audit.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "qa/validate_revised_ui_contract.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "renderer.py",
+      "group": "Color-system implementation",
+      "status": " M"
+    },
+    {
+      "file": "settings.py",
+      "group": "Color-system implementation",
+      "status": " M"
+    },
+    {
+      "file": "settings_model.py",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "tests/calendar_model_test.js",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_analytics.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_calendar_qa_manifest.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_calendar_repository.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_config_and_themes.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_controller_insights.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_renderer.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_settings_model.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_settings_release_contract.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_static_assets.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_ui_primitives.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_ui_surface_registry.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "tests/test_verse.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "themes.py",
+      "group": "Color-system implementation",
+      "status": " M"
+    },
+    {
+      "file": "tools/build_ankiaddon.py",
+      "group": "Automated and visual QA",
+      "status": " M"
+    },
+    {
+      "file": "ui_primitives.py",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "verse.py",
+      "group": "Release documentation and metadata",
+      "status": " M"
+    },
+    {
+      "file": "web/dashboard.css",
+      "group": "Color-system implementation",
+      "status": " M"
+    },
+    {
+      "file": "web/dashboard.js",
+      "group": "Color-system implementation",
+      "status": " M"
+    },
+    {
+      "file": "qa/assemble_release_evidence_1_8_5.py",
+      "group": "Automated and visual QA",
+      "status": "??"
+    },
+    {
+      "file": "qa/calendar_surface_manifest_1_8_5.json",
+      "group": "Automated and visual QA",
+      "status": "??"
+    },
+    {
+      "file": "qa/capture_evidence_manifest_1_8_5.json",
+      "group": "Automated and visual QA",
+      "status": "??"
+    },
+    {
+      "file": "qa/release-evidence-1.8.5-2026-08-24/",
+      "group": "Automated and visual QA",
+      "status": "??"
+    },
+    {
+      "file": "qa/runtime_probe_release_1_8_5.py",
+      "group": "Automated and visual QA",
+      "status": "??"
+    },
+    {
+      "file": "qa/runtime_probe_release_1_8_5_manifest.json",
+      "group": "Automated and visual QA",
+      "status": "??"
+    },
+    {
+      "file": "qa/settings-menu-contact-sheets-1.8.3-2026-08-23-2222/",
+      "group": "Automated and visual QA",
+      "status": "??"
+    },
+    {
+      "file": "qa/ui-surface-registry_1_8_5.json",
+      "group": "Automated and visual QA",
+      "status": "??"
+    },
+    {
+      "file": "qa/visual_regression_matrix_1_8_5.json",
+      "group": "Automated and visual QA",
+      "status": "??"
+    }
+  ],
+  "generated_at": "2026-08-24T14:03:56-05:00",
+  "schema_version": 1,
+  "scope": "Current Home Dashboard 1.8.2 release-candidate worktree, excluding immutable generated evidence directories"
+}
