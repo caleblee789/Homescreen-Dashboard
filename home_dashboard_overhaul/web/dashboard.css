@@ -11,13 +11,14 @@
   font-size: calc(15px * var(--hdo-scale));
   line-height: 1.42;
   isolation: isolate;
-  margin: 24px auto 32px;
-  max-width: none;
+  margin: 22px auto 0;
+  max-width: 1320px;
   overflow-x: clip;
-  padding: 0;
+  padding: 0 0 72px;
   position: relative;
   text-align: left;
-  width: min(1480px, calc(100vw - 64px));
+  scroll-padding-bottom: 72px;
+  width: min(1320px, calc(100% - 32px));
 }
 
 #hdo-dashboard[data-hdo-color-mode="light"] { color-scheme: light; }
@@ -28,17 +29,6 @@
   min-height: 100%;
 }
 
-#hdo-dashboard[data-hdo-background-image="true"]::before {
-  background: var(--ui-canvas);
-  border-radius: 16px;
-  content: "";
-  inset: -12px;
-  opacity: .82;
-  pointer-events: none;
-  position: absolute;
-  z-index: 0;
-}
-
 #hdo-dashboard button {
   color: inherit;
   font: inherit;
@@ -47,7 +37,7 @@
 
 #hdo-dashboard .hdo-stack {
   display: grid;
-  gap: 16px;
+  gap: 12px;
   min-width: 0;
   padding: 0;
   position: relative;
@@ -62,27 +52,35 @@
   min-width: 0;
 }
 
+#hdo-dashboard[data-hdo-theme="Sapphire Glass"] .hdo-card,
+#hdo-dashboard[data-hdo-theme="Sapphire Glass"] .hdo-dashboard-panel,
+#hdo-dashboard[data-hdo-theme="Sapphire Glass"] .hdo-statistics-card {
+  -webkit-backdrop-filter: var(--hdo-card-backdrop-filter);
+  backdrop-filter: var(--hdo-card-backdrop-filter);
+}
+
 #hdo-dashboard .hdo-dashboard-layout {
-  align-items: stretch;
+  align-items: start;
   display: grid;
-  gap: 16px;
+  gap: 12px;
   grid-template-columns: minmax(0, 1fr);
   min-width: 0;
 }
 
 #hdo-dashboard .hdo-insight-rail {
   display: grid;
-  gap: 16px;
+  align-content: start;
+  gap: 11px;
   grid-template-rows: max-content;
   min-width: 0;
 }
 
 #hdo-dashboard .hdo-insight-rail[data-hdo-has-metrics="true"][data-hdo-has-bible="true"] {
-  grid-template-rows: max-content minmax(126px, 1fr);
+  grid-template-rows: max-content max-content;
 }
 
 #hdo-dashboard .hdo-insight-rail[data-hdo-has-metrics="false"][data-hdo-has-bible="true"] {
-  grid-template-rows: minmax(126px, auto);
+  grid-template-rows: max-content;
 }
 
 #hdo-dashboard .hdo-calendar-card {
@@ -93,19 +91,22 @@
   container: hdo-calendar / inline-size;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  align-self: start;
+  block-size: auto;
+  height: auto;
   isolation: isolate;
+  min-block-size: 0;
 }
 
 #hdo-dashboard .hdo-statistics-card {
   background: var(--ui-card-background);
-  border-radius: 8px;
+  border-radius: 9px;
   box-shadow: var(--ui-shadow-card);
 }
 
 #hdo-dashboard .hdo-bible-card {
   background: var(--ui-card-background);
-  border-radius: 8px;
+  border-radius: 9px;
   box-shadow: var(--ui-shadow-card);
 }
 
@@ -120,8 +121,25 @@
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(0, 1fr) auto;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   min-width: 0;
+}
+
+#hdo-dashboard .hdo-calendar-title-line {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 10px;
+}
+
+#hdo-dashboard .hdo-refresh-status {
+  color: var(--ui-text-tertiary);
+  font-size: calc(11px * var(--hdo-scale));
+  font-weight: 650;
+}
+
+#hdo-dashboard .hdo-refresh-status.is-error {
+  color: var(--status-danger-text);
 }
 
 #hdo-dashboard h1,
@@ -155,12 +173,12 @@
 #hdo-dashboard .hdo-context-actions {
   align-items: center;
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 #hdo-dashboard .hdo-header-controls {
   flex-wrap: nowrap;
-  gap: 6px;
+  gap: 8px;
   justify-content: flex-end;
   min-width: 0;
 }
@@ -169,8 +187,8 @@
 #hdo-dashboard .hdo-period-controls {
   background: var(--ui-surface-2);
   border: 1px solid var(--ui-border-subtle);
-  border-radius: 6px;
-  gap: 1px;
+  border-radius: 7px;
+  gap: 0;
   min-width: 0;
   padding: 1px;
 }
@@ -182,8 +200,8 @@
   cursor: pointer;
   color: var(--ui-text-secondary);
   font-size: calc(13.75px * var(--hdo-scale));
-  min-height: 35px;
-  padding: 5px 10px;
+  min-height: 32px;
+  padding: 4px 10px;
   transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
@@ -213,8 +231,15 @@
 
 #hdo-dashboard .hdo-view-switch button {
   background: var(--ui-surface-2);
-  border-color: var(--ui-border-default);
+  border: 0;
+  border-radius: 5px;
   color: var(--ui-text-secondary);
+  min-height: 30px;
+}
+
+#hdo-dashboard .hdo-view-switch button + button,
+#hdo-dashboard .hdo-period-controls button + button {
+  border-inline-start: 1px solid var(--ui-border-subtle);
 }
 
 #hdo-dashboard .hdo-view-switch button[aria-pressed="true"] {
@@ -267,8 +292,10 @@
 
 #hdo-dashboard .hdo-period-controls button {
   background: var(--ui-surface-2);
-  border-color: var(--ui-border-default);
+  border: 0;
+  border-radius: 5px;
   color: var(--ui-text-secondary);
+  min-height: 30px;
 }
 
 #hdo-dashboard .hdo-view-switch button:hover:not([aria-pressed="true"]),
@@ -293,7 +320,7 @@
   background: var(--ui-surface-2);
   border: 1px solid var(--ui-border-subtle);
   border-radius: 8px;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
   min-width: 0;
   padding: 12px;
@@ -303,7 +330,7 @@
   background: transparent;
   border-color: transparent;
   border-radius: 0;
-  display: flex;
+  display: block;
   padding: 0;
 }
 
@@ -315,10 +342,11 @@
 }
 
 #hdo-dashboard .hdo-calendar-shell[data-hdo-calendar-view="year"] .hdo-calendar-body {
-  align-items: center;
+  align-content: start;
   display: grid;
-  flex: 1;
-  padding-block: 10px 12px;
+  min-block-size: 0;
+  padding-block: 0 12px;
+  row-gap: 10px;
 }
 
 #hdo-dashboard .hdo-calendar-shell[data-hdo-calendar-view="year"] .hdo-year-heatmap-content {
@@ -350,7 +378,7 @@
   display: grid;
   column-gap: 5px;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: repeat(var(--hdo-month-rows), clamp(44px, 4.8cqi, 48px));
+  grid-template-rows: repeat(var(--hdo-month-rows), clamp(42px, 4.4cqi, 44px));
   row-gap: 5px;
 }
 
@@ -422,7 +450,7 @@
 #hdo-dashboard .hdo-calendar-day[data-level="5"] { background: var(--heat-complete-5); color: var(--heat-complete-text-5); }
 
 #hdo-dashboard .hdo-calendar-day.is-future {
-  background: var(--calendar-future-bg);
+  background: var(--calendar-empty-bg);
   color: var(--calendar-future-text);
 }
 
@@ -440,9 +468,12 @@
   border-color: var(--ui-accent-border);
 }
 
-#hdo-dashboard .hdo-calendar-day.is-future[data-due-level="1"] { background: var(--heat-due-bg-1); color: var(--ui-text-primary); }
-#hdo-dashboard .hdo-calendar-day.is-future[data-due-level="2"] { background: var(--heat-due-bg-2); color: var(--ui-text-primary); }
-#hdo-dashboard .hdo-calendar-day.is-future[data-due-level="3"] { background: var(--heat-due-bg-3); color: var(--ui-text-primary); }
+#hdo-dashboard .hdo-calendar-day.is-future[data-due-level="1"],
+#hdo-dashboard .hdo-calendar-day.is-future[data-due-level="2"],
+#hdo-dashboard .hdo-calendar-day.is-future[data-due-level="3"] {
+  background: var(--calendar-empty-bg);
+  color: var(--calendar-future-text);
+}
 
 #hdo-dashboard .hdo-calendar-day.is-out-of-month,
 #hdo-dashboard .hdo-calendar-day.is-out-of-month[data-due-level] {
@@ -462,9 +493,9 @@
 #hdo-dashboard .hdo-calendar-day[data-due-level="1"]::after { background: var(--heat-due-mark-1); }
 #hdo-dashboard .hdo-calendar-day[data-due-level="2"]::after { background: var(--heat-due-mark-2); }
 #hdo-dashboard .hdo-calendar-day[data-due-level="3"]::after { background: var(--heat-due-mark-3); }
-#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day[data-due-level="1"]::after { block-size: 2px; }
-#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day[data-due-level="2"]::after { block-size: 4px; }
-#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day[data-due-level="3"]::after { block-size: 6px; }
+#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day[data-due-level="1"]::after { block-size: 3px; }
+#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day[data-due-level="2"]::after { block-size: 3px; }
+#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day[data-due-level="3"]::after { block-size: 4px; }
 
 #hdo-dashboard .hdo-calendar-day:disabled {
   background: var(--ui-disabled-surface);
@@ -517,13 +548,13 @@
   background: var(--status-event-fill);
   border: 1px solid var(--ui-text-primary);
   box-shadow: 0 0 0 1px var(--calendar-event-halo);
-  height: 8px;
+  height: 7px;
   inset-inline-end: 5px;
   pointer-events: none;
   position: absolute;
   top: 5px;
   transform: rotate(45deg);
-  width: 8px;
+  width: 7px;
   z-index: 5;
 }
 
@@ -597,8 +628,12 @@
   background: var(--calendar-footer-bg);
   border-radius: 0 0 9px 9px;
   border-top: 1px solid var(--ui-border-subtle);
-  margin: 12px -16px -16px;
+  margin: 14px -16px -16px;
   overflow: hidden;
+}
+
+#hdo-dashboard .hdo-calendar-shell[data-hdo-calendar-view="year"] + .hdo-calendar-footer {
+  margin-top: 0;
 }
 
 #hdo-dashboard .hdo-calendar-legend {
@@ -607,9 +642,9 @@
   color: var(--ui-text-secondary);
   display: flex;
   flex-wrap: wrap;
-  font-size: calc(12px * var(--hdo-scale));
-  gap: 6px 18px;
-  min-height: 36px;
+  font-size: calc(11.5px * var(--hdo-scale));
+  gap: 6px 16px;
+  min-height: 34px;
   padding: 8px 12px;
 }
 
@@ -630,7 +665,7 @@
 
 #hdo-dashboard .hdo-legend-title {
   color: var(--ui-text-secondary);
-  font-size: calc(12px * var(--hdo-scale));
+  font-size: calc(11.5px * var(--hdo-scale));
   font-weight: 650;
 }
 
@@ -659,13 +694,14 @@
 }
 
 #hdo-dashboard .hdo-due-legend i {
-  border: 1px solid var(--ui-border-subtle);
-  border-radius: 2px;
+  background: transparent !important;
+  border: 0;
+  border-radius: 1px;
   display: inline-block;
-  height: 10px;
+  height: 8px;
   overflow: hidden;
   position: relative;
-  width: 10px;
+  width: 8px;
 }
 
 #hdo-dashboard .hdo-due-legend i::after {
@@ -676,15 +712,12 @@
   position: absolute;
 }
 
-#hdo-dashboard .hdo-due-legend i[data-due-level="1"] { background: var(--heat-due-bg-1); }
-#hdo-dashboard .hdo-due-legend i[data-due-level="2"] { background: var(--heat-due-bg-2); }
-#hdo-dashboard .hdo-due-legend i[data-due-level="3"] { background: var(--heat-due-bg-3); }
 #hdo-dashboard .hdo-due-legend i[data-due-level="1"]::after { background: var(--heat-due-mark-1); }
 #hdo-dashboard .hdo-due-legend i[data-due-level="2"]::after { background: var(--heat-due-mark-2); }
 #hdo-dashboard .hdo-due-legend i[data-due-level="3"]::after { background: var(--heat-due-mark-3); }
-#hdo-dashboard .hdo-due-legend i[data-due-level="1"]::after { height: 2px; }
-#hdo-dashboard .hdo-due-legend i[data-due-level="2"]::after { height: 4px; }
-#hdo-dashboard .hdo-due-legend i[data-due-level="3"]::after { height: 6px; }
+#hdo-dashboard .hdo-due-legend i[data-due-level="1"]::after,
+#hdo-dashboard .hdo-due-legend i[data-due-level="2"]::after,
+#hdo-dashboard .hdo-due-legend i[data-due-level="3"]::after { height: 4px; }
 
 #hdo-dashboard .hdo-legend-event-marker,
 #hdo-dashboard .hdo-context-event-marker {
@@ -701,14 +734,13 @@
 
 #hdo-dashboard .hdo-calendar-context {
   align-items: center;
-  column-gap: 16px;
+  column-gap: 10px;
   display: grid;
-  grid-template-areas:
-    "date action"
-    "event action";
-  grid-template-columns: minmax(0, 1fr) auto;
-  padding: 10px 16px 12px;
-  row-gap: 6px;
+  grid-template-areas: "date event edit action";
+  grid-template-columns: auto minmax(120px, 1fr) auto auto;
+  min-block-size: 46px;
+  padding: 8px 12px;
+  row-gap: 0;
 }
 
 #hdo-dashboard .hdo-selected-date-line {
@@ -746,7 +778,7 @@
 #hdo-dashboard .hdo-next-event-line {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   font-size: calc(12.5px * var(--hdo-scale));
   gap: 4px 6px;
   grid-area: event;
@@ -759,6 +791,7 @@
   font-weight: 700;
   letter-spacing: .055em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 #hdo-dashboard .hdo-context-event-marker {
@@ -806,7 +839,13 @@
 }
 
 #hdo-dashboard .hdo-event-more {
-  color: var(--ui-text-tertiary);
+  background: var(--ui-surface-3);
+  border: 1px solid var(--ui-border-subtle);
+  border-radius: 999px;
+  color: var(--ui-text-secondary);
+  font-size: calc(10.5px * var(--hdo-scale));
+  font-weight: 700;
+  padding-inline: 5px;
 }
 
 #hdo-dashboard .hdo-event-empty {
@@ -818,50 +857,52 @@
   border: 1px solid var(--ui-border-default) !important;
   border-radius: 5px !important;
   color: var(--ui-text-secondary) !important;
-  height: 34px;
-  min-height: 34px !important;
-  min-width: 34px !important;
-  padding: 8px !important;
-  width: 34px;
+  height: 32px;
+  grid-area: edit;
+  min-height: 32px !important;
+  min-width: 32px !important;
+  padding: 7px !important;
+  width: 32px;
 }
 
 #hdo-dashboard .hdo-context-actions {
   align-self: center;
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   grid-area: action;
-  justify-items: stretch;
+  justify-content: flex-end;
   margin: 0;
 }
 
 #hdo-dashboard .hdo-context-action {
   font-size: calc(12px * var(--hdo-scale));
-  min-height: 34px !important;
+  min-height: 32px !important;
   padding-block: 3px !important;
   white-space: nowrap;
 }
 
 #hdo-dashboard .hdo-calendar-card-action {
-  background: var(--ui-accent) !important;
-  border-color: var(--ui-accent) !important;
+  background: var(--ui-accent-soft) !important;
+  border-color: var(--ui-accent-border) !important;
   border-radius: 5px !important;
-  color: var(--ui-on-accent) !important;
+  color: var(--ui-accent) !important;
   font-weight: 700;
-  height: 34px;
-  min-width: 122px;
+  height: 32px;
+  min-width: 112px;
   padding-inline: 11px !important;
 }
 
 #hdo-dashboard .hdo-calendar-card-action:hover:not(:disabled) {
-  background: var(--ui-accent-hover) !important;
-  border-color: var(--ui-accent-hover) !important;
-  color: var(--ui-on-accent) !important;
+  background: var(--ui-control-hover) !important;
+  border-color: var(--ui-accent) !important;
+  color: var(--ui-accent-hover) !important;
 }
 
 #hdo-dashboard .hdo-calendar-card-action:active:not(:disabled) {
-  background: var(--ui-accent-pressed) !important;
+  background: var(--ui-control-pressed) !important;
   border-color: var(--ui-accent-pressed) !important;
-  color: var(--ui-on-accent) !important;
+  color: var(--ui-accent-pressed) !important;
 }
 
 #hdo-dashboard .hdo-calendar-card-action:disabled {
@@ -873,20 +914,42 @@
 #hdo-dashboard .hdo-calendar-tooltip {
   background: var(--ui-overlay-surface);
   border: 1px solid var(--ui-border-default);
-  border-radius: 10px;
+  border-radius: 8px;
   box-shadow: var(--ui-shadow-overlay);
   color: var(--ui-text-primary);
-  max-width: min(260px, calc(100vw - 20px));
-  min-width: min(220px, calc(100vw - 20px));
-  padding: 12px 13px;
+  max-width: min(220px, calc(100vw - 20px));
+  min-width: min(190px, calc(100vw - 20px));
+  padding: 10px 11px;
   pointer-events: none;
   position: fixed;
   width: max-content;
   z-index: 10000;
 }
 
+#hdo-dashboard .hdo-calendar-tooltip::after {
+  background: var(--ui-overlay-surface);
+  border-bottom: 1px solid var(--ui-border-default);
+  border-right: 1px solid var(--ui-border-default);
+  bottom: -5px;
+  content: "";
+  height: 9px;
+  left: var(--hdo-tooltip-caret-left, 50%);
+  position: absolute;
+  transform: translateX(-50%) rotate(45deg);
+  width: 9px;
+}
+
+#hdo-dashboard .hdo-calendar-tooltip.is-below::after {
+  border-bottom: 0;
+  border-right: 0;
+  border-left: 1px solid var(--ui-border-default);
+  border-top: 1px solid var(--ui-border-default);
+  bottom: auto;
+  top: -5px;
+}
+
 #hdo-dashboard .hdo-calendar-tooltip h3 {
-  font-size: calc(14.5px * var(--hdo-scale));
+  font-size: calc(13.5px * var(--hdo-scale));
   margin: 0 0 7px;
 }
 
@@ -927,14 +990,14 @@
 
 #hdo-dashboard .hdo-summary-metrics-grid {
   display: grid;
-  gap: 16px;
+  gap: 11px;
   grid-template-areas:
     "progress"
     "session"
     "recent"
     "lifetime";
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: repeat(4, minmax(146px, 1fr));
+  grid-template-rows: repeat(4, auto);
   min-width: 0;
 }
 
@@ -945,7 +1008,7 @@
 
 #hdo-dashboard .hdo-statistics-card {
   align-content: start;
-  min-height: 146px;
+  min-height: 0;
   min-width: 0;
   padding: 10px 12px;
 }
@@ -973,16 +1036,30 @@
   letter-spacing: 0;
 }
 
-#hdo-dashboard .hdo-progress-complete {
-  color: var(--ui-accent);
-  flex: 0 0 auto;
-  font-size: calc(11.5px * var(--hdo-scale));
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
+#hdo-dashboard .hdo-progress-card .hdo-stat-card-header {
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
-#hdo-dashboard .hdo-progress-complete[data-hdo-progress-state="no_cards_due"] {
+#hdo-dashboard .hdo-progress-status-chip {
+  background: var(--ui-surface-3);
+  border: 1px solid var(--ui-border-subtle);
+  border-radius: 999px;
+  color: var(--ui-text-secondary);
+  flex: 0 0 auto;
   font-size: calc(10.5px * var(--hdo-scale));
+  font-weight: 700;
+  line-height: 1.25;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  padding: 2px 6px;
+  white-space: normal;
+}
+
+#hdo-dashboard .hdo-progress-status-chip[data-hdo-progress-state="all_clear"] {
+  background: var(--ui-accent-soft);
+  border-color: var(--ui-accent-border);
+  color: var(--ui-accent);
 }
 
 #hdo-dashboard .hdo-statistics-card dl {
@@ -1017,6 +1094,8 @@
   white-space: nowrap;
 }
 
+#hdo-dashboard .hdo-value-compact { display: none; }
+
 #hdo-dashboard .hdo-value--completion dd { color: var(--ui-accent); }
 #hdo-dashboard .hdo-value--new dd { color: var(--status-new-text); }
 #hdo-dashboard .hdo-value--learning dd { color: var(--status-learning-text); }
@@ -1038,52 +1117,55 @@
 
 #hdo-dashboard .hdo-progress-track {
   background: var(--ui-surface-3);
+  border: 1px solid var(--ui-border-subtle);
   border-radius: 999px;
-  display: flex;
-  height: 6px;
-  margin: 1px 0 6px;
+  display: grid;
+  height: 14px;
+  margin: 2px 0 7px;
   overflow: hidden;
+  position: relative;
   width: 100%;
 }
 
-#hdo-dashboard .hdo-progress-segment {
-  flex: var(--hdo-progress-count) 1 0;
+#hdo-dashboard .hdo-progress-fill {
+  background: var(--progress-complete);
+  border-radius: inherit;
+  grid-area: 1 / 1;
   height: 100%;
-  min-width: 0;
+  width: var(--hdo-progress-percent, 0%);
+}
+
+#hdo-dashboard .hdo-progress-label {
+  align-self: center;
+  color: var(--ui-text-primary);
+  font-size: calc(10.5px * var(--hdo-scale));
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+  grid-area: 1 / 1;
+  justify-self: center;
+  line-height: 1;
+  mix-blend-mode: normal;
   position: relative;
+  text-shadow: 0 1px 0 var(--ui-surface-1);
+  z-index: 1;
 }
-
-#hdo-dashboard .hdo-progress-segment.is-populated {
-  min-width: 2px;
-}
-
-#hdo-dashboard .hdo-progress-track[data-hdo-progress-state="no_cards_due"] .hdo-progress-segment,
-#hdo-dashboard .hdo-progress-track[data-hdo-progress-state="unavailable"] .hdo-progress-segment {
-  min-width: 0;
-}
-
-#hdo-dashboard .hdo-progress-segment--completed { background: var(--progress-complete); }
-#hdo-dashboard .hdo-progress-segment--new { background: var(--status-new-fill); }
-#hdo-dashboard .hdo-progress-segment--learning { background: var(--status-learning-fill); }
-#hdo-dashboard .hdo-progress-segment--review { background: var(--status-review-fill); }
-#hdo-dashboard .hdo-progress-segment--buried { background: var(--status-buried-fill); }
 
 #hdo-dashboard .hdo-bible-card {
   display: grid;
   gap: 7px;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  min-height: 126px;
+  grid-template-rows: auto auto auto;
+  min-height: 0;
   min-width: 0;
   padding: 12px 16px 13px;
 }
 
 #hdo-dashboard .hdo-verse {
-  align-self: center;
+  align-self: start;
   font-family: var(--hdo-verse-font), Georgia, serif;
   font-size: calc(var(--hdo-verse-size) * var(--hdo-scale));
   font-weight: 500;
   justify-self: center;
-  line-height: 1.34;
+  line-height: 1.36;
   margin: 0 auto;
   max-width: 28ch;
   text-align: center;
@@ -1091,15 +1173,14 @@
 }
 
 #hdo-dashboard .hdo-verse--long {
-  font-size: calc(var(--hdo-verse-long-size) * var(--hdo-scale));
-  max-width: 36ch;
+  max-width: 30ch;
 }
 
 #hdo-dashboard .hdo-verse-reference {
   color: var(--ui-text-tertiary);
   font-size: calc(11.5px * var(--hdo-scale));
   justify-self: center;
-  margin: 0;
+  margin: 1px 0 0;
   text-align: center;
 }
 
@@ -1122,57 +1203,113 @@
 
 #hdo-dashboard .hdo-loading-layout {
   display: grid;
-  gap: 10px;
-  margin-top: 14px;
+  align-items: start;
+  gap: 12px;
 }
 
 #hdo-dashboard .hdo-loading-region {
-  background: var(--ui-surface-2);
+  background: var(--ui-card-background);
   border: 1px solid var(--ui-border-subtle);
   border-radius: 10px;
   display: grid;
   gap: 5px;
-  padding: 9px;
+  padding: 12px;
 }
 
 #hdo-dashboard .hdo-loading-region--calendar {
-  grid-template-columns: repeat(14, minmax(0, 1fr));
+  min-height: 0;
 }
 
 #hdo-dashboard .hdo-loading-region--metrics {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: grid;
+  gap: 11px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 #hdo-dashboard .hdo-loading-region--bible {
+  display: grid;
+  gap: 8px;
   grid-template-columns: 1fr;
+  margin-top: 11px;
 }
 
-#hdo-dashboard .hdo-loading-region span {
+#hdo-dashboard .hdo-loading-region span,
+#hdo-dashboard .hdo-loading-metric-card span,
+#hdo-dashboard .hdo-loading-calendar-grid span {
   animation: hdo-pulse 1.3s ease-in-out infinite alternate;
   background: var(--ui-surface-3);
   border-radius: 5px;
   min-height: 24px;
 }
 
-#hdo-dashboard .hdo-loading-region--calendar span {
-  min-height: 22px;
+#hdo-dashboard .hdo-loading-calendar-grid {
+  display: grid;
+  gap: 3px;
+  grid-template-columns: repeat(53, minmax(0, 1fr));
+  margin-top: 18px;
+  padding-block: 14px 12px;
 }
 
-#hdo-dashboard .hdo-loading-region--metrics span {
-  min-height: 58px;
+#hdo-dashboard .hdo-loading-calendar-grid span {
+  aspect-ratio: 1;
+  min-height: 6px;
 }
 
-#hdo-dashboard .hdo-loading-region--bible span {
-  min-height: 74px;
+#hdo-dashboard .hdo-loading-card[data-hdo-calendar-view="month"] .hdo-loading-calendar-grid {
+  gap: 5px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+#hdo-dashboard .hdo-loading-card[data-hdo-calendar-view="month"] .hdo-loading-calendar-grid span {
+  aspect-ratio: auto;
+  min-height: 42px;
+}
+
+#hdo-dashboard .hdo-loading-calendar-footer {
+  background: var(--ui-surface-3);
+  border-radius: 5px;
+  height: 72px;
+  margin: 12px -16px -16px;
+}
+
+#hdo-dashboard .hdo-loading-metric-card {
+  display: grid;
+  gap: 6px;
+  min-height: 132px;
+  padding: 11px 12px;
+}
+
+#hdo-dashboard .hdo-loading-metric-card span {
+  min-height: 10px;
+}
+
+#hdo-dashboard .hdo-loading-region--bible span:first-child {
+  min-height: 10px;
+  width: 28%;
+}
+
+#hdo-dashboard .hdo-loading-region--bible span:nth-child(2) {
+  min-height: 44px;
+  width: 72%;
+  justify-self: center;
+}
+
+#hdo-dashboard .hdo-loading-region--bible span:last-child {
+  min-height: 9px;
+  width: 22%;
+  justify-self: center;
 }
 
 #hdo-dashboard .hdo-loading-failure {
-  margin-top: 14px;
+  justify-self: center;
+  max-width: 560px;
+  padding: 16px;
+  width: 100%;
 }
 
 #hdo-dashboard .hdo-loading-failure p {
-  font-weight: 700;
-  margin-bottom: 8px;
+  color: var(--ui-text-secondary);
+  margin-bottom: 12px;
 }
 
 #hdo-dashboard .hdo-loading-actions {
@@ -1237,41 +1374,24 @@
   box-shadow: none;
 }
 
-@container hdo-dashboard (min-width: 640px) {
+@container hdo-dashboard (min-width: 440px) {
   #hdo-dashboard .hdo-summary-metrics-grid {
     grid-template-areas:
       "progress session"
       "recent lifetime";
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, 146px);
-  }
-
-  #hdo-dashboard[data-hdo-enlarged-text="true"] .hdo-summary-metrics-grid {
-    grid-template-rows: repeat(2, minmax(146px, auto));
+    grid-template-rows: repeat(2, auto);
   }
 
   #hdo-dashboard .hdo-verse {
-    max-width: 42ch;
+    max-width: 30ch;
   }
 }
 
-@container hdo-dashboard (min-width: 900px) and (max-width: 1219px) {
-  #hdo-dashboard .hdo-dashboard-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  #hdo-dashboard .hdo-insight-rail[data-hdo-has-metrics="true"][data-hdo-has-bible="true"] {
-    grid-template-rows: max-content minmax(126px, auto);
-  }
-}
-
-@container hdo-dashboard (min-width: 1220px) {
-  #hdo-dashboard[data-hdo-has-calendar="true"][data-hdo-has-insights="true"] .hdo-dashboard-layout {
-    grid-template-columns: minmax(0, 1fr) clamp(430px, 30cqi, 450px);
-  }
-
-  #hdo-dashboard .hdo-insight-rail {
-    height: 100%;
+@container hdo-dashboard (min-width: 940px) {
+  #hdo-dashboard[data-hdo-has-calendar="true"][data-hdo-has-insights="true"] .hdo-dashboard-layout,
+  #hdo-dashboard .hdo-loading-layout {
+    grid-template-columns: minmax(0, 2.2fr) minmax(300px, 1fr);
   }
 
   #hdo-dashboard .hdo-verse {
@@ -1279,13 +1399,19 @@
   }
 }
 
-@container hdo-dashboard (max-width: 639px) {
-  #hdo-dashboard .hdo-loading-region--calendar {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-  }
-
+@container hdo-dashboard (max-width: 439px) {
+  #hdo-dashboard .hdo-summary-metrics-grid,
   #hdo-dashboard .hdo-loading-region--metrics {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "progress"
+      "session"
+      "recent"
+      "lifetime";
+  }
+
+  #hdo-dashboard .hdo-calendar-grid--month {
+    grid-template-rows: repeat(var(--hdo-month-rows), clamp(34px, 10cqi, 38px));
   }
 }
 
@@ -1326,19 +1452,17 @@
 
 }
 
-@container hdo-calendar (max-width: 520px) {
+@container hdo-calendar (max-width: 699px) {
   #hdo-dashboard .hdo-calendar-context {
     grid-template-areas:
-      "date"
-      "event"
-      "action";
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 8px;
+      "date edit action"
+      "event event event";
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    row-gap: 7px;
   }
 
-  #hdo-dashboard .hdo-context-actions,
-  #hdo-dashboard .hdo-context-action {
-    width: 100%;
+  #hdo-dashboard .hdo-next-event-line {
+    flex-wrap: nowrap;
   }
 
   #hdo-dashboard .hdo-calendar-grid--year {
@@ -1358,36 +1482,71 @@
   }
 
   #hdo-dashboard .hdo-calendar-context {
+    grid-template-areas:
+      "date edit action"
+      "event event event";
+    column-gap: 4px;
+    grid-template-columns: minmax(0, 1fr) 32px auto;
     padding-inline: 9px;
+    row-gap: 6px;
+  }
+
+  #hdo-dashboard .hdo-period-controls button[data-hdo-calendar="today"] {
+    min-width: 0;
+    padding-inline: 4px;
+  }
+
+  #hdo-dashboard .hdo-selected-date-line {
+    font-size: calc(12px * var(--hdo-scale));
+    gap: 4px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  #hdo-dashboard .hdo-date-state-chip {
+    font-size: calc(10px * var(--hdo-scale));
+    padding-inline: 4px;
   }
 
   #hdo-dashboard .hdo-event-meta {
     flex-basis: 100%;
   }
-}
-
-@container hdo-calendar (min-width: 700px) {
-  #hdo-dashboard .hdo-calendar-context {
-    grid-template-areas: "date event action";
-    grid-template-columns: max-content minmax(0, 1fr) auto;
-  }
 
   #hdo-dashboard .hdo-next-event-line {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+  }
+
+  #hdo-dashboard .hdo-context-actions {
+    justify-content: flex-end;
+  }
+
+  #hdo-dashboard .hdo-calendar-card-action {
+    font-size: calc(11px * var(--hdo-scale));
+    min-width: 104px;
+    padding-inline: 7px !important;
   }
 }
 
-@media (max-width: 640px) {
-  #hdo-dashboard {
-    margin: 16px auto 24px;
-    width: calc(100vw - 16px);
-  }
-}
-
-@media (max-height: 760px) {
+@container hdo-calendar (max-width: 699px) and (min-width: 440px) {
   #hdo-dashboard .hdo-calendar-grid--month {
-    grid-template-rows: repeat(var(--hdo-month-rows), clamp(42px, 4.6cqi, 46px));
+    grid-template-rows: repeat(var(--hdo-month-rows), clamp(38px, 6cqi, 42px));
     row-gap: 4px;
+  }
+}
+
+@container hdo-dashboard (max-width: 619px) {
+  #hdo-dashboard .hdo-value-wide { display: none; }
+  #hdo-dashboard .hdo-value-compact { display: inline; }
+}
+
+@container hdo-dashboard (max-width: 319px) {
+  #hdo-dashboard[data-hdo-calendar-view="year"] .hdo-calendar-grid-frame {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  #hdo-dashboard[data-hdo-calendar-view="year"] .hdo-year-heatmap-content {
+    min-width: 620px;
   }
 }
 

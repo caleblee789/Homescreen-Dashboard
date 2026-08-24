@@ -3,6 +3,7 @@
 
   var DAY_MS = 86400000;
   var UNAVAILABLE_TEXT = "—";
+  var N_A_TEXT = "N/A";
 
   function parseDate(value) {
     var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
@@ -124,6 +125,16 @@
     return new Intl.NumberFormat(locale || undefined).format(Math.max(0, Number(value) || 0));
   }
 
+  function formatDurationCompact(seconds) {
+    var rawSeconds = Math.max(0, Number(seconds) || 0);
+    if (rawSeconds > 0 && rawSeconds < 60) return Math.round(rawSeconds) + "s";
+    var minutes = Math.max(0, Math.round(rawSeconds / 60));
+    if (minutes < 60) return minutes + "m";
+    var hours = Math.floor(minutes / 60);
+    var remainder = minutes % 60;
+    return remainder ? hours + "h " + remainder + "m" : hours + "h";
+  }
+
   function formatLongDate(value, locale) {
     var parsed = dateValue(value);
     return parsed
@@ -195,7 +206,7 @@
       return {
         event: selected[0],
         additional: selected.length - 1,
-        relationship: "Event on this date"
+        relationship: "On this date"
       };
     }
     var upcoming = getNextUpcomingEvent(events, todayIso);
@@ -283,6 +294,42 @@
       });
     }
     return { heading: formatLongDate(day.date, locale), rows: rows };
+  }
+
+  function tooltipPlacement(targetRect, tooltipRect, bounds, marginValue, offsetValue) {
+    var margin = Number.isFinite(Number(marginValue)) ? Math.max(0, Number(marginValue)) : 8;
+    var offset = Number.isFinite(Number(offsetValue)) ? Math.max(0, Number(offsetValue)) : 10;
+    var width = Math.max(0, Number(tooltipRect && tooltipRect.width) || 0);
+    var height = Math.max(0, Number(tooltipRect && tooltipRect.height) || 0);
+    var leftBound = Number(bounds && bounds.left) || 0;
+    var rightBound = Number(bounds && bounds.right) || 0;
+    var topBound = Number(bounds && bounds.top) || 0;
+    var bottomBound = Number(bounds && bounds.bottom) || 0;
+    var targetLeft = Number(targetRect && targetRect.left) || 0;
+    var targetTop = Number(targetRect && targetRect.top) || 0;
+    var targetWidth = Math.max(0, Number(targetRect && targetRect.width) || 0);
+    var targetHeight = Math.max(0, Number(targetRect && targetRect.height) || 0);
+    var targetRight = Number.isFinite(Number(targetRect && targetRect.right))
+      ? Number(targetRect.right)
+      : targetLeft + targetWidth;
+    var targetBottom = Number.isFinite(Number(targetRect && targetRect.bottom))
+      ? Number(targetRect.bottom)
+      : targetTop + targetHeight;
+    var center = targetLeft + targetWidth / 2;
+    var spaceAbove = targetTop - (topBound + margin);
+    var spaceBelow = (bottomBound - margin) - targetBottom;
+    var placeBelow = spaceAbove < height + offset && spaceBelow >= spaceAbove;
+    var preferredTop = placeBelow ? targetBottom + offset : targetTop - height - offset;
+    var maximumLeft = Math.max(leftBound + margin, rightBound - width - margin);
+    var maximumTop = Math.max(topBound + margin, bottomBound - height - margin);
+    var left = Math.min(maximumLeft, Math.max(leftBound + margin, center - width / 2));
+    var top = Math.min(maximumTop, Math.max(topBound + margin, preferredTop));
+    return {
+      left: Math.round(left),
+      top: Math.round(top),
+      below: placeBelow,
+      caretLeft: Math.round(Math.max(14, Math.min(Math.max(14, width - 14), center - left)))
+    };
   }
 
   function getDueLoadScale(forecast) {
@@ -379,6 +426,7 @@
 
     function start() {
       clearTimers();
+      root.dataset.hdoLoadState = "initial";
       root.setAttribute("aria-busy", "true");
       if (card) card.setAttribute("aria-busy", "true");
       if (heading) heading.textContent = "Loading your study dashboard…";
@@ -386,11 +434,14 @@
       if (skeleton) skeleton.hidden = false;
       if (failure) failure.hidden = true;
       delayedTimer = global.setTimeout(function () {
-        if (message) message.textContent = "Still loading your study data…";
+        root.dataset.hdoLoadState = "delayed";
+        if (message) message.textContent = "Still loading your study data...";
       }, 2500);
       failureTimer = global.setTimeout(function () {
+        root.dataset.hdoLoadState = "failure";
         root.setAttribute("aria-busy", "false");
         if (card) card.setAttribute("aria-busy", "false");
+        if (heading) heading.textContent = "Dashboard could not load";
         if (message) message.textContent = "";
         if (skeleton) skeleton.hidden = true;
         if (failure) failure.hidden = false;
@@ -518,17 +569,28 @@
 
     function positionTooltip(target, _pointer) {
       if (!tooltip || tooltip.hidden) return;
-      var margin = 10;
-      var offset = 9;
+      var margin = 8;
+      var offset = 10;
       var targetRect = target.getBoundingClientRect();
       var rect = tooltip.getBoundingClientRect();
-      var left = targetRect.left + targetRect.width / 2 - rect.width / 2;
-      var top = targetRect.top - rect.height - offset;
-      left = Math.min(global.innerWidth - rect.width - margin, Math.max(margin, left));
-      if (top < margin) top = targetRect.bottom + offset;
-      top = Math.min(global.innerHeight - rect.height - margin, Math.max(margin, top));
-      tooltip.style.left = Math.round(left) + "px";
-      tooltip.style.top = Math.round(top) + "px";
+      var card = target.closest(".hdo-calendar-card");
+      var cardBounds = card ? card.getBoundingClientRect() : {
+        left: 0, right: global.innerWidth, top: 0, bottom: global.innerHeight
+      };
+      var bounds = {
+        left: Math.max(0, cardBounds.left),
+        right: Math.min(global.innerWidth, cardBounds.right),
+        top: Math.max(0, cardBounds.top),
+        bottom: Math.min(global.innerHeight, cardBounds.bottom)
+      };
+      var placement = tooltipPlacement(targetRect, rect, bounds, margin, offset);
+      tooltip.classList.toggle("is-below", placement.below);
+      tooltip.style.setProperty(
+        "--hdo-tooltip-caret-left",
+        placement.caretLeft + "px"
+      );
+      tooltip.style.left = placement.left + "px";
+      tooltip.style.top = placement.top + "px";
     }
 
     function showTooltip(target, day, pointer) {
@@ -596,7 +658,7 @@
           eventMeta.textContent = eventMetaText;
           eventMore.hidden = eventContext.additional <= 0;
           eventMore.textContent = eventContext.additional > 0
-            ? "+" + formatNumber(eventContext.additional, locale) + " more"
+            ? "+" + formatNumber(eventContext.additional, locale)
             : "";
           eventEmpty.hidden = true;
           editEvent.hidden = false;
@@ -987,7 +1049,9 @@
         locale,
         envelope.facts.retention_target
       );
-      root.setAttribute("aria-busy", "false");
+      setDashboardUpdating(root, false);
+      var refreshWarning = root.querySelector(".hdo-refresh-warning");
+      if (refreshWarning) refreshWarning.remove();
     };
 
     renderCalendar();
@@ -1000,7 +1064,7 @@
     return state;
   }
 
-  function setMetric(root, key, value, rawValue) {
+  function setMetric(root, key, value, rawValue, compactValue) {
     var node = root.querySelector('[data-hdo-metric="' + key + '"]');
     if (!node) return;
     var row = node.closest(".hdo-metric-row");
@@ -1017,92 +1081,52 @@
       }
     }
     node.hidden = false;
-    node.textContent = unavailable ? UNAVAILABLE_TEXT : String(value);
+    var resolved = unavailable ? UNAVAILABLE_TEXT : String(value);
+    var wide = node.querySelector(".hdo-value-wide");
+    var compact = node.querySelector(".hdo-value-compact");
+    if (wide && compact) {
+      wide.textContent = resolved;
+      compact.textContent = unavailable ? UNAVAILABLE_TEXT : String(compactValue || value);
+    } else {
+      node.textContent = resolved;
+    }
   }
 
   function availableValue(state) {
     return state && state.status === "available" && state.reason === "" ? state.value : null;
   }
 
-  function roundedProgressPercent(completed, workload) {
-    if (workload <= 0) return 0;
-    return Math.min(100, Math.max(0, Math.floor(100 * completed / workload + 0.5)));
-  }
-
-  function progressShare(count, workload) {
-    if (workload <= 0) return "0";
-    return (100 * count / workload).toFixed(1).replace(/\.0$/, "");
-  }
-
-  function updateProgressComposition(root, statistics, presentation, locale) {
-    if (!statistics || typeof statistics !== "object") return;
-    var today = availableValue(statistics.today);
-    var queue = availableValue(statistics.queue);
+  function updateProgressComposition(root, _statistics, presentation, _locale) {
     var track = root.querySelector("[data-hdo-progress-track]");
-    var completeNode = root.querySelector('[data-hdo-metric="progress.percent"]');
-    if (!track || !completeNode) return;
+    var fill = root.querySelector("[data-hdo-progress-fill]");
+    var label = root.querySelector("[data-hdo-progress-label]");
+    var chip = root.querySelector("[data-hdo-progress-chip]");
+    if (!track || !fill || !label || !chip) return;
     var progress = presentation && presentation.progress && typeof presentation.progress === "object"
       ? presentation.progress
-      : null;
-    var counts = progress ? {
-      completed: Math.max(0, Number(progress.completed) || 0),
-      new: Math.max(0, Number(progress.new) || 0),
-      learning: Math.max(0, Number(progress.learning) || 0),
-      review: Math.max(0, Number(progress.review) || 0)
-    } : {
-      completed: today ? Math.max(0, Number(today.answers) || 0) : 0,
-      new: queue ? Math.max(0, Number(queue.new) || 0) : 0,
-      learning: queue ? Math.max(0, Number(queue.learning) || 0) : 0,
-      review: queue ? Math.max(0, Number(queue.review) || 0) : 0
-    };
-    var workload = progress ? Math.max(0, Number(progress.workload) || 0)
-      : counts.completed + counts.new + counts.learning + counts.review;
-    var remaining = counts.new + counts.learning + counts.review;
-    var state = progress && typeof progress.state === "string"
-      ? progress.state
-      : !today || !queue ? "unavailable" : workload === 0 ? "no_cards_due" : remaining === 0 ? "complete" : "in_progress";
-    var percent = progress && progress.percent !== null && progress.percent !== undefined
-      ? Number(progress.percent)
-      : state === "complete" ? 100 : state === "in_progress" ? roundedProgressPercent(counts.completed, workload) : 0;
-    var heading = state === "no_cards_due"
-      ? "No cards due"
-      : state === "unavailable" ? UNAVAILABLE_TEXT : percent + "%";
-    completeNode.textContent = heading;
-    completeNode.dataset.hdoProgressState = state;
-    completeNode.classList.toggle("is-unavailable", state === "unavailable");
-    completeNode.setAttribute("aria-label", state === "no_cards_due" ? "No cards are due today" : state === "unavailable" ? "Today’s workload is unavailable" : percent + "% complete");
+      : { status: "unavailable", fill_percent: null };
+    var state = typeof progress.status === "string" ? progress.status : "unavailable";
+    var hasFill = (state === "in_progress" || state === "complete") &&
+      progress.fill_percent !== null && progress.fill_percent !== undefined;
+    var percent = hasFill ? Math.min(100, Math.max(0, Number(progress.fill_percent) || 0)) : 0;
+    var statusLabel = state === "no_cards_scheduled"
+      ? "No cards scheduled"
+      : state === "all_clear"
+        ? "All clear"
+        : state === "complete"
+          ? "100% complete"
+          : state === "in_progress"
+            ? Math.round(percent) + "% complete"
+            : "Unavailable";
+    chip.hidden = hasFill;
+    chip.textContent = statusLabel;
+    chip.dataset.hdoProgressState = state;
+    track.hidden = !hasFill;
     track.dataset.hdoProgressState = state;
     track.setAttribute("aria-valuenow", String(percent));
-    var labels = {
-      completed: "Completed",
-      new: "New remaining",
-      learning: "Learning remaining",
-      review: "Reviews remaining"
-    };
-    var descriptions = [];
-    Object.keys(counts).forEach(function (key) {
-      var segment = track.querySelector('[data-hdo-progress-segment="' + key + '"]');
-      var description = labels[key] + ": " + formatNumber(counts[key], locale) +
-        " (" + progressShare(counts[key], workload) + "%)";
-      descriptions.push(description);
-      if (!segment) return;
-      segment.dataset.hdoProgressCount = String(counts[key]);
-      segment.style.setProperty("--hdo-progress-count", String(counts[key]));
-      segment.classList.toggle("is-populated", counts[key] > 0);
-      segment.title = description;
-      var hiddenLabel = segment.querySelector(".hdo-visually-hidden");
-      if (hiddenLabel) hiddenLabel.textContent = description;
-    });
-    track.setAttribute(
-      "aria-valuetext",
-      state === "no_cards_due"
-        ? "No cards are due today."
-        : state === "unavailable"
-          ? "Today’s workload is unavailable."
-          : workload > 0
-        ? percent + "% complete. " + descriptions.join("; ") + "."
-        : "Today’s workload is unavailable."
-    );
+    track.setAttribute("aria-valuetext", statusLabel);
+    fill.style.setProperty("--hdo-progress-percent", percent + "%");
+    label.textContent = statusLabel;
   }
 
   function updateMetricSemanticRole(root, key, role) {
@@ -1141,11 +1165,17 @@
     if (today) {
       setMetric(root, "today.answers", todayPresentation.cards_studied || formatNumber(today.answers, locale), today.answers);
       setMetric(root, "today.new_cards_studied", todayPresentation.new_cards_studied || formatNumber(today.new_cards_studied, locale), today.new_cards_studied);
-      setMetric(root, "today.seconds", todayPresentation.time || UNAVAILABLE_TEXT, today.seconds);
+      setMetric(
+        root,
+        "today.time_spent",
+        todayPresentation.time_spent || UNAVAILABLE_TEXT,
+        today.seconds,
+        formatDurationCompact(today.seconds)
+      );
       setMetric(root, "today.pace", todayPresentation.pace || UNAVAILABLE_TEXT, today.pace_value);
       setMetric(root, "queue.eta", todayPresentation.eta || UNAVAILABLE_TEXT, queue && queue.estimated_duration_seconds);
     } else {
-      ["today.answers", "today.new_cards_studied", "today.seconds", "today.pace", "queue.eta"].forEach(function (key) {
+      ["today.answers", "today.new_cards_studied", "today.time_spent", "today.pace", "queue.eta"].forEach(function (key) {
         setMetric(root, key, UNAVAILABLE_TEXT, null);
       });
     }
@@ -1161,13 +1191,13 @@
     }
     if (buried) {
       var buriedTotal = (buried.new || 0) + (buried.learning || 0) + (buried.review || 0);
-      setMetric(root, "buried.total", formatNumber(buriedTotal, locale), buriedTotal);
-    } else setMetric(root, "buried.total", UNAVAILABLE_TEXT, null);
+      setMetric(root, "today.cards_buried", todayPresentation.cards_buried || formatNumber(buriedTotal, locale), buriedTotal);
+    } else setMetric(root, "today.cards_buried", UNAVAILABLE_TEXT, null);
     if (recent) {
       setMetric(root, "last_seven_days.cards_studied", formatNumber(recent.cards_studied, locale), recent.cards_studied);
       setMetric(root, "last_seven_days.new_cards_studied", formatNumber(recent.new_cards_studied, locale), recent.new_cards_studied);
-      setMetric(root, "last_seven_days.retention", recent.retention && recent.retention.status === "available" ? recent.retention.percent + "%" : UNAVAILABLE_TEXT, recent.retention && recent.retention.percent);
-      setMetric(root, "last_seven_days.again_rate", recent.again_rate && recent.again_rate.status === "available" ? recent.again_rate.percent + "%" : UNAVAILABLE_TEXT, recent.again_rate && recent.again_rate.percent);
+      setMetric(root, "last_seven_days.retention", recent.retention && recent.retention.status === "available" ? recent.retention.percent + "%" : N_A_TEXT, recent.retention && recent.retention.percent);
+      setMetric(root, "last_seven_days.again_rate", recent.again_rate && recent.again_rate.status === "available" ? recent.again_rate.percent + "%" : N_A_TEXT, recent.again_rate && recent.again_rate.percent);
       updateMetricSemanticRole(
         root,
         "last_seven_days.retention",
@@ -1200,7 +1230,7 @@
       setMetric(root, "long_term.current_streak", formatNumber(longTerm.current_streak, locale) + (longTerm.current_streak === 1 ? " day" : " days"), longTerm.current_streak);
       setMetric(root, "long_term.longest_streak", formatNumber(longTerm.longest_streak, locale) + (longTerm.longest_streak === 1 ? " day" : " days"), longTerm.longest_streak);
       setMetric(root, "long_term.lifetime_cards_studied", formatNumber(longTerm.lifetime_cards_studied, locale), longTerm.lifetime_cards_studied);
-      setMetric(root, "long_term.lifetime_retention", longTerm.lifetime_retention && longTerm.lifetime_retention.status === "available" ? longTerm.lifetime_retention.percent + "%" : UNAVAILABLE_TEXT, longTerm.lifetime_retention && longTerm.lifetime_retention.percent);
+      setMetric(root, "long_term.lifetime_retention", longTerm.lifetime_retention && longTerm.lifetime_retention.status === "available" ? longTerm.lifetime_retention.percent + "%" : N_A_TEXT, longTerm.lifetime_retention && longTerm.lifetime_retention.percent);
       updateMetricSemanticRole(root, "long_term.lifetime_retention", "");
     } else {
       ["long_term.average_reviews_per_active_day", "long_term.current_streak", "long_term.longest_streak", "long_term.lifetime_retention", "long_term.lifetime_cards_studied"].forEach(function (key) {
@@ -1212,27 +1242,49 @@
 
   var activeState = null;
 
+  function setDashboardUpdating(root, updating) {
+    if (!root) return;
+    root.setAttribute("aria-busy", updating ? "true" : "false");
+    var status = root.querySelector("[data-hdo-refresh-status]");
+    if (status) {
+      status.hidden = !updating;
+      status.textContent = updating ? "Refreshing…" : "";
+      status.classList.remove("is-error");
+    }
+  }
+
+  function setDashboardRefreshFailed(root) {
+    if (!root) return;
+    root.setAttribute("aria-busy", "false");
+    var status = root.querySelector("[data-hdo-refresh-status]");
+    if (status) {
+      status.hidden = false;
+      status.textContent = "Refresh failed";
+      status.classList.add("is-error");
+    }
+    if (root.querySelector(".hdo-refresh-warning")) return;
+    var stack = root.querySelector(".hdo-stack");
+    if (!stack) return;
+    var warning = document.createElement("div");
+    warning.className = "hdo-data-warning hdo-refresh-warning";
+    warning.setAttribute("role", "alert");
+    var copy = document.createElement("span");
+    copy.textContent = "Refresh failed. Showing previously loaded data.";
+    var retry = document.createElement("button");
+    retry.type = "button";
+    retry.textContent = "Retry";
+    retry.addEventListener("click", function () {
+      warning.remove();
+      setDashboardUpdating(root, true);
+      send("retry", {});
+    });
+    warning.append(copy, retry);
+    stack.prepend(warning);
+  }
+
   function applyDocumentTheme(root) {
-    if (!root || typeof document === "undefined") return;
-    var styles = global.getComputedStyle(root);
-    var primary = styles.getPropertyValue("--ui-text-primary").trim();
-    var track = styles.getPropertyValue("--ui-scrollbar-track").trim();
-    var thumb = styles.getPropertyValue("--ui-scrollbar-thumb").trim();
-    var mode = root.dataset.hdoColorMode === "dark" ? "dark" : "light";
-    [document.documentElement, document.body].forEach(function (surface) {
-      if (!surface) return;
-      if (primary) surface.style.color = primary;
-      surface.style.colorScheme = mode;
-      if (track && thumb) surface.style.scrollbarColor = thumb + " " + track;
-    });
-    var backgroundSurfaces = [document.documentElement, document.body, document.getElementById("root")];
-    var hasBackgroundImage = root.dataset.hdoQaBackgroundImage === "true" || backgroundSurfaces.some(function (surface) {
-      if (!surface) return false;
-      var image = global.getComputedStyle(surface).backgroundImage;
-      return Boolean(image && image !== "none");
-    });
-    root.dataset.hdoBackgroundImage = hasBackgroundImage ? "true" : "false";
-    document.documentElement.dataset.hdoColorMode = mode;
+    if (!root) return;
+    root.dataset.hdoHostPreserved = "true";
   }
 
   function mount() {
@@ -1255,7 +1307,10 @@
     },
     setUpdating: function (updating) {
       var root = document.getElementById("hdo-dashboard");
-      if (root) root.setAttribute("aria-busy", updating ? "true" : "false");
+      setDashboardUpdating(root, Boolean(updating));
+    },
+    setRefreshFailed: function () {
+      setDashboardRefreshFailed(document.getElementById("hdo-dashboard"));
     }
   };
 
@@ -1277,13 +1332,17 @@
     getSelectedDateCapabilities: getSelectedDateCapabilities,
     pluralLabel: pluralLabel,
     buildCalendarTooltipRows: buildCalendarTooltipRows,
+    tooltipPlacement: tooltipPlacement,
     getDueLoadScale: getDueLoadScale,
     getDueLoadLevel: getDueLoadLevel,
     intensityThresholds: intensityThresholds,
     intensityLevel: intensityLevel,
     rateSemanticRole: rateSemanticRole,
     formatNumber: formatNumber,
+    formatDurationCompact: formatDurationCompact,
     applyDocumentTheme: applyDocumentTheme,
+    setDashboardUpdating: setDashboardUpdating,
+    setDashboardRefreshFailed: setDashboardRefreshFailed,
     mountLoadingState: mountLoadingState,
     mountDashboard: mountDashboard
   };

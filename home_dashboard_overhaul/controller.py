@@ -19,7 +19,7 @@ from aqt.deckbrowser import DeckBrowser
 from aqt.operations import QueryOp
 from aqt.theme import theme_manager
 
-from .analytics import collect_snapshot, scheduling_today, unavailable_snapshot
+from .analytics import collect_snapshot, scheduling_today
 from .config_schema import analytics_config_fingerprint, archive_expired_events, normalize_config
 from .insights import collect_day_insight, unavailable_day_insight
 from .migration import enabled_legacy_ids, prepare_migration
@@ -40,6 +40,7 @@ from .renderer import (
     day_insight_payload,
     render_activation_required,
     render_dashboard,
+    render_failure,
     render_loading,
 )
 from .verse import QuoteRotator, verse_content
@@ -94,6 +95,8 @@ class DashboardController:
         self._rollover_token = 0
         self._scheduled_rollover_at: Optional[float] = None
         self._last_scheduler_date: Optional[date] = None
+        self.initial_failure = False
+        self.refresh_error = False
 
     def start(self) -> None:
         mw.addonManager.setWebExports(self.package, r"web/.*\.(css|js)")
@@ -159,6 +162,8 @@ class DashboardController:
         self._rollover_token += 1
         self._scheduled_rollover_at = None
         self._last_scheduler_date = None
+        self.initial_failure = False
+        self.refresh_error = False
         self.rotator = QuoteRotator(ROTATION_STATE_PATH)
         self._load_profile_config()
         # The Deck Browser can render its loading shell before ``mw.col`` is
@@ -186,6 +191,8 @@ class DashboardController:
         self._rollover_token += 1
         self._scheduled_rollover_at = None
         self._last_scheduler_date = None
+        self.initial_failure = False
+        self.refresh_error = False
 
     def on_reviewer_answer(self, *_args: object) -> None:
         self._schedule_refresh("reviewer_answer")
@@ -209,11 +216,14 @@ class DashboardController:
             return
         self._check_scheduler_day()
         if self._snapshot_needs_retry() or self._insight_cache_needs_retry():
+            self.initial_failure = False
             self._schedule_refresh("view_entry_retry", delay_ms=0)
 
     def _external_config_update(self, raw: object) -> None:
         data_changed = self._adopt_config(normalize_config(raw), persist=False)
         if data_changed:
+            self.initial_failure = False
+            self.refresh_error = False
             self.invalidate()
             self._refresh_needs_invalidation = False
             self._schedule_refresh(
@@ -375,6 +385,8 @@ class DashboardController:
         self._schedule_callback(delay_ms, rollover)
 
     def _snapshot_needs_retry(self) -> bool:
+        if self.initial_failure:
+            return True
         snapshot = self.snapshot
         if snapshot is None:
             return False
@@ -515,7 +527,6 @@ class DashboardController:
             for key in (
                 "today",
                 "remaining",
-                "buried",
                 "heatmap",
                 "heatmap_metrics",
                 "bible",
@@ -527,7 +538,7 @@ class DashboardController:
         visibility = self.config["visibility"]
         return any(
             bool(visibility.get(key, True))
-            for key in ("today", "remaining", "buried", "heatmap", "heatmap_metrics")
+            for key in ("today", "remaining", "heatmap", "heatmap_metrics")
         )
 
     def on_deck_browser_render(self, _deck_browser: DeckBrowser, content: Any) -> None:
@@ -552,6 +563,9 @@ class DashboardController:
                 facts_revision=self.facts_revision,
             )
             return
+        if self.initial_failure and self.snapshot is None:
+            content.stats += render_failure(self.config, self.is_dark())
+            return
         key = self._key()
         if self.snapshot is not None and self.cache_key == key:
             snapshot = self.snapshot
@@ -563,6 +577,7 @@ class DashboardController:
                 self.is_dark(),
                 selected_date=self.selected_date,
                 facts_revision=self.facts_revision,
+                refresh_error=self.refresh_error,
             )
             return
         if self.snapshot is not None:
@@ -575,6 +590,7 @@ class DashboardController:
                 self.is_dark(),
                 selected_date=self.selected_date,
                 facts_revision=self.facts_revision,
+                refresh_error=self.refresh_error,
             )
             self._request_snapshot(key)
             return
@@ -618,6 +634,8 @@ class DashboardController:
             self.snapshot = snapshot
             self.cache_key = key
             self.inflight_key = None
+            self.initial_failure = False
+            self.refresh_error = False
             self.facts_revision += 1
             self._schedule_rollover()
             if had_visible_snapshot and self._deliver_dashboard_facts(snapshot):
@@ -642,27 +660,21 @@ class DashboardController:
                 return
             had_visible_snapshot = self.snapshot is not None
             self.inflight_key = None
-            current = self._scheduler_date()
-            cutoff = getattr(getattr(getattr(mw, "col", None), "sched", None), "day_cutoff", None)
-            cutoff_iso = ""
-            try:
-                cutoff_iso = datetime.fromtimestamp(int(cutoff)).astimezone().isoformat(timespec="minutes")
-            except (TypeError, ValueError, OverflowError, OSError):
-                pass
-            failed_snapshot = unavailable_snapshot(
-                verse=selected_verse,
-                scheduling_date=current.isoformat() if current is not None else "",
-                day_cutoff_iso=cutoff_iso,
-                revision="failure:{}".format(self.data_generation),
-            )
-            self.snapshot = self._background_failure_snapshot(
-                self.snapshot,
-                failed_snapshot,
-            )
+            if had_visible_snapshot:
+                # A failed refresh must never replace known-good study facts.
+                # Keep the mounted dashboard intact and expose a retryable
+                # status beside the calendar title plus a compact alert.
+                self.cache_key = key
+                self.refresh_error = True
+                if self._set_dashboard_refresh_failed():
+                    return
+                self._refresh_deck_browser()
+                return
+            self.initial_failure = True
+            self.refresh_error = False
+            self.snapshot = None
             self.cache_key = key
             self.facts_revision += 1
-            if had_visible_snapshot and self._deliver_dashboard_facts(self.snapshot):
-                return
             self._refresh_deck_browser()
 
         query = QueryOp(parent=mw, op=operation, success=success)
@@ -692,6 +704,23 @@ class DashboardController:
             "if(target&&typeof target.setUpdating==='function'){target.setUpdating(%s);return;}"
             "if(attempt<20){setTimeout(function(){apply(attempt+1);},50);}})(0);"
         ) % value
+        try:
+            web.eval(script)
+            return True
+        except Exception:
+            return False
+
+    def _set_dashboard_refresh_failed(self) -> bool:
+        if not self._has_live_fact_consumers():
+            return False
+        web = self._dashboard_web()
+        if web is None:
+            return False
+        script = (
+            "(function apply(attempt){var target=globalThis.HDOHomeDashboard;"
+            "if(target&&typeof target.setRefreshFailed==='function'){target.setRefreshFailed();return;}"
+            "if(attempt<20){setTimeout(function(){apply(attempt+1);},50);}})(0);"
+        )
         try:
             web.eval(script)
             return True
@@ -794,6 +823,8 @@ class DashboardController:
         elif command == "open_most_missed" and isinstance(payload, Mapping):
             self.open_most_missed_in_browser(context, payload.get("date"))
         elif command == "retry" and isinstance(payload, Mapping):
+            self.initial_failure = False
+            self.refresh_error = False
             self._schedule_refresh("user_retry", delay_ms=0)
         elif command == "diagnostics" and isinstance(payload, Mapping):
             self.open_settings("about_support")

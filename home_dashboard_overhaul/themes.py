@@ -26,6 +26,16 @@ def composite_color(foreground: str, background: str, opacity: float) -> str:
     return "#{:02X}{:02X}{:02X}".format(*values)
 
 
+def rgba_color(value: str, opacity: float) -> str:
+    """Return a centralized CSS color for a translucent component surface."""
+
+    channel_values = _channels(value)
+    return "rgba({}, {}, {}, {:.2f})".format(
+        *channel_values,
+        max(0.0, min(1.0, opacity)),
+    )
+
+
 def _luminance(value: str) -> float:
     channels = [item / 255 for item in _channels(value)]
     linear = [
@@ -45,40 +55,40 @@ def contrast_ratio(left: str, right: str) -> float:
 # Stable study semantics never inherit the selected theme accent.
 SEMANTIC_PALETTES: Mapping[str, Mapping[str, str]] = {
     "light": {
-        "status_new_fill": "#158FC1",
-        "status_new_text": "#036A9E",
-        "status_learning_fill": "#E28A32",
-        "status_learning_text": "#A94D08",
-        "status_review_fill": "#8A6BB5",
-        "status_review_text": "#68469A",
-        "status_buried_fill": "#718095",
-        "status_buried_text": "#4E5A69",
-        "status_success_fill": "#43A366",
-        "status_success_text": "#1F743E",
+        "status_new_fill": "#2F7DD3",
+        "status_new_text": "#2468B6",
+        "status_learning_fill": "#C76A00",
+        "status_learning_text": "#A85A00",
+        "status_review_fill": "#7C3AED",
+        "status_review_text": "#7C3AED",
+        "status_buried_fill": "#64748B",
+        "status_buried_text": "#64748B",
+        "status_success_fill": "#147A42",
+        "status_success_text": "#147A42",
         "status_warning_fill": "#D0A146",
         "status_warning_text": "#845A08",
         "status_danger_fill": "#D95C74",
         "status_danger_text": "#A92948",
-        "status_event_fill": "#D0A02D",
-        "status_event_text": "#845C0B",
+        "status_event_fill": "#986800",
+        "status_event_text": "#986800",
     },
     "dark": {
-        "status_new_fill": "#59B8E5",
-        "status_new_text": "#59B8E5",
-        "status_learning_fill": "#F0A45C",
-        "status_learning_text": "#F0A45C",
-        "status_review_fill": "#B59BD2",
-        "status_review_text": "#B59BD2",
-        "status_buried_fill": "#99A6B5",
-        "status_buried_text": "#99A6B5",
-        "status_success_fill": "#67C98A",
-        "status_success_text": "#67C98A",
+        "status_new_fill": "#60A5FA",
+        "status_new_text": "#60A5FA",
+        "status_learning_fill": "#F59E0B",
+        "status_learning_text": "#F59E0B",
+        "status_review_fill": "#C084FC",
+        "status_review_text": "#C084FC",
+        "status_buried_fill": "#94A3B8",
+        "status_buried_text": "#94A3B8",
+        "status_success_fill": "#4ADE80",
+        "status_success_text": "#4ADE80",
         "status_warning_fill": "#E4C05B",
         "status_warning_text": "#E4C05B",
         "status_danger_fill": "#ED879A",
         "status_danger_text": "#ED879A",
-        "status_event_fill": "#E3BB52",
-        "status_event_text": "#E3BB52",
+        "status_event_fill": "#FACC15",
+        "status_event_text": "#FACC15",
     },
 }
 
@@ -99,15 +109,15 @@ REVIEWS_DUE_INDICATORS: Mapping[str, tuple[str, ...]] = {
 
 COMPLETION_SCALES: Mapping[str, Mapping[str, tuple[str, ...]]] = {
     "Sapphire Glass": {
-        "light": ("#F0F4F8", "#DCE8F4", "#BFD5EA", "#8EB4D5", "#477AA8", "#285F90"),
+        "light": ("#F8FAFD", "#EEF4FB", "#D7E7F6", "#AFCDEA", "#78A8D2", "#356F9F"),
         "dark": ("#172434", "#1F3449", "#2B4B66", "#3B6C90", "#5A96BE", "#87BCD9"),
     },
     "Graphite": {
-        "light": ("#F1F3F5", "#DDE2E6", "#C4CBD1", "#9DA6AE", "#6E7881", "#434C55"),
+        "light": ("#F7F8FA", "#F1F3F5", "#DCE1E5", "#BAC2C9", "#8D99A3", "#5F6C76"),
         "dark": ("#20252B", "#2B3239", "#3C4650", "#58636D", "#7E8994", "#ADB6BF"),
     },
     "Emerald": {
-        "light": ("#F1F5F2", "#DDEBE2", "#BDDAC7", "#8ABD9A", "#43815B", "#286744"),
+        "light": ("#F8FAF9", "#EDF7F1", "#D1EBDD", "#A7D7BE", "#69B38E", "#287A55"),
         "dark": ("#17231D", "#1D3427", "#28503A", "#397052", "#58A074", "#85C89C"),
     },
     "High Contrast": {
@@ -124,16 +134,16 @@ COMPLETION_SCALES: Mapping[str, Mapping[str, tuple[str, ...]]] = {
 CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
     "Sapphire Glass": {
         "light": {
-            "ui_canvas": "#EEF3F8",
+            "ui_canvas": "#F4F7FB",
             "ui_surface_1": "#FFFFFF",
-            "ui_surface_2": "#F7FAFD",
+            "ui_surface_2": "#F8FAFD",
             "ui_surface_3": "#EDF3F9",
-            "ui_border_subtle": "#D9E3ED",
-            "ui_border_default": "#C3D0DE",
+            "ui_border_subtle": "#E4EBF3",
+            "ui_border_default": "#D6E1ED",
             "ui_border_strong": "#7D91A8",
-            "ui_text_primary": "#17243A",
-            "ui_text_secondary": "#4D6075",
-            "ui_text_tertiary": "#5E7084",
+            "ui_text_primary": "#162235",
+            "ui_text_secondary": "#5E6E80",
+            "ui_text_tertiary": "#5E6E80",
             "ui_text_disabled": "#8B99A8",
             "ui_eyebrow": "#4D7098",
             "ui_accent": "#2A63C7",
@@ -148,19 +158,19 @@ CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "ui_card_gradient_end": "#FAFCFF",
         },
         "dark": {
-            "ui_canvas": "#0A111B",
-            "ui_surface_1": "#111A27",
-            "ui_surface_2": "#152234",
+            "ui_canvas": "#0A131E",
+            "ui_surface_1": "#101D2B",
+            "ui_surface_2": "#142438",
             "ui_surface_3": "#1B2A3D",
-            "ui_border_subtle": "#24364A",
-            "ui_border_default": "#3A526B",
+            "ui_border_subtle": "#1E3348",
+            "ui_border_default": "#28405A",
             "ui_border_strong": "#617B96",
-            "ui_text_primary": "#F3F6FA",
-            "ui_text_secondary": "#C2CEDB",
-            "ui_text_tertiary": "#92A3B5",
+            "ui_text_primary": "#F3F7FB",
+            "ui_text_secondary": "#A2B2C3",
+            "ui_text_tertiary": "#A2B2C3",
             "ui_text_disabled": "#637487",
             "ui_eyebrow": "#9ABBDD",
-            "ui_accent": "#63A7F5",
+            "ui_accent": "#58A6FF",
             "ui_accent_hover": "#7BB6F8",
             "ui_accent_pressed": "#478CD8",
             "ui_accent_soft": "#173555",
@@ -186,7 +196,7 @@ CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "ui_text_tertiary": "#646E77",
             "ui_text_disabled": "#979FA8",
             "ui_eyebrow": "#5D6670",
-            "ui_accent": "#3F4852",
+            "ui_accent": "#506579",
             "ui_accent_hover": "#303840",
             "ui_accent_pressed": "#232A31",
             "ui_accent_soft": "#E9ECEF",
@@ -196,19 +206,19 @@ CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "progress_complete": "#4A535D",
         },
         "dark": {
-            "ui_canvas": "#0E1013",
-            "ui_surface_1": "#161A1F",
-            "ui_surface_2": "#1B2026",
+            "ui_canvas": "#101214",
+            "ui_surface_1": "#171A1D",
+            "ui_surface_2": "#1D2125",
             "ui_surface_3": "#232A31",
             "ui_border_subtle": "#2B333B",
-            "ui_border_default": "#3C4650",
+            "ui_border_default": "#343A40",
             "ui_border_strong": "#65717D",
             "ui_text_primary": "#F4F6F8",
             "ui_text_secondary": "#C2C9D0",
             "ui_text_tertiary": "#939CA6",
             "ui_text_disabled": "#69737D",
             "ui_eyebrow": "#AAB2BB",
-            "ui_accent": "#9DB1C5",
+            "ui_accent": "#8CA0B3",
             "ui_accent_hover": "#B4C5D6",
             "ui_accent_pressed": "#849BAF",
             "ui_accent_soft": "#29343F",
@@ -242,19 +252,19 @@ CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "progress_complete": "#137C55",
         },
         "dark": {
-            "ui_canvas": "#0B100E",
-            "ui_surface_1": "#111A16",
-            "ui_surface_2": "#17241D",
+            "ui_canvas": "#0C1411",
+            "ui_surface_1": "#13201B",
+            "ui_surface_2": "#17271F",
             "ui_surface_3": "#203129",
             "ui_border_subtle": "#2A3B32",
-            "ui_border_default": "#3C5145",
+            "ui_border_default": "#294538",
             "ui_border_strong": "#687E70",
             "ui_text_primary": "#F2F7F4",
             "ui_text_secondary": "#BBCAC1",
             "ui_text_tertiary": "#8E9F95",
             "ui_text_disabled": "#65766C",
             "ui_eyebrow": "#74B38D",
-            "ui_accent": "#3FC180",
+            "ui_accent": "#39C887",
             "ui_accent_hover": "#58CF94",
             "ui_accent_pressed": "#2FA76B",
             "ui_accent_soft": "#173328",
@@ -266,9 +276,9 @@ CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
     },
     "High Contrast": {
         "light": {
-            "ui_canvas": "#ECEEF1",
+            "ui_canvas": "#FFFFFF",
             "ui_surface_1": "#FFFFFF",
-            "ui_surface_2": "#F7F8F9",
+            "ui_surface_2": "#FFFFFF",
             "ui_surface_3": "#EDEFF1",
             "ui_border_subtle": "#8C969F",
             "ui_border_default": "#515B65",
@@ -325,6 +335,8 @@ def _heat_tokens(theme_name: str, variant: str, core: Mapping[str, str]) -> Them
     completion = COMPLETION_SCALES[theme_name][variant]
     complete_text = (
         (core["ui_text_primary"],) * 4 + ("#FFFFFF",) * 2
+        if variant == "light" and theme_name == "High Contrast"
+        else (core["ui_text_primary"],) * 5 + ("#FFFFFF",)
         if variant == "light"
         else (core["ui_text_primary"],) * 4 + ("#0B1116",) * 2
     )

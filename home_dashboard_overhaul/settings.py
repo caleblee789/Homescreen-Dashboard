@@ -209,10 +209,14 @@ def _theme_tokens(
     return {
         "window": theme["ui_canvas"],
         "base": theme["ui_surface_1"],
-        "verse_card": composite_color(
-            theme["ui_surface_1"],
-            theme["ui_canvas"],
-            int(appearance.get("opacity", 88)) / 100,
+        "verse_card": (
+            composite_color(
+                theme["ui_surface_1"],
+                theme["ui_canvas"],
+                int(appearance.get("opacity", 96)) / 100,
+            )
+            if theme["theme_name"] == "Sapphire Glass"
+            else theme["ui_surface_1"]
         ),
         "alternate": theme["ui_surface_2"],
         "text": theme["ui_text_primary"],
@@ -2317,7 +2321,7 @@ class SettingsDialog(QDialog):
         self.preset.currentIndexChanged.connect(self._dashboard_theme_changed)
         self.mode.connect_changed(self._refresh_heatmap_preset_cards)
         opacity_row, self.opacity_slider, self.opacity = _paired_slider(
-            70, 100, appearance["opacity"], " %"
+            94, 100, appearance["opacity"], " %"
         )
         _set_accessibility(
             self.opacity_slider,
@@ -2347,7 +2351,7 @@ class SettingsDialog(QDialog):
             ),
             _stacked_field(
                 "Card background opacity",
-                "Controls how solid dashboard cards appear.",
+                "Controls Sapphire Glass component transparency without changing Anki’s wallpaper or deck list.",
                 opacity_row,
             ),
             _stacked_field(
@@ -2372,7 +2376,7 @@ class SettingsDialog(QDialog):
         advanced_form.setContentsMargins(0, 0, 0, 0)
         advanced_form.setVerticalSpacing(10)
         blur_row, self.blur_slider, self.blur = _paired_slider(
-            0, 32, int(appearance.get("blur", 18)), " px"
+            0, 16, int(appearance.get("blur", 12)), " px"
         )
         _set_accessibility(self.blur_slider, "Card blur slider")
         _set_accessibility(self.blur, "Card blur value")
@@ -2386,7 +2390,7 @@ class SettingsDialog(QDialog):
             "Place the dashboard first or last among injected add-on panels.",
         )
         advanced_form.addRow(
-            _field_label("Card blur", "Controls the dashboard’s glass blur effect."),
+            _field_label("Card blur", "Controls real backdrop blur on Sapphire Glass components only."),
             blur_row,
         )
         advanced_form.addRow(
@@ -2404,6 +2408,7 @@ class SettingsDialog(QDialog):
         card.add_widget(self.appearance_advanced)
         self._reflow_compact_grids()
         self._update_preset_swatch()
+        self._update_glass_controls()
         return card
 
     def _build_dashboard_page(self) -> None:
@@ -2486,12 +2491,12 @@ class SettingsDialog(QDialog):
         add_visibility(
             "remaining",
             "Today’s progress",
-            "Completion, remaining workload, and a compact buried-card summary.",
+            "Completion plus new, learning, review, and total work remaining.",
         )
         add_visibility(
             "today",
             "Today’s session",
-            "Cards studied, new cards, time, pace, and ETA.",
+            "Cards studied, new cards, currently buried cards, time spent, pace, and ETA.",
         )
         add_visibility(
             "heatmap_metrics",
@@ -3400,7 +3405,19 @@ class SettingsDialog(QDialog):
     def _dashboard_theme_changed(self, *_args: object) -> None:
         next_theme = _combo_value(self.preset, "Sapphire Glass")
         self._heatmap_theme = next_theme
+        self._update_glass_controls()
         self._refresh_heatmap_preset_cards()
+
+    def _update_glass_controls(self) -> None:
+        if not all(hasattr(self, name) for name in ("preset", "opacity_slider", "opacity", "blur_slider", "blur")):
+            return
+        enabled = _combo_value(self.preset, "Sapphire Glass") == "Sapphire Glass"
+        explanation = (
+            "Available for Sapphire Glass. Other themes use fully opaque component surfaces."
+        )
+        for widget in (self.opacity_slider, self.opacity, self.blur_slider, self.blur):
+            widget.setEnabled(enabled)
+            widget.setToolTip("" if enabled else explanation)
 
     def _select_heatmap_preset(self, preset_name: str) -> None:
         theme_name = _combo_value(self.preset, "Sapphire Glass")
@@ -3671,8 +3688,9 @@ class SettingsDialog(QDialog):
             self._set_combo_data(self.preset, appearance["preset"])
             self._set_combo_data(self.mode, appearance["mode"])
             self.opacity.setValue(int(appearance["opacity"]))
-            self.blur.setValue(int(appearance.get("blur", 18)))
+            self.blur.setValue(int(appearance.get("blur", 12)))
             self.text_scale.setValue(int(appearance["text_scale"]))
+            self._update_glass_controls()
             self._set_combo_data(
                 self.home_screen_position,
                 config["home_screen"]["position"],

@@ -15,6 +15,7 @@ from home_dashboard_overhaul.models import (
     BrowseTargetKind,
     DayInsight,
 )
+from home_dashboard_overhaul.config_schema import normalize_config
 from home_dashboard_overhaul.tests.fixtures import sample_snapshot
 
 
@@ -25,15 +26,17 @@ class HookList(list):
 class FakeAddonManager:
     def __init__(self) -> None:
         self.writes = []
+        self.config = {}
 
     def addonFromModule(self, _name):
         return "home_dashboard_overhaul"
 
     def getConfig(self, _package):
-        return {}
+        return deepcopy(self.config)
 
     def writeConfig(self, package, config):
         self.writes.append((package, deepcopy(config)))
+        self.config = deepcopy(config)
 
 
 class FakeSwitch:
@@ -99,6 +102,10 @@ class FakeWeb:
 class FakeDeckBrowser:
     def __init__(self) -> None:
         self.web = FakeWeb()
+        self.refresh_count = 0
+
+    def refresh(self):
+        self.refresh_count += 1
 
 
 class FakeQueryOp:
@@ -180,6 +187,10 @@ class ControllerCapabilityTests(unittest.TestCase):
 
     def setUp(self) -> None:
         FakeQueryOp.pending.clear()
+        self.aqt.mw.addonManager.config = {}
+        self.aqt.mw.addonManager.writes.clear()
+        self.aqt.mw.state = "deckBrowser"
+        self.aqt.mw.deckBrowser = FakeDeckBrowser()
         self.aqt.dialogs.opened.clear()
         self.aqt.gui_hooks.browser_will_search.clear()
         self.rotation_directory = tempfile.TemporaryDirectory()
@@ -334,6 +345,58 @@ class ControllerCapabilityTests(unittest.TestCase):
             calls[1],
             (("profile_open_ready",), {"delay_ms": 0, "invalidate_on_apply": False}),
         )
+
+    def test_first_render_and_restart_use_the_stored_calendar_view(self) -> None:
+        stored = normalize_config({
+            "heatmap": {"calendar_view": "month"},
+            "migration": {"completed": True},
+        })
+        self.aqt.mw.addonManager.config = stored
+        controller = self.module.DashboardController()
+        controller._load_profile_config()
+        self.assertEqual(controller.config["heatmap"]["calendar_view"], "month")
+        self.assertEqual(self.aqt.mw.addonManager.writes, [])
+
+        content = SimpleNamespace(stats="")
+        controller.on_deck_browser_render(FakeDeckBrowser(), content)
+        self.assertIn('data-hdo-calendar-view="month"', content.stats)
+        self.assertIn('data-hdo-calendar-view="month" aria-busy="true"', content.stats)
+
+        before = len(self.aqt.mw.addonManager.writes)
+        controller.set_calendar_view("year")
+        self.assertEqual(len(self.aqt.mw.addonManager.writes), before + 1)
+        self.assertEqual(self.aqt.mw.addonManager.config["heatmap"]["calendar_view"], "year")
+        restarted = self.module.DashboardController()
+        self.assertEqual(restarted.config["heatmap"]["calendar_view"], "year")
+
+        writes = len(self.aqt.mw.addonManager.writes)
+        restarted.set_calendar_view("invalid")
+        restarted.set_calendar_view("year")
+        self.assertEqual(len(self.aqt.mw.addonManager.writes), writes)
+
+    def test_refresh_failure_retains_previous_snapshot_and_exposes_retry_state(self) -> None:
+        previous = sample_snapshot(date(2026, 8, 17))
+        self.controller.snapshot = previous
+        key = self.controller._key()
+        self.controller._request_snapshot(key)
+        self.assertEqual(len(FakeQueryOp.pending), 1)
+
+        FakeQueryOp.pending[0].fail(RuntimeError("refresh failed"))
+
+        self.assertIs(self.controller.snapshot, previous)
+        self.assertTrue(self.controller.refresh_error)
+        self.assertFalse(self.controller.initial_failure)
+        scripts = self.aqt.mw.deckBrowser.web.scripts
+        self.assertTrue(any("setRefreshFailed" in script for script in scripts))
+
+    def test_initial_query_failure_has_no_fake_zero_snapshot(self) -> None:
+        self.controller.snapshot = None
+        key = self.controller._key()
+        self.controller._request_snapshot(key)
+        FakeQueryOp.pending[0].fail(RuntimeError("initial failed"))
+        self.assertIsNone(self.controller.snapshot)
+        self.assertTrue(self.controller.initial_failure)
+        self.assertFalse(self.controller.refresh_error)
 
 
 if __name__ == "__main__":

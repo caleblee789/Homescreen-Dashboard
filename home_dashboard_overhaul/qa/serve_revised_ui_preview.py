@@ -153,6 +153,9 @@ class PreviewHandler(BaseHTTPRequestHandler):
                     "text_scale": max(100, min(150, scale)),
                 },
                 "heatmap": {"calendar_view": view},
+                "visibility": {
+                    "bible": query.get("bible", ["enabled"])[0] != "disabled",
+                },
             }
         )
         fixture = query.get("fixture", ["reference"])[0]
@@ -162,6 +165,16 @@ class PreviewHandler(BaseHTTPRequestHandler):
             if fixture == "stress"
             else sample_snapshot(date(2026, 8, 17))
         )
+        if query.get("verse", [""])[0] == "long":
+            snapshot = replace(
+                snapshot,
+                verse=VerseContent(
+                    "The steadfast love of the Lord never ceases; his mercies never come to an end; "
+                    "they are new every morning; great is your faithfulness, and your loving care "
+                    "continues through every season of patient study and service.",
+                    "Lamentations 3:22–23",
+                ),
+            )
         selected = query.get("selected", [""])[0]
         if selected:
             config["_preview_selected_date"] = selected

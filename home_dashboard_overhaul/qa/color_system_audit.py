@@ -525,7 +525,7 @@ def changed_file_summary(root: Path = PACKAGE_ROOT) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "scope": "Current Home Dashboard 1.8.1 release-candidate worktree, excluding immutable generated evidence directories",
+        "scope": "Current Home Dashboard 1.8.2 release-candidate worktree, excluding immutable generated evidence directories",
         "file_count": len(files),
         "files": files,
     }

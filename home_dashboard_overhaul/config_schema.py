@@ -19,7 +19,7 @@ from .themes import (
 from .verse import load_default_quotes
 
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 PACKAGE_ROOT = Path(__file__).resolve().parent
 DEFAULT_CONFIG_PATH = PACKAGE_ROOT / "config.json"
 DEFAULT_VERSES_PATH = PACKAGE_ROOT / "default_verses.json"
@@ -127,8 +127,6 @@ def _normalize_event(value: object, index: int) -> Dict[str, Any] | None:
 def normalize_config(raw: object) -> Dict[str, Any]:
     defaults = default_config()
     source = raw if isinstance(raw, Mapping) else {}
-    raw_visibility = source.get("visibility", {}) if isinstance(source, Mapping) else {}
-    raw_visibility = raw_visibility if isinstance(raw_visibility, Mapping) else {}
     raw_introduced = source.get("introduced", {}) if isinstance(source, Mapping) else {}
     raw_introduced = raw_introduced if isinstance(raw_introduced, Mapping) else {}
     raw_new_cards = source.get("new_cards", {}) if isinstance(source, Mapping) else {}
@@ -141,8 +139,11 @@ def normalize_config(raw: object) -> Dict[str, Any]:
     appearance = config["appearance"]
     appearance["preset"] = _choice(appearance.get("preset"), PRESETS.keys(), "Sapphire Glass")
     appearance["mode"] = _choice(appearance.get("mode"), {"auto", "light", "dark"}, "auto")
-    appearance["opacity"] = _int(appearance.get("opacity"), 88, 70, 100)
-    appearance["blur"] = _int(appearance.get("blur"), 18, 0, 32)
+    # Schema 8 narrows glass controls to the range that keeps text-bearing
+    # components legible over arbitrary host wallpapers. Non-Sapphire themes
+    # retain these preferences for a future switch back, but render opaquely.
+    appearance["opacity"] = _int(appearance.get("opacity"), 96, 94, 100)
+    appearance["blur"] = _int(appearance.get("blur"), 12, 0, 16)
     # Layout density remains retired. Drop the known legacy
     # key while the deep merge continues to preserve unrelated future keys.
     appearance.pop("density", None)
@@ -152,10 +153,11 @@ def normalize_config(raw: object) -> Dict[str, Any]:
     home_screen["position"] = _choice(home_screen.get("position"), {"top", "bottom"}, "top")
 
     visibility = config["visibility"]
-    if "buried" not in raw_visibility and "introduced" in raw_visibility:
-        visibility["buried"] = _bool(raw_visibility.get("introduced"), True)
     for key, default in defaults["visibility"].items():
         visibility[key] = _bool(visibility.get(key), bool(default))
+    # Buried is a scheduler-authoritative Today’s Session metric in schema 8,
+    # not an independently hideable dashboard surface.
+    visibility.pop("buried", None)
     visibility.pop("introduced", None)
 
     study = config["study"]

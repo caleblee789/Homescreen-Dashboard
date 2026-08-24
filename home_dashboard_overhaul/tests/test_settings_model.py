@@ -147,7 +147,7 @@ class SettingsDraftTests(unittest.TestCase):
         draft = SettingsDraft(baseline)
         self.assertFalse(draft.dirty)
         edited = dict(draft.values)
-        edited["appearance"] = dict(edited["appearance"], opacity=91)
+        edited["appearance"] = dict(edited["appearance"], opacity=95)
         draft.replace_values(edited)
         self.assertTrue(draft.dirty)
         self.assertIn(("appearance", "opacity"), draft.changed_paths)
@@ -157,13 +157,13 @@ class SettingsDraftTests(unittest.TestCase):
     def test_dirty_counter_counts_exact_leaves_and_treats_lists_as_atomic(self) -> None:
         baseline = normalize_config(
             {
-                "appearance": {"mode": "light", "opacity": 88},
+                "appearance": {"mode": "light", "opacity": 94},
                 "bible": {"quotes": ["One"]},
             }
         )
         draft = SettingsDraft(baseline)
         edited = dict(draft.values)
-        edited["appearance"] = dict(edited["appearance"], mode="dark", opacity=91)
+        edited["appearance"] = dict(edited["appearance"], mode="dark", opacity=95)
         edited["bible"] = dict(edited["bible"], quotes=["One", "Two", "Three"])
         draft.replace_values(edited)
         self.assertEqual(draft.changed_leaf_count, 3)
@@ -179,7 +179,7 @@ class SettingsDraftTests(unittest.TestCase):
     def test_section_reset_preserves_events_verse_library_and_unknown_keys(self) -> None:
         baseline = normalize_config(
             {
-                "appearance": {"opacity": 71},
+                "appearance": {"opacity": 95},
                 "events": {
                     "items": [
                         {
@@ -247,24 +247,24 @@ class SettingsDraftTests(unittest.TestCase):
         self.assertEqual([conflict.path for conflict in result.conflicts], [("appearance", "opacity")])
 
     def test_rebase_keeps_unknown_external_keys_and_local_edits(self) -> None:
-        baseline = normalize_config({"appearance": {"opacity": 88}, "future": {"left": 1}})
+        baseline = normalize_config({"appearance": {"opacity": 94}, "future": {"left": 1}})
         draft = SettingsDraft(baseline)
         local = dict(draft.values)
-        local["appearance"] = dict(local["appearance"], opacity=93)
+        local["appearance"] = dict(local["appearance"], opacity=95)
         draft.replace_values(local)
-        latest = normalize_config({"appearance": {"opacity": 88}, "future": {"left": 1, "right": 2}})
+        latest = normalize_config({"appearance": {"opacity": 94}, "future": {"left": 1, "right": 2}})
         conflicts = draft.rebase(latest)
         self.assertFalse(conflicts)
-        self.assertEqual(draft.values["appearance"]["opacity"], 93)
+        self.assertEqual(draft.values["appearance"]["opacity"], 95)
         self.assertEqual(draft.values["future"]["right"], 2)
 
     def test_same_concurrent_value_is_not_a_conflict(self) -> None:
-        baseline = normalize_config({"appearance": {"opacity": 88}})
-        staged = normalize_config({"appearance": {"opacity": 94}})
-        latest = normalize_config({"appearance": {"opacity": 94}})
+        baseline = normalize_config({"appearance": {"opacity": 94}})
+        staged = normalize_config({"appearance": {"opacity": 95}})
+        latest = normalize_config({"appearance": {"opacity": 95}})
         result = three_way_merge(baseline, staged, latest)
         self.assertFalse(result.conflicts)
-        self.assertEqual(result.values["appearance"]["opacity"], 94)
+        self.assertEqual(result.values["appearance"]["opacity"], 95)
 
     def test_managed_lists_are_atomic_during_merge(self) -> None:
         baseline = normalize_config({"bible": {"quotes": ["A"]}})
@@ -403,7 +403,7 @@ class SettingsUtilityTests(unittest.TestCase):
     def test_normalized_round_trip_preserves_future_nested_values(self) -> None:
         original = normalize_config(
             {
-                "appearance": {"mode": "dark", "opacity": 91},
+                "appearance": {"mode": "dark", "opacity": 95},
                 "heatmap": {"history_days": 45, "excluded_deck_ids": [2, 8]},
                 "events": {"sort": "descending"},
                 "future": {"nested": {"value": [1, 2, 3]}},

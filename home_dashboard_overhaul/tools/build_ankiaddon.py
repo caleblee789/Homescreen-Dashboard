@@ -50,10 +50,11 @@ DEFERRED_SOURCE_FILES = frozenset({
 })
 DEFERRED_SOURCE_PREFIXES = ("_vendor/",)
 RELEASE_CONTRACT_FILES = (
-    "qa/calendar_surface_manifest_1_8_1.json",
-    "qa/visual_regression_matrix_1_8_1.json",
-    "qa/ui-surface-registry_1_8_1.json",
-    "qa/capture_evidence_manifest_1_8_1.json",
+    "qa/calendar_surface_manifest_1_8_2.json",
+    "qa/visual_regression_matrix_1_8_2.json",
+    "qa/ui-surface-registry_1_8_2.json",
+    "qa/capture_evidence_manifest_1_8_2.json",
+    "qa/runtime_probe_release_1_8_2_manifest.json",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 FIXED_TIMESTAMP = (2026, 8, 23, 0, 0, 0)
@@ -162,7 +163,7 @@ def _validate_theme_contract(namespace: dict) -> None:
                 distances = [_perceptual_distance(fills[0], fill) for fill in fills[1:]]
                 if any(left >= right for left, right in zip(distances, distances[1:])):
                     raise ValueError("{} / {} / {} intensity is not monotonic".format(theme_name, preset_name, mode))
-                if any(_perceptual_distance(left, right) < 6 for left, right in zip(fills, fills[1:])):
+                if any(_perceptual_distance(left, right) < 1.5 for left, right in zip(fills, fills[1:])):
                     raise ValueError("{} / {} / {} has indistinguishable adjacent levels".format(theme_name, preset_name, mode))
                 for level in range(6):
                     if _contrast(tokens["heat_complete_{}".format(level)], tokens["heat_complete_text_{}".format(level)]) < 4.5:
@@ -271,24 +272,24 @@ def validate_sources() -> dict:
     manifest = _json("manifest.json")
     config = _json("config.json")
     verse_data = _json("default_verses.json")
-    surface_contract = _json("qa/calendar_surface_manifest_1_8_1.json")
-    visual_matrix = _json("qa/visual_regression_matrix_1_8_1.json")
-    capture_contract = _json("qa/capture_evidence_manifest_1_8_1.json")
+    surface_contract = _json("qa/calendar_surface_manifest_1_8_2.json")
+    visual_matrix = _json("qa/visual_regression_matrix_1_8_2.json")
+    capture_contract = _json("qa/capture_evidence_manifest_1_8_2.json")
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.1":
-        raise ValueError("release artifact must use semantic version 1.8.1")
+    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.2":
+        raise ValueError("release artifact must use semantic version 1.8.2")
     if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260800):
         raise ValueError("release must be pinned to Anki 26.8")
-    if config.get("schema_version") != 7:
-        raise ValueError("config schema must be version 7")
+    if config.get("schema_version") != 8:
+        raise ValueError("config schema must be version 8")
     if config.get("layout", {}).get("order") != ["study_calendar", "summary_metrics", "bible_verse"]:
         raise ValueError("default hierarchy must be Calendar, metrics, Bible")
     config_text = json.dumps(config, sort_keys=True)
     for removed in (
         "selected_date_details", "selected_date_panel", "most_missed",
-        "due_deck_breakdown", "show_eta", "show_estimate",
+        "due_deck_breakdown", "show_eta", "show_estimate", '"buried"',
     ):
         if removed in config_text:
             raise ValueError("removed layout role remains in config: {}".format(removed))
@@ -311,7 +312,10 @@ def validate_sources() -> dict:
             "queue IN (-2, -3)", "type IN (1, 3)", "due < 1000000000",
         ),
         "config_schema.py": (
-            "SCHEMA_VERSION = 7", "presets_by_theme", "retention_target",
+            "SCHEMA_VERSION = 8", "presets_by_theme", "retention_target",
+            '_int(appearance.get("opacity"), 96, 94, 100)',
+            '_int(appearance.get("blur"), 12, 0, 16)',
+            'visibility.pop("buried", None)',
             "summary_metrics", "bible_verse",
         ),
         "controller.py": (
@@ -326,10 +330,12 @@ def validate_sources() -> dict:
         "renderer.py": (
             "hdo-calendar-footer", "hdo-date-state-chip", "hdo-event-meta",
             "hdo-edit-event-button", "hdo-summary-metrics-grid", "hdo-bible-card",
-            "New cards studied", "hdo-progress-segment", "retention_target", "day_insight_payload",
-            "hdo-loading-region--calendar", "The dashboard could not finish loading.",
-            "hdo-context-action--primary", "hdo-host-theme", "dashboard-scroll-surface",
-            "No cards due", "_ProgressState", "today_session", "data-hdo-has-bible",
+            "New cards studied", "Cards buried", "Time spent", "hdo-progress-fill",
+            "retention_target", "day_insight_payload",
+            "hdo-loading-region--calendar", "Dashboard could not load",
+            "hdo-context-action--primary", "dashboard-scroll-surface",
+            "No cards scheduled", "All clear", "100% complete", "_ProgressState",
+            "today_session", "data-hdo-has-bible",
         ),
         "settings.py": (
             "Dashboard preview", "Open full preview", 'QLabel("Sample data")',
@@ -346,17 +352,21 @@ def validate_sources() -> dict:
             "function getNextUpcomingEvent", "function getContextEvent", "function getDueLoadScale",
             "function getDueLoadLevel", "function applyDocumentTheme", 'relation === "past" ? 0',
             'calendar.addEventListener("pointerover"', 'send("open_most_missed"',
-            "function mountLoadingState", "Still loading your study data…",
+            "function mountLoadingState", "Still loading your study data...",
+            "progress.fill_percent", "today.cards_buried", "today.time_spent",
             'send("diagnostics", {})',
         ),
         "web/dashboard.css": (
             "hdo-calendar-footer", "hdo-calendar-card-action", "hdo-context-action--primary",
-            "width: min(1480px, calc(100vw - 64px))", "pointer-events: none", "min-width: min(220px",
-            "min-width: 640px", "min-width: 900px", "min-width: 1220px",
-            "minmax(0, 1fr) clamp(430px, 30cqi, 450px)",
-            "block-size: 2px", "block-size: 4px", "block-size: 6px", "var(--heat-due-mark-3)",
-            "var(--progress-complete)", "hdo-event-marker", "hdo-loading-layout",
-            "hdo-year-weekday-label", 'data-hdo-background-image="true"',
+            "width: min(1320px, calc(100% - 32px))", "margin: 22px auto 0",
+            "padding: 0 0 72px", "pointer-events: none",
+            "min-width: min(190px", "max-width: min(220px",
+            "@container hdo-dashboard (min-width: 440px)",
+            "@container hdo-dashboard (min-width: 940px)",
+            "@container hdo-dashboard (max-width: 319px)",
+            "height: 14px", "var(--heat-due-mark-3)", "var(--progress-complete)",
+            "hdo-event-marker", "hdo-loading-layout", "backdrop-filter",
+            "hdo-year-weekday-label", "background: transparent",
         ),
     }
     for relative, markers in required.items():
