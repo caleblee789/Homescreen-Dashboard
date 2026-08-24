@@ -1160,6 +1160,9 @@
 #hdo-dashboard .hdo-progress-label--fill {
   clip-path: inset(0 calc(100% - var(--hdo-progress-percent, 0%)) 0 0);
   color: var(--ui-on-accent);
+  justify-self: stretch;
+  text-align: center;
+  width: 100%;
   z-index: 2;
 }
 
