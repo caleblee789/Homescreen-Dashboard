@@ -50,11 +50,13 @@ DEFERRED_SOURCE_FILES = frozenset({
 })
 DEFERRED_SOURCE_PREFIXES = ("_vendor/",)
 RELEASE_CONTRACT_FILES = (
-    "qa/calendar_surface_manifest_1_8_4.json",
-    "qa/visual_regression_matrix_1_8_4.json",
-    "qa/ui-surface-registry_1_8_4.json",
-    "qa/capture_evidence_manifest_1_8_4.json",
-    "qa/runtime_probe_release_1_8_4_manifest.json",
+    "qa/calendar_surface_manifest_1_8_5.json",
+    "qa/visual_regression_matrix_1_8_5.json",
+    "qa/ui-surface-registry_1_8_5.json",
+    "qa/capture_evidence_manifest_1_8_5.json",
+    "qa/runtime_probe_release_1_8_5_manifest.json",
+    "qa/runtime_probe_release_1_8_5.py",
+    "qa/assemble_release_evidence_1_8_5.py",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 FIXED_TIMESTAMP = (2026, 8, 24, 0, 0, 0)
@@ -232,27 +234,41 @@ def _validate_theme_contract(namespace: dict) -> None:
 
 
 def _validate_visual_matrix(matrix: dict) -> None:
-    axes = {
-        "theme": ("Sapphire Glass", "Graphite", "Emerald", "High Contrast"),
-        "mode": ("light", "dark"),
-        "view": ("month", "year"),
+    palette_axes = matrix.get("palette_ids_by_theme")
+    modes = matrix.get("modes")
+    entries = matrix.get("palette_cases")
+    if not isinstance(palette_axes, dict) or not isinstance(modes, list):
+        raise ValueError("visual regression matrix palette axes are missing")
+    if not isinstance(entries, list) or len(entries) != 32:
+        raise ValueError("visual regression matrix must contain 32 palette cases")
+    expected = {
+        (theme, palette, mode)
+        for theme, names in palette_axes.items()
+        for palette, mode in itertools.product(names, modes)
     }
-    entries = matrix.get("cases")
-    if not isinstance(entries, list) or len(entries) != 16:
-        raise ValueError("visual regression matrix must contain exactly 16 primary cases")
-    expected = set(itertools.product(*axes.values()))
     actual = {
-        (entry.get("theme"), entry.get("mode"), entry.get("view"))
+        (entry.get("theme"), entry.get("palette"), entry.get("mode"))
         for entry in entries if isinstance(entry, dict)
     }
     if actual != expected or len(actual) != len(entries):
-        raise ValueError("visual regression matrix must cover the exact Cartesian product once")
-    if len({entry.get("id") for entry in entries}) != 16:
-        raise ValueError("visual regression IDs must be unique")
-    if any(entry.get("text_scale") != 100 for entry in entries):
-        raise ValueError("visual regression matrix must be calibrated only at 100 percent")
-    if matrix.get("deferred_scales_percent") != [125, 150]:
-        raise ValueError("125 and 150 percent visual calibration must stay deferred")
+        raise ValueError("visual regression matrix must cover every saved palette ID in both modes once")
+    if len({entry.get("id") for entry in entries}) != 32:
+        raise ValueError("palette visual regression IDs must be unique")
+    if any(entry.get("view") != "month" for entry in entries):
+        raise ValueError("palette cases must use one shared production Month tree")
+    if [entry.get("id") for entry in matrix.get("view_cases", [])] != [
+        "PROD-MONTH-STABLE", "PROD-YEAR-STABLE"
+    ]:
+        raise ValueError("stable Month and Year cases are incomplete")
+    settings_axes = matrix.get("settings_page_axes", {})
+    try:
+        settings_count = math.prod(len(settings_axes[key]) for key in (
+            "page", "window_width", "application_font_percent"
+        ))
+    except (KeyError, TypeError):
+        settings_count = 0
+    if settings_count != 24 or matrix.get("settings_page_case_count") != 24:
+        raise ValueError("Settings visual matrix must derive 24 page-width-font cases")
 
 
 def validate_sources() -> dict:
@@ -272,14 +288,14 @@ def validate_sources() -> dict:
     manifest = _json("manifest.json")
     config = _json("config.json")
     verse_data = _json("default_verses.json")
-    surface_contract = _json("qa/calendar_surface_manifest_1_8_4.json")
-    visual_matrix = _json("qa/visual_regression_matrix_1_8_4.json")
-    capture_contract = _json("qa/capture_evidence_manifest_1_8_4.json")
+    surface_contract = _json("qa/calendar_surface_manifest_1_8_5.json")
+    visual_matrix = _json("qa/visual_regression_matrix_1_8_5.json")
+    capture_contract = _json("qa/capture_evidence_manifest_1_8_5.json")
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.4":
-        raise ValueError("release artifact must use semantic version 1.8.4")
+    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.5":
+        raise ValueError("release artifact must use semantic version 1.8.5")
     if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260800):
         raise ValueError("release must be pinned to Anki 26.8")
     if config.get("schema_version") != 8:
@@ -314,6 +330,7 @@ def validate_sources() -> dict:
         ),
         "config_schema.py": (
             "SCHEMA_VERSION = 8", "presets_by_theme", "retention_target",
+            '{"ascending", "descending", "name"}',
             '_int(appearance.get("opacity"), 96, 94, 100)',
             '_int(appearance.get("blur"), 12, 0, 16)',
             'visibility.pop("buried", None)',
@@ -323,6 +340,7 @@ def validate_sources() -> dict:
             'page == "calendar_data"', 'page == "events"', "selected_event_id",
             "def _open_browser_target", "browser_will_search", "context.ids = ids",
             'command == "diagnostics"', 'self.open_settings("about_support")',
+            "def _persist_settings_transaction", "_restore_optional_bytes",
         ),
         "insights.py": (
             "ORDER BY again_count DESC, total_answers DESC, r.cid ASC",
@@ -339,14 +357,16 @@ def validate_sources() -> dict:
             "today_session", "data-hdo-has-bible",
         ),
         "settings.py": (
-            "Dashboard preview", "Open full preview", 'QLabel("Sample data")',
-            '[("Current section", "context"), ("Full dashboard", "full")]',
-            '[("Fit", "fit"), ("Actual size", "actual")]',
-            'SettingsCard(\n            "Content & study metrics"',
-            'SettingsCard(\n            "Calendar & data"',
-            "class SelectChevron", "class SettingsSwitch", "def _attach_event_menu",
-            "SettingsCard", "HEATMAP_PRESETS", "_heatmap_preset_preferences",
-            "Qt.FocusPolicy.NoFocus",
+            "self.resize(1200, 800)", "self.setMinimumSize(1040, 700)",
+            "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
+            'self.preview_wrap.setObjectName("PreviewDock")',
+            '[("Section", "context"), ("Full dashboard", "full")]',
+            '[("Fit", "fit"), ("100%", "actual")]',
+            'SettingsCard("Study calculations")', 'SettingsCard("Calendar display")',
+            'SettingsCard("Calendar range")', 'SettingsCard("Data and reset"',
+            "class EventRowWidget", "class VerseRowWidget", "def _attach_event_menu",
+            'self.revert_button = QPushButton("Revert changes")',
+            'self.save_error.setObjectName("InlineSaveError")',
         ),
         "web/dashboard.js": (
             "function buildCalendarTooltipRows", "function getSelectedDateCapabilities",
@@ -356,19 +376,24 @@ def validate_sources() -> dict:
             "function mountLoadingState", "Still loading your study data...",
             "progress.fill_percent", "today.cards_buried", "today.time_spent",
             'send("diagnostics", {})', "document.scrollingElement",
+            "function visibleBottomActionContainer(root)",
+            "var clearance = footerHeight + 24", "new global.ResizeObserver(update)",
             'relationship: "No event on this date"', 'editEvent.title = "Add event"',
             "setYearScrollPosition", "state.yearScrollLeft = yearScrollFrame.scrollLeft",
             "root.dataset.hdoLastUpdatedAt",
         ),
         "web/dashboard.css": (
             "hdo-calendar-footer", "hdo-calendar-card-action", "hdo-context-action--primary",
-            "width: min(1240px, calc(100% - 32px))", "margin: 22px auto 0",
+            "width: min(1120px, calc(100% - 40px))", "margin: 24px auto 0",
             "padding: 0 0 var(--hdo-bottom-clearance)", "pointer-events: none",
             "min-width: min(190px", "max-width: min(220px",
             "@container hdo-dashboard (min-width: 420px)",
             "@container hdo-dashboard (min-width: 1040px)",
-            "@container hdo-dashboard (max-width: 419px)",
-            "@container hdo-dashboard (max-width: 479px)", "min-width: 580px",
+            "@container hdo-calendar (max-width: 419px)",
+            "repeat(6, clamp(48px, 4.8cqi, 54px))",
+            "28px repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))",
+            "18px repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))",
+            "min-width: 580px",
             "min-block-size: 14px", "var(--heat-due-mark-3)", "var(--progress-complete)",
             "hdo-event-marker", "hdo-loading-layout", "backdrop-filter",
             "hdo-year-weekday-label", "background: transparent",
@@ -385,6 +410,8 @@ def validate_sources() -> dict:
         "Select a date for details", "hdo-selected-date-details",
         "hdo-most-missed-list", "hdo-due-deck-breakdown", "Expand preview",
         "open_insight_card", "Using sample data", "getDueOverlayHeight", "hdo-due-hatch",
+        "SettingsLayoutMetrics", "settings_content_mode", "section_selector",
+        "section_tabs", "compact_toolbar", 'setText("Discard changes"',
     ):
         if forbidden in dashboard_surface_source:
             raise ValueError("removed dashboard surface/copy remains: {}".format(forbidden))
@@ -396,8 +423,13 @@ def validate_sources() -> dict:
     _validate_theme_contract(runpy.run_path(str(ROOT / "themes.py")))
     _validate_visual_matrix(visual_matrix)
     criteria = surface_contract.get("acceptance_criteria")
-    if not isinstance(criteria, list) or [item.get("id") for item in criteria] != list(range(1, 43)):
-        raise ValueError("corrected surface contract must encode criteria 1 through 42")
+    if (
+        not isinstance(criteria, list)
+        or len(criteria) < 20
+        or len({item.get("id") for item in criteria}) != len(criteria)
+        or any(not item.get("tags") or not str(item.get("requirement", "")).strip() for item in criteria)
+    ):
+        raise ValueError("corrected surface contract must encode unique tagged acceptance criteria")
     if any(contract.get("release") != version for contract in (
         surface_contract, visual_matrix, capture_contract
     )):
@@ -411,10 +443,19 @@ def validate_sources() -> dict:
         "restart_expected_new_remaining": 10,
     }:
         raise ValueError("multi-deck new-limit runtime smoke contract is incomplete")
-    if capture_contract.get("primary_native_frames") != [
-        entry.get("id") for entry in visual_matrix.get("cases", [])
-    ]:
-        raise ValueError("capture contract primary IDs differ from the visual matrix")
+    families = capture_contract.get("capture_families", [])
+    counts = {item.get("id"): item.get("count") for item in families}
+    if counts != {
+        "production-palettes": 32,
+        "production-core": 16,
+        "settings-pages": 24,
+        "settings-contract": 23,
+        "restart": 2,
+    }:
+        raise ValueError("capture families do not match the implemented UI contract")
+    derived = capture_contract.get("derived_native_frame_count", {})
+    if sum(counts.values()) != 97 or derived.get("total") != 97:
+        raise ValueError("capture plan must derive exactly 97 native frames")
 
     verses = verse_data.get("quote")
     if (

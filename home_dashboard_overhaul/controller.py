@@ -50,6 +50,7 @@ from .verse import QuoteRotator, verse_content
 PACKAGE_ROOT = Path(__file__).resolve().parent
 ROTATION_STATE_PATH = PACKAGE_ROOT / "user_files" / "rotation_state.json"
 NATIVE_STUDIED_RE = re.compile(r'<div\s+id=["\']studiedToday["\'][^>]*>.*?</div>', re.IGNORECASE | re.DOTALL)
+_ROTATION_UNCHANGED = object()
 
 
 def _write_json_atomic(path: Path, value: Mapping[str, Any]) -> None:
@@ -57,6 +58,37 @@ def _write_json_atomic(path: Path, value: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary.write_text(json.dumps(dict(value), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     os.replace(str(temporary), str(path))
+
+
+def _read_optional_bytes(path: Path) -> Optional[bytes]:
+    try:
+        return path.read_bytes()
+    except FileNotFoundError:
+        return None
+
+
+def _write_bytes_atomic(path: Path, value: bytes) -> None:
+    temporary = path.with_suffix(path.suffix + ".transaction.tmp")
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary.write_bytes(value)
+        os.replace(str(temporary), str(path))
+    except OSError:
+        try:
+            temporary.unlink()
+        except OSError:
+            pass
+        raise
+
+
+def _restore_optional_bytes(path: Path, previous: Optional[bytes]) -> None:
+    if previous is None:
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+    else:
+        _write_bytes_atomic(path, previous)
 
 
 def _web_asset_url(package: str, filename: str) -> str:
@@ -1166,17 +1198,36 @@ class DashboardController:
     def save_config(self, config: Mapping[str, Any], preferred_verse: object = None) -> None:
         normalized = normalize_config(config)
         archive_expired_events(normalized)
-        data_changed = self._adopt_config(normalized, persist=True)
+        previous_bible = self.config.get("bible", {})
+        next_bible = normalized["bible"]
+        rotation_changed = (
+            previous_bible.get("quotes") != next_bible.get("quotes")
+            or previous_bible.get("rotation_mode") != next_bible.get("rotation_mode")
+        )
+        prepared_rotation: object = _ROTATION_UNCHANGED
         if (
             normalized["bible"].get("rotation_mode") == "manual"
             and isinstance(preferred_verse, str)
-            and self.rotator.set_quote(
+        ):
+            prepared_rotation = self.rotator.prepare_quote(
                 list(normalized["bible"]["quotes"]),
                 "manual",
                 preferred_verse,
             )
-            and self.snapshot is not None
-        ):
+            if prepared_rotation is None:
+                raise ValueError("The selected manual verse is no longer in the verse library.")
+        elif rotation_changed:
+            prepared_rotation = None
+
+        self._persist_settings_transaction(normalized, prepared_rotation)
+        data_changed = self._adopt_config(
+            normalized,
+            persist=False,
+            rotation_persisted=prepared_rotation is not _ROTATION_UNCHANGED,
+        )
+        if isinstance(prepared_rotation, Mapping):
+            self.rotator.adopt_prepared(prepared_rotation)
+        if isinstance(prepared_rotation, Mapping) and self.snapshot is not None:
             self.snapshot = replace(self.snapshot, verse=verse_content(preferred_verse))
         self.last_event_archive_date = date.today()
         if data_changed:
@@ -1189,7 +1240,64 @@ class DashboardController:
             )
         self._refresh_deck_browser()
 
-    def _adopt_config(self, normalized: Mapping[str, Any], persist: bool) -> bool:
+    def _persist_settings_transaction(
+        self,
+        normalized: Mapping[str, Any],
+        prepared_rotation: object,
+    ) -> None:
+        """Commit config and manual-verse state with best-effort rollback."""
+
+        try:
+            raw_previous = mw.addonManager.getConfig(self.package)
+        except Exception:
+            raw_previous = self.config
+        previous_config = deepcopy(
+            dict(raw_previous) if isinstance(raw_previous, Mapping) else self.config
+        )
+        previous_rotation = (
+            _read_optional_bytes(ROTATION_STATE_PATH)
+            if prepared_rotation is not _ROTATION_UNCHANGED
+            else None
+        )
+        try:
+            mw.addonManager.writeConfig(self.package, normalize_config(normalized))
+        except Exception as exc:
+            raise RuntimeError("Could not write add-on configuration: {}".format(exc)) from exc
+
+        if prepared_rotation is _ROTATION_UNCHANGED:
+            return
+        try:
+            if isinstance(prepared_rotation, Mapping):
+                self.rotator.persist_prepared(prepared_rotation)
+            else:
+                try:
+                    ROTATION_STATE_PATH.unlink()
+                except FileNotFoundError:
+                    pass
+        except Exception as exc:
+            rollback_errors = []
+            try:
+                mw.addonManager.writeConfig(self.package, previous_config)
+            except Exception as rollback_exc:
+                rollback_errors.append("configuration rollback failed: {}".format(rollback_exc))
+            try:
+                _restore_optional_bytes(ROTATION_STATE_PATH, previous_rotation)
+            except Exception as rollback_exc:
+                rollback_errors.append("verse-state rollback failed: {}".format(rollback_exc))
+            detail = "Could not save the current manual verse; previous settings were restored."
+            if rollback_errors:
+                detail = "Could not save the current manual verse; {}.".format(
+                    "; ".join(rollback_errors)
+                )
+            raise RuntimeError("{} {}".format(detail, exc)) from exc
+
+    def _adopt_config(
+        self,
+        normalized: Mapping[str, Any],
+        persist: bool,
+        *,
+        rotation_persisted: bool = False,
+    ) -> bool:
         normalized_config = normalize_config(normalized)
         analytics_changed = analytics_config_fingerprint(self.config) != analytics_config_fingerprint(normalized_config)
         events_changed = self.config.get("events", {}) != normalized_config.get("events", {})
@@ -1216,7 +1324,7 @@ class DashboardController:
                 reference_date,
             )
         if rotation_changed:
-            self.rotator.clear(persistent=True)
+            self.rotator.clear(persistent=not rotation_persisted)
             if self.snapshot is not None:
                 self.snapshot = replace(self.snapshot, verse=self._selected_verse())
         return analytics_changed or events_changed

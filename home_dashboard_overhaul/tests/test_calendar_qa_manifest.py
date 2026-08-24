@@ -9,166 +9,182 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-class NativeRefinementQaContractTests(unittest.TestCase):
+class CanonicalUiReleaseQaContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         qa = ROOT / "qa"
         cls.manifest = json.loads(
-            (qa / "calendar_surface_manifest_1_8_4.json").read_text(encoding="utf-8")
+            (qa / "calendar_surface_manifest_1_8_5.json").read_text(encoding="utf-8")
         )
         cls.matrix = json.loads(
-            (qa / "visual_regression_matrix_1_8_4.json").read_text(encoding="utf-8")
+            (qa / "visual_regression_matrix_1_8_5.json").read_text(encoding="utf-8")
         )
         cls.capture = json.loads(
-            (qa / "capture_evidence_manifest_1_8_4.json").read_text(encoding="utf-8")
+            (qa / "capture_evidence_manifest_1_8_5.json").read_text(encoding="utf-8")
         )
         cls.registry = json.loads(
-            (qa / "ui-surface-registry_1_8_4.json").read_text(encoding="utf-8")
+            (qa / "ui-surface-registry_1_8_5.json").read_text(encoding="utf-8")
         )
 
-    def test_manifest_is_the_authoritative_1_8_4_native_contract(self) -> None:
+    def test_manifest_is_the_authoritative_1_8_5_schema_eight_contract(self) -> None:
         self.assertEqual(self.manifest["schema_version"], 8)
-        self.assertEqual(self.manifest["release"], "1.8.4")
+        self.assertEqual(self.manifest["release"], "1.8.5")
         self.assertEqual(
             self.manifest["contract"],
-            "multi-deck-new-limit-correction-native-100-percent-2026-08-24",
+            "canonical-settings-and-production-dashboard-final-ui-2026-08-24",
         )
         self.assertEqual(
             self.manifest["dashboard_order"],
             ["study_calendar", "summary_metrics", "bible_verse"],
         )
-        architecture = self.manifest["wide_architecture"]
-        self.assertEqual(architecture["minimum_container_width"], 1040)
-        self.assertEqual(architecture["dashboard_maximum_width"], 1240)
-        self.assertEqual(architecture["minimum_page_side_margin"], 16)
-        self.assertEqual(architecture["top_spacing"], 22)
-        self.assertEqual(architecture["native_control_height"], 42)
-        self.assertEqual(architecture["native_control_gap"], 24)
-        self.assertEqual(architecture["bottom_safe_area"], 66)
+        settings = self.manifest["settings_architecture"]
+        self.assertEqual(settings["default_window"], [1200, 800])
+        self.assertEqual(settings["minimum_normal_window"], [1040, 700])
+        self.assertEqual(settings["maximum_inner_width"], 1240)
+        self.assertEqual(settings["rail_width"], 152)
+        self.assertFalse(settings["preview_persisted"])
+        dashboard = self.manifest["dashboard_architecture"]
+        self.assertEqual(dashboard["maximum_width"], 1120)
+        self.assertEqual(dashboard["month_cells"], 42)
+        self.assertEqual(dashboard["month_rows"], 6)
+        self.assertEqual(dashboard["year_weeks"], 53)
+        self.assertEqual(dashboard["year_weekday_column"], 28)
+        self.assertEqual(dashboard["year_cell_range"], [10, 12])
+        self.assertEqual(dashboard["year_gap"], 3)
 
-    def test_current_surface_registry_is_exact_once_and_matches_authority(self) -> None:
-        manifest_ids = [item["id"] for item in self.manifest["canonical_surfaces"]]
-        registry_ids = [item["id"] for item in self.registry["surfaces"]]
-        self.assertGreaterEqual(len(manifest_ids), 41)
-        self.assertEqual(len(manifest_ids), len(set(manifest_ids)))
-        self.assertEqual(registry_ids, manifest_ids)
+    def test_surface_registry_matches_the_authority_exactly_once(self) -> None:
+        manifest_surfaces = self.manifest["canonical_surfaces"]
+        registry_surfaces = self.registry["surfaces"]
+        ids = [surface["id"] for surface in manifest_surfaces]
+        self.assertGreaterEqual(len(ids), 30)
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertEqual(registry_surfaces, manifest_surfaces)
         self.assertTrue(self.registry["exact_once"])
         self.assertEqual(
             self.registry["authority"],
-            "qa/calendar_surface_manifest_1_8_4.json",
+            "qa/calendar_surface_manifest_1_8_5.json",
         )
 
-    def test_primary_matrix_is_the_exact_sixteen_case_cartesian_product(self) -> None:
-        axes = self.matrix["axes"]
-        expected = set(product(axes["theme"], axes["mode"], axes["view"]))
+    def test_palette_matrix_covers_every_theme_id_in_both_modes(self) -> None:
+        expected = {
+            (theme, palette, mode)
+            for theme, palettes in self.matrix["palette_ids_by_theme"].items()
+            for palette, mode in product(palettes, self.matrix["modes"])
+        }
         actual = {
-            (case["theme"], case["mode"], case["view"])
-            for case in self.matrix["cases"]
+            (case["theme"], case["palette"], case["mode"])
+            for case in self.matrix["palette_cases"]
         }
-        self.assertEqual(self.matrix["release"], "1.8.4")
-        self.assertEqual(self.matrix["primary_case_count"], 16)
-        self.assertEqual(len(self.matrix["cases"]), 16)
-        self.assertEqual(len({case["id"] for case in self.matrix["cases"]}), 16)
+        self.assertEqual(len(expected), 32)
         self.assertEqual(actual, expected)
-        self.assertTrue(all(case["text_scale"] == 100 for case in self.matrix["cases"]))
-        self.assertEqual(self.matrix["deferred_scales_percent"], [125, 150])
+        self.assertEqual(len({case["id"] for case in self.matrix["palette_cases"]}), 32)
+        self.assertTrue(all(case["view"] == "month" for case in self.matrix["palette_cases"]))
         self.assertEqual(
-            self.matrix["required_container_width_assertions"],
-            [1240, 1100, 1040, 1039, 620, 479, 419, 320, 319],
+            [case["id"] for case in self.matrix["view_cases"]],
+            ["PROD-MONTH-STABLE", "PROD-YEAR-STABLE"],
         )
 
-    def test_capture_manifest_binds_every_primary_and_required_coverage_tag(self) -> None:
-        primary_ids = [case["id"] for case in self.matrix["cases"]]
-        self.assertEqual(self.capture["primary_native_frames"], primary_ids)
-        tags = {
-            tag
-            for case in self.matrix["cases"] + self.capture["supplemental_frames"]
-            for tag in case["tags"]
-        }
-        self.assertFalse(set(self.capture["required_coverage_tags"]) - tags)
-        self.assertEqual(
-            len({case["id"] for case in self.capture["supplemental_frames"]}),
-            len(self.capture["supplemental_frames"]),
+    def test_settings_page_matrix_is_derived_from_all_required_axes(self) -> None:
+        axes = self.matrix["settings_page_axes"]
+        expected_count = len(axes["page"]) * len(axes["window_width"]) * len(
+            axes["application_font_percent"]
         )
-        self.assertEqual(self.capture["native_frame_count"], {"initial": 55, "restart": 1, "total": 56})
-        self.assertEqual(self.capture["contact_sheet_output"]["detail_sheet_count"], 15)
-        restart = self.capture["supplemental_frames"][-1]
-        self.assertEqual(restart["id"], "RUNTIME-RESTART-PERSISTENCE")
-        self.assertIn("no_waiver", restart["tags"])
-        self.assertNotIn("waived", json.dumps(self.capture).casefold())
+        self.assertEqual(expected_count, 24)
+        self.assertEqual(self.matrix["settings_page_case_count"], expected_count)
+        self.assertEqual(axes["window_width"], [1040, 1200, "full-screen"])
+        self.assertEqual(axes["application_font_percent"], [100, 150])
 
-    def test_1_8_4_capture_registry_probe_and_assembler_share_new_ids(self) -> None:
+    def test_capture_count_is_derived_from_contract_families(self) -> None:
+        families = self.capture["capture_families"]
+        derived = self.capture["derived_native_frame_count"]
+        self.assertEqual(sum(family["count"] for family in families), derived["total"])
+        self.assertEqual(derived, {
+            "initial": 95,
+            "restart": 2,
+            "total": 97,
+            "derivation": "sum(capture_families.count)",
+        })
+        self.assertEqual(
+            {family["id"]: family["count"] for family in families},
+            {
+                "production-palettes": 32,
+                "production-core": 16,
+                "settings-pages": 24,
+                "settings-contract": 23,
+                "restart": 2,
+            },
+        )
+        all_explicit = [
+            capture_id
+            for family in families
+            for capture_id in family.get("capture_ids", [])
+        ]
+        self.assertEqual(len(all_explicit), len(set(all_explicit)))
+        self.assertEqual(
+            families[-1]["capture_ids"],
+            ["PROD-RESTART-PERSISTENCE", "SET-RESTART-PERSISTENCE"],
+        )
+        self.assertIn("no-waiver", families[-1]["requirements"])
+
+    def test_settings_contract_includes_every_required_interaction_state(self) -> None:
+        family = next(
+            item for item in self.capture["capture_families"]
+            if item["id"] == "settings-contract"
+        )
         required = {
-            "HISTORICAL-ALL-CLEAR-SG-D-M",
-            "RESP-SG-D-INTERMEDIATE-SCROLLED-BOTTOM",
-            "RESP-HC-D-NARROW-SCROLLED-BOTTOM",
-            "RESP-YEAR-NARROW-JANUARY",
-            "RESP-YEAR-NARROW-CURRENT-MONTH",
-            "RESP-YEAR-NARROW-DECEMBER",
-            "BIBLE-LONG-NARROW",
-            "STATE-NARROW-LONG-EVENT-PLUS-9",
-            "STATE-NARROW-LONG-LOCALIZED-DATE",
+            "SET-DOCK-SHOWN", "SET-DOCK-HIDDEN",
+            "SET-PREVIEW-SECTION-FIT", "SET-PREVIEW-SECTION-100",
+            "SET-PREVIEW-FULL-FIT", "SET-PREVIEW-FULL-100",
+            "SET-OVERLAY-SUBMIN",
+            "SET-EVENTS-EMPTY", "SET-EVENTS-POPULATED", "SET-EVENTS-SELECTED",
+            "SET-EVENTS-SEARCHED", "SET-EVENTS-ARCHIVED",
+            "SET-BIBLE-SHORT", "SET-BIBLE-LONG", "SET-BIBLE-CUSTOM",
+            "SET-ABOUT-BOTTOM", "SET-DIRTY", "SET-REVERT",
+            "SET-SAVE-SUCCESS", "SET-SAVE-ERROR", "SET-LEGACY-ROUTE",
+            "SET-WINDOW-RESTORE", "SET-WINDOW-CLAMP",
         }
-        planned = set(self.capture["primary_native_frames"]) | {
-            item["id"] for item in self.capture["supplemental_frames"]
-        }
-        self.assertTrue(required <= planned)
-        self.assertNotIn("FRESH-SG-D-M", planned)
-        probe = (ROOT / "qa" / "runtime_probe_release_1_8_4.py").read_text(encoding="utf-8")
-        assembler = (ROOT / "qa" / "assemble_release_evidence_1_8_4.py").read_text(encoding="utf-8")
-        for capture_id in required:
-            self.assertIn(capture_id, probe)
-            self.assertIn(capture_id, assembler)
+        self.assertEqual(set(family["capture_ids"]), required)
 
-    def test_reference_inputs_are_calibration_only_and_history_stays_present(self) -> None:
-        for reference in self.capture["reference_inputs"]:
-            self.assertFalse(reference["may_count_as_acceptance_evidence"])
-            self.assertTrue(reference["must_not_be_overwritten"])
-        screenshot = self.capture["reference_inputs"][0]
-        self.assertEqual(screenshot["physical_pixels"], [3420, 2214])
+    def test_production_core_includes_geometry_semantics_backgrounds_and_clearance(self) -> None:
+        family = next(
+            item for item in self.capture["capture_families"]
+            if item["id"] == "production-core"
+        )
+        required = {
+            "PROD-MONTH-STABLE", "PROD-YEAR-STABLE",
+            "PROD-MARKERS-COMBINED", "PROD-MARKERS-COMPLETION",
+            "PROD-MARKERS-DUE", "PROD-MARKERS-TODAY", "PROD-MARKERS-EVENT",
+            "PROD-LEGEND-NO-DUE", "PROD-LEGEND-NO-EVENT",
+            "PROD-BG-WHITE", "PROD-BG-BLACK", "PROD-BG-PURPLE", "PROD-BG-IMAGE",
+            "PROD-SECTIONS-BELOW", "PROD-BOTTOM-CLEARANCE", "PROD-VERSE-EXACT",
+        }
+        self.assertEqual(set(family["capture_ids"]), required)
+
+    def test_references_are_immutable_and_user_owned_evidence_is_never_staged(self) -> None:
+        references = self.capture["reference_inputs"]
+        self.assertTrue(all(not item["may_count_as_acceptance_evidence"] for item in references))
+        self.assertTrue(all(item["must_not_be_overwritten"] for item in references))
+        user_owned = next(item for item in references if item["id"].startswith("USER-OWNED"))
         self.assertEqual(
-            screenshot["sha256"],
-            "a53963d27305bfe531fdd56ebc675ccf25b8be58276636b4a8c4a7380e701c57",
+            user_owned["path"],
+            "qa/settings-menu-contact-sheets-1.8.3-2026-08-23-2222",
         )
-        old_manifest = json.loads(
-            (ROOT / "qa" / "calendar_surface_manifest.json").read_text(encoding="utf-8")
-        )
-        old_matrix = json.loads(
-            (ROOT / "qa" / "visual_regression_matrix_1_8_0.json").read_text(encoding="utf-8")
-        )
-        self.assertEqual(old_manifest["release"], "1.8.0")
-        self.assertEqual(old_matrix["release"], "1.8.0")
-        self.assertTrue((ROOT / "qa" / "release-evidence-1.8.0-2026-08-23").is_dir())
-        retained_181 = json.loads(
-            (ROOT / "qa" / "calendar_surface_manifest_1_8_1.json").read_text(encoding="utf-8")
-        )
-        self.assertEqual(retained_181["release"], "1.8.1")
-        self.assertTrue((ROOT / "qa" / "release-evidence-1.8.1-2026-08-23").is_dir())
-        retained_182 = json.loads(
-            (ROOT / "qa" / "calendar_surface_manifest_1_8_2.json").read_text(encoding="utf-8")
-        )
-        self.assertEqual(retained_182["release"], "1.8.2")
-        self.assertTrue((ROOT / "qa" / "release-evidence-1.8.2-2026-08-23").is_dir())
-        retained_183 = json.loads(
-            (ROOT / "qa" / "calendar_surface_manifest_1_8_3.json").read_text(encoding="utf-8")
-        )
-        self.assertEqual(retained_183["release"], "1.8.3")
-        self.assertTrue((ROOT / "qa" / "release-evidence-1.8.3-2026-08-23").is_dir())
+        self.assertTrue(user_owned["must_not_be_staged"])
+        for version in ("1.8.0", "1.8.1", "1.8.2", "1.8.3", "1.8.4"):
+            self.assertTrue(any(version in item["id"] for item in references))
 
-    def test_acceptance_boundaries_are_machine_readable_and_separate(self) -> None:
+    def test_acceptance_boundaries_and_isolation_are_explicit(self) -> None:
+        expected_unrun = {
+            "voiceover_review", "windows_validation", "linux_validation",
+            "forced_colors_review", "device_pixel_ratio_1", "os_display_scaling",
+        }
+        self.assertEqual(set(self.capture["deferred_unrun"]), expected_unrun)
+        self.assertEqual(set(self.matrix["deferred_unrun"]), expected_unrun)
+        self.assertEqual(len(self.capture["isolation_gates"]), 4)
+        self.assertIn("controlled-restart", self.capture["required_automated_gates"])
         criteria = self.manifest["acceptance_criteria"]
-        self.assertEqual([item["id"] for item in criteria], list(range(1, 43)))
-        smoke = self.capture["runtime_smoke_requirements"]
-        self.assertEqual(smoke["remaining_limits"], {"A": 3, "B": 7})
-        self.assertEqual(smoke["expected_unexcluded_new_remaining"], 10)
-        self.assertEqual(smoke["expected_excluding_b_new_remaining"], 3)
-        self.assertEqual(smoke["restart_expected_new_remaining"], 10)
+        self.assertEqual(len({item["id"] for item in criteria}), len(criteria))
         self.assertTrue(all(item["tags"] and item["requirement"].strip() for item in criteria))
-        deferred = set(self.capture["deferred_unrun"])
-        self.assertIn("voiceover_review", deferred)
-        self.assertIn("windows_validation", deferred)
-        self.assertIn("forced_colors_review", deferred)
-        self.assertIn("non_100_percent_scaling", deferred)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@
 }
 
 #hdo-dashboard {
-  --hdo-native-footer-height: 42px;
+  --hdo-native-footer-height: 60px;
   --hdo-native-footer-gap: 24px;
   --hdo-bottom-clearance: calc(var(--hdo-native-footer-height) + var(--hdo-native-footer-gap));
   --hdo-skeleton-base: var(--ui-skeleton-base);
@@ -16,14 +16,13 @@
   font-size: calc(15px * var(--hdo-scale));
   line-height: 1.42;
   isolation: isolate;
-  margin: 22px auto 0;
-  max-width: 1240px;
-  overflow-x: clip;
+  margin: 24px auto 0;
+  max-width: 1120px;
   padding: 0 0 var(--hdo-bottom-clearance);
   position: relative;
   text-align: left;
   scroll-padding-bottom: var(--hdo-bottom-clearance);
-  width: min(1240px, calc(100% - 32px));
+  width: min(1120px, calc(100% - 40px));
 }
 
 #hdo-dashboard[data-hdo-color-mode="light"] {
@@ -97,7 +96,7 @@
 #hdo-dashboard .hdo-calendar-card {
   background: var(--ui-card-background);
   border-color: var(--ui-border-default);
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: var(--ui-shadow-card);
   container: hdo-calendar / inline-size;
   display: flex;
@@ -112,19 +111,17 @@
 #hdo-dashboard .hdo-statistics-card {
   background: var(--ui-card-background);
   border-radius: 9px;
-  box-shadow: var(--ui-shadow-card);
 }
 
 #hdo-dashboard .hdo-bible-card {
   background: var(--ui-card-background);
   border-radius: 9px;
-  box-shadow: var(--ui-shadow-card);
 }
 
 #hdo-dashboard .hdo-calendar-card,
 #hdo-dashboard .hdo-recovery-card,
 #hdo-dashboard .hdo-loading-card {
-  padding: 16px;
+  padding: 20px;
 }
 
 #hdo-dashboard .hdo-dashboard-header {
@@ -164,7 +161,7 @@
 #hdo-dashboard .hdo-recovery-card h2,
 #hdo-dashboard .hdo-loading-card h2 {
   color: var(--ui-text-primary);
-  font-size: calc(19.5px * var(--hdo-scale));
+  font-size: calc(24px * var(--hdo-scale));
   letter-spacing: -.015em;
   margin-bottom: 0;
 }
@@ -188,7 +185,7 @@
 }
 
 #hdo-dashboard .hdo-header-controls {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
   min-width: 0;
@@ -211,7 +208,7 @@
   cursor: pointer;
   color: var(--ui-text-secondary);
   font-size: calc(13.75px * var(--hdo-scale));
-  min-height: 32px;
+  min-height: 34px;
   padding: 4px 10px;
   transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
 }
@@ -245,7 +242,7 @@
   border: 0;
   border-radius: 5px;
   color: var(--ui-text-secondary);
-  min-height: 30px;
+  min-height: 34px;
 }
 
 #hdo-dashboard .hdo-view-switch button + button,
@@ -289,7 +286,7 @@
 #hdo-dashboard .hdo-settings,
 #hdo-dashboard .hdo-icon-button {
   font-size: 1em;
-  min-width: 35px;
+  min-width: 34px;
   padding-inline: 5px;
 }
 
@@ -306,7 +303,7 @@
   border: 0;
   border-radius: 5px;
   color: var(--ui-text-secondary);
-  min-height: 30px;
+  min-height: 34px;
 }
 
 #hdo-dashboard .hdo-view-switch button:hover:not([aria-pressed="true"]),
@@ -387,16 +384,16 @@
 
 #hdo-dashboard .hdo-calendar-grid--month {
   display: grid;
-  column-gap: 5px;
+  column-gap: 6px;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: repeat(var(--hdo-month-rows), clamp(42px, 4.4cqi, 44px));
-  row-gap: 5px;
+  grid-template-rows: repeat(6, clamp(48px, 4.8cqi, 54px));
+  row-gap: 6px;
 }
 
 #hdo-dashboard .hdo-calendar-grid--year {
   display: grid;
   column-gap: 3px;
-  grid-template-columns: 22px repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr));
+  grid-template-columns: 28px repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr));
   grid-template-rows: 18px repeat(7, auto);
   justify-content: center;
   min-width: 0;
@@ -434,7 +431,8 @@
   appearance: none;
   background: var(--calendar-empty-bg);
   border: 1px solid var(--ui-border-subtle);
-  border-radius: 5px;
+  border-radius: 6px;
+  box-shadow: none;
   color: var(--heat-complete-text-0);
   cursor: pointer;
   display: flex;
@@ -493,6 +491,7 @@
 
 #hdo-dashboard .hdo-calendar-day[data-due-level]:not([data-due-level="0"])::after {
   border-radius: 0 0 4px 4px;
+  box-shadow: 0 -1px 0 var(--ui-text-primary);
   content: "";
   inset-block-end: 1px;
   inset-inline: 2px;
@@ -516,29 +515,30 @@
 }
 
 #hdo-dashboard .hdo-calendar-day:focus-visible {
+  box-shadow: none;
   outline: 2px solid var(--ui-focus);
   outline-offset: 1px;
   z-index: 7;
 }
 
-#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day.is-today .hdo-date-number {
-  background: var(--calendar-today-ring);
-  color: var(--ui-on-accent);
-  min-width: 22px;
-  padding: 2px 6px;
-  text-align: center;
-}
-
-#hdo-dashboard .hdo-calendar-day.is-selected {
-  /* Anki's native button reset can set outline-width to zero with !important.
-     Keep the single semantic selection outline authoritative in the host. */
-  outline: 2px solid var(--calendar-selected-ring) !important;
-  outline-offset: -1px;
+#hdo-dashboard .hdo-calendar-day.is-today {
+  border-color: var(--calendar-ring-halo);
+  box-shadow: none;
+  outline: 2px solid var(--calendar-today-ring) !important;
+  outline-offset: -3px;
   z-index: 6;
 }
 
+#hdo-dashboard .hdo-calendar-day.is-selected {
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--calendar-selected-ring) 16%, transparent),
+    color-mix(in srgb, var(--calendar-selected-ring) 16%, transparent)
+  );
+  z-index: 5;
+}
+
 #hdo-dashboard .hdo-calendar-day.is-selected:focus-visible {
-  outline-color: var(--ui-focus) !important;
+  outline: 2px solid var(--ui-focus) !important;
   outline-offset: 1px;
 }
 
@@ -558,7 +558,7 @@
 #hdo-dashboard .hdo-event-marker {
   background: var(--status-event-fill);
   border: 1px solid var(--ui-text-primary);
-  box-shadow: 0 0 0 1px var(--calendar-event-halo);
+  outline: 1px solid var(--calendar-event-halo);
   height: 7px;
   inset-inline-end: 5px;
   pointer-events: none;
@@ -615,32 +615,18 @@
 
 #hdo-dashboard .hdo-calendar-grid--year .hdo-event-marker {
   border: 1px solid var(--ui-text-primary);
-  box-shadow: 0 0 0 1px var(--calendar-ring-halo);
+  outline: 1px solid var(--calendar-event-halo);
   height: 4px;
   inset-inline-end: 1px;
   top: 1px;
   width: 4px;
 }
 
-#hdo-dashboard .hdo-calendar-grid--year .hdo-calendar-day.is-today::before {
-  background: var(--calendar-today-ring);
-  border: 1px solid var(--calendar-ring-halo);
-  border-radius: 999px;
-  content: "";
-  height: clamp(3px, 38%, 6px);
-  inset: 50% auto auto 50%;
-  pointer-events: none;
-  position: absolute;
-  transform: translate(-50%, -50%);
-  width: clamp(3px, 38%, 6px);
-  z-index: 4;
-}
-
 #hdo-dashboard .hdo-calendar-footer {
   background: var(--calendar-footer-bg);
   border-radius: 0 0 9px 9px;
   border-top: 1px solid var(--ui-border-subtle);
-  margin: 14px -16px -16px;
+  margin: 14px -20px -20px;
   overflow: hidden;
 }
 
@@ -719,6 +705,7 @@
 #hdo-dashboard .hdo-due-legend i::after {
   border-radius: 0 0 1px 1px;
   bottom: 1px;
+  box-shadow: 0 -1px 0 var(--ui-text-primary);
   content: "";
   inset-inline: 1px;
   position: absolute;
@@ -735,7 +722,7 @@
 #hdo-dashboard .hdo-context-event-marker {
   background: var(--status-event-fill);
   border: 1px solid var(--ui-text-primary);
-  box-shadow: 0 0 0 1px var(--calendar-event-halo);
+  outline: 1px solid var(--calendar-event-halo);
   display: inline-block;
   flex: 0 0 auto;
   height: 6px;
@@ -750,9 +737,14 @@
   display: grid;
   grid-template-areas: "date event actions";
   grid-template-columns: auto minmax(0, 1fr) auto;
-  min-block-size: 46px;
+  min-block-size: 56px;
   padding: 8px 12px;
   row-gap: 6px;
+}
+
+#hdo-dashboard .hdo-calendar-context--no-event {
+  grid-template-areas: "date actions";
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 #hdo-dashboard .hdo-selected-date-line {
@@ -1183,7 +1175,7 @@
 #hdo-dashboard .hdo-verse {
   align-self: start;
   font-family: var(--hdo-verse-font), Georgia, serif;
-  font-size: calc(var(--hdo-verse-size) * var(--hdo-scale));
+  font-size: var(--hdo-verse-size);
   font-weight: 500;
   justify-self: center;
   line-height: 1.36;
@@ -1422,12 +1414,6 @@
   }
 }
 
-@container hdo-dashboard (max-width: 419px) {
-  #hdo-dashboard .hdo-calendar-grid--month {
-    grid-template-rows: repeat(var(--hdo-month-rows), clamp(34px, 10cqi, 38px));
-  }
-}
-
 @container hdo-calendar (max-width: 560px) {
   #hdo-dashboard .hdo-dashboard-header {
     grid-template-columns: minmax(0, 1fr);
@@ -1449,10 +1435,7 @@
     padding: 7px;
   }
 
-  #hdo-dashboard .hdo-calendar-day {
-    border-radius: 5px;
-    padding: 5px;
-  }
+  #hdo-dashboard .hdo-calendar-day { padding: 5px; }
 
   #hdo-dashboard .hdo-date-number {
     font-size: calc(12px * var(--hdo-scale));
@@ -1495,6 +1478,7 @@
     grid-template-columns: 18px repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr));
     row-gap: 1px;
   }
+
 }
 
 @container hdo-calendar (max-width: 419px) {
@@ -1549,13 +1533,6 @@
     font-size: calc(11px * var(--hdo-scale));
     min-width: 104px;
     padding-inline: 7px !important;
-  }
-}
-
-@container hdo-calendar (max-width: 759px) and (min-width: 420px) {
-  #hdo-dashboard .hdo-calendar-grid--month {
-    grid-template-rows: repeat(var(--hdo-month-rows), clamp(38px, 6cqi, 42px));
-    row-gap: 4px;
   }
 }
 

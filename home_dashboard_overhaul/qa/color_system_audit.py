@@ -291,7 +291,7 @@ def contrast_audit() -> dict[str, Any]:
                 event_ratio = max(
                     contrast_ratio(tokens["status_event_fill"], tokens[fill_role]),
                     contrast_ratio(tokens["ui_text_primary"], tokens[fill_role]),
-                    contrast_ratio(tokens["calendar_ring_halo"], tokens[fill_role]),
+                    contrast_ratio(tokens["calendar_event_halo"], tokens[fill_role]),
                 )
                 _check(
                     checks,
@@ -327,12 +327,16 @@ def contrast_audit() -> dict[str, Any]:
                     theme=theme_name,
                     mode=mode,
                     group="reviews due bottom marker",
-                    foreground_role=due_mark_role,
+                    foreground_role="{} plus ui_text_primary edge".format(due_mark_role),
                     foreground=tokens[due_mark_role],
                     background_role=due_bg_role,
                     background=due_bg,
                     threshold=2.75,
-                    note="The fixed-height marker is also differentiated geometrically from full-cell completion fill.",
+                    ratio=max(
+                        contrast_ratio(tokens[due_mark_role], due_bg),
+                        contrast_ratio(tokens["ui_text_primary"], due_bg),
+                    ),
+                    note="The plum fixed-height marker has a one-pixel text-primary edge and is also differentiated geometrically from completion fill.",
                 )
                 _check(
                     checks,

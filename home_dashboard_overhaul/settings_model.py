@@ -13,19 +13,11 @@ from typing import Any, Dict, Iterable, Mapping, MutableMapping, Sequence, Tuple
 
 from .config_schema import default_config, normalize_config
 from .models import DashboardSnapshot, EventItem, ValueState
-from .ui_primitives import (
-    CONTENT_MODE_EXTRA_WIDE,
-    CONTENT_MODE_INTERMEDIATE,
-    CONTENT_MODE_NARROW,
-    CONTENT_MODES,
-)
 from .verse import verse_within_limit
 
 
 Path = Tuple[str, ...]
 _MISSING = object()
-
-SETTINGS_CONTENT_MODES = CONTENT_MODES
 
 HISTORY_RANGE_ALL = "all"
 HISTORY_RANGE_90 = "90"
@@ -67,50 +59,32 @@ def history_range_values(choice: object, custom_start: object) -> Tuple[int, str
     return 0, ""
 
 
-@dataclass(frozen=True)
-class SettingsLayoutMetrics:
-    """Measured minimums used to select the native Settings composition.
+def clamp_window_size(
+    saved: object,
+    available: Sequence[int],
+    *,
+    default: Tuple[int, int] = (1200, 800),
+    minimum: Tuple[int, int] = (1040, 700),
+    margin: int = 32,
+) -> Tuple[int, int]:
+    """Clamp a remembered Qt size to the screen without inventing a UI mode."""
 
-    The widget layer supplies live size hints and font metrics.  Keeping the
-    decision pure makes it possible to prove that layout changes follow content
-    fit rather than release-screenshot widths.
-    """
-
-    available_width: int
-    font_height: int
-    sidebar_width: int
-    editor_width: int
-    preview_width: int
-    footer_width: int
-    spacing: int = 0
-
-
-def settings_content_mode(metrics: SettingsLayoutMetrics) -> str:
-    """Return the release-specified responsive Settings composition.
-
-    The UI architecture changes at 1180 and 760 logical pixels.  Individual
-    controls still use live font metrics and wrapping size hints, but the
-    navigation and preview must remain predictable at the documented widths.
-    """
-
-    values = (
-        metrics.available_width,
-        metrics.font_height,
-        metrics.sidebar_width,
-        metrics.editor_width,
-        metrics.preview_width,
-        metrics.footer_width,
-        metrics.spacing,
+    try:
+        available_width, available_height = (int(available[0]), int(available[1]))
+    except (TypeError, ValueError, IndexError):
+        available_width, available_height = default
+    maximum_width = max(1, available_width - max(0, int(margin)))
+    maximum_height = max(1, available_height - max(0, int(margin)))
+    try:
+        saved_width, saved_height = (int(saved[0]), int(saved[1]))  # type: ignore[index]
+    except (TypeError, ValueError, IndexError):
+        saved_width, saved_height = default
+    minimum_width = min(minimum[0], maximum_width)
+    minimum_height = min(minimum[1], maximum_height)
+    return (
+        min(maximum_width, max(minimum_width, saved_width)),
+        min(maximum_height, max(minimum_height, saved_height)),
     )
-    if any(not isinstance(value, int) or value < 0 for value in values):
-        raise ValueError("settings layout metrics must be non-negative integers")
-
-    available = metrics.available_width
-    if available >= 1180:
-        return CONTENT_MODE_EXTRA_WIDE
-    if available >= 760:
-        return CONTENT_MODE_INTERMEDIATE
-    return CONTENT_MODE_NARROW
 
 
 SECTION_IDS = (
@@ -217,9 +191,14 @@ def preview_snapshot_with_staged_events(
                     days_remaining=(event_date - today).days,
                 )
             )
+    order = event_config.get("sort")
     staged.sort(
-        key=lambda item: (item.date, item.name.casefold()),
-        reverse=event_config.get("sort") == "descending",
+        key=(
+            (lambda item: (item.name.casefold(), item.date, item.event_id))
+            if order == "name"
+            else (lambda item: (item.date, item.name.casefold(), item.event_id))
+        ),
+        reverse=order == "descending",
     )
     event_items = tuple(staged)
     event_state = ValueState.available(event_items)

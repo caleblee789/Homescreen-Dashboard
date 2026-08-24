@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+## 1.8.5 — 2026-08-24
+
+- Replaced the three Settings compositions with one native Qt shell: compact
+  global header, permanent 152 px rail, one active-page scroller, one shared
+  Preview dock, and a final-row footer. The window defaults to 1200×800,
+  enforces 1040×700 where the screen permits, restores a clamped Qt-only size,
+  and reuses the same PreviewDock instance as a small-screen overlay fallback.
+- Reorganized Dashboard Settings into Appearance, Dashboard sections, Study
+  calculations, Calendar display, Calendar range, and Data and reset. Added
+  global Revert changes, stable Close and Save changes actions, inline save
+  failures, and transaction-safe config/manual-verse persistence with
+  best-effort rollback.
+- Rebuilt Events around compact Active/Archived tabs and shared two-line rows;
+  added the persisted `events.sort = "name"` option with case-insensitive name,
+  date, and stable-ID ordering. Rebuilt Bible rows around reference/excerpt
+  presentation plus Current and Preview badges, and compacted About into
+  Version/Help, privacy/legal, and Backup and recovery groups without changing
+  the legally required Scripture attribution or adding recovery behavior.
+- Authored distinct light and dark completion ladders for all 16 existing
+  theme-specific heatmap IDs while preserving every ID and per-theme saved
+  selection. Settings colors now follow only Anki's application appearance.
+- Reworked the production dashboard to a transparent, normal-flow 1120 px
+  shell with measured native-action clearance. Month is always 42 cells and
+  six weeks; Year is one responsive 53-week tree with a 28 px weekday column
+  that compacts its columns and gaps to avoid horizontal scrolling at 480 px
+  and above. Completion, selection, Today, due, and event markers remain
+  independently visible, and legend/event groups are conditional.
+- Preserved schema 8, scheduler-authoritative counts, analytics, migrations,
+  events, verses, and all existing config keys. Added a 97-frame evidence
+  contract derived from the implemented Settings and production surface set,
+  with exact-package initial/restart isolation gates and explicit unrun
+  platform/accessibility boundaries.
+
 ## 1.8.4 — 2026-08-24
 
 - Limited Today’s Progress `New remaining` to Anki's scheduler-authoritative

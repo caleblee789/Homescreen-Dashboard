@@ -8,6 +8,7 @@ from home_dashboard_overhaul.themes import (
     DEFAULT_HEATMAP_PRESETS,
     HEATMAP_PRESETS,
     PRESETS,
+    SETTINGS_COLOR_TOKENS,
 )
 
 
@@ -18,17 +19,15 @@ class SettingsReleaseContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.settings = (ROOT / "settings.py").read_text(encoding="utf-8")
-        cls.runtime_probe = (ROOT / "qa" / "runtime_probe_settings_overhaul.py").read_text(
+        cls.model = (ROOT / "settings_model.py").read_text(encoding="utf-8")
+        cls.release_probe = (ROOT / "qa" / "runtime_probe_release_1_8_5.py").read_text(
             encoding="utf-8"
         )
-        cls.contact_sheet = (
-            ROOT / "qa" / "generate_settings_overhaul_contact_sheets.py"
-        ).read_text(encoding="utf-8")
         cls.config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
         cls.manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
     def test_release_metadata_and_schema_eight_are_current(self) -> None:
-        self.assertEqual(self.manifest["human_version"], "1.8.4")
+        self.assertEqual(self.manifest["human_version"], "1.8.5")
         self.assertEqual(self.config["schema_version"], 8)
         self.assertEqual(self.config["appearance"]["opacity"], 96)
         self.assertEqual(self.config["appearance"]["blur"], 12)
@@ -38,7 +37,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             ("Sapphire Glass", "Graphite", "Emerald", "High Contrast"),
         )
 
-    def test_saved_heatmap_identifiers_are_preserved_as_theme_native_cards(self) -> None:
+    def test_saved_heatmap_ids_have_distinct_authored_light_and_dark_ladders(self) -> None:
         expected = {
             "Sapphire Glass": ("Sapphire", "Amethyst", "Glacier", "Sea Glass"),
             "Graphite": ("Slate", "Steel", "Plum", "Mint"),
@@ -51,252 +50,275 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )
         self.assertEqual(set(DEFAULT_HEATMAP_PRESETS), set(expected))
         for theme, presets in HEATMAP_PRESETS.items():
-            for name, variants in presets.items():
-                with self.subTest(theme=theme, preset=name):
-                    self.assertEqual(set(variants), {"light", "dark"})
-                    for tokens in variants.values():
-                        self.assertTrue(all(
-                            key in tokens
-                            for key in (
-                                "heat_complete_0",
-                                "heat_complete_1",
-                                "heat_complete_2",
-                                "heat_complete_3",
-                                "heat_complete_4",
-                                "heat_complete_5",
-                                "heat_complete_text_0",
-                                "heat_complete_text_1",
-                                "heat_complete_text_2",
-                                "heat_complete_text_3",
-                                "heat_complete_text_4",
-                                "heat_complete_text_5",
-                            )
-                        ))
-        self.assertIn('card = SettingsCard(\n            "Calendar & data"', self.settings)
-        self.assertIn("self.heatmap_preset_grid", self.settings)
-        self.assertIn('button.setObjectName("HeatmapPresetCard")', self.settings)
-        self.assertNotIn('card_layout.addWidget(button)', self.settings)
-        self.assertIn("presets_by_theme=deepcopy(self._heatmap_preset_preferences)", self.settings)
+            for variant in ("light", "dark"):
+                ladders = []
+                for name, variants in presets.items():
+                    with self.subTest(theme=theme, preset=name, variant=variant):
+                        tokens = variants[variant]
+                        ladder = tuple(tokens["heat_complete_{}".format(level)] for level in range(6))
+                        self.assertEqual(len(set(ladder)), 6)
+                        ladders.append(ladder)
+                        for level in range(6):
+                            self.assertIn("heat_complete_text_{}".format(level), tokens)
+                self.assertEqual(len(ladders), len(set(ladders)))
+        self.assertEqual(
+            tuple(
+                HEATMAP_PRESETS["Graphite"]["Slate"]["dark"][
+                    "heat_complete_{}".format(level)
+                ]
+                for level in range(6)
+            ),
+            ("#1B222A", "#303A45", "#424E5B", "#566474", "#6E7E90", "#8C9BAA"),
+        )
 
-    def test_settings_use_four_page_responsive_shell(self) -> None:
+    def test_settings_palette_is_owned_only_by_anki_appearance(self) -> None:
+        self.assertEqual(set(SETTINGS_COLOR_TOKENS), {"light", "dark"})
+        theme_source = self.settings.split("def _theme_tokens", 1)[1].split(
+            "def _color_contrast", 1
+        )[0]
+        self.assertIn("del config", theme_source)
+        self.assertIn('SETTINGS_COLOR_TOKENS["dark" if anki_dark else "light"]', theme_source)
+        self.assertNotIn("resolve_theme", theme_source)
+
+    def test_settings_use_one_canonical_shell_and_one_shared_preview_dock(self) -> None:
         for marker in (
-            "self.setMinimumSize(560, 560)",
-            "self.setMaximumWidth(1320)",
-            "outer = QGridLayout(self)",
+            "self.resize(1200, 800)",
+            "self.setMinimumSize(1040, 700)",
+            "self.settings_shell.setMaximumWidth(1240)",
+            "self.settings_shell.setSizePolicy(",
+            "self._update_settings_shell_margins()",
+            "inset = max(0, (self.width() - 1240) // 2)",
+            "self.nav.setFixedWidth(152)",
             "outer.setRowStretch(1, 1)",
-            "self.resize(1240, 860)",
-            "settings_content_mode(self._settings_layout_metrics())",
-            "self.nav.setVisible(extra_wide)",
-            "self.section_tabs.setVisible(mode == CONTENT_MODE_INTERMEDIATE)",
-            "self.section_selector_wrap.setVisible(narrow)",
-            "self.compact_toolbar_layout.setDirection",
-            'self.current_section in {"dashboard", "bible_verse"}',
+            "outer.addWidget(self.header_shell, 0, 0)",
+            "outer.addWidget(self.body_shell, 1, 0)",
+            "outer.addWidget(self.footer_shell, 2, 0)",
+            'self.preview_wrap.setObjectName("PreviewDock")',
+            "available.width() < 1040",
+            "1 if self._preview_overlay_mode else 2",
             'self._add_page("dashboard", page)',
             'self._add_page("events", page)',
             'self._add_page("bible_verse", page)',
             'self._add_page("about_support", page)',
         ):
             self.assertIn(marker, self.settings)
-        self.assertNotIn("Restore section defaults", self.settings)
-        self.assertNotIn("PERSONALIZE", self.settings)
+        self.assertEqual(self.settings.count('setObjectName("PreviewDock")'), 1)
+        shell_source = self.settings.split("dialog_layout = QHBoxLayout(self)", 1)[1].split(
+            "outer = QGridLayout(self.settings_shell)", 1
+        )[0]
+        self.assertNotIn("addStretch", shell_source)
+        for retired in (
+            "SettingsLayoutMetrics",
+            "settings_content_mode",
+            "section_selector",
+            "section_tabs",
+            "compact_toolbar",
+            "CONTENT_MODE_NARROW",
+            "CONTENT_MODE_INTERMEDIATE",
+            "CONTENT_MODE_EXTRA_WIDE",
+        ):
+            self.assertNotIn(retired, self.settings)
 
-    def test_preview_is_contextual_content_sized_and_uses_bible_data(self) -> None:
+    def test_window_size_is_restored_clamped_centered_and_non_schema(self) -> None:
+        for marker in (
+            '"HomeScreenDashboard/settingsWindowSize"',
+            "width, height = clamp_window_size(",
+            "available.center() - self.rect().center()",
+            "def _settle_window_to_screen(self) -> None:",
+            "frame_extra_height = max(0, frame.height() - client.height())",
+            "self.setMaximumSize(maximum_width, maximum_height)",
+            "self._window_settings.setValue(",
+        ):
+            self.assertIn(marker, self.settings)
+        self.assertIn("default: Tuple[int, int] = (1200, 800)", self.model)
+        self.assertIn("minimum: Tuple[int, int] = (1040, 700)", self.model)
+        self.assertNotIn("settingsWindowSize", json.dumps(self.config))
+
+    def test_native_probe_does_not_override_or_clear_window_persistence_cases(self) -> None:
+        self.assertIn(
+            'if special not in {"window-restore", "window-clamp", "restart-persistence"}:',
+            self.release_probe,
+        )
+        self.assertIn(
+            'if special != "restart-persistence":\n        settings.remove(SETTINGS_SIZE_KEY)',
+            self.release_probe,
+        )
+
+    def test_preview_uses_the_production_renderer_and_approved_controls(self) -> None:
         for marker in (
             "render_dashboard(",
             "preview=True",
-            '[("Current section", "context"), ("Full dashboard", "full")]',
-            '[("Fit", "fit"), ("Actual size", "actual")]',
+            '[("Section", "context"), ("Full dashboard", "full")]',
+            '[("Fit", "fit"), ("100%", "actual")]',
+            'self.preview_full_button = QPushButton("Open")',
             '"calendar": ".hdo-calendar-card"',
-            '"study_calculations": ".hdo-summary-metrics-grid"',
             '"bible_verse": ".hdo-bible-card"',
-            "var naturalWidth = focusOnly ? viewportWidth",
-            "root.style.width = naturalWidth + 'px'",
-            "surface.style.display = surface === target ? '' : 'none'",
-            "rail.style.display = target === calendar ? 'none' : 'grid'",
-            "document.documentElement.style.overflowY = 'auto'",
-            "var canvas = getComputedStyle(root).getPropertyValue('--ui-canvas')",
-            "document.documentElement.style.background = canvas",
-            "document.body.style.colorScheme = root.dataset.hdoColorMode || 'light'",
-            '("Reviews Due", tokens["heat_due_bg_3"], tokens["heat_due_mark_3"])',
-            "Open full preview",
-            'QLabel("Sample data")',
-            "representative_preview_snapshot",
+            "preview_snapshot_with_staged_events",
             "verse_content(self.quotes[selected_quote])",
-            "self.preview.setFixedHeight(max(160, min(520, height)))",
-            "def _web_asset_url(package: str, filename: str) -> str:",
-            'css=[_web_asset_url(package, "dashboard.css")]',
-            'js=[_web_asset_url(package, "dashboard.js")]',
+            "root.style.transform = 'scale(' + scale + ')'",
+            "document.documentElement.style.overflowY = 'auto'",
+            "document.documentElement.style.overflowY = 'hidden'",
+            "def _update_preview_canvas_height(self) -> None:",
+            "rendered_height = max(0, self._preview_content_size.height())",
+            "preferred = max(150, min(320, rendered_height + 8))",
+            "self.preview_wrap.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Maximum)",
         ):
             self.assertIn(marker, self.settings)
-        self.assertNotIn("Using sample data", self.settings)
-        preview_source = self.settings.split("def _render_preview", 1)[1].split(
-            "def _latest_stored_config", 1
-        )[0]
-        self.assertNotIn("scrollIntoView", preview_source)
-        self.assertNotIn("Math.max(900", self.settings)
         self.assertNotIn("sample_snapshot", self.settings)
 
-    def test_event_actions_are_owned_by_each_row(self) -> None:
+    def test_preview_visibility_is_session_only_and_about_omits_it(self) -> None:
         for marker in (
-            "def _attach_event_menu",
-            'button = QPushButton("•••")',
-            "tree.setItemWidget(item, 2, button)",
-            'menu.addAction("Edit")',
-            'menu.addAction("Restore" if archived else "Archive")',
-            'delete_action = menu.addAction("Delete")',
-            '"Delete event?"',
-            "self.undo_toast.show()",
+            "self._preview_visible = True",
+            'if section_id != "about_support"',
+            'self.current_section in {"dashboard", "events", "bible_verse"}',
+            'if self.current_section == "about_support"',
         ):
             self.assertIn(marker, self.settings)
-        self.assertNotIn("event_selection_state", self.settings)
-        self.assertNotIn("item.setFirstColumnSpanned", self.settings)
+        self.assertNotIn("previewVisibility", self.settings)
+        self.assertNotIn("preview_visible", json.dumps(self.config))
 
-    def test_non_narrow_forms_wrap_only_controls_that_cannot_fit(self) -> None:
-        self.assertIn("QFormLayout.RowWrapPolicy.WrapLongRows", self.settings)
-
-    def test_compound_labels_do_not_collapse_after_wrapping(self) -> None:
-        self.assertIn("self._sync_minimum_height(220)", self.settings)
-        self.assertIn("if self.minimumHeight() < target", self.settings)
-
-    def test_wide_segmented_and_palette_fields_are_explicitly_stacked(self) -> None:
-        self.assertIn("def _stacked_field", self.settings)
-        for label in ("Appearance mode", "Heatmap palette", "Text color", "Rotation"):
-            self.assertIn('                "{}",'.format(label), self.settings)
-
-    def test_custom_bible_color_has_explicit_source_and_validation(self) -> None:
+    def test_visual_polish_regressions_from_native_review_are_locked(self) -> None:
         for marker in (
-            "self.font_color = QLineEdit",
-            "self.font_color_swatch = QPushButton",
-            '[("Theme color", "theme"), ("Custom color", "custom")]',
-            're.fullmatch(r"#[0-9A-Fa-f]{6}"',
-            "self.font_color.setEnabled(state[\"bible.font_color\"])",
-            "self.font_color_swatch.setEnabled(state[\"bible.font_color\"])",
-            "Qt.FocusPolicy.NoFocus",
-            "self.font_color.setFocusPolicy(focus_policy)",
-            "self.font_color_swatch.setFocusPolicy(focus_policy)",
-            "self.custom_color_container.setVisible",
-            "Enter a valid #RRGGBB color",
-            "Low contrast",
+            "QListWidget#SettingsNav::item:hover:!selected {{ color:",
+            "card.setSizePolicy(\n                QSizePolicy.Policy.Expanding,\n                QSizePolicy.Policy.Preferred,",
+            "dialog.setModal(True)",
+            "Qt.WindowType.WindowStaysOnTopHint",
+            'method = "QScreen.grabWindow-screen-client-crop"',
         ):
-            self.assertIn(marker, self.settings)
+            source = self.release_probe if marker.startswith(("dialog.", "Qt.", "method")) else self.settings
+            self.assertIn(marker, source)
 
-    def test_footer_is_a_normal_grid_row_with_dirty_save_states(self) -> None:
-        footer_index = self.settings.index("outer.addWidget(self.footer_shell, 2, 0)")
-        splitter_index = self.settings.index("outer.addWidget(self.splitter, 1, 0)")
-        self.assertLess(splitter_index, footer_index)
-        for marker in (
-            'self.close_button.setText("Discard changes" if dirty else "Close")',
-            'self._set_status("saving", "Saving…")',
-            'self._set_status("saved", "✓ Saved")',
-            'self._set_status("error", "Couldn’t save")',
-            "QKeySequence.StandardKey.Save",
-            "Save changes",
-            "QTimer.singleShot(2000, clear_saved_status)",
-        ):
-            self.assertIn(marker, self.settings)
-        clearance = self.settings.split("def _apply_settings_footer_clearance", 1)[1].split(
-            "def _toggle_preview", 1
-        )[0]
-        self.assertIn("return 0", clearance)
-
-    def test_control_system_has_vector_chevrons_contrast_and_distinct_focus(self) -> None:
-        for marker in (
-            "class SelectChevron(QWidget)",
-            "painter.drawLine(3, 6, 8, 11)",
-            "painter.drawLine(8, 11, 13, 6)",
-            "QComboBox::down-arrow {{ image: none",
-            '"highlight_text": _foreground_for(highlight)',
-            "class SettingsSwitch(QPushButton)",
-            "painter.drawRoundedRect(2, 4, 40, 24",
-            "class SegmentButton(QPushButton)",
-            "def move_selection",
-            "QPushButton#SegmentButton:checked {{ background: {highlight}",
-            "QPushButton#SegmentButton:focus {{ border: 2px solid {focus}",
-        ):
-            self.assertIn(marker, self.settings)
-
-    def test_dashboard_has_exact_three_internal_areas_and_new_copy(self) -> None:
-        for marker in (
+    def test_dashboard_cards_are_in_the_canonical_order(self) -> None:
+        card_markers = (
             '"Appearance"',
-            '"Content & study metrics"',
-            '"Calendar & data"',
-            '"Visible sections"',
-            '"Study calculations"',
-            '"Recent and lifetime statistics"',
-            '"Count manually rescheduled cards as newly studied"',
-            '"Retention status target"',
-            '"Card background opacity"',
-            '"Controls Sapphire Glass component transparency without changing Anki’s wallpaper or deck list."',
-            '"Cards studied, new cards, currently buried cards, time spent, pace, and ETA."',
-            '"Study totals and due dates recalculate after saving."',
+            '"Dashboard sections"',
+            'SettingsCard("Study calculations")',
+            'SettingsCard("Calendar display")',
+            'SettingsCard("Calendar range")',
+            'SettingsCard("Data and reset"',
+        )
+        positions = [self.settings.index(marker) for marker in card_markers]
+        self.assertEqual(positions, sorted(positions))
+        for copy in (
+            "Study history, due load, and events.",
+            "Cards remaining and completion.",
+            "Display only. Study history is unchanged.",
+            "Calendar totals update after saving.",
+        ):
+            self.assertIn(copy, self.settings)
+
+    def test_sapphire_only_fields_are_hidden_without_discarding_values(self) -> None:
+        source = self.settings.split("def _update_glass_controls", 1)[1].split(
+            "def _select_heatmap_preset", 1
+        )[0]
+        self.assertIn('== "Sapphire Glass"', source)
+        self.assertIn("self.opacity_field.setVisible(enabled)", source)
+        self.assertIn("self.blur_field_label.setVisible(enabled)", source)
+        self.assertIn("self.blur_field.setVisible(enabled)", source)
+        self.assertNotIn("setValue", source)
+
+    def test_event_manager_uses_two_line_rows_name_sort_and_main_scroller(self) -> None:
+        for marker in (
+            "class EventRowWidget(QWidget)",
+            'self.title.setObjectName("EventRowTitle")',
+            'self.metadata.setObjectName("EventRowMeta")',
+            'self.overflow.setFixedSize(32, 32)',
+            'self.event_tabs.addTab(self.active_events, "Active (0)")',
+            'self.event_tabs.addTab(self.archived_events, "Archived (0)")',
+            'self.event_empty_add = QPushButton("Add event")',
+            '("Name", "name")',
+            'if sort_value == "name"',
+            'str(item.get("name", "")).casefold()',
+            "tree.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
+            "tree.setFixedHeight(max(2, tree.topLevelItemCount() * row_height + 8))",
         ):
             self.assertIn(marker, self.settings)
 
-    def test_glass_controls_use_schema_eight_ranges_and_disable_outside_sapphire(self) -> None:
+    def test_bible_library_uses_reference_excerpt_badges_and_incremental_rows(self) -> None:
         for marker in (
-            '94, 100, appearance["opacity"], " %"',
-            '0, 16, int(appearance.get("blur", 12)), " px"',
-            'enabled = _combo_value(self.preset, "Sapphire Glass") == "Sapphire Glass"',
-            'for widget in (self.opacity_slider, self.opacity, self.blur_slider, self.blur):',
-            'widget.setEnabled(enabled)',
-            'Other themes use fully opaque component surfaces.',
-        ):
-            self.assertIn(marker, self.settings)
-        self.assertNotIn('self.visibility["buried"]', self.settings)
-
-    def test_legacy_anchor_focus_cannot_override_the_settled_scroll_position(self) -> None:
-        anchor_source = self.settings.split("def _scroll_dashboard_anchor", 1)[1].split(
-            "def _settings_layout_metrics", 1
-        )[0]
-        focus_source = self.settings.split("def _ensure_settings_focus_visible", 1)[1].split(
-            "def _update_preview_visibility", 1
-        )[0]
-        self.assertIn("self._dashboard_anchor_focus_active = True", anchor_source)
-        self.assertIn("self._dashboard_anchor_focus_active = False", anchor_source)
-        self.assertIn('getattr(self, "_dashboard_anchor_focus_active", False)', focus_source)
-        responsive_source = self.settings.split("def _apply_responsive", 1)[1].split(
-            "def _apply_settings_footer_clearance", 1
-        )[0]
-        self.assertIn("self._requested_dashboard_anchor", responsive_source)
-        self.assertIn("self._settle_dashboard_anchor(anchor, -1, 0)", responsive_source)
-
-    def test_capture_contract_includes_true_full_screen_month_and_year(self) -> None:
-        for marker in (
-            "isolated-main-window-initial-full-screen-month-rendered",
-            "isolated-main-window-restart-full-screen-year-rendered",
-            '"calendar_view": "month"',
-            '"calendar_view": config["heatmap"]["calendar_view"]',
-            "mw.isFullScreen()",
-        ):
-            self.assertIn(marker, self.runtime_probe)
-        for marker in (
-            "Rendered Anki home dashboard · Month and Year in true full-screen",
-            "isolated-main-window-initial-full-screen-month-rendered.png",
-            "isolated-main-window-restart-full-screen-year-rendered.png",
-        ):
-            self.assertIn(marker, self.contact_sheet)
-
-    def test_two_column_labels_report_wrapped_height_to_qt(self) -> None:
-        for marker in (
-            "class WrappingFieldLabel(QWidget)",
-            "def hasHeightForWidth(self) -> bool",
-            "def heightForWidth(self, width: int) -> int",
-            "return WrappingFieldLabel(title, description)",
+            "class VerseRowWidget(QWidget)",
+            'self.current_badge = QLabel("Current")',
+            'self.preview_badge = QLabel("Preview")',
+            "split_quote_reference(quote)",
+            "self._quote_render_limit = 100",
+            "self._quote_render_limit += 100",
+            "matches[:self._quote_render_limit]",
+            "self.quote_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
+            "self.quote_list.setFixedHeight(max(2, self.quote_list.count() * row_height + 8))",
+            'SettingsCard(\n            "Rotation"',
+            'SettingsCard(\n            "Verse library"',
         ):
             self.assertIn(marker, self.settings)
 
-    def test_removed_dashboard_surfaces_have_no_settings_controls(self) -> None:
-        lowered = self.settings.casefold()
-        for forbidden in (
-            "expand preview",
-            "show most missed",
-            "most missed preview",
-            "selected-date panel position",
-            "due-deck breakdown",
-            "show estimated completion time",
-            "show eta",
+    def test_about_is_compact_and_exposes_only_existing_recovery_behavior(self) -> None:
+        attribution = (
+            "Scripture quotations are taken from the Holy Bible, New Living Translation, "
+            "copyright ©1996, 2004, 2015 by Tyndale House Foundation. Used by permission "
+            "of Tyndale House Publishers. All rights reserved."
+        )
+        for marker in (
+            'SettingsCard("Version & compatibility")',
+            'SettingsCard("Help")',
+            "top_cards.addWidget(version_card, 0, 0)",
+            "top_cards.addWidget(help_card, 0, 1)",
+            'SettingsCard("Privacy & legal")',
+            'SettingsCard("Backup and recovery")',
+            'recovery_export.clicked.connect(self._export_quotes)',
+            attribution,
         ):
-            self.assertNotIn(forbidden, lowered)
+            self.assertIn(marker, self.settings)
+        recovery_source = self.settings.split('SettingsCard("Backup and recovery")', 1)[1].split(
+            "layout.addStretch()", 1
+        )[0]
+        for forbidden in ("restore", "reset", "import"):
+            self.assertNotIn(forbidden, recovery_source.casefold())
+
+    def test_footer_has_stable_actions_revert_and_inline_error(self) -> None:
+        footer_index = self.settings.index("outer.addWidget(self.footer_shell, 2, 0)")
+        body_index = self.settings.index("outer.addWidget(self.body_shell, 1, 0)")
+        self.assertLess(body_index, footer_index)
+        for marker in (
+            'self.revert_button = QPushButton("Revert changes")',
+            'self.close_button.setText("Close")',
+            'self.save_button.setText("Save changes")',
+            'self.save_error.setObjectName("InlineSaveError")',
+            "def _revert_changes(self)",
+            "baseline = deepcopy(self.draft.baseline)",
+            'self._set_status("saving", "Saving…")',
+            "self.saved_status_timer.timeout.connect(self._clear_saved_status)",
+            "self.saved_status_timer.start()",
+            "self.save_button.setEnabled(False)",
+            'self._last_save_error = "Could not save changes: {}".format(detail)',
+            "self.draft.replace_all(latest_saved)",
+        ):
+            self.assertIn(marker, self.settings)
+        self.assertNotIn('setText("Discard changes"', self.settings)
+
+    def test_controls_grow_with_application_font_without_an_alternate_layout(self) -> None:
+        for marker in (
+            "widget.fontMetrics().lineSpacing() + 10",
+            "view.fontMetrics().lineSpacing() + 12",
+            "max(56, (2 * view.fontMetrics().lineSpacing()) + 20)",
+            "self.setFixedSize(34, 20)",
+            "combo.setMaximumWidth(260)",
+            "spin.setMaximumWidth(92)",
+            "QFormLayout.RowWrapPolicy.WrapLongRows",
+        ):
+            self.assertIn(marker, self.settings)
+
+    def test_legacy_calendar_route_settles_to_the_dashboard_card(self) -> None:
+        self.assertIn('"calendar": ("dashboard", "calendar")', self.model)
+        source = self.settings.split("def _schedule_dashboard_anchor", 1)[1].split(
+            "def _apply_canonical_layout", 1
+        )[0]
+        for marker in (
+            "self._requested_dashboard_anchor = anchor",
+            "QTimer.singleShot(0, lambda: self._settle_dashboard_anchor(anchor, -1, 0))",
+            "target_y = target.mapTo(page, QPoint(0, 0)).y()",
+            "value = max(0, target_y - 2)",
+            "scroll.verticalScrollBar().setValue(value)",
+        ):
+            self.assertIn(marker, source)
 
 
 if __name__ == "__main__":

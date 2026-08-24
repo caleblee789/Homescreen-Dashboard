@@ -37,7 +37,6 @@ DASHBOARD_PRIMITIVES: Tuple[str, ...] = (
 
 SETTINGS_PRIMITIVES: Tuple[str, ...] = (
     "settings-sidebar",
-    "settings-section-selector",
     "settings-footer",
     "form-control",
     "list-or-table-row",
@@ -47,8 +46,8 @@ SETTINGS_PRIMITIVES: Tuple[str, ...] = (
 
 PRIMITIVE_NAMES: Tuple[str, ...] = DASHBOARD_PRIMITIVES + SETTINGS_PRIMITIVES
 
-INTERACTION_TARGET_MIN_PX = 36
-VISUAL_CHROME_PX = 30
+INTERACTION_TARGET_MIN_PX = 34
+VISUAL_CHROME_PX = 32
 FOCUS_RING_PX = 3
 FOCUS_RING_OFFSET_PX = 2
 COMPLETION_TOKEN_ROLE = "completion"

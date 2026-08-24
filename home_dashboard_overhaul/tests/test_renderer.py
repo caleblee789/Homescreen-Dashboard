@@ -93,10 +93,19 @@ class RendererTests(unittest.TestCase):
         due = html[html.index("hdo-legend-due"):html.index("hdo-calendar-context-bar")]
         self.assertEqual(completion.count("data-level="), 5)
         self.assertEqual(due.count("data-due-level="), 3)
-        self.assertIn("Reviews due", due)
+        self.assertIn("Due cards", due)
         self.assertIn("Completed reviews", html)
         self.assertIn('<span class="hdo-legend-endpoint">Low</span>', html)
         self.assertIn('<span class="hdo-legend-endpoint">High</span>', html)
+
+        disabled = deepcopy(self.config)
+        disabled["visibility"]["events"] = False
+        disabled["heatmap"]["show_due_forecast"] = False
+        disabled_html = render_dashboard(self.snapshot, disabled)
+        self.assertNotIn("hdo-legend-due", disabled_html)
+        self.assertNotIn("hdo-legend-event", disabled_html)
+        self.assertNotIn("hdo-calendar-footer__event", disabled_html)
+        self.assertIn("hdo-calendar-footer__date-context", disabled_html)
 
     def test_context_bar_has_selected_event_and_only_contextual_action_shells(self) -> None:
         html = render_dashboard(self.snapshot, self.config)
@@ -411,11 +420,11 @@ class RendererTests(unittest.TestCase):
         self.assertIn("rgba(255, 255, 255, 0.96)", sapphire_html)
         self.assertIn("--hdo-card-backdrop-filter:blur(12px) saturate(1.08)", sapphire_html)
 
-    def test_bible_preference_maps_to_safe_clamp_and_hiding_removes_rail_slot(self) -> None:
+    def test_bible_preference_renders_exact_size_and_hiding_removes_rail_slot(self) -> None:
         config = deepcopy(self.config)
         config["bible"]["font_size"] = "96px"
         html = render_dashboard(self.snapshot, config)
-        self.assertIn("--hdo-verse-size:16.00px", html)
+        self.assertIn("--hdo-verse-size:96.00px", html)
         self.assertIn('class="hdo-verse hdo-verse--medium"', html)
 
         short = render_dashboard(
@@ -423,14 +432,14 @@ class RendererTests(unittest.TestCase):
             config,
         )
         self.assertIn('class="hdo-verse hdo-verse--short"', short)
-        self.assertIn("--hdo-verse-size:17.00px", short)
+        self.assertIn("--hdo-verse-size:96.00px", short)
 
         long = render_dashboard(
             replace(self.snapshot, verse=VerseContent("Grace " * 50, "Reference")),
             config,
         )
         self.assertIn('class="hdo-verse hdo-verse--long"', long)
-        self.assertIn("--hdo-verse-size:15.00px", long)
+        self.assertIn("--hdo-verse-size:96.00px", long)
 
         config["visibility"]["bible"] = False
         hidden = render_dashboard(self.snapshot, config)

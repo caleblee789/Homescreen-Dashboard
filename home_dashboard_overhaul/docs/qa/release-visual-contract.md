@@ -1,96 +1,111 @@
 # Release visual contract
 
-Status: Home Screen Dashboard 1.8.4 native UI 100% release contract.
+Status: Home Screen Dashboard 1.8.5 canonical UI release contract.
 
 ## Authority and retained history
 
 The current machine-readable authorities are:
 
-- `qa/calendar_surface_manifest_1_8_4.json`
-- `qa/ui-surface-registry_1_8_4.json`
-- `qa/visual_regression_matrix_1_8_4.json`
-- `qa/capture_evidence_manifest_1_8_4.json`
+- `qa/calendar_surface_manifest_1_8_5.json`
+- `qa/ui-surface-registry_1_8_5.json`
+- `qa/visual_regression_matrix_1_8_5.json`
+- `qa/capture_evidence_manifest_1_8_5.json`
 
-The supplied 3420×2214 screenshot and the complete 1.8.0 through 1.8.3
-packages, reports, captures, and contact sheets are immutable calibration
-history. They must not be overwritten or represented as new 1.8.4 evidence.
+The supplied 3420×2214 screenshot and complete 1.8.0 through 1.8.4 packages,
+reports, captures, and contact sheets are immutable calibration history. They
+must not be overwritten or represented as new 1.8.5 evidence.
 
-## Native UI 100% composition
+## Production composition
 
-- The dashboard is at most 1,240 px wide and leaves 66 px beneath its content
-  for Anki's 42 px native controls plus a 24 px gap.
-- Anki's actual `document.scrollingElement` owns vertical scrolling. The
-  dashboard adds no nested vertical scroller, fixed or sticky positioning, or
+- The dashboard is at most 1,120 px wide, starts 24 px below the document top,
+  and retains at least 20 px side margins.
+- Anki's actual document scroller owns vertical movement. The dashboard adds
+  no viewport-height root, root overflow clipping, fixed/sticky positioning, or
   page-level horizontal overflow.
-- Calendar and rail remain side by side from 1,040 px; the rail is at least
-  372 px wide. From 420–1,039 px the calendar, auto-fitting metrics, and Bible
-  stack. Below 420 px the narrow density uses one metric column.
-- The footer has separate date, event, and action regions: one row from 760 px,
-  two rows from 420–759 px, and three rows below 420 px. Dates and event titles
-  wrap when needed.
-- Year is fully visible without horizontal scrolling at 480 px and above.
-  Below 480 px, Year alone uses a 580 px minimum internal region with 12 px
-  edge padding, a 5 px scrollbar, and subtle edge fades. January, the current
-  month, and December remain reachable; initial/Today centering and preserved
-  manual scroll position are required.
-- Month remains content-driven, including unequal five- and six-row heights.
-  Bible growth, font scope, and disabled state do not determine Year height.
+- A visible fixed/sticky Anki bottom-action container is detected without
+  localized button text and observed for resize. Root bottom padding and
+  document scroll padding equal its measured height plus 24 px, using 60 px
+  only as the missing-height fallback.
+- Month is always a 42-cell, six-week grid. Completion fill, selected overlay,
+  today's 2 px outline, due marker, and event diamond remain independently
+  visible.
+- Year is always a real 53-week grid with a 28 px weekday column and fluid week
+  columns. Below 760 px its label column and gaps compact so the full grid stays
+  inside the dashboard at 480 px and above; below 480 px only the heatmap may
+  scroll internally.
+- Month and Year share one header and identical outer-card width. The compact
+  footer conditionally omits disabled due/event legend groups and event summary.
+- Per-cell and secondary-card shadows are absent. The calendar card retains one
+  restrained outer shadow and one-pixel boundaries.
 
-Representative container widths are 1240, 1100, 1040, 1039, 620, 479, 419,
-320, and 319 px. Capture subtitles record native dimensions, container width,
-computed density, and UI 100%.
+Production captures cover Month/Year, stable switching, all semantic marker
+combinations, every theme's four palette choices in light and dark, white,
+black, purple, and image host backgrounds, sections below the calendar, and
+bottom-scrolled clearance above Anki's native actions.
 
-## Meaning and visual states
+## Settings composition
 
-- Today uses `Next event`. A selected date with an event uses `On this date`;
-  one without an event uses `No event on this date`. The event action switches
-  between `Edit event` and `Add event`; Reviewed and Due actions remain
-  secondary.
-- Progress uses one readable completion bar. Wide labels remain on one line,
-  and values stay tabular and right-aligned.
-- Month due strips remain inset, event markers retain safe top/right placement,
-  and Year due indicators remain visible but restrained. Legend meaning does
-  not change.
-- Graphite owns slate interaction accents while New cards retain semantic blue.
-  Emerald Dark uses the final neutral-green surface set. High Contrast remains
-  opaque.
-- Dashboard-owned surfaces may be transparent where designed, but `html`,
-  `body`, the Deck Browser, native controls, and external pink/purple
-  compatibility backgrounds are never altered.
-- Initial and delayed skeleton geometry remains stable. Initial failure uses a
-  400–440 px panel, 20 px padding, and 32 px actions. Retained-data refresh
-  failure uses one full-width banner containing one `last_updated_at`
-  timestamp.
+- One native Qt tree owns all widths: compact header, fixed 152 px rail, one
+  page scroller, optional shared Preview dock, and final-row footer.
+- Default size is 1200×800. Minimum 1040×700 is enforced when the screen permits;
+  restored size and the complete decorated frame are clamped to available
+  geometry so the final-row footer remains onscreen. The inner shell is
+  centered and capped at 1,240 px.
+- On a physically smaller screen, the same Preview dock becomes a
+  layout-managed overlay. No alternate controls or page trees are created.
+- Preview starts shown each Dashboard, Events, and Bible verse session, is
+  omitted on About, and is not persisted. Section/Full and Fit/100% use the
+  production renderer. Fit uses a content-aware compact canvas instead of a
+  dead full-height panel; Full and 100% retain a larger scrollable canvas.
+- The rail paints exactly one active row, legacy Calendar routing aligns the
+  Calendar display card without exposing a preceding-card sliver, and the
+  About lead cards share a matched visual row.
+- Settings chrome follows only Anki's light/dark appearance. Application font
+  scaling relies on font-relative roles and control minimums based on line
+  height plus padding.
+- Event, verse, and deck lists have no internal vertical scrollbars; their rows
+  belong to the main page scroller. Verse loading remains incremental.
 
-## Minimal release gate
+Settings captures cover all four pages at 1040, 1200, and full-screen widths;
+100% and 150% application fonts; dock shown/hidden; Section/Full and Fit/100%;
+the sub-minimum overlay; required Events/Bible/About states; dirty, revert,
+save, and error states; legacy routing; window restore/clamp; and restart.
 
-Before the visual smoke cases, create two independent head decks with at least
-40 new cards each and remaining daily limits of 3 and 7. Keep head A selected:
-the production dashboard must show 10 New remaining, then 3 when head B is
-excluded. The same unexcluded 10-card result must survive the single restart.
+## Persistence and meaning
 
-Run the repository's Python suite once and JavaScript suite once, with targeted
-regressions only for footer meaning/actions, bottom clearance/no page overflow,
-Year centering/scroll preservation, the single timestamped refresh banner, and
-version/manifest/capture consistency.
+- Schema remains 8. The only persisted config-domain expansion is
+  `events.sort = "name"`.
+- Existing completion-palette IDs and per-theme selections remain stable.
+- Settings size is a non-schema Qt preference; Preview visibility is not
+  persisted.
+- `SettingsDraft`, staged preview, three-way merge, dependency retention, and
+  list-as-one-field dirty counting remain authoritative.
+- Saving validates all staged state before either write, disables Save while
+  active, updates the baseline only after complete success, and uses
+  best-effort rollback plus a specific inline error after partial failure.
+- Legacy Calendar routing activates Dashboard, settles on Calendar display,
+  and preserves staged values.
+- Saved configuration is loaded before the first production render.
 
-Build `home-dashboard-overhaul-1.8.4.ankiaddon` once. Verify only version,
-the 24-member allowlist, safe paths, successful exact-package loading, and
-source/archive parity.
+## Release gate
 
-Install that exact archive in one fresh disposable sync-disabled Anki 26.8
-profile. After identity confirmation, perform one bounded smoke pass and one
-restart covering initial load, bottom scrolling, narrow footer readability,
-January/current-month/December Year access, failure/retry timestamp behavior,
-and Year-view persistence.
+Pass the Python and JavaScript suites, compilation, manifest/assets checks,
+`git diff --check`, source/archive parity, safe-path inspection, and secret/link
+audits. Build `home-dashboard-overhaul-1.8.5.ankiaddon` reproducibly.
 
-The new evidence package must contain 55 initial captures plus
-`RUNTIME-RESTART-PERSISTENCE`, one overview, and 15 detail sheets. Every
-capture ID appears exactly once in the detail sheets. Review the overview and
-changed/critical captures; exhaustive pixel review of unchanged states is not
-required.
+Install that exact hash into one fresh disposable sync-disabled Anki 26.8
+profile. Prove process, window, filesystem, and sync isolation before
+interaction, then repeat all four gates after one controlled restart.
+
+The implementation-derived evidence contract contains 97 native captures: 95
+initial production/Settings states and two controlled-restart states. Every
+capture ID must appear exactly once in validated contact-sheet coverage.
+
+Only after local gates, exact-package QA, restart persistence, visual review,
+and GitHub checks pass may the release PR be squash-merged.
 
 ## Deferred and unrun
 
-VoiceOver, forced-colors, Windows/Linux, non-100% scaling, and OS-level scaling
-acceptance remain deferred and must be reported as unrun and unclaimed.
+VoiceOver, Windows, Linux, forced-colors, DPR 1, and OS display-scaling
+acceptance remain deferred and must be reported as unrun and unclaimed unless
+separately executed.

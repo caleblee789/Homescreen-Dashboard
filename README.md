@@ -1,41 +1,34 @@
 # Home Screen Dashboard
 
-Home Screen Dashboard 1.8.4 is a calendar-first responsive Deck Browser
-dashboard for Anki Desktop 26.8. It combines study history, due work, local
-events, stable metrics, and a rotating Bible verse without patching Anki's
-private Deck Browser or statistics classes.
+Home Screen Dashboard 1.8.5 is a calendar-first Deck Browser dashboard for
+Anki Desktop 26.8. It combines study history, due work, local events, stable
+metrics, and a rotating Bible verse without patching Anki's private Deck
+Browser or statistics classes.
 
-## 1.8.4 highlights
+## 1.8.5 highlights
 
-- `New remaining` now sums Anki's scheduler-authoritative allowance for every
-  included top-level deck, even when the currently selected deck is only one
-  of several head decks. Parent/child limits and dashboard deck exclusions are
-  applied once, and Total remaining, ETA, and completion use the same value.
-- The responsive, calendar, theme, runtime-state, and schema-8 behavior from
-  1.8.3 is otherwise unchanged.
-
-- Anki's document scroller owns vertical movement, with a 1,240 px dashboard
-  maximum and 66 px of clearance above native controls.
-- Calendar and the 372 px minimum rail stay side by side from 1,040 px. Below
-  that, calendar, auto-fitting metrics, and Bible stack; narrow density starts
-  below 420 px.
-- Footer semantics distinguish `Next event`, `On this date`, and `No event
-  on this date`, with contextual `Add event` and `Edit event` actions.
-- Year remains fully visible from 480 px and gains its only internal horizontal
-  scroller below that threshold, with complete January/current/December access
-  and preserved manual position.
-- Metric labels, progress copy, calendar indicators, theme palettes, loading
-  skeletons, the failure panel, and the single timestamped refresh banner are
-  corrected without changing schema 8.
-- The host canvas, Deck Browser background, native controls, and external
-  compatibility backgrounds remain untouched.
+- Settings uses one native Qt composition at every size: a compact header,
+  152 px text rail, one active page scroller, one shared optional Preview dock,
+  and a stable final-row footer.
+- Dashboard, Events, Bible verse, and About use compact content-sized controls
+  while retaining schema 8, staged previews, three-way merge behavior, and all
+  existing configuration keys. Event sorting additionally accepts `name`.
+- Month is a stable 42-cell grid and Year remains a true 53-week grid. The
+  production dashboard is capped at 1,120 px and measures Anki's visible
+  bottom actions to maintain 24 px of clearance in normal document flow.
+- All 16 existing completion-palette IDs now resolve to separately authored
+  light and dark ladders while preserving each theme's saved selection.
+- Config and manual-verse persistence is transactional, with best-effort
+  rollback and an inline error if only part of a save succeeds.
+- Scheduler-authoritative New remaining counts, analytics, events, verses,
+  migration behavior, and Anki's native navigation, deck table, gear,
+  background, and bottom actions remain intact.
 
 ## Install
 
-Install the verified
-`home-dashboard-overhaul-1.8.4.ankiaddon` from the 1.8.4 release evidence
-package through **Tools → Add-ons → Install from file**, then restart Anki.
-Disable any legacy source add-ons identified by the activation card.
+Install the verified `home-dashboard-overhaul-1.8.5.ankiaddon` from the 1.8.5
+release evidence through **Tools → Add-ons → Install from file**, then restart
+Anki. Disable any legacy source add-ons named by the activation card.
 
 The manifest supports Anki Desktop 26.8 (`min_point_version` and
 `max_point_version` 260800).
@@ -52,20 +45,21 @@ python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
 The builder creates one 24-member allowlisted archive and verifies its version,
-safe paths, and source/archive parity. Release runtime validation installs that
-exact archive in one fresh sync-disabled disposable Anki profile, performs one
-bounded smoke pass and one restart, then produces 56 native captures, one
-overview, and 15 detail contact sheets.
+safe paths, and source/archive byte parity. Release validation installs that
+exact archive in a fresh sync-disabled disposable Anki profile, proves four
+isolation gates before interaction and after one controlled restart, and
+captures the 97 states derived from the current implementation contract.
 
-The current machine-readable release contracts are:
+The current machine-readable release authorities are:
 
-- [calendar_surface_manifest_1_8_4.json](home_dashboard_overhaul/qa/calendar_surface_manifest_1_8_4.json)
-- [visual_regression_matrix_1_8_4.json](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_4.json)
-- [capture_evidence_manifest_1_8_4.json](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_4.json)
+- [calendar_surface_manifest_1_8_5.json](home_dashboard_overhaul/qa/calendar_surface_manifest_1_8_5.json)
+- [ui-surface-registry_1_8_5.json](home_dashboard_overhaul/qa/ui-surface-registry_1_8_5.json)
+- [visual_regression_matrix_1_8_5.json](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_5.json)
+- [capture_evidence_manifest_1_8_5.json](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_5.json)
 
-The 1.8.0 through 1.8.3 packages and evidence remain immutable historical
-comparison material. VoiceOver, forced-colors, Windows/Linux, non-100% scaling,
-and OS-level scaling remain deferred and unclaimed.
+The 1.8.0 through 1.8.4 packages and evidence remain immutable historical
+comparison material. VoiceOver, Windows, Linux, forced-colors, DPR 1, and true
+OS display-scaling acceptance remain deferred and unclaimed unless run.
 
 ## Project layout
 
@@ -74,7 +68,7 @@ and OS-level scaling remain deferred and unclaimed.
 - `home_dashboard_overhaul/qa/`: machine-readable contracts, QA tools, and
   versioned release evidence
 - `deferred/calendar_sources_vnext/`: intentionally deferred external-calendar
-  source excluded from 1.8.4
+  source excluded from 1.8.5
 
 ## License and notices
 
