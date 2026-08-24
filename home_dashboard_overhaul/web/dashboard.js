@@ -162,6 +162,17 @@
     }).format(parsed);
   }
 
+  function formatCompactEventDate(value, referenceValue, locale) {
+    var parsed = dateValue(value);
+    var reference = dateValue(referenceValue);
+    if (!parsed) return "";
+    return new Intl.DateTimeFormat(locale || undefined, {
+      month: "short",
+      day: "numeric",
+      year: reference && reference.getFullYear() === parsed.getFullYear() ? undefined : "numeric"
+    }).format(parsed);
+  }
+
   function groupEvents(rows) {
     var grouped = Object.create(null);
     (Array.isArray(rows) ? rows : []).forEach(function (event) {
@@ -201,20 +212,39 @@
   }
 
   function getContextEvent(events, selectedIso, todayIso) {
-    var selected = groupEvents(events)[selectedIso] || [];
+    var grouped = groupEvents(events);
+    var selected = grouped[selectedIso] || [];
+    if (selectedIso === todayIso) {
+      var next = getNextUpcomingEvent(events, todayIso);
+      return next ? {
+        event: next.event,
+        additional: next.additional,
+        relationship: "Next event",
+        kind: "next"
+      } : {
+        event: null,
+        additional: 0,
+        relationship: "Next event",
+        kind: "empty_today",
+        upcoming: null
+      };
+    }
     if (selected.length) {
       return {
         event: selected[0],
         additional: selected.length - 1,
-        relationship: "On this date"
+        relationship: "On this date",
+        kind: "selected"
       };
     }
     var upcoming = getNextUpcomingEvent(events, todayIso);
-    return upcoming ? {
-      event: upcoming.event,
-      additional: upcoming.additional,
-      relationship: "Next event"
-    } : null;
+    return {
+      event: null,
+      additional: 0,
+      relationship: "No event on this date",
+      kind: "empty_selected",
+      upcoming: upcoming
+    };
   }
 
   function eventCountdown(eventDate, todayValue, locale) {
@@ -228,6 +258,33 @@
       return new Intl.RelativeTimeFormat(locale || undefined, { numeric: "always" }).format(days, "day");
     }
     return "in " + formatNumber(days, locale) + " days";
+  }
+
+  function eventCountdownCompact(eventDate, todayValue, locale) {
+    var eventDay = dateValue(eventDate);
+    var today = dateValue(todayValue);
+    if (!eventDay || !today) return "";
+    var days = dayDifference(eventDay, today);
+    if (days === 0) return "today";
+    if (days === 1) return "tomorrow";
+    if (days === -1) return "yesterday";
+    return (days < 0 ? "−" : "") + formatNumber(Math.abs(days), locale) + "d";
+  }
+
+  function formatLastUpdatedTime(value, locale) {
+    var parsed = new Date(String(value || ""));
+    if (Number.isNaN(parsed.getTime())) return "";
+    return new Intl.DateTimeFormat(locale || undefined, {
+      hour: "numeric",
+      minute: "2-digit"
+    }).format(parsed);
+  }
+
+  function dashboardDensity(width) {
+    var resolved = Math.max(0, Number(width) || 0);
+    if (resolved >= 1040) return "wide";
+    if (resolved >= 420) return "intermediate";
+    return "narrow";
   }
 
   function getSelectedDateCapabilities(day, schedulingDate) {
@@ -459,6 +516,18 @@
     var calendar = root.querySelector(".hdo-calendar-grid");
     var locale = document.documentElement.lang || undefined;
     var loadingState = mountLoadingState(root);
+    var scrollOwner = applyDocumentScrollClearance(root);
+
+    function updateDensity() {
+      root.dataset.hdoContentMode = dashboardDensity(root.getBoundingClientRect().width);
+    }
+
+    updateDensity();
+    if (typeof global.ResizeObserver === "function") {
+      new global.ResizeObserver(updateDensity).observe(root);
+    } else {
+      global.addEventListener("resize", updateDensity);
+    }
 
     root.querySelectorAll("[data-hdo-command]").forEach(function (button) {
       button.addEventListener("click", function () {
@@ -473,6 +542,8 @@
       });
     });
     if (!payload) return null;
+    var hasStoredYearScroll = payload.year_scroll_left !== null && payload.year_scroll_left !== undefined &&
+      Number.isFinite(Number(payload.year_scroll_left));
 
     var state = {
       payload: payload,
@@ -490,11 +561,16 @@
       latestRangeRequest: 0,
       latestInsightRequest: Object.create(null),
       mostMissed: Object.create(null),
-      modelCache: new Map()
+      modelCache: new Map(),
+      yearScrollLeft: hasStoredYearScroll ? Math.max(0, Number(payload.year_scroll_left)) : null,
+      yearInitialCentered: hasStoredYearScroll,
+      yearCenterRequested: !hasStoredYearScroll,
+      scrollOwner: scrollOwner
     };
 
     function adoptPayload(nextPayload, preserveAnchor, preserveCalendar) {
       state.payload = nextPayload;
+      if (nextPayload.last_updated_at) root.dataset.hdoLastUpdatedAt = String(nextPayload.last_updated_at);
       state.view = nextPayload.view === "month" ? "month" : "year";
       state.weekStart = Math.max(0, Math.min(6, Number(nextPayload.week_start) || 0));
       if (!preserveAnchor) state.anchor = dateValue(nextPayload.anchor) || state.anchor;
@@ -526,6 +602,9 @@
     var tooltip = root.querySelector(".hdo-calendar-tooltip");
     var tooltipHeading = root.querySelector("[data-hdo-tooltip-heading]");
     var tooltipRows = root.querySelector("[data-hdo-tooltip-rows]");
+    // Keep the fixed tooltip outside the glass card: backdrop-filter makes the
+    // card a containing block and would otherwise offset viewport coordinates.
+    if (tooltip && tooltip.parentElement !== root) root.appendChild(tooltip);
     var dateState = root.querySelector("[data-hdo-date-state]");
     var contextDate = root.querySelector("[data-hdo-context-date]");
     var contextEvent = root.querySelector("[data-hdo-context-event]");
@@ -643,29 +722,41 @@
       }
       var eventContext = getContextEvent(state.events, state.selected, todayIso);
       if (contextEvent && contextEventMarker && eventLink && eventMeta && eventMore && eventEmpty && editEvent) {
-        if (contextEventLabel) contextEventLabel.textContent = eventContext ? eventContext.relationship : "Next event";
-        if (eventContext) {
-          var countdown = eventCountdown(eventContext.event.date, todayIso, locale);
-          var eventDate = formatEventDate(eventContext.event.date, todayIso, locale);
+        var calendarCard = root.querySelector(".hdo-calendar-card");
+        var compactFooter = (calendarCard ? calendarCard.clientWidth : root.clientWidth) < 760;
+        var selectedEvent = eventContext && eventContext.event;
+        var secondaryUpcoming = eventContext && eventContext.kind === "empty_selected" && !compactFooter
+          ? eventContext.upcoming
+          : null;
+        var displayedEvent = selectedEvent || (secondaryUpcoming && secondaryUpcoming.event) || null;
+        var additionalEvents = selectedEvent
+          ? eventContext.additional
+          : secondaryUpcoming ? secondaryUpcoming.additional : 0;
+        if (contextEventLabel) contextEventLabel.textContent = eventContext.relationship;
+        if (displayedEvent) {
+          var countdown = compactFooter
+            ? eventCountdownCompact(displayedEvent.date, todayIso, locale)
+            : eventCountdown(displayedEvent.date, todayIso, locale);
+          var eventDate = compactFooter
+            ? formatCompactEventDate(displayedEvent.date, todayIso, locale)
+            : formatEventDate(displayedEvent.date, todayIso, locale);
           var eventMetaText = eventDate + (countdown ? " · " + countdown : "");
-          var eventDescription = eventContext.relationship + ": " + eventContext.event.name + (eventMetaText ? " · " + eventMetaText : "");
+          var eventTitle = secondaryUpcoming
+            ? "Next upcoming: " + displayedEvent.name
+            : displayedEvent.name;
+          var eventDescription = eventContext.relationship + ": " + eventTitle + (eventMetaText ? " · " + eventMetaText : "");
           contextEventMarker.hidden = false;
           eventLink.hidden = false;
-          eventLink.textContent = eventContext.event.name;
+          eventLink.textContent = eventTitle;
           eventLink.title = eventDescription;
-          eventLink.dataset.eventDate = eventContext.event.date;
+          eventLink.dataset.eventDate = displayedEvent.date;
           eventMeta.hidden = !eventMetaText;
           eventMeta.textContent = eventMetaText;
-          eventMore.hidden = eventContext.additional <= 0;
-          eventMore.textContent = eventContext.additional > 0
-            ? "+" + formatNumber(eventContext.additional, locale)
+          eventMore.hidden = additionalEvents <= 0;
+          eventMore.textContent = additionalEvents > 0
+            ? "+" + formatNumber(additionalEvents, locale)
             : "";
           eventEmpty.hidden = true;
-          editEvent.hidden = false;
-          editEvent.dataset.eventId = String(eventContext.event.id || "");
-          editEvent.dataset.eventDate = eventContext.event.date;
-          editEvent.setAttribute("aria-label", "Edit event: " + eventContext.event.name);
-          editEvent.title = "Edit event";
         } else {
           contextEventMarker.hidden = true;
           eventLink.hidden = true;
@@ -676,10 +767,19 @@
           eventMeta.textContent = "";
           eventMore.hidden = true;
           eventMore.textContent = "";
-          eventEmpty.hidden = false;
-          editEvent.hidden = true;
-          editEvent.dataset.eventId = "";
-          editEvent.dataset.eventDate = "";
+          eventEmpty.textContent = eventContext.kind === "empty_today" ? "No upcoming event" : "";
+          eventEmpty.hidden = !eventEmpty.textContent;
+        }
+        var canEditEvents = state.payload.events_enabled !== false;
+        editEvent.hidden = !canEditEvents;
+        editEvent.dataset.eventId = selectedEvent ? String(selectedEvent.id || "") : "";
+        editEvent.dataset.eventDate = selectedEvent ? selectedEvent.date : state.selected;
+        if (selectedEvent) {
+          editEvent.setAttribute("aria-label", "Edit event: " + selectedEvent.name);
+          editEvent.title = "Edit event";
+        } else {
+          editEvent.setAttribute("aria-label", "Add event on " + formatSelectedDate(state.selected, locale));
+          editEvent.title = "Add event";
         }
       }
       var day = state.days[state.selected];
@@ -720,28 +820,73 @@
         next.tabIndex = 0;
         if (focusCell) next.focus();
       }
-      keepSelectedYearCellVisible();
       updateContext();
       send("calendar_selection_changed", { date: dayIso, follows_today: state.followsToday });
       if (liveStatus) liveStatus.textContent = "Selected " + formatLongDate(dayIso, locale);
     }
 
-    function keepSelectedYearCellVisible() {
-      if (state.view !== "year") return;
-      var frame = shell.querySelector(".hdo-calendar-grid-frame");
-      var selectedCell = calendar.querySelector(".hdo-calendar-day.is-selected");
-      if (!frame || !selectedCell || frame.scrollWidth <= frame.clientWidth + 1) return;
-      var target = selectedCell.offsetLeft + selectedCell.offsetWidth / 2 - frame.clientWidth / 2;
-      frame.scrollLeft = Math.max(0, Math.min(frame.scrollWidth - frame.clientWidth, target));
+    function updateYearScrollEdges(frame) {
+      if (!frame) return;
+      var maximum = Math.max(0, frame.scrollWidth - frame.clientWidth);
+      frame.classList.toggle("has-overflow-left", maximum > 1 && frame.scrollLeft > 1);
+      frame.classList.toggle("has-overflow-right", maximum > 1 && frame.scrollLeft < maximum - 1);
     }
 
-    var selectedVisibilityFrame = shell.querySelector(".hdo-calendar-grid-frame");
-    if (selectedVisibilityFrame && typeof window.ResizeObserver === "function") {
-      new window.ResizeObserver(function () {
-        window.requestAnimationFrame(keepSelectedYearCellVisible);
-      }).observe(selectedVisibilityFrame);
-    } else {
-      window.addEventListener("resize", keepSelectedYearCellVisible);
+    function setYearScrollPosition(forceCenter) {
+      if (state.view !== "year") return;
+      var frame = shell.querySelector(".hdo-calendar-grid-frame");
+      if (!frame) return;
+      var maximum = Math.max(0, frame.scrollWidth - frame.clientWidth);
+      if (maximum <= 1) {
+        frame.scrollLeft = 0;
+        updateYearScrollEdges(frame);
+        return;
+      }
+      var shouldCenter = Boolean(forceCenter || state.yearCenterRequested || state.yearScrollLeft === null);
+      if (shouldCenter) {
+        var calendarToday = dateValue(state.payload.calendar_date);
+        var targetIso = calendarToday && calendarToday.getFullYear() === state.anchor.getFullYear()
+          ? isoDate(new Date(calendarToday.getFullYear(), calendarToday.getMonth(), 15))
+          : isoDate(state.anchor);
+        var targetCell = calendar.querySelector('.hdo-calendar-day[data-date="' + targetIso + '"]');
+        var target = targetCell
+          ? targetCell.offsetLeft + targetCell.offsetWidth / 2 - frame.clientWidth / 2
+          : maximum / 2;
+        frame.scrollLeft = Math.max(0, Math.min(maximum, target));
+        state.yearInitialCentered = true;
+        state.yearCenterRequested = false;
+      } else {
+        frame.scrollLeft = Math.max(0, Math.min(maximum, Number(state.yearScrollLeft) || 0));
+      }
+      state.yearScrollLeft = frame.scrollLeft;
+      updateYearScrollEdges(frame);
+    }
+
+    function scheduleYearScroll(forceCenter) {
+      var apply = function () { setYearScrollPosition(forceCenter); };
+      if (typeof global.requestAnimationFrame === "function") global.requestAnimationFrame(apply);
+      else apply();
+    }
+
+    var yearScrollFrame = shell.querySelector(".hdo-calendar-grid-frame");
+    var yearScrollSendTimer = 0;
+    if (yearScrollFrame) {
+      yearScrollFrame.addEventListener("scroll", function () {
+        if (state.view !== "year") return;
+        state.yearScrollLeft = yearScrollFrame.scrollLeft;
+        updateYearScrollEdges(yearScrollFrame);
+        if (yearScrollSendTimer) global.clearTimeout(yearScrollSendTimer);
+        yearScrollSendTimer = global.setTimeout(function () {
+          send("calendar_year_scroll", { left: state.yearScrollLeft });
+        }, 80);
+      }, { passive: true });
+      if (typeof global.ResizeObserver === "function") {
+        new global.ResizeObserver(function () {
+          scheduleYearScroll(false);
+        }).observe(yearScrollFrame);
+      } else {
+        global.addEventListener("resize", function () { scheduleYearScroll(false); });
+      }
     }
 
     function createDayCell(dayIso, outOfMonth, view, rowIndex, columnIndex) {
@@ -884,6 +1029,9 @@
     }
 
     function renderCalendar() {
+      if (state.view === "year" && yearScrollFrame && state.yearInitialCentered) {
+        state.yearScrollLeft = yearScrollFrame.scrollLeft;
+      }
       calendar.replaceChildren();
       shell.dataset.hdoCalendarView = state.view;
       root.dataset.hdoCalendarView = state.view;
@@ -948,11 +1096,7 @@
         });
       }
       updateContext();
-      if (typeof window.requestAnimationFrame === "function") {
-        window.requestAnimationFrame(keepSelectedYearCellVisible);
-      } else {
-        keepSelectedYearCellVisible();
-      }
+      scheduleYearScroll(false);
     }
 
     function requestRange() {
@@ -983,6 +1127,7 @@
       button.addEventListener("click", function () {
         if (button.dataset.hdoCalendar === "today") {
           state.anchor = dateValue(state.payload.calendar_date) || new Date();
+          state.yearCenterRequested = true;
           if (state.payload.scheduling_date) selectDate(String(state.payload.scheduling_date), false);
         } else {
           state.anchor = navigate(state.anchor, state.view, button.dataset.hdoCalendar === "previous" ? -1 : 1);
@@ -1100,6 +1245,7 @@
     var track = root.querySelector("[data-hdo-progress-track]");
     var fill = root.querySelector("[data-hdo-progress-fill]");
     var label = root.querySelector("[data-hdo-progress-label]");
+    var fillLabel = root.querySelector("[data-hdo-progress-label-fill]");
     var chip = root.querySelector("[data-hdo-progress-chip]");
     if (!track || !fill || !label || !chip) return;
     var progress = presentation && presentation.progress && typeof presentation.progress === "object"
@@ -1125,8 +1271,9 @@
     track.dataset.hdoProgressState = state;
     track.setAttribute("aria-valuenow", String(percent));
     track.setAttribute("aria-valuetext", statusLabel);
-    fill.style.setProperty("--hdo-progress-percent", percent + "%");
+    track.style.setProperty("--hdo-progress-percent", percent + "%");
     label.textContent = statusLabel;
+    if (fillLabel) fillLabel.textContent = statusLabel;
   }
 
   function updateMetricSemanticRole(root, key, role) {
@@ -1258,9 +1405,9 @@
     root.setAttribute("aria-busy", "false");
     var status = root.querySelector("[data-hdo-refresh-status]");
     if (status) {
-      status.hidden = false;
-      status.textContent = "Refresh failed";
-      status.classList.add("is-error");
+      status.hidden = true;
+      status.textContent = "";
+      status.classList.remove("is-error");
     }
     if (root.querySelector(".hdo-refresh-warning")) return;
     var stack = root.querySelector(".hdo-stack");
@@ -1269,7 +1416,10 @@
     warning.className = "hdo-data-warning hdo-refresh-warning";
     warning.setAttribute("role", "alert");
     var copy = document.createElement("span");
-    copy.textContent = "Refresh failed. Showing previously loaded data.";
+    var updated = formatLastUpdatedTime(root.dataset.hdoLastUpdatedAt, document.documentElement.lang || undefined);
+    copy.textContent = updated
+      ? "Refresh failed. Showing data last updated at " + updated + "."
+      : "Refresh failed. Showing previously loaded data.";
     var retry = document.createElement("button");
     retry.type = "button";
     retry.textContent = "Retry";
@@ -1285,6 +1435,15 @@
   function applyDocumentTheme(root) {
     if (!root) return;
     root.dataset.hdoHostPreserved = "true";
+  }
+
+  function applyDocumentScrollClearance(root) {
+    if (!root || root.dataset.hdoPreview === "true" || typeof document === "undefined") return null;
+    var scrollOwner = document.scrollingElement;
+    if (!scrollOwner || !scrollOwner.style) return null;
+    scrollOwner.style.setProperty("scroll-padding-block-end", "66px");
+    root.dataset.hdoScrollOwner = scrollOwner === document.documentElement ? "documentElement" : "body";
+    return scrollOwner;
   }
 
   function mount() {
@@ -1328,7 +1487,11 @@
     getContextEvent: getContextEvent,
     formatSelectedDate: formatSelectedDate,
     formatEventDate: formatEventDate,
+    formatCompactEventDate: formatCompactEventDate,
     eventCountdown: eventCountdown,
+    eventCountdownCompact: eventCountdownCompact,
+    formatLastUpdatedTime: formatLastUpdatedTime,
+    dashboardDensity: dashboardDensity,
     getSelectedDateCapabilities: getSelectedDateCapabilities,
     pluralLabel: pluralLabel,
     buildCalendarTooltipRows: buildCalendarTooltipRows,
@@ -1341,6 +1504,7 @@
     formatNumber: formatNumber,
     formatDurationCompact: formatDurationCompact,
     applyDocumentTheme: applyDocumentTheme,
+    applyDocumentScrollClearance: applyDocumentScrollClearance,
     setDashboardUpdating: setDashboardUpdating,
     setDashboardRefreshFailed: setDashboardRefreshFailed,
     mountLoadingState: mountLoadingState,

@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+## 1.8.3 — 2026-08-23
+
+- Moved vertical ownership to Anki's actual document scroller, reduced the
+  dashboard maximum to 1,240 px, and reserved 66 px for the native 42 px
+  controls plus a 24 px gap without painting the host or compatibility
+  backgrounds.
+- Kept calendar and rail side by side from 1,040 px with a 372 px minimum rail;
+  below that, calendar, auto-fitting metrics, and Bible stack. Narrow density
+  now begins below 420 px.
+- Split the footer into date, event, and action regions with one row from
+  760 px, two rows from 420–759 px, and three rows below 420 px. Added exact
+  `Next event`, `On this date`, and `No event on this date` meanings plus
+  contextual `Add event` and `Edit event` behavior.
+- Added the below-480 px Year scroller with edge padding, restrained scrollbar,
+  fades, current-month centering, manual-scroll preservation, and complete
+  January/December access. At 480 px and above, Year remains fully visible.
+- Kept wide metric labels on one line, strengthened progress-label contrast,
+  adjusted Month and Year indicators, strengthened light level-one heat colors,
+  moved Graphite interactions to slate accents, and corrected Emerald Dark
+  neutral surfaces.
+- Improved skeleton visibility, refined the initial failure panel, and reduced
+  retained-data refresh failures to one timestamped full-width banner.
+- Retained configuration schema 8 and the Anki 26.8 pin. Built one 24-member
+  1.8.3 archive and scoped release QA to one Python pass, one JavaScript pass,
+  targeted regressions, one fresh sync-disabled exact-package smoke run, one
+  restart, and one 56-frame contact-sheet package with one overview and 15
+  detail sheets.
+
 ## 1.8.2 — 2026-08-23
 
 - Rebuilt the 100% dashboard around a 1,320 px maximum, 16 px minimum side

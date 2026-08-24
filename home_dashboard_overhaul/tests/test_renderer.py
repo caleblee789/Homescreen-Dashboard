@@ -103,6 +103,9 @@ class RendererTests(unittest.TestCase):
         context = html[html.index("hdo-calendar-context-bar"):html.index("hdo-calendar-tooltip")]
         self.assertIn("hdo-calendar-footer", html)
         self.assertIn("hdo-selected-date-line", context)
+        self.assertIn("hdo-calendar-footer__date-context", context)
+        self.assertIn("hdo-calendar-footer__event", context)
+        self.assertIn("hdo-calendar-footer__actions", context)
         self.assertIn("hdo-date-state-chip", context)
         self.assertIn("data-hdo-date-state", context)
         self.assertIn("data-hdo-context-date", context)
@@ -119,7 +122,22 @@ class RendererTests(unittest.TestCase):
         self.assertIn('primaryAction.textContent = "Reviewed cards"', script)
         self.assertIn('primaryAction.textContent = "Due cards"', script)
         self.assertIn("getContextEvent(state.events, state.selected, todayIso)", script)
-        self.assertIn('eventContext ? eventContext.relationship : "Next event"', script)
+        self.assertIn('relationship: "Next event"', script)
+        self.assertIn('relationship: "On this date"', script)
+        self.assertIn('relationship: "No event on this date"', script)
+        self.assertIn('editEvent.title = "Edit event"', script)
+        self.assertIn('editEvent.title = "Add event"', script)
+
+    def test_refresh_failure_uses_one_last_updated_banner(self) -> None:
+        html = render_dashboard(
+            self.snapshot,
+            self.config,
+            refresh_error=True,
+            last_updated_at="2026-08-23T20:14:00-05:00",
+        )
+        self.assertEqual(html.count("hdo-refresh-warning"), 1)
+        self.assertEqual(html.count("Refresh failed. Showing data last updated at"), 1)
+        self.assertIn('data-hdo-last-updated-at="2026-08-23T20:14:00-05:00"', html)
 
     def test_metric_group_order_rows_and_number_formatting(self) -> None:
         html = render_dashboard(self.snapshot, self.config)

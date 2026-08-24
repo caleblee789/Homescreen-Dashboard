@@ -7,6 +7,7 @@ from dataclasses import replace
 from datetime import date, datetime, timedelta
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -97,6 +98,8 @@ class DashboardController:
         self._last_scheduler_date: Optional[date] = None
         self.initial_failure = False
         self.refresh_error = False
+        self.last_updated_at = ""
+        self.year_scroll_left: Optional[float] = None
 
     def start(self) -> None:
         mw.addonManager.setWebExports(self.package, r"web/.*\.(css|js)")
@@ -164,6 +167,8 @@ class DashboardController:
         self._last_scheduler_date = None
         self.initial_failure = False
         self.refresh_error = False
+        self.last_updated_at = ""
+        self.year_scroll_left = None
         self.rotator = QuoteRotator(ROTATION_STATE_PATH)
         self._load_profile_config()
         # The Deck Browser can render its loading shell before ``mw.col`` is
@@ -193,6 +198,8 @@ class DashboardController:
         self._last_scheduler_date = None
         self.initial_failure = False
         self.refresh_error = False
+        self.last_updated_at = ""
+        self.year_scroll_left = None
 
     def on_reviewer_answer(self, *_args: object) -> None:
         self._schedule_refresh("reviewer_answer")
@@ -561,6 +568,8 @@ class DashboardController:
                 self.config,
                 self.is_dark(),
                 facts_revision=self.facts_revision,
+                last_updated_at=self.last_updated_at,
+                year_scroll_left=self.year_scroll_left,
             )
             return
         if self.initial_failure and self.snapshot is None:
@@ -578,6 +587,8 @@ class DashboardController:
                 selected_date=self.selected_date,
                 facts_revision=self.facts_revision,
                 refresh_error=self.refresh_error,
+                last_updated_at=self.last_updated_at,
+                year_scroll_left=self.year_scroll_left,
             )
             return
         if self.snapshot is not None:
@@ -591,6 +602,8 @@ class DashboardController:
                 selected_date=self.selected_date,
                 facts_revision=self.facts_revision,
                 refresh_error=self.refresh_error,
+                last_updated_at=self.last_updated_at,
+                year_scroll_left=self.year_scroll_left,
             )
             self._request_snapshot(key)
             return
@@ -632,6 +645,7 @@ class DashboardController:
                 return
             had_visible_snapshot = self.snapshot is not None
             self.snapshot = snapshot
+            self.last_updated_at = datetime.now().astimezone().isoformat(timespec="seconds")
             self.cache_key = key
             self.inflight_key = None
             self.initial_failure = False
@@ -742,6 +756,8 @@ class DashboardController:
             self.config,
             self.selected_date,
             self.facts_revision,
+            self.last_updated_at,
+            self.year_scroll_left,
         )
         envelope = {"revision": self.facts_revision, "facts": facts}
         encoded = json.dumps(envelope, ensure_ascii=True, separators=(",", ":"))
@@ -833,6 +849,15 @@ class DashboardController:
                 payload.get("date"),
                 payload.get("follows_today"),
             )
+        elif command == "calendar_year_scroll" and isinstance(payload, Mapping):
+            left = payload.get("left")
+            if (
+                isinstance(left, (int, float))
+                and not isinstance(left, bool)
+                and math.isfinite(float(left))
+                and 0 <= float(left) <= 100_000
+            ):
+                self.year_scroll_left = float(left)
         elif command == "calendar_view_changed" and isinstance(payload, Mapping):
             self.set_calendar_view(payload.get("view"))
         return (True, None)
@@ -884,6 +909,11 @@ class DashboardController:
         current = self._scheduler_date()
         self.selected_date = selected.isoformat()
         self.selection_follows_today = bool(raw_follows_today) and selected == current
+        if self.selection_follows_today:
+            # A Today action owns one fresh centering pass.  Clearing the
+            # stored manual offset prevents the range rerender that follows
+            # the click from restoring the pre-Today Year position.
+            self.year_scroll_left = None
 
     def open_day_in_browser(self, raw_date: object) -> None:
         selected = self._parse_bridge_date(raw_date)
