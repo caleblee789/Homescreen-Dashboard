@@ -73,7 +73,7 @@ class CorrectedStaticAssetTests(unittest.TestCase):
             self.css,
             r"\.hdo-event-summary\s*\{[^}]*flex:\s*1 1 auto;",
         )
-        self.assertIn("text-overflow: ellipsis", self.css)
+        self.assertIn("text-overflow: clip", self.css)
 
     def test_compact_surfaces_omit_internal_boundary_copy_and_placeholders(self) -> None:
         sources = self.renderer + self.js

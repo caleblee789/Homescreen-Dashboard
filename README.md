@@ -1,11 +1,18 @@
 # Home Screen Dashboard
 
-Home Screen Dashboard 1.8.3 is a calendar-first responsive Deck Browser
+Home Screen Dashboard 1.8.4 is a calendar-first responsive Deck Browser
 dashboard for Anki Desktop 26.8. It combines study history, due work, local
 events, stable metrics, and a rotating Bible verse without patching Anki's
 private Deck Browser or statistics classes.
 
-## 1.8.3 highlights
+## 1.8.4 highlights
+
+- `New remaining` now sums Anki's scheduler-authoritative allowance for every
+  included top-level deck, even when the currently selected deck is only one
+  of several head decks. Parent/child limits and dashboard deck exclusions are
+  applied once, and Total remaining, ETA, and completion use the same value.
+- The responsive, calendar, theme, runtime-state, and schema-8 behavior from
+  1.8.3 is otherwise unchanged.
 
 - Anki's document scroller owns vertical movement, with a 1,240 px dashboard
   maximum and 66 px of clearance above native controls.
@@ -26,7 +33,7 @@ private Deck Browser or statistics classes.
 ## Install
 
 Install the verified
-`home-dashboard-overhaul-1.8.3.ankiaddon` from the 1.8.3 release evidence
+`home-dashboard-overhaul-1.8.4.ankiaddon` from the 1.8.4 release evidence
 package through **Tools → Add-ons → Install from file**, then restart Anki.
 Disable any legacy source add-ons identified by the activation card.
 
@@ -52,11 +59,11 @@ overview, and 15 detail contact sheets.
 
 The current machine-readable release contracts are:
 
-- [calendar_surface_manifest_1_8_3.json](home_dashboard_overhaul/qa/calendar_surface_manifest_1_8_3.json)
-- [visual_regression_matrix_1_8_3.json](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_3.json)
-- [capture_evidence_manifest_1_8_3.json](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_3.json)
+- [calendar_surface_manifest_1_8_4.json](home_dashboard_overhaul/qa/calendar_surface_manifest_1_8_4.json)
+- [visual_regression_matrix_1_8_4.json](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_4.json)
+- [capture_evidence_manifest_1_8_4.json](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_4.json)
 
-The 1.8.0, 1.8.1, and 1.8.2 packages and evidence remain immutable historical
+The 1.8.0 through 1.8.3 packages and evidence remain immutable historical
 comparison material. VoiceOver, forced-colors, Windows/Linux, non-100% scaling,
 and OS-level scaling remain deferred and unclaimed.
 
@@ -67,7 +74,7 @@ and OS-level scaling remain deferred and unclaimed.
 - `home_dashboard_overhaul/qa/`: machine-readable contracts, QA tools, and
   versioned release evidence
 - `deferred/calendar_sources_vnext/`: intentionally deferred external-calendar
-  source excluded from 1.8.3
+  source excluded from 1.8.4
 
 ## License and notices
 

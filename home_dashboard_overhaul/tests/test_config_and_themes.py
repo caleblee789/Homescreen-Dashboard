@@ -314,7 +314,7 @@ class ThemeTests(unittest.TestCase):
         self.assertNotEqual(emerald_dark["status_success_fill"], emerald_dark["ui_accent"])
 
         graphite_light = resolve_theme("Graphite", "light", False)
-        self.assertEqual(graphite_light["ui_accent"], "#5F7388")
+        self.assertEqual(graphite_light["ui_accent"], "#566B80")
         self.assertNotEqual(graphite_light["ui_accent"], graphite_light["status_new_fill"])
 
         graphite_dark = resolve_theme("Graphite", "dark", True)

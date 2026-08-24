@@ -50,14 +50,14 @@ DEFERRED_SOURCE_FILES = frozenset({
 })
 DEFERRED_SOURCE_PREFIXES = ("_vendor/",)
 RELEASE_CONTRACT_FILES = (
-    "qa/calendar_surface_manifest_1_8_3.json",
-    "qa/visual_regression_matrix_1_8_3.json",
-    "qa/ui-surface-registry_1_8_3.json",
-    "qa/capture_evidence_manifest_1_8_3.json",
-    "qa/runtime_probe_release_1_8_3_manifest.json",
+    "qa/calendar_surface_manifest_1_8_4.json",
+    "qa/visual_regression_matrix_1_8_4.json",
+    "qa/ui-surface-registry_1_8_4.json",
+    "qa/capture_evidence_manifest_1_8_4.json",
+    "qa/runtime_probe_release_1_8_4_manifest.json",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
-FIXED_TIMESTAMP = (2026, 8, 23, 0, 0, 0)
+FIXED_TIMESTAMP = (2026, 8, 24, 0, 0, 0)
 
 
 def _json(relative: str) -> dict:
@@ -272,14 +272,14 @@ def validate_sources() -> dict:
     manifest = _json("manifest.json")
     config = _json("config.json")
     verse_data = _json("default_verses.json")
-    surface_contract = _json("qa/calendar_surface_manifest_1_8_3.json")
-    visual_matrix = _json("qa/visual_regression_matrix_1_8_3.json")
-    capture_contract = _json("qa/capture_evidence_manifest_1_8_3.json")
+    surface_contract = _json("qa/calendar_surface_manifest_1_8_4.json")
+    visual_matrix = _json("qa/visual_regression_matrix_1_8_4.json")
+    capture_contract = _json("qa/capture_evidence_manifest_1_8_4.json")
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.3":
-        raise ValueError("release artifact must use semantic version 1.8.3")
+    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.4":
+        raise ValueError("release artifact must use semantic version 1.8.4")
     if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260800):
         raise ValueError("release must be pinned to Anki 26.8")
     if config.get("schema_version") != 8:
@@ -310,6 +310,7 @@ def validate_sources() -> dict:
         "analytics.py": (
             "due_load_reference", "math.ceil(len(forecast_counts) * .90)",
             "queue IN (-2, -3)", "type IN (1, 3)", "due < 1000000000",
+            "deck_due_tree", "_limited_new_for_deck_node", "GROUP BY did",
         ),
         "config_schema.py": (
             "SCHEMA_VERSION = 8", "presets_by_theme", "retention_target",
@@ -395,8 +396,21 @@ def validate_sources() -> dict:
     _validate_theme_contract(runpy.run_path(str(ROOT / "themes.py")))
     _validate_visual_matrix(visual_matrix)
     criteria = surface_contract.get("acceptance_criteria")
-    if not isinstance(criteria, list) or [item.get("id") for item in criteria] != list(range(1, 42)):
-        raise ValueError("corrected surface contract must encode criteria 1 through 41")
+    if not isinstance(criteria, list) or [item.get("id") for item in criteria] != list(range(1, 43)):
+        raise ValueError("corrected surface contract must encode criteria 1 through 42")
+    if any(contract.get("release") != version for contract in (
+        surface_contract, visual_matrix, capture_contract
+    )):
+        raise ValueError("release contracts must match the manifest version")
+    if capture_contract.get("runtime_smoke_requirements") != {
+        "active_head_deck": "A",
+        "raw_new_cards_per_head_minimum": 40,
+        "remaining_limits": {"A": 3, "B": 7},
+        "expected_unexcluded_new_remaining": 10,
+        "expected_excluding_b_new_remaining": 3,
+        "restart_expected_new_remaining": 10,
+    }:
+        raise ValueError("multi-deck new-limit runtime smoke contract is incomplete")
     if capture_contract.get("primary_native_frames") != [
         entry.get("id") for entry in visual_matrix.get("cases", [])
     ]:

@@ -1,11 +1,21 @@
-# Home Screen Dashboard 1.8.3
+# Home Screen Dashboard 1.8.4
 
 Home Screen Dashboard is a calendar-first Deck Browser dashboard for Anki
 Desktop 26.8. It combines study history, due work, local events, stable study
 metrics, and a rotating Bible verse without patching Anki's private Deck
 Browser or statistics classes.
 
-## What changed in 1.8.3
+## What changed in 1.8.4
+
+- `New remaining` now uses Anki's full due tree instead of the currently
+  selected deck's reviewer queue. Included head decks keep independent daily
+  limits, recursive parent/child caps are applied once, and configured deck
+  exclusions still remove their contribution.
+- Total remaining, ETA, and completion consume that same scheduler-limited
+  count. If Anki cannot provide a trustworthy due tree, Today’s Progress is
+  shown as unavailable instead of falling back to uncapped inventory.
+- All 1.8.3 responsive layout, footer, Year scrolling, visual polish, runtime
+  states, and schema-8 behavior is retained unchanged.
 
 - The dashboard now uses Anki's real document scroller, a 1,240 px maximum,
   and 66 px of bottom clearance for the 42 px native controls plus a 24 px gap.
@@ -69,7 +79,7 @@ work remains deferred and is not packaged.
 
 ## Install
 
-Install `home-dashboard-overhaul-1.8.3.ankiaddon` through **Tools -> Add-ons ->
+Install `home-dashboard-overhaul-1.8.4.ankiaddon` through **Tools -> Add-ons ->
 Install from file**, restart Anki, and disable any legacy source add-ons named
 by the activation card. The manifest is pinned to Anki Desktop 26.8.
 

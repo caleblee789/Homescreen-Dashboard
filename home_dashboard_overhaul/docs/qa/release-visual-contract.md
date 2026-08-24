@@ -1,19 +1,19 @@
 # Release visual contract
 
-Status: Home Screen Dashboard 1.8.3 native UI 100% release contract.
+Status: Home Screen Dashboard 1.8.4 native UI 100% release contract.
 
 ## Authority and retained history
 
 The current machine-readable authorities are:
 
-- `qa/calendar_surface_manifest_1_8_3.json`
-- `qa/ui-surface-registry_1_8_3.json`
-- `qa/visual_regression_matrix_1_8_3.json`
-- `qa/capture_evidence_manifest_1_8_3.json`
+- `qa/calendar_surface_manifest_1_8_4.json`
+- `qa/ui-surface-registry_1_8_4.json`
+- `qa/visual_regression_matrix_1_8_4.json`
+- `qa/capture_evidence_manifest_1_8_4.json`
 
-The supplied 3420×2214 screenshot and the complete 1.8.0, 1.8.1, and 1.8.2
+The supplied 3420×2214 screenshot and the complete 1.8.0 through 1.8.3
 packages, reports, captures, and contact sheets are immutable calibration
-history. They must not be overwritten or represented as new 1.8.3 evidence.
+history. They must not be overwritten or represented as new 1.8.4 evidence.
 
 ## Native UI 100% composition
 
@@ -64,12 +64,17 @@ computed density, and UI 100%.
 
 ## Minimal release gate
 
+Before the visual smoke cases, create two independent head decks with at least
+40 new cards each and remaining daily limits of 3 and 7. Keep head A selected:
+the production dashboard must show 10 New remaining, then 3 when head B is
+excluded. The same unexcluded 10-card result must survive the single restart.
+
 Run the repository's Python suite once and JavaScript suite once, with targeted
 regressions only for footer meaning/actions, bottom clearance/no page overflow,
 Year centering/scroll preservation, the single timestamped refresh banner, and
 version/manifest/capture consistency.
 
-Build `home-dashboard-overhaul-1.8.3.ankiaddon` once. Verify only version,
+Build `home-dashboard-overhaul-1.8.4.ankiaddon` once. Verify only version,
 the 24-member allowlist, safe paths, successful exact-package loading, and
 source/archive parity.
 

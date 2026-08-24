@@ -726,14 +726,16 @@ def _queue(
     scheduled_review: Optional[int] = None,
     scope: Optional[FilterScope] = None,
 ) -> QueueStats:
-    """Return one scoped, raw workload for Today’s Progress.
+    """Return one scoped workload for Today’s Progress.
 
-    New is active new-card inventory. Learning is active original learning work
-    due before the next rollover, including interday learning due by the current
-    scheduler day. Relearning is deliberately excluded from Learning because it
-    belongs to the canonical review/relearning value supplied by ``DayFacts``.
-    Preview/repeat cards in queue 4 are excluded from every category. None of
-    these values is reduced by deck daily limits.
+    New is collected per deck and capped recursively by Anki's full due tree,
+    so each top-level deck contributes its own remaining daily allowance while
+    parent and child limits are each applied once. Learning is active original
+    learning work due before the next rollover, including interday learning due
+    by the current scheduler day. Relearning is deliberately excluded from
+    Learning because it belongs to the canonical review/relearning value
+    supplied by ``DayFacts``. Preview/repeat cards in queue 4 are excluded from
+    every category. Learning and review are not reduced by deck daily limits.
     """
     if scheduled_review is None:
         raise RuntimeError("scheduled review demand is unavailable")
@@ -757,20 +759,35 @@ def _queue(
     if deck_condition:
         conditions.append(deck_condition)
         args.extend(deck_args)
-    row = _safe_first(
+    rows = _safe_all(
         col.db,
         "SELECT "
+        "did, "
         "coalesce(sum(CASE WHEN queue = 0 AND type = 0 THEN 1 ELSE 0 END), 0), "
         "coalesce(sum(CASE WHEN type = 1 AND "
         "((queue = 1 AND due < ?) OR (queue = 3 AND due <= ?)) "
         "THEN 1 ELSE 0 END), 0) "
-        "FROM cards WHERE {}".format(" AND ".join(conditions)),
+        "FROM cards WHERE {} GROUP BY did".format(" AND ".join(conditions)),
         int(col.sched.day_cutoff),
         int(getattr(col.sched, "today", 0)),
         *args,
     )
-    new = max(0, int(row[0] or 0))
-    learning = max(0, int(row[1] or 0))
+    raw_new_by_deck: Dict[int, int] = {}
+    learning = 0
+    for row in rows:
+        if len(row) != 3:
+            raise RuntimeError("remaining-work query returned an invalid row")
+        try:
+            deck_id = int(row[0])
+            raw_new = max(0, int(row[1] or 0))
+            learning += max(0, int(row[2] or 0))
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise RuntimeError("remaining-work query returned invalid values") from exc
+        if deck_id <= 0:
+            raise RuntimeError("remaining-work query returned an invalid deck")
+        if raw_new:
+            raw_new_by_deck[deck_id] = raw_new_by_deck.get(deck_id, 0) + raw_new
+    new = _scheduler_limited_new_remaining(col, raw_new_by_deck, resolved)
     total = new + learning + review
     estimate: int | None = None
     if total == 0:
@@ -795,6 +812,70 @@ def _deck_tree_node(node: Any, deck_id: int) -> Any | None:
         if match is not None:
             return match
     return None
+
+
+def _limited_new_for_deck_node(
+    node: Any,
+    raw_new_by_deck: Mapping[int, int],
+    excluded_deck_ids: Set[int],
+    seen_deck_ids: Set[int],
+) -> int:
+    """Apply one node's remaining limit after recursively limiting children."""
+
+    try:
+        deck_id = int(getattr(node, "deck_id"))
+        limit = int(getattr(node, "new_count"))
+        children = getattr(node, "children")
+    except (AttributeError, TypeError, ValueError, OverflowError) as exc:
+        raise RuntimeError("Anki returned an invalid due-tree node") from exc
+    if deck_id <= 0 or limit < 0 or children is None or deck_id in seen_deck_ids:
+        raise RuntimeError("Anki returned an invalid due-tree node")
+    seen_deck_ids.add(deck_id)
+    if deck_id in excluded_deck_ids:
+        return 0
+    available = max(0, int(raw_new_by_deck.get(deck_id, 0)))
+    for child in children:
+        available += _limited_new_for_deck_node(
+            child,
+            raw_new_by_deck,
+            excluded_deck_ids,
+            seen_deck_ids,
+        )
+    return min(available, limit)
+
+
+def _scheduler_limited_new_remaining(
+    col: Any,
+    raw_new_by_deck: Mapping[int, int],
+    scope: FilterScope,
+) -> int:
+    """Sum independently limited top-level deck counts from Anki's due tree."""
+
+    deck_due_tree = getattr(getattr(col, "sched", None), "deck_due_tree", None)
+    if not callable(deck_due_tree):
+        raise RuntimeError("Anki's due tree is unavailable")
+    try:
+        root = deck_due_tree()
+        children = getattr(root, "children")
+    except Exception as exc:
+        raise RuntimeError("Anki's due tree is unavailable") from exc
+    if children is None:
+        raise RuntimeError("Anki returned an invalid due tree")
+    seen_deck_ids: Set[int] = set()
+    excluded_deck_ids = set(scope.excluded_deck_ids)
+    limited = sum(
+        _limited_new_for_deck_node(
+            child,
+            raw_new_by_deck,
+            excluded_deck_ids,
+            seen_deck_ids,
+        )
+        for child in children
+    )
+    missing = {deck_id for deck_id, count in raw_new_by_deck.items() if count > 0} - seen_deck_ids
+    if missing:
+        raise RuntimeError("Anki's due tree omitted active new-card decks")
+    return limited
 
 
 def _scheduler_hidden_buried(

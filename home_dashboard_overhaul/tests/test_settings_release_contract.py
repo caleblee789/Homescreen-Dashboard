@@ -28,7 +28,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
         cls.manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
     def test_release_metadata_and_schema_eight_are_current(self) -> None:
-        self.assertEqual(self.manifest["human_version"], "1.8.3")
+        self.assertEqual(self.manifest["human_version"], "1.8.4")
         self.assertEqual(self.config["schema_version"], 8)
         self.assertEqual(self.config["appearance"]["opacity"], 96)
         self.assertEqual(self.config["appearance"]["blur"], 12)

@@ -14,24 +14,24 @@ class NativeRefinementQaContractTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         qa = ROOT / "qa"
         cls.manifest = json.loads(
-            (qa / "calendar_surface_manifest_1_8_3.json").read_text(encoding="utf-8")
+            (qa / "calendar_surface_manifest_1_8_4.json").read_text(encoding="utf-8")
         )
         cls.matrix = json.loads(
-            (qa / "visual_regression_matrix_1_8_3.json").read_text(encoding="utf-8")
+            (qa / "visual_regression_matrix_1_8_4.json").read_text(encoding="utf-8")
         )
         cls.capture = json.loads(
-            (qa / "capture_evidence_manifest_1_8_3.json").read_text(encoding="utf-8")
+            (qa / "capture_evidence_manifest_1_8_4.json").read_text(encoding="utf-8")
         )
         cls.registry = json.loads(
-            (qa / "ui-surface-registry_1_8_3.json").read_text(encoding="utf-8")
+            (qa / "ui-surface-registry_1_8_4.json").read_text(encoding="utf-8")
         )
 
-    def test_manifest_is_the_authoritative_1_8_3_native_contract(self) -> None:
+    def test_manifest_is_the_authoritative_1_8_4_native_contract(self) -> None:
         self.assertEqual(self.manifest["schema_version"], 8)
-        self.assertEqual(self.manifest["release"], "1.8.3")
+        self.assertEqual(self.manifest["release"], "1.8.4")
         self.assertEqual(
             self.manifest["contract"],
-            "final-corrections-native-100-percent-2026-08-23",
+            "multi-deck-new-limit-correction-native-100-percent-2026-08-24",
         )
         self.assertEqual(
             self.manifest["dashboard_order"],
@@ -55,7 +55,7 @@ class NativeRefinementQaContractTests(unittest.TestCase):
         self.assertTrue(self.registry["exact_once"])
         self.assertEqual(
             self.registry["authority"],
-            "qa/calendar_surface_manifest_1_8_3.json",
+            "qa/calendar_surface_manifest_1_8_4.json",
         )
 
     def test_primary_matrix_is_the_exact_sixteen_case_cartesian_product(self) -> None:
@@ -65,7 +65,7 @@ class NativeRefinementQaContractTests(unittest.TestCase):
             (case["theme"], case["mode"], case["view"])
             for case in self.matrix["cases"]
         }
-        self.assertEqual(self.matrix["release"], "1.8.3")
+        self.assertEqual(self.matrix["release"], "1.8.4")
         self.assertEqual(self.matrix["primary_case_count"], 16)
         self.assertEqual(len(self.matrix["cases"]), 16)
         self.assertEqual(len({case["id"] for case in self.matrix["cases"]}), 16)
@@ -97,7 +97,7 @@ class NativeRefinementQaContractTests(unittest.TestCase):
         self.assertIn("no_waiver", restart["tags"])
         self.assertNotIn("waived", json.dumps(self.capture).casefold())
 
-    def test_1_8_3_capture_registry_probe_and_assembler_share_new_ids(self) -> None:
+    def test_1_8_4_capture_registry_probe_and_assembler_share_new_ids(self) -> None:
         required = {
             "HISTORICAL-ALL-CLEAR-SG-D-M",
             "RESP-SG-D-INTERMEDIATE-SCROLLED-BOTTOM",
@@ -114,8 +114,8 @@ class NativeRefinementQaContractTests(unittest.TestCase):
         }
         self.assertTrue(required <= planned)
         self.assertNotIn("FRESH-SG-D-M", planned)
-        probe = (ROOT / "qa" / "runtime_probe_release_1_8_3.py").read_text(encoding="utf-8")
-        assembler = (ROOT / "qa" / "assemble_release_evidence_1_8_3.py").read_text(encoding="utf-8")
+        probe = (ROOT / "qa" / "runtime_probe_release_1_8_4.py").read_text(encoding="utf-8")
+        assembler = (ROOT / "qa" / "assemble_release_evidence_1_8_4.py").read_text(encoding="utf-8")
         for capture_id in required:
             self.assertIn(capture_id, probe)
             self.assertIn(capture_id, assembler)
@@ -149,10 +149,20 @@ class NativeRefinementQaContractTests(unittest.TestCase):
         )
         self.assertEqual(retained_182["release"], "1.8.2")
         self.assertTrue((ROOT / "qa" / "release-evidence-1.8.2-2026-08-23").is_dir())
+        retained_183 = json.loads(
+            (ROOT / "qa" / "calendar_surface_manifest_1_8_3.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(retained_183["release"], "1.8.3")
+        self.assertTrue((ROOT / "qa" / "release-evidence-1.8.3-2026-08-23").is_dir())
 
     def test_acceptance_boundaries_are_machine_readable_and_separate(self) -> None:
         criteria = self.manifest["acceptance_criteria"]
-        self.assertEqual([item["id"] for item in criteria], list(range(1, 42)))
+        self.assertEqual([item["id"] for item in criteria], list(range(1, 43)))
+        smoke = self.capture["runtime_smoke_requirements"]
+        self.assertEqual(smoke["remaining_limits"], {"A": 3, "B": 7})
+        self.assertEqual(smoke["expected_unexcluded_new_remaining"], 10)
+        self.assertEqual(smoke["expected_excluding_b_new_remaining"], 3)
+        self.assertEqual(smoke["restart_expected_new_remaining"], 10)
         self.assertTrue(all(item["tags"] and item["requirement"].strip() for item in criteria))
         deferred = set(self.capture["deferred_unrun"])
         self.assertIn("voiceover_review", deferred)

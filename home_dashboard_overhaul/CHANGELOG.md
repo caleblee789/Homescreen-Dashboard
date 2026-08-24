@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 1.8.4 — 2026-08-24
+
+- Limited Today’s Progress `New remaining` to Anki's scheduler-authoritative
+  collection-wide remaining new-card count. Each top-level deck contributes
+  its own daily allowance, child and parent limits are applied once, and deck
+  exclusions remain in force even when another head deck is active.
+- Kept configuration schema 8 and the Anki 26.8 pin. Scoped release QA to the
+  scheduler regressions, one Python pass, one JavaScript pass, one fresh
+  sync-disabled exact-package smoke run with two differently limited head
+  decks, one restart, and one new 56-frame contact-sheet package.
+
 ## 1.8.3 — 2026-08-23
 
 - Moved vertical ownership to Anki's actual document scroller, reduced the
