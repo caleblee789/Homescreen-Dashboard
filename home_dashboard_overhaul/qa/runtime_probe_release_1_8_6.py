@@ -15,7 +15,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import sys
 from typing import Any, Mapping
 
 from aqt import gui_hooks, mw
@@ -1008,7 +1007,8 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
             and frame.bottom() <= available_geometry.bottom()
         ),
         "fixed_size": dialog.minimumSize() == dialog.maximumSize(),
-        "macos_native_attached": bool(getattr(dialog, "_macos_window_attached", False)),
+        "parented_to_anki": dialog.parentWidget() is mw,
+        "modal_capture_lifecycle": dialog.isModal(),
         "font_percent": int(case.get("font_percent", 100)),
         "application_font_point_size": QApplication.font().pointSizeF(),
         "nav_width": dialog.nav.width(),
@@ -1122,8 +1122,8 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
         base._require(size[0] <= available[0] and size[1] <= available[1], "Settings window size escaped screen geometry")
     if special in {"stats-preview", "restart-persistence"}:
         base._require(state.get("statistics_parity") == "passed", "Settings preview statistics parity did not pass")
-    if sys.platform == "darwin":
-        base._require(bool(state.get("macos_native_attached")), "Settings is not attached to Anki's native macOS window")
+    base._require(bool(state.get("parented_to_anki")), "Settings is not parented to Anki")
+    base._require(bool(state.get("modal_capture_lifecycle")), "Settings capture does not mirror modal exec ownership")
 
 
 def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Mapping[str, Any]) -> None:

@@ -134,26 +134,15 @@ class FakeQueryOp:
             self.failure_callback(error or RuntimeError("failure"))
 
 
-class FakeSignal:
-    def __init__(self) -> None:
-        self.callbacks = []
-
-    def connect(self, callback) -> None:
-        self.callbacks.append(callback)
-
-    def emit(self, *args) -> None:
-        for callback in list(self.callbacks):
-            callback(*args)
-
-
 class FakeSettingsDialog:
     instances = []
 
     def __init__(self, *args) -> None:
         self.args = args
-        self.finished = FakeSignal()
         self.visible = False
         self.show_count = 0
+        self.exec_count = 0
+        self.retained_during_exec = False
         self.opened_pages = []
         self.raised = 0
         self.activated = 0
@@ -165,6 +154,13 @@ class FakeSettingsDialog:
     def show(self) -> None:
         self.show_count += 1
         self.visible = True
+
+    def exec(self) -> int:
+        self.exec_count += 1
+        self.visible = True
+        self.retained_during_exec = self.args[0].settings_dialog is self
+        self.visible = False
+        return 0
 
     def open_page(self, *args) -> None:
         self.opened_pages.append(args)
@@ -282,7 +278,7 @@ class ControllerCapabilityTests(unittest.TestCase):
 
         self.assertEqual(calls, [("about_support",)])
 
-    def test_settings_open_as_retained_modeless_window(self) -> None:
+    def test_settings_match_pronounceit_parented_modal_exec_lifecycle(self) -> None:
         FakeSettingsDialog.instances.clear()
         settings = ModuleType("home_dashboard_overhaul.settings")
         settings.SettingsDialog = FakeSettingsDialog
@@ -295,19 +291,12 @@ class ControllerCapabilityTests(unittest.TestCase):
                 dialog.args,
                 (self.controller, "calendar_data", "2026-08-28", "exam-42"),
             )
-            self.assertEqual(dialog.show_count, 1)
-            self.assertTrue(dialog.visible)
+            self.assertEqual(dialog.exec_count, 1)
+            self.assertEqual(dialog.show_count, 0)
+            self.assertTrue(dialog.retained_during_exec)
+            self.assertFalse(dialog.visible)
             self.assertEqual(dialog.raised, 0)
             self.assertEqual(dialog.activated, 0)
-
-            self.controller.open_settings("events", "2026-08-29", "exam-43")
-
-        self.assertEqual(len(FakeSettingsDialog.instances), 1)
-        self.assertEqual(dialog.opened_pages, [("events", "2026-08-29", "exam-43")])
-        self.assertEqual(dialog.show_count, 1)
-        self.assertEqual(dialog.raised, 1)
-        self.assertEqual(dialog.activated, 1)
-        dialog.finished.emit(0)
         self.assertIsNone(self.controller.settings_dialog)
 
     def test_year_scroll_position_survives_a_controller_rerender(self) -> None:

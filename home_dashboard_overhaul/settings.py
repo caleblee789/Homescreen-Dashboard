@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from copy import deepcopy
-import ctypes
 from dataclasses import replace
 from datetime import date, datetime
 import hashlib
@@ -11,7 +10,6 @@ import html as html_module
 import json
 from pathlib import Path
 import re
-import sys
 import time
 from typing import Any, Callable, Dict, List, Mapping, MutableMapping, Optional
 
@@ -116,230 +114,6 @@ ACTION_TEXT = "Home Screen Dashboard settings"
 PROJECT_URL = "https://github.com/caleblee789/Homescreen-Dashboard"
 ISSUES_URL = "https://github.com/caleblee789/Homescreen-Dashboard/issues"
 PACKAGE_ROOT = Path(__file__).resolve().parent
-
-_MACOS_CAN_JOIN_ALL_SPACES = 1 << 0
-_MACOS_MOVE_TO_ACTIVE_SPACE = 1 << 1
-_MACOS_FULL_SCREEN_PRIMARY = 1 << 7
-_MACOS_FULL_SCREEN_AUXILIARY = 1 << 8
-_MACOS_FULL_SCREEN_NONE = 1 << 9
-_MACOS_WINDOW_ABOVE = 1
-
-
-def _macos_auxiliary_collection_behavior(current: int) -> int:
-    """Return the native flags for a child of Anki's full-screen window."""
-
-    conflicting = (
-        _MACOS_CAN_JOIN_ALL_SPACES
-        | _MACOS_FULL_SCREEN_PRIMARY
-        | _MACOS_FULL_SCREEN_NONE
-    )
-    return (
-        int(current) & ~conflicting
-    ) | _MACOS_MOVE_TO_ACTIVE_SPACE | _MACOS_FULL_SCREEN_AUXILIARY
-
-
-def _macos_objective_c_calls() -> tuple[Any, ...]:
-    """Load typed Objective-C entry points without adding a PyObjC dependency."""
-
-    runtime = ctypes.CDLL("/usr/lib/libobjc.A.dylib")
-    selector = runtime.sel_registerName
-    selector.argtypes = [ctypes.c_char_p]
-    selector.restype = ctypes.c_void_p
-    pointer_message = ctypes.CFUNCTYPE(
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-    )(("objc_msgSend", runtime))
-    size_message = ctypes.CFUNCTYPE(
-        ctypes.c_size_t,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-    )(("objc_msgSend", runtime))
-    set_size_message = ctypes.CFUNCTYPE(
-        None,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-        ctypes.c_size_t,
-    )(("objc_msgSend", runtime))
-    pointer_argument_message = ctypes.CFUNCTYPE(
-        None,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-    )(("objc_msgSend", runtime))
-    pointer_integer_argument_message = ctypes.CFUNCTYPE(
-        None,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-        ctypes.c_ssize_t,
-    )(("objc_msgSend", runtime))
-    return (
-        runtime,
-        selector,
-        pointer_message,
-        size_message,
-        set_size_message,
-        pointer_argument_message,
-        pointer_integer_argument_message,
-    )
-
-
-def _macos_native_window(
-    widget: QWidget,
-    pointer_message: Callable[..., object],
-    selector: Callable[[bytes], object],
-) -> int:
-    """Resolve a Qt QWidget's NSView handle to its containing NSWindow."""
-
-    view = int(widget.winId())
-    if not view:
-        return 0
-    return int(pointer_message(view, selector(b"window")) or 0)
-
-
-def _attach_macos_settings_window(dialog: QWidget, parent: Optional[QWidget]) -> bool:
-    """Attach Settings to Anki's native window and verify the relationship."""
-
-    if sys.platform != "darwin":
-        return True
-    if parent is None:
-        return False
-    child_window = 0
-    parent_window = 0
-    original_behavior: Optional[int] = None
-    selector: Optional[Callable[[bytes], object]] = None
-    pointer_message: Optional[Callable[..., object]] = None
-    set_size_message: Optional[Callable[..., object]] = None
-    pointer_argument_message: Optional[Callable[..., object]] = None
-
-    def rollback() -> None:
-        """Leave no native child relation behind after a failed attachment."""
-
-        if (
-            not child_window
-            or child_window == parent_window
-            or selector is None
-            or pointer_message is None
-            or pointer_argument_message is None
-        ):
-            return
-        try:
-            actual_parent = int(
-                pointer_message(child_window, selector(b"parentWindow")) or 0
-            )
-            if actual_parent:
-                pointer_argument_message(
-                    actual_parent,
-                    selector(b"removeChildWindow:"),
-                    child_window,
-                )
-            if original_behavior is not None and set_size_message is not None:
-                set_size_message(
-                    child_window,
-                    selector(b"setCollectionBehavior:"),
-                    original_behavior,
-                )
-        except Exception:
-            pass
-
-    try:
-        (
-            _runtime,
-            selector,
-            pointer_message,
-            size_message,
-            set_size_message,
-            pointer_argument_message,
-            pointer_integer_argument_message,
-        ) = _macos_objective_c_calls()
-        child_window = _macos_native_window(dialog, pointer_message, selector)
-        parent_window = _macos_native_window(parent, pointer_message, selector)
-        if not child_window or not parent_window or child_window == parent_window:
-            return False
-
-        original_behavior = int(size_message(
-            child_window,
-            selector(b"collectionBehavior"),
-        ))
-        expected_behavior = _macos_auxiliary_collection_behavior(original_behavior)
-        set_size_message(
-            child_window,
-            selector(b"setCollectionBehavior:"),
-            expected_behavior,
-        )
-
-        current_parent = int(
-            pointer_message(child_window, selector(b"parentWindow")) or 0
-        )
-        if current_parent not in (0, parent_window):
-            rollback()
-            return False
-        if current_parent != parent_window:
-            pointer_integer_argument_message(
-                parent_window,
-                selector(b"addChildWindow:ordered:"),
-                child_window,
-                _MACOS_WINDOW_ABOVE,
-            )
-
-        actual_parent = int(
-            pointer_message(child_window, selector(b"parentWindow")) or 0
-        )
-        actual_behavior = int(
-            size_message(child_window, selector(b"collectionBehavior"))
-        )
-        required = _MACOS_MOVE_TO_ACTIVE_SPACE | _MACOS_FULL_SCREEN_AUXILIARY
-        forbidden = (
-            _MACOS_CAN_JOIN_ALL_SPACES
-            | _MACOS_FULL_SCREEN_PRIMARY
-            | _MACOS_FULL_SCREEN_NONE
-        )
-        accepted = (
-            actual_parent == parent_window
-            and actual_behavior & required == required
-            and actual_behavior & forbidden == 0
-        )
-        if not accepted:
-            rollback()
-        return accepted
-    except Exception:
-        rollback()
-        return False
-
-
-def _detach_macos_settings_window(dialog: QWidget) -> bool:
-    """Remove Settings from its native parent before the Qt dialog closes."""
-
-    if sys.platform != "darwin":
-        return True
-    try:
-        (
-            _runtime,
-            selector,
-            pointer_message,
-            _size_message,
-            _set_size_message,
-            pointer_argument_message,
-            _pointer_integer_argument_message,
-        ) = _macos_objective_c_calls()
-        child_window = _macos_native_window(dialog, pointer_message, selector)
-        if not child_window:
-            return False
-        parent_window = int(
-            pointer_message(child_window, selector(b"parentWindow")) or 0
-        )
-        if parent_window:
-            pointer_argument_message(
-                parent_window,
-                selector(b"removeChildWindow:"),
-                child_window,
-            )
-        return not bool(
-            pointer_message(child_window, selector(b"parentWindow"))
-        )
-    except Exception:
-        return False
 
 
 def _web_asset_url(package: str, filename: str) -> str:
@@ -1827,13 +1601,10 @@ class SettingsDialog(QDialog):
         selected_event_date: str = "",
         selected_event_id: str = "",
     ) -> None:
-        # Deliberately use the same ordinary parented QDialog construction as
-        # Anki's Tools > Add-ons window. Custom Qt.Tool/native-panel handling
-        # gives the window independent macOS Space ownership and can make tab
-        # clicks alternate between the Desktop and Anki's full-screen Space.
+        # Match PronounceIt's working macOS/full-screen behavior: this remains
+        # an ordinary QDialog parented to Anki. The controller opens it with
+        # exec(), so Qt owns modality, native parenting, and Space placement.
         super().__init__(mw)
-        self.setWindowModality(Qt.WindowModality.NonModal)
-        self._macos_window_attached = False
         self.controller = controller
         self.draft = SettingsDraft(controller.config)
         self.staged = deepcopy(self.draft.values)
@@ -2138,21 +1909,6 @@ class SettingsDialog(QDialog):
             QTimer.singleShot(0, self._reflow_compact_grids)
         if hasattr(self, "preview"):
             QTimer.singleShot(0, self._update_preview_canvas_height)
-
-    def show(self) -> None:
-        if sys.platform == "darwin" and not self._macos_window_attached:
-            if not _attach_macos_settings_window(self, self.parentWidget()):
-                self._allow_close = True
-                self.reject()
-                QMessageBox.critical(
-                    mw,
-                    "Settings could not open",
-                    "Home Screen Dashboard could not attach Settings to Anki's "
-                    "current macOS Space.",
-                )
-                return
-            self._macos_window_attached = True
-        super().show()
 
     def showEvent(self, event: Any) -> None:
         super().showEvent(event)
@@ -5287,9 +5043,6 @@ class SettingsDialog(QDialog):
             event.ignore()
 
     def done(self, result: int) -> None:
-        if self._macos_window_attached:
-            _detach_macos_settings_window(self)
-            self._macos_window_attached = False
         try:
             self.preview.cleanup()
         except Exception:

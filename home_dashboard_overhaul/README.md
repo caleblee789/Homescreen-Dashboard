@@ -83,11 +83,10 @@ saved baseline. The baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only swatches and production-rendered
-preview content. Settings opens as an ordinary, parented, non-modal QDialog at
-a fixed 1200×800 size, clamped for smaller screens instead of restoring a saved
-size. On macOS, opening additionally verifies that the dialog is a native child
-of Anki's window so it stays in Anki's active full-screen Space; attachment
-failure is reported and the dialog does not open ambiguously.
+preview content. Settings opens as an ordinary `QDialog(mw)` through `exec()`,
+matching Pronounce It's working parented modal lifecycle so Qt/macOS owns the
+native parent and active full-screen Space. It uses a fixed 1200×800 size,
+clamped for smaller screens instead of restoring a saved size.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source

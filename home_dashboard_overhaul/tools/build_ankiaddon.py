@@ -357,7 +357,7 @@ def validate_sources() -> dict:
             "def _open_browser_target", "browser_will_search", "context.ids = ids",
             'command == "diagnostics"', 'self.open_settings("about_support")',
             "def _persist_settings_transaction", "_restore_optional_bytes",
-            "self.settings_dialog.show()", "self.settings_dialog.raise_()",
+            "self.settings_dialog.exec()", "finally:\n            self.settings_dialog = None",
         ),
         "insights.py": (
             "ORDER BY again_count DESC, total_answers DESC, r.cid ASC",
@@ -375,7 +375,7 @@ def validate_sources() -> dict:
         ),
         "settings.py": (
             "self.setFixedSize(1200, 800)", "self.setFixedSize(width, height)",
-            "super().__init__(mw)", "Qt.WindowModality.NonModal",
+            "super().__init__(mw)",
             "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
             'self.preview_wrap.setObjectName("PreviewDock")',
             '[("Section", "context"), ("Full dashboard", "full")]',
@@ -385,8 +385,6 @@ def validate_sources() -> dict:
             "class EventRowWidget", "class VerseRowWidget", "def _attach_event_menu",
             'self.revert_button = QPushButton("Revert changes")',
             'self.save_error.setObjectName("InlineSaveError")',
-            "def _attach_macos_settings_window", "def _detach_macos_settings_window",
-            'selector(b"addChildWindow:ordered:")', 'selector(b"removeChildWindow:")',
         ),
         "web/dashboard.js": (
             "function buildCalendarTooltipRows", "function getSelectedDateCapabilities",
@@ -426,7 +424,8 @@ def validate_sources() -> dict:
 
     for retired in (
         "Qt.WindowType.Tool", "self.winId()", "setTransientParent",
-        "_attach_transient_parent",
+        "_attach_transient_parent", "Qt.WindowModality.NonModal", "objc_msgSend",
+        "_attach_macos_settings_window", "_detach_macos_settings_window",
     ):
         if retired in sources["settings.py"]:
             raise ValueError("retired macOS Settings panel behavior remains: {}".format(retired))

@@ -6,7 +6,7 @@
   "exact_once": true,
   "surfaces": [
     {"id": "SET-SHELL", "owner": "SettingsDialog", "fixture": "single-header-rail-content-preview-footer-tree"},
-    {"id": "SET-WINDOW", "owner": "SettingsDialog", "fixture": "fixed-default-clamp-center-and-verified-macos-native-child"},
+    {"id": "SET-WINDOW", "owner": "SettingsDialog", "fixture": "fixed-default-clamp-center-and-parented-modal-exec"},
     {"id": "SET-NAV", "owner": "SettingsSidebar", "fixture": "fixed-152px-text-rail-all-widths"},
     {"id": "SET-PREVIEW", "owner": "PreviewDock", "fixture": "one-shared-dock-section-full-fit-100-open"},
     {"id": "SET-PREVIEW-OVERLAY", "owner": "PreviewDock", "fixture": "same-instance-small-physical-screen-fallback"},

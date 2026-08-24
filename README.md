@@ -19,9 +19,10 @@ Browser or statistics classes.
 - Initial HTML, live refresh, wide Month and Year 2×2 layouts, intermediate and
   narrow shells, Settings Preview, and hard restart are contractually checked
   against identical values from the same collection snapshot.
-- Settings remains one fixed, non-modal, parented native Qt composition. On
-  macOS it verifies a native child relationship to Anki before opening, which
-  keeps the window in Anki's active full-screen Space; geometry is not saved.
+- Settings remains one fixed, parented native Qt composition. It now matches
+  Pronounce It's working lifecycle—a normal `QDialog(mw)` opened with
+  `exec()`—so Qt/macOS manages modality and the active full-screen Space;
+  geometry is not saved.
 
 - Settings uses one native Qt composition at every size: a compact header,
   152 px text rail, one active page scroller, one shared optional Preview dock,
@@ -45,7 +46,7 @@ Browser or statistics classes.
 The local 1.8.6 candidate is built as
 `home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.6.ankiaddon` for
 installation through **Tools → Add-ons → Install from file**. Its SHA-256 is
-`bb9b76df9f4d40302ee1d3322a061b520517d885ff6181031e3f702004ce5ffd`.
+`a545508801750dedbb20904fb21413f52767ea310debc6dfadabe62e8e44d1f6`.
 It will be copied into versioned native release evidence only after the
 remaining runtime gate is completed. Disable any legacy source add-ons named
 by the activation card.

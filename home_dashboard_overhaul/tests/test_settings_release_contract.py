@@ -119,54 +119,39 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired, self.settings)
 
-    def test_window_matches_ankis_parented_addons_dialog_contract(self) -> None:
+    def test_window_matches_pronounceit_parented_modal_exec_contract(self) -> None:
         for marker in (
             "super().__init__(mw)",
-            "Qt.WindowModality.NonModal",
             "width, height = clamp_window_size(",
             "self.setFixedSize(width, height)",
             "available.center() - self.rect().center()",
             "QTimer.singleShot(0, self._settle_initial_scroll_top)",
         ):
             self.assertIn(marker, self.settings)
-        self.assertIn("self.settings_dialog.show()", self.controller)
-        self.assertNotIn("self.settings_dialog.open()", self.controller)
-        reuse_source = self.controller.split(
-            "if self.settings_dialog is not None and self.settings_dialog.isVisible():", 1
-        )[1].split("return", 1)[0]
-        self.assertLess(
-            reuse_source.index("self.settings_dialog.activateWindow()"),
-            reuse_source.index("self.settings_dialog.raise_()"),
-        )
+        self.assertIn("if self.settings_dialog is not None:", self.controller)
+        self.assertIn("self.settings_dialog.exec()", self.controller)
+        self.assertIn("finally:\n            self.settings_dialog = None", self.controller)
+        for retired_opening_marker in (
+            "self.settings_dialog.show()",
+            "self.settings_dialog.open()",
+            "self.settings_dialog.raise_()",
+            "self.settings_dialog.activateWindow()",
+            "self.settings_dialog.finished.connect",
+        ):
+            self.assertNotIn(retired_opening_marker, self.controller)
         self.assertNotIn("settingsWindowSize", self.settings)
         self.assertNotIn("def _settle_window_to_screen", self.settings)
-        dialog_source = self.settings.split("class SettingsDialog(QDialog):", 1)[1]
-        for retired_panel_marker in (
+        for retired_window_marker in (
             "Qt.WindowType.Tool",
+            "Qt.WindowModality.NonModal",
             "setTransientParent",
             "_attach_transient_parent",
+            "_attach_macos_settings_window",
+            "_detach_macos_settings_window",
+            "objc_msgSend",
+            "self.winId()",
         ):
-            self.assertNotIn(retired_panel_marker, dialog_source)
-        for native_attachment_marker in (
-            "def _attach_macos_settings_window(",
-            "def _detach_macos_settings_window(",
-            'selector(b"addChildWindow:ordered:")',
-            'selector(b"removeChildWindow:")',
-            "actual_behavior & required == required",
-            "actual_behavior & forbidden == 0",
-            'if sys.platform == "darwin" and not self._macos_window_attached:',
-            "if not _attach_macos_settings_window(self, self.parentWidget()):",
-            'QMessageBox.critical(',
-            "if self._macos_window_attached:",
-        ):
-            self.assertIn(native_attachment_marker, self.settings)
-        show_source = dialog_source.split("def show(self) -> None:", 1)[1].split(
-            "def showEvent", 1
-        )[0]
-        self.assertLess(
-            show_source.index("_attach_macos_settings_window"),
-            show_source.index("super().show()"),
-        )
+            self.assertNotIn(retired_window_marker, self.settings)
         self.assertIn("default: Tuple[int, int] = (1200, 800)", self.model)
         self.assertIn("minimum: Tuple[int, int] = (1040, 700)", self.model)
         self.assertNotIn("settingsWindowSize", json.dumps(self.config))

@@ -15,6 +15,7 @@
     "preview_width_range": [288, 320],
     "preview_default": "open-per-session-except-about",
     "preview_persisted": false,
+    "window_lifecycle": "parented-qdialog-exec",
     "primary_vertical_scroller": "active-page",
     "small_screen_fallback": "same-preview-dock-layout-overlay",
     "footer_ownership": "final-shell-row"
@@ -37,7 +38,7 @@
     "config_schema": 8,
     "only_config_domain_expansion": "events.sort=name",
     "qt_window_preference": null,
-    "macos_window_relationship": "verified-native-child-of-current-anki-window",
+    "macos_window_relationship": "qt-managed-parented-modal-exec",
     "preview_visibility_persisted": false,
     "staging_model": "SettingsDraft-three-way-merge",
     "list_dirty_granularity": "one-field",
@@ -46,7 +47,7 @@
   },
   "canonical_surfaces": [
     {"id": "SET-SHELL", "owner": "SettingsDialog", "fixture": "single-header-rail-content-preview-footer-tree"},
-    {"id": "SET-WINDOW", "owner": "SettingsDialog", "fixture": "fixed-default-clamp-center-and-verified-macos-native-child"},
+    {"id": "SET-WINDOW", "owner": "SettingsDialog", "fixture": "fixed-default-clamp-center-and-parented-modal-exec"},
     {"id": "SET-NAV", "owner": "SettingsSidebar", "fixture": "fixed-152px-text-rail-all-widths"},
     {"id": "SET-PREVIEW", "owner": "PreviewDock", "fixture": "one-shared-dock-section-full-fit-100-open"},
     {"id": "SET-PREVIEW-OVERLAY", "owner": "PreviewDock", "fixture": "same-instance-small-physical-screen-fallback"},
@@ -82,7 +83,7 @@
   ],
   "acceptance_criteria": [
     {"id": "SET-ONE-TREE", "tags": ["settings", "structure"], "requirement": "Settings uses one header, an unambiguous 152 px active rail, active-page scroller, optional shared PreviewDock, and final-row footer at every width."},
-    {"id": "SET-GEOMETRY", "tags": ["settings", "geometry"], "requirement": "The window defaults to 1200x800, enforces 1040x700 when the screen permits, keeps its complete decorated frame and footer inside available geometry, centers a maximum-1240 inner shell, and uses the same dock in the small-screen overlay fallback. On macOS it verifies a native child relationship to Anki's current window and fails closed if attachment cannot be proven."},
+    {"id": "SET-GEOMETRY", "tags": ["settings", "geometry"], "requirement": "The window defaults to 1200x800, enforces 1040x700 when the screen permits, keeps its complete decorated frame and footer inside available geometry, centers a maximum-1240 inner shell, and uses the same dock in the small-screen overlay fallback. It matches Pronounce It's parented QDialog exec lifecycle so Qt/macOS manages modality, native parenting, and the active full-screen Space."},
     {"id": "SET-PREVIEW", "tags": ["settings", "preview"], "requirement": "Section and Full dashboard render through the production renderer; Fit scales top-aligned without clipping in a content-aware compact canvas with no dead full-height panel, and 100 percent owns the preview secondary scrollbar."},
     {"id": "SET-PAGES", "tags": ["settings", "coverage"], "requirement": "All four pages are captured at 1040, 1200, and full-screen widths at 100 and 150 percent application fonts."},
     {"id": "SET-FOOTER", "tags": ["settings", "save"], "requirement": "Revert, Close, Save changes, and the inline save-error region remain reachable in stable final-row positions."},

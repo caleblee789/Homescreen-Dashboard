@@ -92,11 +92,11 @@ excludes buried backlog/work due in the active scheduler day.
 
 ## Settings and preview
 
-The Settings window is an ordinary, parented, non-modal QDialog at a fixed
-1200×800 size. Smaller screens receive a clamped fixed size with a 32 px safety
-margin. The opening size is not persisted. On macOS the dialog verifies a
-native child relationship to Anki before it opens, keeping both windows in the
-same active full-screen Space. It uses one compact header, 152 px rail,
+The Settings window is an ordinary `QDialog(mw)` opened through `exec()`,
+matching Pronounce It's working parented modal lifecycle so Qt/macOS manages
+the native parent and active full-screen Space. It uses a fixed 1200×800 size;
+smaller screens receive a clamped fixed size with a 32 px safety margin, and
+the opening size is not persisted. It uses one compact header, 152 px rail,
 active-page scroller, optional shared right Preview dock, and final-row footer.
 A physically smaller screen keeps the same rail and page and places the same
 Preview dock in a layout-managed overlay.

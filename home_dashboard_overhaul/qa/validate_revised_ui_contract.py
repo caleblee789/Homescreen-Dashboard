@@ -177,7 +177,6 @@ def validate(root: Path = ROOT) -> List[str]:
         "self.setFixedSize(1200, 800)",
         "self.setFixedSize(width, height)",
         "super().__init__(mw)",
-        "Qt.WindowModality.NonModal",
         "self.settings_shell.setMaximumWidth(1240)",
         "self.nav.setFixedWidth(152)",
         'self.preview_wrap.setObjectName("PreviewDock")',
@@ -193,10 +192,6 @@ def validate(root: Path = ROOT) -> List[str]:
         'SettingsCard("Calendar range")',
         'SettingsCard("Data and reset"',
         'SettingsCard("Backup and recovery")',
-        "def _attach_macos_settings_window(",
-        "def _detach_macos_settings_window(",
-        'selector(b"addChildWindow:ordered:")',
-        'selector(b"removeChildWindow:")',
     ))
     _require_markers(errors, "settings_model.py", (
         "def clamp_window_size(",
@@ -209,8 +204,8 @@ def validate(root: Path = ROOT) -> List[str]:
         "presets_by_theme",
     ))
     _require_markers(errors, "controller.py", (
-        "self.settings_dialog.show()",
-        "self.settings_dialog.raise_()",
+        "self.settings_dialog.exec()",
+        "finally:\n            self.settings_dialog = None",
         "def _persist_settings_transaction(",
         "previous_config = deepcopy(",
         "_restore_optional_bytes(ROTATION_STATE_PATH, previous_rotation)",
@@ -262,7 +257,8 @@ def validate(root: Path = ROOT) -> List[str]:
     for retired in (
         "HomeScreenDashboard/settingsWindowSize", "def _settle_window_to_screen",
         "Qt.WindowType.Tool", "self.winId()", "setTransientParent",
-        "_attach_transient_parent",
+        "_attach_transient_parent", "Qt.WindowModality.NonModal", "objc_msgSend",
+        "_attach_macos_settings_window", "_detach_macos_settings_window",
     ):
         if retired in settings_source:
             errors.append("retired Settings window behavior remains: {}".format(retired))

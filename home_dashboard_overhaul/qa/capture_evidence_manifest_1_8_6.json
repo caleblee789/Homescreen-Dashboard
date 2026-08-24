@@ -137,7 +137,7 @@
         "SET-WINDOW-FIXED",
         "SET-WINDOW-CLAMP"
       ],
-      "requirements": ["no-dead-full-height-fit-panel", "clean-legacy-card-anchor", "matched-about-lead-cards", "fixed-size-decorated-window-clamped", "native-macos-child-attachment"]
+      "requirements": ["no-dead-full-height-fit-panel", "clean-legacy-card-anchor", "matched-about-lead-cards", "fixed-size-decorated-window-clamped", "parented-modal-exec-lifecycle"]
     },
     {
       "id": "statistics-accuracy",

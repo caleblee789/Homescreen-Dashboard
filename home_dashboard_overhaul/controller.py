@@ -1186,16 +1186,16 @@ class DashboardController:
         page_name = page if isinstance(page, str) else ""
         date_value = selected_date if self._valid_bridge_date(selected_date) else ""
         event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
-        if self.settings_dialog is not None and self.settings_dialog.isVisible():
-            self.settings_dialog.open_page(page_name, date_value, event_value)
-            self.settings_dialog.activateWindow()
-            self.settings_dialog.raise_()
+        if self.settings_dialog is not None:
             return
         self.settings_dialog = SettingsDialog(self, page_name, date_value, event_value)
-        self.settings_dialog.finished.connect(lambda _result: setattr(self, "settings_dialog", None))
-        # Match Anki's Add-ons dialog lifecycle: keep a modeless, parented
-        # window alive in the controller instead of presenting a modal sheet.
-        self.settings_dialog.show()
+        # PronounceIt uses this exact parented modal lifecycle. Let Qt/macOS
+        # manage the native parent and full-screen Space instead of overriding
+        # either with a modeless window or Objective-C child attachment.
+        try:
+            self.settings_dialog.exec()
+        finally:
+            self.settings_dialog = None
 
     def save_config(self, config: Mapping[str, Any], preferred_verse: object = None) -> None:
         normalized = normalize_config(config)

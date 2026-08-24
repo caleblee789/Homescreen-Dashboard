@@ -29,11 +29,11 @@
   buried cards while excluding buried backlog/work due in the active day.
   Calendar history and detail actions now consume the same canonical records
   as the metric cards.
-- Changed Settings from a modal macOS sheet to one retained, non-modal,
-  parented QDialog with a fixed 1200×800 default, screen clamping, no saved
-  geometry, and a verified native macOS child relationship that keeps the
-  dialog in Anki’s active full-screen Space. Attachment failures stop with an
-  explicit error instead of opening an ambiguously owned window.
+- Changed Settings to match Pronounce It’s proven window lifecycle: one normal
+  `QDialog(mw)` opened through `exec()`, allowing Qt/macOS to manage modality,
+  native parenting, and the active full-screen Space without a custom
+  Objective-C child-window bridge. The fixed 1200×800 default, screen clamping,
+  and no-saved-geometry policy remain intact.
 - Preserved schema 8, every JSON/DOM metric key, bridge command, label, order,
   whole-percent presentation, 2×2 and responsive layouts, and the production
   Settings preview. Added a 102-frame exact-package evidence contract with
