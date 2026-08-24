@@ -1,0 +1,11 @@
+{
+  "name": "Home Dashboard 1.8.6 canonical UI isolated release probe",
+  "package": "zz_hdo_release_1_8_6_probe",
+  "ankiweb_id": "",
+  "homepage": "",
+  "conflicts": [],
+  "candidate_package": "home_dashboard_overhaul",
+  "stages": ["initial", "restart"],
+  "components": ["production-dashboard", "canonical-settings", "native-statistics-parity"],
+  "expected_capture_count": 102
+}

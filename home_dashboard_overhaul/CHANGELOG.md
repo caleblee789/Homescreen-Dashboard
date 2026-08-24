@@ -2,6 +2,44 @@
 
 ## Unreleased
 
+## 1.8.6 — 2026-08-24
+
+- Audited every study-derived value shown in Today’s Progress, Today’s
+  Session, Last 7 Days, All Time, calendar tooltips, and selected-day details.
+  Today and historical buckets now use Anki’s fixed 86,400-second periods
+  relative to the next scheduler rollover, including exact lower and upper
+  boundary handling.
+- Corrected Last 7 Days and All Time Retention to mirror Anki 26.8.1 native
+  true-retention eligibility: rated scheduling-affecting review entries, or
+  learning/relearning entries whose prior interval is at least one day. Again
+  fails; Hard, Good, and Easy pass. The visible whole percentage is rounded
+  half-up once and Again is rendered as its exact complement. A locked
+  regression distinguishes 80% all-answer success from 86% native Retention.
+- Corrected Today’s Progress remaining counts to use Anki’s limited due tree
+  with the selected reviewer queue and dashboard deck exclusions. New,
+  Learning, and Review remain disjoint, `Total remaining` is enforced as their
+  sum, and future intraday learning outside learn-ahead is no longer mistaken
+  for buried work.
+- Corrected Today’s Session to count rated answers and elapsed review time in
+  the active scheduler period, distinct qualifying new introductions, and
+  explicit current buried queues. Pace remains seconds per answer and ETA
+  retains the existing empirical-pace policy with a whole-minute ceiling.
+- Corrected calendar due forecasting to Anki’s non-new, non-suspended
+  future-due behavior, including filtered-deck original due dates and future
+  buried cards while excluding buried backlog/work due in the active day.
+  Calendar history and detail actions now consume the same canonical records
+  as the metric cards.
+- Changed Settings from a modal macOS sheet to one retained, non-modal,
+  parented QDialog with a fixed 1200×800 default, screen clamping, no saved
+  geometry, and a verified native macOS child relationship that keeps the
+  dialog in Anki’s active full-screen Space. Attachment failures stop with an
+  explicit error instead of opening an ambiguously owned window.
+- Preserved schema 8, every JSON/DOM metric key, bridge command, label, order,
+  whole-percent presentation, 2×2 and responsive layouts, and the production
+  Settings preview. Added a 102-frame exact-package evidence contract with
+  native Graphs/Scheduler comparisons, responsive snapshot parity, a hard
+  restart, and explicit unrun platform/accessibility boundaries.
+
 ## 1.8.5 — 2026-08-24
 
 - Replaced the three Settings compositions with one native Qt shell: compact

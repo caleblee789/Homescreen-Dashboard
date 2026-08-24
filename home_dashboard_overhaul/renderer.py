@@ -488,13 +488,18 @@ def _retention_role(value: RateMetric, target: int | None) -> str:
     return "hdo-value--danger"
 
 
-def _again_role(value: RateMetric, retention_target: int | None) -> str:
+def _again_role(
+    value: RateMetric,
+    retention_target: int | None,
+    display_percent: int | None = None,
+) -> str:
     if value.status != RateStatus.AVAILABLE or value.percent is None or retention_target is None:
         return ""
+    percent = value.percent if display_percent is None else display_percent
     target = max(0, 100 - retention_target)
-    if value.percent <= target:
+    if percent <= target:
         return "hdo-value--success"
-    if value.percent <= min(100, target + 10):
+    if percent <= min(100, target + 10):
         return "hdo-value--warning"
     return "hdo-value--danger"
 
@@ -528,12 +533,21 @@ def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
         _retention_role(stats.retention, target),
         unavailable=retention == UNAVAILABLE_TEXT,
     ))
-    again = _rate_text(stats.again_rate)
+    again_percent = (
+        100 - int(stats.retention.percent)
+        if (
+            stats.retention.status == RateStatus.AVAILABLE
+            and stats.retention.percent is not None
+            and stats.again_rate.status == RateStatus.AVAILABLE
+        )
+        else None
+    )
+    again = "{}%".format(again_percent) if again_percent is not None else _rate_text(stats.again_rate)
     rows.append(_metric(
         "Again rate",
         again,
         "last_seven_days.again_rate",
-        _again_role(stats.again_rate, target),
+        _again_role(stats.again_rate, target, again_percent),
         unavailable=again == UNAVAILABLE_TEXT,
     ))
     return _stats_group("Last 7 Days", "hdo-last-seven", rows)

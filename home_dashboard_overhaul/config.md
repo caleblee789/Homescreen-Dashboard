@@ -62,14 +62,44 @@ legend groups and event summaries are conditional on their feature settings.
 Date selection, tooltip, exact Browser routing, event edit/add, and Most Missed
 behavior retain their existing semantics.
 
+## Statistics calculations
+
+Today is the exact scheduler period `[next rollover − 86,400 seconds, next
+rollover)`. Cards studied counts rated answer events in that period after the
+configured analytics scope; Time spent sums their recorded review time; Pace
+is seconds per answer. New cards studied counts distinct qualifying
+introductions, with `new_cards.include_rescheduled` controlling whether a
+reset/reintroduced card may count again.
+
+New, Learning, and Reviews remaining come from Anki's limited due tree and are
+reconciled with its built reviewer queue. Dashboard deck exclusions remain in
+force, and Total is always the exact sum of the three categories. Explicit
+queues `-2` and `-3` are authoritative for cards currently buried. Only
+queue-hidden New and Review siblings are inferred; a Learning difference can
+be future intraday work outside learn-ahead and is not classified as buried.
+
+Last 7 Days spans the seven fixed scheduler periods ending at the next
+rollover. All Time spans the complete configured analytics scope. Retention
+matches Anki 26.8.1 true-retention eligibility: a rated scheduling-affecting
+entry qualifies when it is review-kind or its prior interval is at least one
+day. Again fails and Hard, Good, and Easy pass. Retention is rounded half-up to
+the existing whole percentage once, and visible Again is `100 − Retention`.
+
+Calendar history and selected-day details use the same rollover-relative
+records. Forecasting follows Anki's non-new, non-suspended future-due logic,
+uses filtered-deck original due dates, includes future buried cards, and
+excludes buried backlog/work due in the active scheduler day.
+
 ## Settings and preview
 
-The Settings window defaults to 1200×800, enforces 1040×700 when the available
-screen permits, and restores `HomeScreenDashboard/settingsWindowSize` only
-after clamping it to the screen's available geometry. It uses one compact
-header, 152 px rail, active-page scroller, optional shared right Preview dock,
-and final-row footer. A physically smaller screen keeps the same rail and page
-and places the same Preview dock in a layout-managed overlay.
+The Settings window is an ordinary, parented, non-modal QDialog at a fixed
+1200×800 size. Smaller screens receive a clamped fixed size with a 32 px safety
+margin. The opening size is not persisted. On macOS the dialog verifies a
+native child relationship to Anki before it opens, keeping both windows in the
+same active full-screen Space. It uses one compact header, 152 px rail,
+active-page scroller, optional shared right Preview dock, and final-row footer.
+A physically smaller screen keeps the same rail and page and places the same
+Preview dock in a layout-managed overlay.
 
 Preview is open by default for Dashboard, Events, and Bible verse each session,
 is omitted on About, and is never persisted. `Section | Full dashboard` and

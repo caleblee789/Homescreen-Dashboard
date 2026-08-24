@@ -1188,11 +1188,13 @@ class DashboardController:
         event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
         if self.settings_dialog is not None and self.settings_dialog.isVisible():
             self.settings_dialog.open_page(page_name, date_value, event_value)
-            self.settings_dialog.raise_()
             self.settings_dialog.activateWindow()
+            self.settings_dialog.raise_()
             return
         self.settings_dialog = SettingsDialog(self, page_name, date_value, event_value)
         self.settings_dialog.finished.connect(lambda _result: setattr(self, "settings_dialog", None))
+        # Match Anki's Add-ons dialog lifecycle: keep a modeless, parented
+        # window alive in the controller instead of presenting a modal sheet.
         self.settings_dialog.show()
 
     def save_config(self, config: Mapping[str, Any], preferred_verse: object = None) -> None:

@@ -223,6 +223,16 @@ class QueueStats:
     total: int = 0
     estimated_duration_seconds: Optional[int] = None
 
+    def __post_init__(self) -> None:
+        categories = (int(self.new), int(self.learning), int(self.review))
+        total = int(self.total)
+        if any(value < 0 for value in categories) or total < 0:
+            raise ValueError("queue counts cannot be negative")
+        if total != sum(categories):
+            raise ValueError("queue total must equal new + learning + review")
+        if self.estimated_duration_seconds is not None and int(self.estimated_duration_seconds) < 0:
+            raise ValueError("queue estimate cannot be negative")
+
 
 @dataclass(frozen=True)
 class BuriedStats:

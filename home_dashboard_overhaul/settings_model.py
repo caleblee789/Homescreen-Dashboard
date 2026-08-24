@@ -60,14 +60,14 @@ def history_range_values(choice: object, custom_start: object) -> Tuple[int, str
 
 
 def clamp_window_size(
-    saved: object,
+    requested: object,
     available: Sequence[int],
     *,
     default: Tuple[int, int] = (1200, 800),
     minimum: Tuple[int, int] = (1040, 700),
     margin: int = 32,
 ) -> Tuple[int, int]:
-    """Clamp a remembered Qt size to the screen without inventing a UI mode."""
+    """Clamp a requested Qt size to the screen without inventing a UI mode."""
 
     try:
         available_width, available_height = (int(available[0]), int(available[1]))
@@ -76,14 +76,16 @@ def clamp_window_size(
     maximum_width = max(1, available_width - max(0, int(margin)))
     maximum_height = max(1, available_height - max(0, int(margin)))
     try:
-        saved_width, saved_height = (int(saved[0]), int(saved[1]))  # type: ignore[index]
+        requested_width, requested_height = (
+            int(requested[0]), int(requested[1])  # type: ignore[index]
+        )
     except (TypeError, ValueError, IndexError):
-        saved_width, saved_height = default
+        requested_width, requested_height = default
     minimum_width = min(minimum[0], maximum_width)
     minimum_height = min(minimum[1], maximum_height)
     return (
-        min(maximum_width, max(minimum_width, saved_width)),
-        min(maximum_height, max(minimum_height, saved_height)),
+        min(maximum_width, max(minimum_width, requested_width)),
+        min(maximum_height, max(minimum_height, requested_height)),
     )
 
 

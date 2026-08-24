@@ -19,15 +19,16 @@ class SettingsReleaseContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.settings = (ROOT / "settings.py").read_text(encoding="utf-8")
+        cls.controller = (ROOT / "controller.py").read_text(encoding="utf-8")
         cls.model = (ROOT / "settings_model.py").read_text(encoding="utf-8")
-        cls.release_probe = (ROOT / "qa" / "runtime_probe_release_1_8_5.py").read_text(
+        cls.release_probe = (ROOT / "qa" / "runtime_probe_release_1_8_6.py").read_text(
             encoding="utf-8"
         )
         cls.config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
         cls.manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
     def test_release_metadata_and_schema_eight_are_current(self) -> None:
-        self.assertEqual(self.manifest["human_version"], "1.8.5")
+        self.assertEqual(self.manifest["human_version"], "1.8.6")
         self.assertEqual(self.config["schema_version"], 8)
         self.assertEqual(self.config["appearance"]["opacity"], 96)
         self.assertEqual(self.config["appearance"]["blur"], 12)
@@ -82,8 +83,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
 
     def test_settings_use_one_canonical_shell_and_one_shared_preview_dock(self) -> None:
         for marker in (
-            "self.resize(1200, 800)",
-            "self.setMinimumSize(1040, 700)",
+            "self.setFixedSize(1200, 800)",
             "self.settings_shell.setMaximumWidth(1240)",
             "self.settings_shell.setSizePolicy(",
             "self._update_settings_shell_margins()",
@@ -94,7 +94,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "outer.addWidget(self.body_shell, 1, 0)",
             "outer.addWidget(self.footer_shell, 2, 0)",
             'self.preview_wrap.setObjectName("PreviewDock")',
-            "available.width() < 1040",
+            "width < 1040",
             "1 if self._preview_overlay_mode else 2",
             'self._add_page("dashboard", page)',
             'self._add_page("events", page)',
@@ -119,30 +119,61 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired, self.settings)
 
-    def test_window_size_is_restored_clamped_centered_and_non_schema(self) -> None:
+    def test_window_matches_ankis_parented_addons_dialog_contract(self) -> None:
         for marker in (
-            '"HomeScreenDashboard/settingsWindowSize"',
+            "super().__init__(mw)",
+            "Qt.WindowModality.NonModal",
             "width, height = clamp_window_size(",
+            "self.setFixedSize(width, height)",
             "available.center() - self.rect().center()",
-            "def _settle_window_to_screen(self) -> None:",
-            "frame_extra_height = max(0, frame.height() - client.height())",
-            "self.setMaximumSize(maximum_width, maximum_height)",
-            "self._window_settings.setValue(",
+            "QTimer.singleShot(0, self._settle_initial_scroll_top)",
         ):
             self.assertIn(marker, self.settings)
+        self.assertIn("self.settings_dialog.show()", self.controller)
+        self.assertNotIn("self.settings_dialog.open()", self.controller)
+        reuse_source = self.controller.split(
+            "if self.settings_dialog is not None and self.settings_dialog.isVisible():", 1
+        )[1].split("return", 1)[0]
+        self.assertLess(
+            reuse_source.index("self.settings_dialog.activateWindow()"),
+            reuse_source.index("self.settings_dialog.raise_()"),
+        )
+        self.assertNotIn("settingsWindowSize", self.settings)
+        self.assertNotIn("def _settle_window_to_screen", self.settings)
+        dialog_source = self.settings.split("class SettingsDialog(QDialog):", 1)[1]
+        for retired_panel_marker in (
+            "Qt.WindowType.Tool",
+            "setTransientParent",
+            "_attach_transient_parent",
+        ):
+            self.assertNotIn(retired_panel_marker, dialog_source)
+        for native_attachment_marker in (
+            "def _attach_macos_settings_window(",
+            "def _detach_macos_settings_window(",
+            'selector(b"addChildWindow:ordered:")',
+            'selector(b"removeChildWindow:")',
+            "actual_behavior & required == required",
+            "actual_behavior & forbidden == 0",
+            'if sys.platform == "darwin" and not self._macos_window_attached:',
+            "if not _attach_macos_settings_window(self, self.parentWidget()):",
+            'QMessageBox.critical(',
+            "if self._macos_window_attached:",
+        ):
+            self.assertIn(native_attachment_marker, self.settings)
+        show_source = dialog_source.split("def show(self) -> None:", 1)[1].split(
+            "def showEvent", 1
+        )[0]
+        self.assertLess(
+            show_source.index("_attach_macos_settings_window"),
+            show_source.index("super().show()"),
+        )
         self.assertIn("default: Tuple[int, int] = (1200, 800)", self.model)
         self.assertIn("minimum: Tuple[int, int] = (1040, 700)", self.model)
         self.assertNotIn("settingsWindowSize", json.dumps(self.config))
 
-    def test_native_probe_does_not_override_or_clear_window_persistence_cases(self) -> None:
-        self.assertIn(
-            'if special not in {"window-restore", "window-clamp", "restart-persistence"}:',
-            self.release_probe,
-        )
-        self.assertIn(
-            'if special != "restart-persistence":\n        settings.remove(SETTINGS_SIZE_KEY)',
-            self.release_probe,
-        )
+    def test_native_probe_window_overrides_remain_outside_product_code(self) -> None:
+        self.assertNotIn("SETTINGS_SIZE_KEY", self.settings)
+        self.assertNotIn("QSettings", self.settings)
 
     def test_preview_uses_the_production_renderer_and_approved_controls(self) -> None:
         for marker in (

@@ -29,6 +29,7 @@ from home_dashboard_overhaul.models import (
     DashboardFacts,
     DayDomainState,
     FilterScope,
+    RateMetric,
     RateStatus,
     ValueState,
     ValueStatus,
@@ -45,7 +46,7 @@ class FakeDB:
         today_new=2,
         lifetime=(100, 1_000_000, 20, 400_000),
         buried=(3, 2, 7),
-        remaining=(8, 10),
+        remaining=(8, 10, 3),
         intraday_relearning=(0, None),
     ) -> None:
         self.history = history if history is not None else [
@@ -75,6 +76,19 @@ class FakeDB:
         if "sum(CASE" in sql and "r.ease = 1" not in sql:
             self.lifetime_sql = sql
             return self.lifetime
+        if "count(DISTINCT CASE" in sql and "r.ease != 1" in sql:
+            answers = sum(max(0, int(row[1] or 0)) for row in self.history)
+            new_cards = sum(max(0, int(row[2] or 0)) for row in self.history if len(row) > 2)
+            again = sum(max(0, int(row[3] or 0)) for row in self.history if len(row) > 3)
+            passed = sum(
+                max(0, int(row[4] or 0)) if len(row) >= 7 else max(0, int(row[1] or 0) - (int(row[3] or 0) if len(row) > 3 else 0))
+                for row in self.history
+            )
+            failed = sum(
+                max(0, int(row[5] or 0)) if len(row) >= 7 else (max(0, int(row[3] or 0)) if len(row) > 3 else 0)
+                for row in self.history
+            )
+            return answers, new_cards, again, passed, failed
         if "count(DISTINCT CASE" in sql:
             self.today_new_sql = sql
             return (self.today_new,)
@@ -86,12 +100,42 @@ class FakeDB:
         if "FROM revlog" in sql:
             self.history_queries += 1
             self.history_sql = sql
-            return list(self.history)
+            cutoff = int(args[0]) if args else Scheduler.day_cutoff
+            current_day = scheduling_today(cutoff)
+            if "count(DISTINCT CASE" not in sql:
+                return [
+                    ((date.fromisoformat(str(row[0])) - current_day).days, row[1])
+                    for row in self.history
+                ]
+            output = []
+            for row in self.history:
+                day_index = (date.fromisoformat(str(row[0])) - current_day).days
+                count = max(0, int(row[1] or 0)) if len(row) > 1 else 0
+                new_cards = max(0, int(row[2] or 0)) if len(row) > 2 else 0
+                again = max(0, int(row[3] or 0)) if len(row) > 3 else 0
+                if len(row) >= 7:
+                    passed = max(0, int(row[4] or 0))
+                    failed = max(0, int(row[5] or 0))
+                    card_ids = row[6]
+                else:
+                    passed = max(0, count - again)
+                    failed = min(count, again)
+                    card_ids = row[4] if len(row) > 4 else None
+                output.append((day_index, count, new_cards, again, passed, failed, card_ids))
+            return output
         if "GROUP BY did" in sql and "queue = 0 AND type = 0" in sql:
             self.remaining_sql = sql
             if self.remaining and isinstance(self.remaining[0], (tuple, list)):
                 return list(self.remaining)
-            return [(1, self.remaining[0], self.remaining[1])]
+            return [(1, self.remaining[0], self.remaining[1], self.remaining[2])]
+        if "SELECT id, type, queue, due, odue, odid FROM cards" in sql:
+            output = []
+            card_id = 10_000
+            for due, count, *_rest in self.forecast:
+                for _ in range(max(0, int(count or 0))):
+                    output.append((card_id, 2, 2, int(due), 0, 0))
+                    card_id += 1
+            return output
         if "FROM cards" in sql:
             return list(self.forecast)
         return []
@@ -147,9 +191,10 @@ class SQLiteDB:
         self.connection = sqlite3.connect(":memory:")
         self.connection.executescript(
             "CREATE TABLE revlog (id INTEGER PRIMARY KEY, cid INTEGER, ease INTEGER, "
-            "type INTEGER, lastIvl INTEGER, time INTEGER);"
+            "type INTEGER, lastIvl INTEGER, time INTEGER, factor INTEGER NOT NULL DEFAULT 2500);"
             "CREATE TABLE cards (id INTEGER PRIMARY KEY, did INTEGER, queue INTEGER, "
-            "due INTEGER, type INTEGER, odid INTEGER NOT NULL DEFAULT 0);"
+            "due INTEGER, type INTEGER, odid INTEGER NOT NULL DEFAULT 0, "
+            "odue INTEGER NOT NULL DEFAULT 0);"
         )
 
     def first(self, sql, *args):
@@ -237,6 +282,167 @@ class LongTermTests(unittest.TestCase):
                 self.assertEqual(calculate_long_term(rows, today).current_streak, expected)
 
 
+class NativeRetentionTests(unittest.TestCase):
+    @staticmethod
+    def _collection() -> SQLiteCollection:
+        col = SQLiteCollection()
+        col.sched.day_cutoff = int(datetime(2026, 8, 14, 4).timestamp())
+        col.sched.today = 500
+        return col
+
+    @staticmethod
+    def _insert_reviews(col: SQLiteCollection, rows) -> None:
+        col.db.connection.executemany(
+            "INSERT INTO revlog (id, cid, ease, type, lastIvl, time, factor) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            rows,
+        )
+
+    def test_native_eligible_retention_replaces_all_answer_success(self) -> None:
+        col = self._collection()
+        cutoff_ms = col.sched.day_cutoff * 1000
+        start = cutoff_ms - 60_000
+        rows = []
+        for index in range(947):
+            rows.append((start + index, index + 1, 3, 1, 1, 1000, 2500))
+        for index in range(153):
+            rows.append((start + 947 + index, 10_000 + index, 1, 1, 1, 1000, 2500))
+        # Learning Again answers with no prior one-day interval affect the
+        # all-answer success rate, but are ineligible for native Retention.
+        for index in range(84):
+            rows.append((start + 1100 + index, 20_000 + index, 1, 0, 0, 1000, 2500))
+        self._insert_reviews(col, rows)
+
+        facts = collect_dashboard_facts(col, normalize_config({}), date(2026, 8, 13))
+        recent = facts.last_seven_days.value
+        lifetime = facts.long_term.value
+
+        self.assertEqual(RateMetric.from_counts(947, 1184).percent, 80)
+        self.assertEqual(recent.cards_studied, 1184)
+        self.assertEqual(
+            (
+                recent.retention.numerator,
+                recent.retention.denominator,
+                recent.retention.percent,
+                recent.again_rate.numerator,
+                recent.again_rate.percent,
+            ),
+            (947, 1100, 86, 153, 14),
+        )
+        self.assertEqual(
+            (
+                lifetime.lifetime_retention.numerator,
+                lifetime.lifetime_retention.denominator,
+                lifetime.lifetime_retention.percent,
+            ),
+            (947, 1100, 86),
+        )
+
+    def test_retention_eligibility_matches_anki_review_kinds_and_cram_rule(self) -> None:
+        col = self._collection()
+        base = col.sched.day_cutoff * 1000 - 30_000
+        self._insert_reviews(col, [
+            (base + 1, 1, 3, 1, 0, 1000, 2500),       # Review: pass, always eligible.
+            (base + 2, 2, 3, 0, 1, 1000, 2500),       # Learning after >=1 day: pass.
+            (base + 3, 3, 1, 2, -86400, 1000, 2500),  # Relearning after >=1 day: fail.
+            (base + 4, 4, 4, 3, 1, 1000, 2500),       # Filtered, rescheduling: pass.
+            (base + 5, 5, 1, 3, 1, 1000, 0),          # Filtered cram: ineligible.
+            (base + 6, 6, 1, 0, 0, 1000, 2500),       # First learning step: ineligible.
+            (base + 7, 6, 1, 0, 0, 1000, 2500),       # Repeated same-day attempt.
+            (base + 8, 8, 3, 4, 1, 1000, 2500),       # Manual: excluded by scope.
+            (base + 9, 9, 3, 5, 1, 1000, 2500),       # Rescheduled: excluded by scope.
+        ])
+
+        recent = collect_dashboard_facts(
+            col,
+            normalize_config({}),
+            date(2026, 8, 13),
+        ).last_seven_days.value
+
+        self.assertEqual((recent.cards_studied, recent.new_cards_studied), (7, 1))
+        self.assertEqual(
+            (
+                recent.retention.numerator,
+                recent.retention.denominator,
+                recent.retention.percent,
+                recent.again_rate.numerator,
+                recent.again_rate.percent,
+            ),
+            (3, 4, 75, 1, 25),
+        )
+
+    def test_exact_seven_period_cutoffs_are_start_inclusive_and_end_exclusive(self) -> None:
+        col = self._collection()
+        cutoff_ms = col.sched.day_cutoff * 1000
+        lower = cutoff_ms - 7 * 86_400 * 1000
+        self._insert_reviews(col, [
+            (lower - 1, 1, 1, 1, 1, 1000, 2500),
+            (lower, 2, 3, 1, 1, 1000, 2500),
+            (cutoff_ms - 1, 3, 3, 1, 1, 1000, 2500),
+            (cutoff_ms, 4, 1, 1, 1, 1000, 2500),
+        ])
+
+        facts = collect_dashboard_facts(col, normalize_config({}), date(2026, 8, 13))
+
+        self.assertEqual(facts.last_seven_days.value.cards_studied, 2)
+        self.assertEqual(facts.last_seven_days.value.retention.percent, 100)
+        self.assertEqual(facts.today.value.answers, 1)
+        self.assertEqual(facts.long_term.value.lifetime_cards_studied, 3)
+
+    def test_calendar_day_index_keeps_exact_active_period_lower_bound_today(self) -> None:
+        col = self._collection()
+        cutoff_ms = col.sched.day_cutoff * 1000
+        lower = cutoff_ms - 86_400 * 1000
+        self._insert_reviews(col, [
+            (lower - 1, 1, 3, 1, 1, 1000, 2500),
+            (lower, 2, 3, 1, 1, 1000, 2500),
+            (cutoff_ms - 1, 3, 3, 1, 1, 1000, 2500),
+            (cutoff_ms, 4, 3, 1, 1, 1000, 2500),
+        ])
+
+        facts = collect_dashboard_facts(col, normalize_config({}), date(2026, 8, 13))
+
+        self.assertEqual(facts.for_date("2026-08-12").reviews_completed.value, 1)
+        self.assertEqual(facts.for_date("2026-08-13").reviews_completed.value, 2)
+        self.assertEqual(facts.today.value.answers, 2)
+
+    def test_new_introductions_are_distinct_and_resets_follow_scope_policy(self) -> None:
+        col = self._collection()
+        cutoff_ms = col.sched.day_cutoff * 1000
+        older = cutoff_ms - 8 * 86_400 * 1000
+        current = cutoff_ms - 10_000
+        self._insert_reviews(col, [
+            (older, 1, 3, 0, 0, 1000, 2500),
+            (current + 1, 1, 0, 4, 0, 0, 2500),
+            (current + 2, 1, 3, 0, 0, 1000, 2500),
+            (current + 3, 2, 1, 0, 0, 1000, 2500),
+            (current + 4, 2, 3, 0, 0, 1000, 2500),
+            (current + 5, 3, 3, 3, 0, 1000, 0),
+        ])
+
+        included = collect_dashboard_facts(col, normalize_config({}), date(2026, 8, 13))
+        excluded = collect_dashboard_facts(
+            col,
+            normalize_config({"new_cards": {"include_rescheduled": False}}),
+            date(2026, 8, 13),
+        )
+
+        self.assertEqual(
+            (
+                included.today.value.new_cards_studied,
+                included.last_seven_days.value.new_cards_studied,
+            ),
+            (2, 2),
+        )
+        self.assertEqual(
+            (
+                excluded.today.value.new_cards_studied,
+                excluded.last_seven_days.value.new_cards_studied,
+            ),
+            (1, 1),
+        )
+
+
 class SnapshotTests(unittest.TestCase):
     def test_due_load_reference_uses_positive_full_horizon_p90(self) -> None:
         col = FakeCollection(forecast=[
@@ -280,7 +486,7 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(next(row for row in included if row[0] == "2026-08-13"), ("2026-08-13", 3, 2))
         self.assertEqual(next(row for row in excluded if row[0] == "2026-08-13"), ("2026-08-13", 3, 1))
 
-    def test_today_progress_and_calendar_share_canonical_current_day_values(self) -> None:
+    def test_today_uses_exact_native_period_while_calendar_keeps_day_index_facts(self) -> None:
         col = FakeCollection()
         snapshot = collect_snapshot(col, normalize_config({}), VerseContent("Body", "Ref"))
         facts = snapshot.facts
@@ -288,7 +494,7 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(today.reviews_completed.value, 7)
         self.assertEqual(today.reviews_due.value, 3)
         self.assertEqual(today.new_cards_studied.value, 2)
-        self.assertEqual(facts.today.value.answers, 7)
+        self.assertEqual(facts.today.value.answers, 10)
         self.assertEqual(facts.today.value.new_cards_studied, 2)
         self.assertEqual(
             (facts.queue.value.new, facts.queue.value.learning, facts.queue.value.review),
@@ -296,7 +502,7 @@ class SnapshotTests(unittest.TestCase):
         )
         self.assertEqual(facts.queue.value.total, 21)
         self.assertEqual(facts.queue.value.estimated_duration_seconds, 300)
-        self.assertAlmostEqual(facts.today.value.pace_value, 100.0 / 7.0)
+        self.assertAlmostEqual(facts.today.value.pace_value, 10.0)
         self.assertEqual(
             (facts.buried.value.new, facts.buried.value.learning, facts.buried.value.review),
             (3, 2, 7),
@@ -312,10 +518,10 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(set(snapshot.__dataclass_fields__), {"facts", "verse"})
         self.assertIn("r.type IN (0, 3) AND r.lastIvl = 0", col.db.history_sql)
 
-    def test_today_new_card_count_consumes_canonical_scoped_day_facts(self) -> None:
+    def test_today_new_card_count_uses_the_exact_active_scheduler_period(self) -> None:
         col = FakeCollection(history=[], today_new=4)
         snapshot = collect_snapshot(col, normalize_config({"heatmap": {"history_days": 1}}), VerseContent())
-        self.assertEqual(snapshot.facts.today.value.new_cards_studied, 0)
+        self.assertEqual(snapshot.facts.today.value.new_cards_studied, 4)
         self.assertEqual(snapshot.facts.for_date("2026-08-13").new_cards_studied.value, 0)
 
     def test_collect_snapshot_preserves_partial_unavailability_without_numeric_projection(self) -> None:
@@ -384,7 +590,7 @@ class SnapshotTests(unittest.TestCase):
                 today=(0, 0),
                 lifetime=(0, 0, 0, 0),
                 due_tree=DueTree(0, 0, 0),
-                remaining=(0, 0),
+                remaining=(0, 0, 0),
             ),
             normalize_config({}),
             VerseContent(),
@@ -398,7 +604,7 @@ class SnapshotTests(unittest.TestCase):
         self.assertIsNone(unknown.facts.queue.value.estimated_duration_seconds)
 
     def test_eta_rounds_up_to_a_whole_minute(self) -> None:
-        queue = _queue(FakeCollection(remaining=(1, 0)), 10.0, 61.0, 0)
+        queue = _queue(FakeCollection(remaining=(1, 0, 0)), 10.0, 61.0, 0)
         self.assertEqual(queue.estimated_duration_seconds, 120)
 
     def test_new_remaining_obeys_ankis_scheduler_daily_limit(self) -> None:
@@ -415,7 +621,7 @@ class SnapshotTests(unittest.TestCase):
                     DueTree(new=7, deck_id=2),
                 )
 
-        col = FakeCollection(remaining=[(1, 40, 1), (2, 40, 1)])
+        col = FakeCollection(remaining=[(1, 40, 1, 3), (2, 40, 1, 2)])
         col.sched = MultiDeckScheduler()
 
         queue = _queue(col, 10.0, 20.0, 5)
@@ -435,10 +641,10 @@ class SnapshotTests(unittest.TestCase):
         )
         head_b = DueTree(new=6, deck_id=2)
         col = FakeCollection(remaining=[
-            (1, 2, 0),
-            (11, 8, 0),
-            (12, 8, 0),
-            (2, 10, 0),
+            (1, 2, 0, 0),
+            (11, 8, 0, 0),
+            (12, 8, 0, 0),
+            (2, 10, 0, 0),
         ])
         col.sched = Scheduler(due_tree_root(head_a, head_b))
 
@@ -455,7 +661,7 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(without_child.new, 13)
 
     def test_new_remaining_honors_consumed_and_zero_daily_limits(self) -> None:
-        col = FakeCollection(remaining=[(1, 20, 0), (2, 20, 0)])
+        col = FakeCollection(remaining=[(1, 20, 0, 0), (2, 20, 0, 0)])
         col.sched = Scheduler(due_tree_root(
             DueTree(new=2, deck_id=1),
             DueTree(new=0, deck_id=2),
@@ -465,6 +671,59 @@ class SnapshotTests(unittest.TestCase):
 
         self.assertEqual((queue.new, queue.total), (2, 2))
 
+    def test_remaining_uses_ankis_built_queue_for_the_selected_subtree(self) -> None:
+        class QueueAwareScheduler:
+            today = Scheduler.today
+            day_cutoff = Scheduler.day_cutoff
+
+            def __init__(self) -> None:
+                self.due_tree = due_tree_root(
+                    DueTree(new=7, learning=5, review=9, deck_id=1),
+                    DueTree(new=2, learning=1, review=3, deck_id=2),
+                )
+
+            def deck_due_tree(self):
+                return self.due_tree
+
+            def get_queued_cards(self, *, fetch_limit):
+                self.fetch_limit = fetch_limit
+                return SimpleNamespace(
+                    new_count=4,
+                    learning_count=3,
+                    review_count=6,
+                )
+
+        col = FakeCollection(remaining=[
+            (1, 7, 5, 9),
+            (2, 2, 1, 3),
+        ])
+        col.sched = QueueAwareScheduler()
+        col.decks = SimpleNamespace(get_current_id=lambda: 1)
+
+        all_decks = _queue(col, 10.0, 10.0, 12)
+        without_second_deck = _queue(
+            col,
+            10.0,
+            10.0,
+            9,
+            FilterScope(excluded_deck_ids=(2,)),
+        )
+
+        self.assertEqual(
+            (all_decks.new, all_decks.learning, all_decks.review, all_decks.total),
+            (6, 4, 9, 19),
+        )
+        self.assertEqual(
+            (
+                without_second_deck.new,
+                without_second_deck.learning,
+                without_second_deck.review,
+                without_second_deck.total,
+            ),
+            (4, 3, 6, 13),
+        )
+        self.assertEqual(col.sched.fetch_limit, 0)
+
     def test_due_tree_failure_makes_progress_unavailable_without_raw_fallback(self) -> None:
         class BrokenDueTreeScheduler:
             today = Scheduler.today
@@ -473,7 +732,7 @@ class SnapshotTests(unittest.TestCase):
             def deck_due_tree(self):
                 raise RuntimeError("due tree failed")
 
-        col = FakeCollection(remaining=[(1, 40, 0)])
+        col = FakeCollection(remaining=[(1, 40, 0, 0)])
         col.sched = BrokenDueTreeScheduler()
 
         facts = collect_dashboard_facts(col, normalize_config({}), date(2026, 8, 13))
@@ -503,7 +762,7 @@ class SnapshotTests(unittest.TestCase):
         )
         self.assertIn("NOT EXISTS (SELECT 1 FROM revlog prior", col.db.history_sql)
         self.assertIn("NOT EXISTS (SELECT 1 FROM revlog prior", col.db.lifetime_sql)
-        self.assertEqual(col.db.today_new_sql, "")
+        self.assertIn("NOT EXISTS (SELECT 1 FROM revlog prior", col.db.today_new_sql)
 
     def test_overdue_forecast_is_clamped_to_today(self) -> None:
         col = FakeCollection(history=[], forecast=[(490, 2), (500, 3), (501, 4)])
@@ -517,14 +776,14 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(scheduling_today(cutoff), date(2026, 11, 1))
 
     @unittest.skipUnless(hasattr(time, "tzset"), "requires Unix timezone support")
-    def test_pace_window_preserves_wall_clock_cutoff_across_dst(self) -> None:
+    def test_pace_window_uses_ankis_fixed_scheduler_period_across_dst(self) -> None:
         previous = os.environ.get("TZ")
         try:
             os.environ["TZ"] = "America/Chicago"
             time.tzset()
             cutoff = int(datetime(2026, 3, 8, 4, 0).timestamp())
             lower = pace_lower_bound(cutoff, 1)
-            self.assertEqual(cutoff - lower, 23 * 3600)
+            self.assertEqual(cutoff - lower, 24 * 3600)
         finally:
             if previous is None:
                 os.environ.pop("TZ", None)
@@ -810,9 +1069,11 @@ class CanonicalFactsTests(unittest.TestCase):
         self.assertEqual(current.browse_target.query, "cid:1")
         self.assertTrue(current.browse_target.exact)
 
-    def test_progress_uses_same_raw_review_demand_and_disjoint_scoped_new_learning(self) -> None:
+    def test_progress_uses_native_learning_and_review_queue_categories(self) -> None:
         col = self._sqlite_collection()
-        col.sched.due_tree = due_tree_root(DueTree(2, 1, 1))
+        col.sched.due_tree = due_tree_root(
+            DueTree(new=2, learning=4, review=1)
+        )
         col.db.connection.executemany(
             "INSERT INTO cards (id, did, queue, due, type) VALUES (?, ?, ?, ?, ?)",
             [
@@ -837,17 +1098,15 @@ class CanonicalFactsTests(unittest.TestCase):
         )
         current = facts.for_date("2026-08-13")
         tomorrow = facts.for_date("2026-08-14")
-        self.assertEqual(current.reviews_due.value, 3)
+        self.assertEqual(current.reviews_due.value, 5)
         self.assertEqual(current.browse_target.kind, BrowseTargetKind.DUE)
-        self.assertEqual(current.browse_target.card_ids, (1, 2, 11))
+        self.assertEqual(current.browse_target.card_ids, (1, 2, 7, 10, 11))
         self.assertTrue(current.browse_target.exact)
-        self.assertEqual((tomorrow.reviews_due.value, tomorrow.browse_target.card_ids), (1, (6,)))
-        self.assertFalse({7, 8}.intersection(tomorrow.browse_target.card_ids))
-        self.assertEqual((facts.queue.value.new, facts.queue.value.learning), (1, 2))
-        self.assertEqual(facts.queue.value.review, 3)
+        self.assertEqual((tomorrow.reviews_due.value, tomorrow.browse_target.card_ids), (2, (6, 8)))
+        self.assertEqual((facts.queue.value.new, facts.queue.value.learning), (1, 4))
+        self.assertEqual(facts.queue.value.review, 1)
         self.assertEqual(facts.queue.value.total, 6)
-        self.assertEqual(facts.queue.value.review, current.reviews_due.value)
-        self.assertEqual(tomorrow.browse_target.query, "cid:6")
+        self.assertEqual(tomorrow.browse_target.query, "cid:6,8")
         self.assertEqual(tomorrow.browse_target.kind, BrowseTargetKind.FUTURE_DUE)
         self.assertTrue(tomorrow.browse_target.exact)
 
@@ -859,8 +1118,8 @@ class CanonicalFactsTests(unittest.TestCase):
             }}),
             date(2026, 8, 13),
         )
-        self.assertEqual(disabled.for_date("2026-08-13").reviews_due.value, 3)
-        self.assertEqual(disabled.queue.value.review, 3)
+        self.assertEqual(disabled.for_date("2026-08-13").reviews_due.value, 5)
+        self.assertEqual(disabled.queue.value.review, 1)
         self.assertEqual(
             disabled.for_date("2026-08-14").reviews_due.reason,
             AvailabilityReason.QUERY_FAILED,
@@ -890,7 +1149,7 @@ class CanonicalFactsTests(unittest.TestCase):
             (ValueStatus.UNAVAILABLE, AvailabilityReason.QUERY_FAILED, None),
         )
 
-    def test_scheduler_tree_review_count_is_never_used_as_due_fallback(self) -> None:
+    def test_incomplete_scheduler_tree_makes_remaining_counts_unavailable(self) -> None:
         incomplete_tree = SimpleNamespace(
             deck_id=1,
             new_count=2,
@@ -902,10 +1161,9 @@ class CanonicalFactsTests(unittest.TestCase):
 
         self.assertEqual(
             (facts.queue.status, facts.queue.reason),
-            (ValueStatus.AVAILABLE, AvailabilityReason.NONE),
+            (ValueStatus.UNAVAILABLE, AvailabilityReason.QUERY_FAILED),
         )
         self.assertEqual(facts.for_date(facts.scheduling_date).reviews_due.value, 3)
-        self.assertEqual(facts.queue.value.review, 3)
 
     def test_deck_exclusions_scope_every_collection_backed_consumer(self) -> None:
         col = self._sqlite_collection()
@@ -962,7 +1220,7 @@ class CanonicalFactsTests(unittest.TestCase):
         self.assertEqual(facts.long_term.value.current_streak, 1)
         self.assertEqual(current.browse_target.card_ids, (1, 4))
         self.assertFalse({11, 14}.intersection(current.browse_target.card_ids))
-        self.assertEqual(current.reviews_due.value, 2)
+        self.assertEqual(current.reviews_due.value, 4)
         self.assertEqual((future.reviews_due.value, future.browse_target.card_ids), (1, (6,)))
         self.assertNotIn(3, current.browse_target.card_ids)
         self.assertFalse({13, 16}.intersection(future.browse_target.card_ids))
@@ -973,7 +1231,7 @@ class CanonicalFactsTests(unittest.TestCase):
                 facts.queue.value.review,
                 facts.queue.value.total,
             ),
-            (1, 2, 2, 5),
+            (1, 3, 1, 5),
         )
         self.assertEqual(
             (facts.buried.value.new, facts.buried.value.learning, facts.buried.value.review),
@@ -1001,23 +1259,23 @@ class CanonicalFactsTests(unittest.TestCase):
         )
 
         mutation_expectations = (
-            ("bury", -2, 1, 2),
-            ("unbury", 2, 2, 1),
-            ("suspend", -1, 1, 1),
-            ("unsuspend", 2, 2, 1),
+            ("bury", -2, 3, 0, 2),
+            ("unbury", 2, 4, 1, 1),
+            ("suspend", -1, 3, 0, 1),
+            ("unsuspend", 2, 4, 1, 1),
         )
-        for label, queue, due_count, buried_review in mutation_expectations:
+        for label, queue, due_count, queue_review, buried_review in mutation_expectations:
             with self.subTest(mutation=label):
                 col.db.connection.execute("UPDATE cards SET queue = ? WHERE id = 4", (queue,))
                 updated = filtered_facts()
                 self.assertEqual(updated.for_date("2026-08-13").reviews_due.value, due_count)
-                self.assertEqual(updated.queue.value.review, due_count)
+                self.assertEqual(updated.queue.value.review, queue_review)
                 self.assertEqual(updated.buried.value.review, buried_review)
 
         col.db.connection.execute("UPDATE cards SET queue = -2 WHERE id = 6")
         future_buried = filtered_facts()
-        self.assertEqual(future_buried.for_date("2026-08-14").reviews_due.value, 0)
-        self.assertEqual(future_buried.for_date("2026-08-14").browse_target.kind, BrowseTargetKind.NONE)
+        self.assertEqual(future_buried.for_date("2026-08-14").reviews_due.value, 1)
+        self.assertEqual(future_buried.for_date("2026-08-14").browse_target.card_ids, (6,))
         col.db.connection.execute("UPDATE cards SET queue = 2 WHERE id = 6")
         future_unburied = filtered_facts()
         self.assertEqual(future_unburied.for_date("2026-08-14").reviews_due.value, 1)
@@ -1026,24 +1284,24 @@ class CanonicalFactsTests(unittest.TestCase):
     def test_filtered_deck_original_ids_and_preview_queue_obey_the_same_scope(self) -> None:
         col = self._sqlite_collection()
         col.db.connection.executemany(
-            "INSERT INTO cards (id, did, queue, due, type, odid) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO cards (id, did, queue, due, type, odid, odue) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
             [
-                (1, 99, 0, 100, 0, 2),
-                (2, 99, 1, col.sched.day_cutoff - 1, 1, 2),
-                (3, 99, 2, 500, 2, 2),
-                (4, 99, -2, 0, 3, 2),
-                (5, 99, 0, 100, 0, 1),
-                (6, 99, 1, col.sched.day_cutoff - 1, 1, 1),
-                (7, 99, 2, 500, 2, 1),
-                (8, 99, -2, 0, 3, 1),
-                (9, 99, 4, col.sched.day_cutoff - 1, 1, 1),
-                (10, 99, 4, col.sched.day_cutoff - 1, 3, 1),
-                (11, 2, 0, 100, 0, 1),
-                (12, 99, 2, 501, 2, 2),
-                (13, 99, 2, 501, 2, 1),
-                (14, 99, 1, col.sched.day_cutoff - 1, 3, 2),
-                (15, 99, 1, col.sched.day_cutoff - 1, 3, 1),
+                (1, 99, 0, 100, 0, 2, 100),
+                (2, 99, 1, col.sched.day_cutoff - 1, 1, 2, col.sched.day_cutoff - 1),
+                (3, 99, 2, 500, 2, 2, 500),
+                (4, 99, -2, 500, 3, 2, 500),
+                (5, 99, 0, 100, 0, 1, 100),
+                (6, 99, 1, col.sched.day_cutoff - 1, 1, 1, col.sched.day_cutoff - 1),
+                (7, 99, 2, 500, 2, 1, 500),
+                (8, 99, -2, 500, 3, 1, 500),
+                (9, 99, 4, col.sched.day_cutoff - 1, 1, 1, col.sched.day_cutoff - 1),
+                (10, 99, 4, col.sched.day_cutoff - 1, 3, 1, col.sched.day_cutoff - 1),
+                (11, 2, 0, 100, 0, 1, 100),
+                (12, 99, 2, 501, 2, 2, 501),
+                (13, 99, 2, 501, 2, 1, 501),
+                (14, 99, 1, col.sched.day_cutoff - 1, 3, 2, col.sched.day_cutoff - 1),
+                (15, 99, 1, col.sched.day_cutoff - 1, 3, 1, col.sched.day_cutoff - 1),
             ],
         )
         col.db.connection.executemany(
@@ -1067,7 +1325,7 @@ class CanonicalFactsTests(unittest.TestCase):
         self.assertEqual(current.browse_target.card_ids, (7,))
         self.assertEqual(facts.today.value.answers, 1)
         self.assertEqual(facts.today.value.seconds, 3.0)
-        self.assertEqual(current.reviews_due.value, 2)
+        self.assertEqual(current.reviews_due.value, 5)
         self.assertEqual(future.reviews_due.value, 1)
         self.assertEqual(future.browse_target.card_ids, (13,))
         self.assertNotIn(12, future.browse_target.card_ids)
@@ -1078,7 +1336,7 @@ class CanonicalFactsTests(unittest.TestCase):
                 facts.queue.value.review,
                 facts.queue.value.total,
             ),
-            (1, 1, 2, 4),
+            (1, 2, 1, 4),
         )
         self.assertEqual(
             facts.queue.value.total,
@@ -1192,7 +1450,7 @@ class HistoricalTimingAndBuriedTests(unittest.TestCase):
             rows,
         )
         stats = _buried(col)
-        self.assertEqual((stats.new, stats.learning, stats.review), (2, 2, 1))
+        self.assertEqual((stats.new, stats.learning, stats.review), (2, 4, 2))
 
     def test_buried_adds_due_tree_cards_hidden_from_ankis_active_queue(self) -> None:
         class QueueAwareScheduler:
@@ -1231,7 +1489,7 @@ class HistoricalTimingAndBuriedTests(unittest.TestCase):
 
         stats = _buried(col)
 
-        self.assertEqual((stats.new, stats.learning, stats.review), (4, 3, 4))
+        self.assertEqual((stats.new, stats.learning, stats.review), (4, 1, 4))
         self.assertEqual(col.sched.requested_deck_id, 1)
         self.assertEqual(col.sched.fetch_limit, 0)
 

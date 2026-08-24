@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import ctypes
 from dataclasses import replace
 from datetime import date, datetime
 import hashlib
@@ -10,6 +11,7 @@ import html as html_module
 import json
 from pathlib import Path
 import re
+import sys
 import time
 from typing import Any, Callable, Dict, List, Mapping, MutableMapping, Optional
 
@@ -53,7 +55,6 @@ from aqt.qt import (
     QPushButton,
     QEvent,
     QScrollArea,
-    QSettings,
     QSize,
     QSizePolicy,
     QSlider,
@@ -115,6 +116,230 @@ ACTION_TEXT = "Home Screen Dashboard settings"
 PROJECT_URL = "https://github.com/caleblee789/Homescreen-Dashboard"
 ISSUES_URL = "https://github.com/caleblee789/Homescreen-Dashboard/issues"
 PACKAGE_ROOT = Path(__file__).resolve().parent
+
+_MACOS_CAN_JOIN_ALL_SPACES = 1 << 0
+_MACOS_MOVE_TO_ACTIVE_SPACE = 1 << 1
+_MACOS_FULL_SCREEN_PRIMARY = 1 << 7
+_MACOS_FULL_SCREEN_AUXILIARY = 1 << 8
+_MACOS_FULL_SCREEN_NONE = 1 << 9
+_MACOS_WINDOW_ABOVE = 1
+
+
+def _macos_auxiliary_collection_behavior(current: int) -> int:
+    """Return the native flags for a child of Anki's full-screen window."""
+
+    conflicting = (
+        _MACOS_CAN_JOIN_ALL_SPACES
+        | _MACOS_FULL_SCREEN_PRIMARY
+        | _MACOS_FULL_SCREEN_NONE
+    )
+    return (
+        int(current) & ~conflicting
+    ) | _MACOS_MOVE_TO_ACTIVE_SPACE | _MACOS_FULL_SCREEN_AUXILIARY
+
+
+def _macos_objective_c_calls() -> tuple[Any, ...]:
+    """Load typed Objective-C entry points without adding a PyObjC dependency."""
+
+    runtime = ctypes.CDLL("/usr/lib/libobjc.A.dylib")
+    selector = runtime.sel_registerName
+    selector.argtypes = [ctypes.c_char_p]
+    selector.restype = ctypes.c_void_p
+    pointer_message = ctypes.CFUNCTYPE(
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+    )(("objc_msgSend", runtime))
+    size_message = ctypes.CFUNCTYPE(
+        ctypes.c_size_t,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+    )(("objc_msgSend", runtime))
+    set_size_message = ctypes.CFUNCTYPE(
+        None,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_size_t,
+    )(("objc_msgSend", runtime))
+    pointer_argument_message = ctypes.CFUNCTYPE(
+        None,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+    )(("objc_msgSend", runtime))
+    pointer_integer_argument_message = ctypes.CFUNCTYPE(
+        None,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_ssize_t,
+    )(("objc_msgSend", runtime))
+    return (
+        runtime,
+        selector,
+        pointer_message,
+        size_message,
+        set_size_message,
+        pointer_argument_message,
+        pointer_integer_argument_message,
+    )
+
+
+def _macos_native_window(
+    widget: QWidget,
+    pointer_message: Callable[..., object],
+    selector: Callable[[bytes], object],
+) -> int:
+    """Resolve a Qt QWidget's NSView handle to its containing NSWindow."""
+
+    view = int(widget.winId())
+    if not view:
+        return 0
+    return int(pointer_message(view, selector(b"window")) or 0)
+
+
+def _attach_macos_settings_window(dialog: QWidget, parent: Optional[QWidget]) -> bool:
+    """Attach Settings to Anki's native window and verify the relationship."""
+
+    if sys.platform != "darwin":
+        return True
+    if parent is None:
+        return False
+    child_window = 0
+    parent_window = 0
+    original_behavior: Optional[int] = None
+    selector: Optional[Callable[[bytes], object]] = None
+    pointer_message: Optional[Callable[..., object]] = None
+    set_size_message: Optional[Callable[..., object]] = None
+    pointer_argument_message: Optional[Callable[..., object]] = None
+
+    def rollback() -> None:
+        """Leave no native child relation behind after a failed attachment."""
+
+        if (
+            not child_window
+            or child_window == parent_window
+            or selector is None
+            or pointer_message is None
+            or pointer_argument_message is None
+        ):
+            return
+        try:
+            actual_parent = int(
+                pointer_message(child_window, selector(b"parentWindow")) or 0
+            )
+            if actual_parent:
+                pointer_argument_message(
+                    actual_parent,
+                    selector(b"removeChildWindow:"),
+                    child_window,
+                )
+            if original_behavior is not None and set_size_message is not None:
+                set_size_message(
+                    child_window,
+                    selector(b"setCollectionBehavior:"),
+                    original_behavior,
+                )
+        except Exception:
+            pass
+
+    try:
+        (
+            _runtime,
+            selector,
+            pointer_message,
+            size_message,
+            set_size_message,
+            pointer_argument_message,
+            pointer_integer_argument_message,
+        ) = _macos_objective_c_calls()
+        child_window = _macos_native_window(dialog, pointer_message, selector)
+        parent_window = _macos_native_window(parent, pointer_message, selector)
+        if not child_window or not parent_window or child_window == parent_window:
+            return False
+
+        original_behavior = int(size_message(
+            child_window,
+            selector(b"collectionBehavior"),
+        ))
+        expected_behavior = _macos_auxiliary_collection_behavior(original_behavior)
+        set_size_message(
+            child_window,
+            selector(b"setCollectionBehavior:"),
+            expected_behavior,
+        )
+
+        current_parent = int(
+            pointer_message(child_window, selector(b"parentWindow")) or 0
+        )
+        if current_parent not in (0, parent_window):
+            rollback()
+            return False
+        if current_parent != parent_window:
+            pointer_integer_argument_message(
+                parent_window,
+                selector(b"addChildWindow:ordered:"),
+                child_window,
+                _MACOS_WINDOW_ABOVE,
+            )
+
+        actual_parent = int(
+            pointer_message(child_window, selector(b"parentWindow")) or 0
+        )
+        actual_behavior = int(
+            size_message(child_window, selector(b"collectionBehavior"))
+        )
+        required = _MACOS_MOVE_TO_ACTIVE_SPACE | _MACOS_FULL_SCREEN_AUXILIARY
+        forbidden = (
+            _MACOS_CAN_JOIN_ALL_SPACES
+            | _MACOS_FULL_SCREEN_PRIMARY
+            | _MACOS_FULL_SCREEN_NONE
+        )
+        accepted = (
+            actual_parent == parent_window
+            and actual_behavior & required == required
+            and actual_behavior & forbidden == 0
+        )
+        if not accepted:
+            rollback()
+        return accepted
+    except Exception:
+        rollback()
+        return False
+
+
+def _detach_macos_settings_window(dialog: QWidget) -> bool:
+    """Remove Settings from its native parent before the Qt dialog closes."""
+
+    if sys.platform != "darwin":
+        return True
+    try:
+        (
+            _runtime,
+            selector,
+            pointer_message,
+            _size_message,
+            _set_size_message,
+            pointer_argument_message,
+            _pointer_integer_argument_message,
+        ) = _macos_objective_c_calls()
+        child_window = _macos_native_window(dialog, pointer_message, selector)
+        if not child_window:
+            return False
+        parent_window = int(
+            pointer_message(child_window, selector(b"parentWindow")) or 0
+        )
+        if parent_window:
+            pointer_argument_message(
+                parent_window,
+                selector(b"removeChildWindow:"),
+                child_window,
+            )
+        return not bool(
+            pointer_message(child_window, selector(b"parentWindow"))
+        )
+    except Exception:
+        return False
 
 
 def _web_asset_url(package: str, filename: str) -> str:
@@ -1602,7 +1827,13 @@ class SettingsDialog(QDialog):
         selected_event_date: str = "",
         selected_event_id: str = "",
     ) -> None:
+        # Deliberately use the same ordinary parented QDialog construction as
+        # Anki's Tools > Add-ons window. Custom Qt.Tool/native-panel handling
+        # gives the window independent macOS Space ownership and can make tab
+        # clicks alternate between the Desktop and Anki's full-screen Space.
         super().__init__(mw)
+        self.setWindowModality(Qt.WindowModality.NonModal)
+        self._macos_window_attached = False
         self.controller = controller
         self.draft = SettingsDraft(controller.config)
         self.staged = deepcopy(self.draft.values)
@@ -1648,32 +1879,20 @@ class SettingsDialog(QDialog):
         ] = {}
         self.setObjectName("HomeDashboardSettings")
         self.setWindowTitle("Home Screen Dashboard settings")
-        self._window_settings = QSettings()
-        screen = self.screen() or QApplication.primaryScreen()
+        parent = self.parentWidget()
+        screen = parent.screen() if parent is not None else None
+        screen = screen or self.screen() or QApplication.primaryScreen()
         if screen is not None:
             available = screen.availableGeometry()
-            remembered = self._window_settings.value(
-                "HomeScreenDashboard/settingsWindowSize"
-            )
-            saved_size = (
-                (remembered.width(), remembered.height())
-                if isinstance(remembered, QSize)
-                else None
-            )
             width, height = clamp_window_size(
-                saved_size,
+                None,
                 (available.width(), available.height()),
             )
-            usable_width = max(1, available.width() - 32)
-            usable_height = max(1, available.height() - 32)
-            self.setMinimumSize(min(1040, usable_width), min(700, usable_height))
-            self.setMaximumSize(available.width(), available.height())
-            self.resize(width, height)
+            self.setFixedSize(width, height)
             self.move(available.center() - self.rect().center())
-            self._preview_overlay_mode = available.width() < 1040
+            self._preview_overlay_mode = width < 1040
         else:
-            self.setMinimumSize(1040, 700)
-            self.resize(1200, 800)
+            self.setFixedSize(1200, 800)
         self._hdo_theme_tokens = _theme_tokens(self.staged, self.controller.is_dark())
         self._preview_content_size = QSize()
         self.setStyleSheet(_settings_style(self.staged, self.controller.is_dark()))
@@ -1920,6 +2139,21 @@ class SettingsDialog(QDialog):
         if hasattr(self, "preview"):
             QTimer.singleShot(0, self._update_preview_canvas_height)
 
+    def show(self) -> None:
+        if sys.platform == "darwin" and not self._macos_window_attached:
+            if not _attach_macos_settings_window(self, self.parentWidget()):
+                self._allow_close = True
+                self.reject()
+                QMessageBox.critical(
+                    mw,
+                    "Settings could not open",
+                    "Home Screen Dashboard could not attach Settings to Anki's "
+                    "current macOS Space.",
+                )
+                return
+            self._macos_window_attached = True
+        super().show()
+
     def showEvent(self, event: Any) -> None:
         super().showEvent(event)
         if self._initial_scroll_settled:
@@ -1931,8 +2165,6 @@ class SettingsDialog(QDialog):
         # the rail and explicitly settle a normal route at the top. Legacy
         # dashboard anchors retain their separately scheduled destination.
         self.nav.setFocus(Qt.FocusReason.OtherFocusReason)
-        QTimer.singleShot(0, self._settle_window_to_screen)
-        QTimer.singleShot(80, self._settle_window_to_screen)
         if not self._requested_dashboard_anchor:
             QTimer.singleShot(0, self._settle_initial_scroll_top)
             QTimer.singleShot(80, self._settle_initial_scroll_top)
@@ -1941,32 +2173,6 @@ class SettingsDialog(QDialog):
         scroll = self.stack.currentWidget() if hasattr(self, "stack") else None
         if isinstance(scroll, QScrollArea):
             scroll.verticalScrollBar().setValue(0)
-
-    def _settle_window_to_screen(self) -> None:
-        """Keep the complete decorated window inside available geometry."""
-
-        screen = self.screen() or QApplication.primaryScreen()
-        if screen is None:
-            return
-        available = screen.availableGeometry()
-        frame = self.frameGeometry()
-        client = self.geometry()
-        frame_extra_width = max(0, frame.width() - client.width())
-        frame_extra_height = max(0, frame.height() - client.height())
-        maximum_width = max(1, available.width() - frame_extra_width)
-        maximum_height = max(1, available.height() - frame_extra_height)
-        self.setMaximumSize(maximum_width, maximum_height)
-        if self.width() > maximum_width or self.height() > maximum_height:
-            self.resize(
-                min(self.width(), maximum_width),
-                min(self.height(), maximum_height),
-            )
-        frame = self.frameGeometry()
-        rightmost = max(available.left(), available.right() - frame.width() + 1)
-        bottommost = max(available.top(), available.bottom() - frame.height() + 1)
-        target_x = min(max(frame.x(), available.left()), rightmost)
-        target_y = min(max(frame.y(), available.top()), bottommost)
-        self.move(self.pos() + QPoint(target_x - frame.x(), target_y - frame.y()))
 
     def _update_settings_shell_margins(self) -> None:
         """Fill the dialog through 1240px, then center the capped shell."""
@@ -5081,13 +5287,9 @@ class SettingsDialog(QDialog):
             event.ignore()
 
     def done(self, result: int) -> None:
-        try:
-            self._window_settings.setValue(
-                "HomeScreenDashboard/settingsWindowSize",
-                self.size(),
-            )
-        except Exception:
-            pass
+        if self._macos_window_attached:
+            _detach_macos_settings_window(self)
+            self._macos_window_attached = False
         try:
             self.preview.cleanup()
         except Exception:

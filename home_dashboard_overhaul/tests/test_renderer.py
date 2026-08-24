@@ -217,10 +217,13 @@ class RendererTests(unittest.TestCase):
 
         tiny = rendered(
             TodayStats(999),
-            ValueState.available(QueueStats(new=1, learning=1, review=1, total=999)),
+            ValueState.available(QueueStats(new=1, learning=1, review=1, total=3)),
         )
         self.assertIn("<dt>Total remaining</dt><dd data-hdo-metric=\"queue.total\">3</dd>", tiny)
         self.assertNotIn("data-hdo-progress-segment", tiny)
+
+        with self.assertRaisesRegex(ValueError, "queue total"):
+            QueueStats(new=1, learning=1, review=1, total=999)
 
         unavailable = rendered(
             TodayStats(7),
@@ -299,6 +302,24 @@ class RendererTests(unittest.TestCase):
         lifetime = re.search(r'<div class="hdo-metric-row ([^"]*)"[^>]*><dt>Retention</dt>', all_time)
         self.assertIsNotNone(lifetime)
         self.assertEqual(lifetime.group(1), "")
+
+    def test_native_retention_regression_renders_86_and_complementary_14(self) -> None:
+        recent = LastSevenDaysStats(
+            cards_studied=1_184,
+            new_cards_studied=84,
+            retention=RateMetric.from_counts(947, 1_100),
+            again_rate=RateMetric.from_counts(153, 1_100),
+        )
+        facts = replace(
+            self.snapshot.facts,
+            last_seven_days=ValueState.available(recent),
+        )
+        html = render_dashboard(replace(self.snapshot, facts=facts), self.config)
+        section = html[html.index("Last 7 Days"):html.index("All Time")]
+
+        self.assertIn('<dt>Retention</dt><dd data-hdo-metric="last_seven_days.retention">86%</dd>', section)
+        self.assertIn('<dt>Again rate</dt><dd data-hdo-metric="last_seven_days.again_rate">14%</dd>', section)
+        self.assertNotIn(">80%</dd>", section)
 
     def test_theme_preserves_the_entire_host_canvas(self) -> None:
         html = render_dashboard(self.snapshot, self.config, anki_dark=False)
@@ -396,6 +417,12 @@ class RendererTests(unittest.TestCase):
         year_payload = dashboard_facts_payload(self.snapshot, self.config)
         self.assertEqual(month_payload["due_load_reference"], year_payload["due_load_reference"])
         self.assertEqual(month_payload["due_load_reference"], self.snapshot.facts.due_load_reference)
+        self.assertEqual(month_payload["statistics"], year_payload["statistics"])
+
+        initial = payload_from(render_dashboard(self.snapshot, self.config, preview=False))
+        preview = payload_from(render_dashboard(self.snapshot, self.config, preview=True))
+        self.assertEqual(initial["statistics"], preview["statistics"])
+        self.assertEqual(initial["presentation"], preview["presentation"])
 
     def test_selected_heatmap_tokens_and_safe_opacity_are_rendered(self) -> None:
         config = deepcopy(self.config)

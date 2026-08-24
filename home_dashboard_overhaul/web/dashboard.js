@@ -1341,23 +1341,28 @@
       setMetric(root, "today.cards_buried", todayPresentation.cards_buried || formatNumber(buriedTotal, locale), buriedTotal);
     } else setMetric(root, "today.cards_buried", UNAVAILABLE_TEXT, null);
     if (recent) {
+      var retentionAvailable = recent.retention && recent.retention.status === "available";
+      var againAvailable = recent.again_rate && recent.again_rate.status === "available";
+      var displayedAgainPercent = retentionAvailable && againAvailable
+        ? 100 - Number(recent.retention.percent)
+        : (againAvailable ? Number(recent.again_rate.percent) : null);
       setMetric(root, "last_seven_days.cards_studied", formatNumber(recent.cards_studied, locale), recent.cards_studied);
       setMetric(root, "last_seven_days.new_cards_studied", formatNumber(recent.new_cards_studied, locale), recent.new_cards_studied);
-      setMetric(root, "last_seven_days.retention", recent.retention && recent.retention.status === "available" ? recent.retention.percent + "%" : N_A_TEXT, recent.retention && recent.retention.percent);
-      setMetric(root, "last_seven_days.again_rate", recent.again_rate && recent.again_rate.status === "available" ? recent.again_rate.percent + "%" : N_A_TEXT, recent.again_rate && recent.again_rate.percent);
+      setMetric(root, "last_seven_days.retention", retentionAvailable ? recent.retention.percent + "%" : N_A_TEXT, recent.retention && recent.retention.percent);
+      setMetric(root, "last_seven_days.again_rate", againAvailable ? displayedAgainPercent + "%" : N_A_TEXT, displayedAgainPercent);
       updateMetricSemanticRole(
         root,
         "last_seven_days.retention",
-        recent.retention && recent.retention.status === "available"
+        retentionAvailable
           ? rateSemanticRole(recent.retention.percent, retentionTarget, false)
           : ""
       );
       updateMetricSemanticRole(
         root,
         "last_seven_days.again_rate",
-        recent.again_rate && recent.again_rate.status === "available"
+        againAvailable
           ? rateSemanticRole(
-              recent.again_rate.percent,
+              displayedAgainPercent,
               retentionTarget === null || retentionTarget === undefined || retentionTarget === ""
                 ? null
                 : 100 - Number(retentionTarget),
