@@ -1,0 +1,478 @@
+{
+  "authority": "native-deck-browser-100-percent",
+  "captures": {
+    "RUNTIME-RESTART-PERSISTENCE": {
+      "capture_method": "QMainWindow.grab-isolated-restart",
+      "device_pixel_ratio": 1.0,
+      "dom": {
+        "bible": null,
+        "bibleFont": "",
+        "bibleFontSize": "",
+        "bibleHeight": 0,
+        "bibleOverflow": false,
+        "biblePresent": false,
+        "bodyBackgroundImage": "none",
+        "bodyOverflowX": 0,
+        "buriedText": "7",
+        "calendar": {
+          "bottom": 486.78,
+          "height": 306.78,
+          "left": 300,
+          "right": 1199.25,
+          "top": 180,
+          "width": 899.25
+        },
+        "calendarCellCount": 365,
+        "cardBackdrop": "blur(16px) saturate(1.08)",
+        "cardBackground": "linear-gradient(rgba(21, 34, 52, 0.94) 0%, rgba(17, 26, 39, 0.94) 100%) rgba(0, 0, 0, 0)",
+        "cardShadowCount": 5,
+        "cardSurfaceOpacity": "0.94",
+        "combinedStateCount": 1,
+        "contextEventLabel": "Next event",
+        "contextEventMeta": "",
+        "contextEventTitle": "",
+        "devicePixelRatio": 1,
+        "documentOverflowX": 0,
+        "dueLegendCount": 3,
+        "dueLevels": [
+          "0",
+          "2",
+          "3"
+        ],
+        "editEventVisible": false,
+        "etaText": "8:19 PM",
+        "eventCountText": "",
+        "eventMarkerCount": 1,
+        "footerAlignmentBands": 3,
+        "footerGridTemplateAreas": "\"date event edit action\"",
+        "footerOverlapArea": 0,
+        "footerRowCount": 1,
+        "frame": {
+          "bottom": 389.78,
+          "height": 129.13,
+          "left": 318,
+          "right": 1181.25,
+          "top": 260.66,
+          "width": 863.25
+        },
+        "frameOverflowMode": "visible",
+        "frameOverflowX": 0,
+        "grid": {
+          "bottom": 389.78,
+          "height": 129.13,
+          "left": 318,
+          "right": 1181.25,
+          "top": 260.66,
+          "width": 863.25
+        },
+        "hostPreserved": "true",
+        "layout": {
+          "bottom": 486.78,
+          "height": 306.78,
+          "left": 300,
+          "right": 1620,
+          "top": 180,
+          "width": 1320
+        },
+        "layoutGap": 12,
+        "layoutSideBySide": true,
+        "layoutStacked": false,
+        "learningText": "14",
+        "legendText": "Completed reviewsLowHighReviews due",
+        "loadState": "",
+        "loading": false,
+        "loadingCalendar": null,
+        "loadingFailureActions": [],
+        "loadingFailureCopy": "",
+        "loadingFailureHeading": "",
+        "loadingFailureVisible": false,
+        "loadingMessage": "",
+        "loadingSkeletonVisible": false,
+        "metrics": {
+          "bottom": 478.75,
+          "height": 298.75,
+          "left": 1211.25,
+          "right": 1620,
+          "top": 180,
+          "width": 408.75
+        },
+        "mode": "dark",
+        "monthCellHeights": [],
+        "monthColumnGap": "",
+        "monthRowGap": "",
+        "monthRows": 0,
+        "newText": "32",
+        "primaryActionText": "Reviewed cards",
+        "primaryActionVisible": true,
+        "progressFillPercent": "60",
+        "progressState": "in_progress",
+        "progressText": "60% complete",
+        "progressTrackHeight": 14,
+        "qaBackgroundImage": "",
+        "qaContainerWidth": "",
+        "rail": {
+          "bottom": 478.75,
+          "height": 298.75,
+          "left": 1211.25,
+          "right": 1620,
+          "top": 180,
+          "width": 408.75
+        },
+        "railChildCount": 1,
+        "railHasBible": "false",
+        "ready": true,
+        "refreshRetryVisible": false,
+        "refreshStatus": "",
+        "refreshWarning": "",
+        "reviewText": "78",
+        "root": {
+          "bottom": 558.78,
+          "height": 378.78,
+          "left": 300,
+          "right": 1620,
+          "top": 180,
+          "width": 1320
+        },
+        "rootAriaBusy": "false",
+        "rootBackground": "rgba(0, 0, 0, 0)",
+        "rootMarginTop": "22px",
+        "rootPaddingBottom": "72px",
+        "rootScrollPaddingBottom": "72px",
+        "rowLabels": {
+          "lifetime": [
+            "Avg cards/day",
+            "Current streak",
+            "Longest streak",
+            "Retention",
+            "Cards studied"
+          ],
+          "progress": [
+            "New remaining",
+            "Learning remaining",
+            "Reviews remaining",
+            "Total remaining"
+          ],
+          "recent": [
+            "Cards studied",
+            "New cards studied",
+            "Retention",
+            "Again rate"
+          ],
+          "session": [
+            "Cards studied",
+            "New cards studied",
+            "Cards buried",
+            "Time spent",
+            "Pace",
+            "ETA"
+          ]
+        },
+        "scrimBackground": "rgba(0, 0, 0, 0)",
+        "scrimContent": "none",
+        "selectedCount": 1,
+        "selectedOutlineOffset": "-1px",
+        "selectedOutlineWidth": "2px",
+        "statisticCardHeights": [
+          153.17,
+          153.17,
+          134.58,
+          134.58
+        ],
+        "statisticCardOverflow": 0,
+        "statisticCardOverflowDetails": [
+          {
+            "className": "hdo-statistics-card hdo-progress-card",
+            "clientHeight": 151,
+            "clientWidth": 197,
+            "heading": {
+              "bottom": 206.61,
+              "height": 15.61,
+              "left": 1224.25,
+              "right": 1338.34,
+              "top": 191,
+              "width": 114.09
+            },
+            "headingLineHeight": "15.62px",
+            "headingText": "Today\u2019s Progress",
+            "meta": null,
+            "metaText": "",
+            "scrollHeight": 151,
+            "scrollWidth": 197
+          },
+          {
+            "className": "hdo-statistics-card hdo-session-card",
+            "clientHeight": 151,
+            "clientWidth": 197,
+            "heading": {
+              "bottom": 206.61,
+              "height": 15.61,
+              "left": 1434.13,
+              "right": 1545.59,
+              "top": 191,
+              "width": 111.47
+            },
+            "headingLineHeight": "15.62px",
+            "headingText": "Today\u2019s Session",
+            "meta": null,
+            "metaText": "",
+            "scrollHeight": 151,
+            "scrollWidth": 197
+          },
+          {
+            "className": "hdo-statistics-card hdo-recent-card",
+            "clientHeight": 133,
+            "clientWidth": 197,
+            "heading": {
+              "bottom": 370.78,
+              "height": 15.61,
+              "left": 1224.25,
+              "right": 1302.69,
+              "top": 355.17,
+              "width": 78.44
+            },
+            "headingLineHeight": "15.62px",
+            "headingText": "Last 7 Days",
+            "meta": null,
+            "metaText": "",
+            "scrollHeight": 133,
+            "scrollWidth": 197
+          },
+          {
+            "className": "hdo-statistics-card hdo-lifetime-card",
+            "clientHeight": 133,
+            "clientWidth": 197,
+            "heading": {
+              "bottom": 370.78,
+              "height": 15.61,
+              "left": 1434.13,
+              "right": 1490.63,
+              "top": 355.17,
+              "width": 56.5
+            },
+            "headingLineHeight": "15.62px",
+            "headingText": "All Time",
+            "meta": null,
+            "metaText": "",
+            "scrollHeight": 133,
+            "scrollWidth": 197
+          }
+        ],
+        "statisticCardRects": [
+          {
+            "bottom": 333.17,
+            "height": 153.17,
+            "left": 1211.25,
+            "right": 1410.13,
+            "top": 180,
+            "width": 198.88
+          },
+          {
+            "bottom": 333.17,
+            "height": 153.17,
+            "left": 1421.13,
+            "right": 1620,
+            "top": 180,
+            "width": 198.88
+          },
+          {
+            "bottom": 478.75,
+            "height": 134.58,
+            "left": 1211.25,
+            "right": 1410.13,
+            "top": 344.17,
+            "width": 198.88
+          },
+          {
+            "bottom": 478.75,
+            "height": 134.58,
+            "left": 1421.13,
+            "right": 1620,
+            "top": 344.17,
+            "width": 198.88
+          }
+        ],
+        "statisticCardWidths": [
+          198.88,
+          198.88,
+          198.88,
+          198.88
+        ],
+        "statisticColumns": 2,
+        "statisticRows": 2,
+        "statisticsCardCount": 4,
+        "theme": "Sapphire Glass",
+        "timeSpentText": "1 hr 22 min1h 22m",
+        "titleText": "2026",
+        "todayCount": 1,
+        "tooltip": {
+          "bottom": 0,
+          "height": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0,
+          "width": 0
+        },
+        "tooltipHeading": "",
+        "tooltipVisible": false,
+        "unavailableCount": 0,
+        "verticalScrollAvailable": true,
+        "view": "year",
+        "viewport": {
+          "height": 931,
+          "width": 1920
+        },
+        "yearCellHeight": 12.86,
+        "yearCellWidth": 12.86,
+        "yearColumnGap": "3px",
+        "yearContent": {
+          "bottom": 389.78,
+          "height": 129.13,
+          "left": 318,
+          "right": 1181.25,
+          "top": 260.66,
+          "width": 863.25
+        },
+        "yearMonthLabels": [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec"
+        ],
+        "yearRowGap": "3px",
+        "yearWeekdayLabels": [
+          "Mon",
+          "Wed",
+          "Fri"
+        ],
+        "yearWeeks": "53",
+        "zeroSemanticCount": 0
+      },
+      "file": "captures/RUNTIME-RESTART-PERSISTENCE.png",
+      "fixture": "populated",
+      "layout": "wide",
+      "logical_frame": {
+        "height": 1050,
+        "width": 1920,
+        "x": -1920,
+        "y": 101
+      },
+      "mode": "dark",
+      "physical_pixels": [
+        1920,
+        1018
+      ],
+      "production_deck_browser_mount": true,
+      "sampled_color_count": 24,
+      "sha256": "c1ece9c078d532c9761bce1bcaa596d19769b02a395760ee134365972aeb6310",
+      "tags": [
+        "runtime_state",
+        "restart",
+        "settings_persistence",
+        "calendar_view_persistence",
+        "theme_persistence",
+        "palette_persistence",
+        "visibility_persistence",
+        "opacity_persistence",
+        "blur_persistence",
+        "clean_settings_state",
+        "no_waiver"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "year",
+      "window_title": "Codex QA HDO 1.8.2 20260823-191540 - Anki",
+      "window_title_matches_profile": true
+    }
+  },
+  "errors": [],
+  "identity": {
+    "addons_inside_run_root": true,
+    "anki_version": "26.8.1",
+    "auto_sync": false,
+    "candidate": {
+      "candidate": "/Users/test/Documents/ChatGPT.nosync/Homescreen Statistics Overhaul/home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.2.ankiaddon",
+      "candidate_sha256": "f1a3eddcd47f259b9b7c7645f5f355de1849711034361623498476973e7b2a70",
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.2",
+      "member_count": 24,
+      "zip_integrity": "passed"
+    },
+    "candidate_addon_root": "/private/tmp/anki-release-qa.6sqgejer/addons21/home_dashboard_overhaul",
+    "collection_inside_run_root": true,
+    "collection_path": "/private/tmp/anki-release-qa.6sqgejer/Codex QA HDO 1.8.2 20260823-191540/collection.anki2",
+    "excluded_normal_pid": 51708,
+    "excluded_normal_pid_alive": true,
+    "excluded_normal_process_state": "alive-and-untouched",
+    "gated_before_window_interaction": true,
+    "media_sync": false,
+    "pid": 52916,
+    "probe_addon_root": "/private/tmp/anki-release-qa.6sqgejer/addons21/zz_hdo_release_1_8_2_probe",
+    "processes_are_distinct": true,
+    "profile": "Codex QA HDO 1.8.2 20260823-191540",
+    "profile_matches": true,
+    "run_root": "/private/tmp/anki-release-qa.6sqgejer",
+    "single_instance_key_fingerprint": "03a7eb8b13d9",
+    "sync_credentials_present": false,
+    "sync_identity": "disabled-and-disconnected",
+    "window_title": "Codex QA HDO 1.8.2 20260823-191540 - Anki",
+    "window_title_matches_profile": true
+  },
+  "matrix": {
+    "all_100_percent": true,
+    "case_count": 1,
+    "case_ids": [
+      "RUNTIME-RESTART-PERSISTENCE"
+    ],
+    "host": "actual isolated Anki main Deck Browser",
+    "primary_count": 0,
+    "renderer": "exact installed production controller and renderer"
+  },
+  "persistence_readback": {
+    "bible_visible": false,
+    "blur": 16,
+    "calendar_view": "year",
+    "calendar_view_expected": "year",
+    "calendar_view_matches_expected": true,
+    "events_visible": false,
+    "mode": "dark",
+    "opacity": 94,
+    "sapphire_palette": "Amethyst",
+    "settings_state": "clean",
+    "show_eta_present": false,
+    "status": "passed",
+    "theme": "Sapphire Glass",
+    "visibility_buried_present": false,
+    "week_start": 6
+  },
+  "release": "1.8.2",
+  "scale_policy": {
+    "deferred_ui_scales_percent": [
+      125,
+      150
+    ],
+    "text_scale_percent": 100,
+    "ui_scale_percent": 100
+  },
+  "schema_version": 2,
+  "screen": {
+    "available_geometry": [
+      -1920,
+      101,
+      1920,
+      1050
+    ],
+    "device_pixel_ratio": 1.0,
+    "name": "KYY"
+  },
+  "stage": "restart",
+  "status": "passed"
+}

@@ -1,0 +1,311 @@
+{
+  "all_native_captures_in_exactly_one_detail_sheet": true,
+  "capture_to_detail_sheet": {
+    "BACKGROUND-EM-D": "contact-sheet-10-backgrounds-01.png",
+    "BACKGROUND-EM-L": "contact-sheet-10-backgrounds-01.png",
+    "BACKGROUND-REDUCED-OPACITY": "contact-sheet-11-backgrounds-02.png",
+    "BACKGROUND-SG-D": "contact-sheet-10-backgrounds-01.png",
+    "BACKGROUND-SG-L": "contact-sheet-10-backgrounds-01.png",
+    "BIBLE-CUSTOM-FONT": "contact-sheet-12-bible.png",
+    "BIBLE-DISABLED": "contact-sheet-12-bible.png",
+    "BIBLE-LONG": "contact-sheet-12-bible.png",
+    "BIBLE-SHORT": "contact-sheet-12-bible.png",
+    "FRESH-SG-D-M": "contact-sheet-05-fresh-data.png",
+    "FRESH-SG-D-Y": "contact-sheet-05-fresh-data.png",
+    "FRESH-SG-L-M": "contact-sheet-05-fresh-data.png",
+    "FRESH-SG-L-Y": "contact-sheet-05-fresh-data.png",
+    "PRIMARY-EM-D-M": "contact-sheet-03-primary-emerald.png",
+    "PRIMARY-EM-D-Y": "contact-sheet-03-primary-emerald.png",
+    "PRIMARY-EM-L-M": "contact-sheet-03-primary-emerald.png",
+    "PRIMARY-EM-L-Y": "contact-sheet-03-primary-emerald.png",
+    "PRIMARY-GR-D-M": "contact-sheet-02-primary-graphite.png",
+    "PRIMARY-GR-D-Y": "contact-sheet-02-primary-graphite.png",
+    "PRIMARY-GR-L-M": "contact-sheet-02-primary-graphite.png",
+    "PRIMARY-GR-L-Y": "contact-sheet-02-primary-graphite.png",
+    "PRIMARY-HC-D-M": "contact-sheet-04-primary-high-contrast.png",
+    "PRIMARY-HC-D-Y": "contact-sheet-04-primary-high-contrast.png",
+    "PRIMARY-HC-L-M": "contact-sheet-04-primary-high-contrast.png",
+    "PRIMARY-HC-L-Y": "contact-sheet-04-primary-high-contrast.png",
+    "PRIMARY-SG-D-M": "contact-sheet-01-primary-sapphire.png",
+    "PRIMARY-SG-D-Y": "contact-sheet-01-primary-sapphire.png",
+    "PRIMARY-SG-L-M": "contact-sheet-01-primary-sapphire.png",
+    "PRIMARY-SG-L-Y": "contact-sheet-01-primary-sapphire.png",
+    "RESP-HC-D-NARROW": "contact-sheet-07-responsive-02.png",
+    "RESP-HC-L-NARROW": "contact-sheet-07-responsive-02.png",
+    "RESP-SG-D-INTERMEDIATE": "contact-sheet-06-responsive-01.png",
+    "RESP-SG-D-NARROW": "contact-sheet-06-responsive-01.png",
+    "RESP-SG-L-INTERMEDIATE": "contact-sheet-06-responsive-01.png",
+    "RESP-SG-L-NARROW": "contact-sheet-06-responsive-01.png",
+    "RUNTIME-DELAYED-LOADING": "contact-sheet-13-runtime.png",
+    "RUNTIME-FAILURE": "contact-sheet-13-runtime.png",
+    "RUNTIME-INITIAL-LOADING": "contact-sheet-13-runtime.png",
+    "RUNTIME-RESTART-PERSISTENCE": "contact-sheet-13-runtime.png",
+    "RUNTIME-RETRY": "contact-sheet-13-runtime.png",
+    "STATE-COMBINED-TODAY": "contact-sheet-08-calendar-states-01.png",
+    "STATE-COMPLETE-METRICS": "contact-sheet-09-calendar-states-02.png",
+    "STATE-FIVE-ROW-SUNDAY": "contact-sheet-09-calendar-states-02.png",
+    "STATE-NEXT-EVENT-FUTURE": "contact-sheet-08-calendar-states-01.png",
+    "STATE-PAST-TOOLTIP": "contact-sheet-08-calendar-states-01.png",
+    "STATE-SELECTED-EVENT": "contact-sheet-08-calendar-states-01.png",
+    "STATE-SIX-ROW-MONDAY": "contact-sheet-09-calendar-states-02.png",
+    "STATE-YEAR-BOUNDARIES": "contact-sheet-09-calendar-states-02.png"
+  },
+  "detail_capture_count": 48,
+  "detail_capture_ids_unique": true,
+  "detail_sheet_count": 13,
+  "omitted_planned_captures": [],
+  "overview": {
+    "capture_ids": [
+      "PRIMARY-SG-L-M",
+      "PRIMARY-SG-L-Y",
+      "PRIMARY-SG-D-M",
+      "PRIMARY-SG-D-Y",
+      "PRIMARY-GR-L-M",
+      "PRIMARY-GR-L-Y",
+      "PRIMARY-GR-D-M",
+      "PRIMARY-GR-D-Y",
+      "PRIMARY-EM-L-M",
+      "PRIMARY-EM-L-Y",
+      "PRIMARY-EM-D-M",
+      "PRIMARY-EM-D-Y",
+      "PRIMARY-HC-L-M",
+      "PRIMARY-HC-L-Y",
+      "PRIMARY-HC-D-M",
+      "PRIMARY-HC-D-Y",
+      "FRESH-SG-L-M",
+      "FRESH-SG-L-Y",
+      "FRESH-SG-D-M",
+      "FRESH-SG-D-Y",
+      "RESP-SG-L-INTERMEDIATE",
+      "RESP-SG-D-INTERMEDIATE",
+      "RESP-SG-L-NARROW",
+      "RESP-SG-D-NARROW",
+      "RESP-HC-L-NARROW",
+      "RESP-HC-D-NARROW",
+      "STATE-COMBINED-TODAY",
+      "STATE-SELECTED-EVENT",
+      "STATE-NEXT-EVENT-FUTURE",
+      "STATE-PAST-TOOLTIP",
+      "STATE-FIVE-ROW-SUNDAY",
+      "STATE-SIX-ROW-MONDAY",
+      "STATE-YEAR-BOUNDARIES",
+      "STATE-COMPLETE-METRICS",
+      "BACKGROUND-SG-L",
+      "BACKGROUND-SG-D",
+      "BACKGROUND-EM-L",
+      "BACKGROUND-EM-D",
+      "BACKGROUND-REDUCED-OPACITY",
+      "BIBLE-SHORT",
+      "BIBLE-LONG",
+      "BIBLE-CUSTOM-FONT",
+      "BIBLE-DISABLED",
+      "RUNTIME-INITIAL-LOADING",
+      "RUNTIME-DELAYED-LOADING",
+      "RUNTIME-FAILURE",
+      "RUNTIME-RETRY",
+      "RUNTIME-RESTART-PERSISTENCE"
+    ],
+    "dimensions": [
+      3840,
+      4980
+    ],
+    "file": "contact-sheet-00-overview.png",
+    "sha256": "1f662e1cb6d5715106bf15b60ac942162897de36a20602d3014ef514bdcd3f0a"
+  },
+  "release": "1.8.2",
+  "schema_version": 1,
+  "sheets": [
+    {
+      "capture_ids": [
+        "PRIMARY-SG-L-M",
+        "PRIMARY-SG-L-Y",
+        "PRIMARY-SG-D-M",
+        "PRIMARY-SG-D-Y"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-01-primary-sapphire.png",
+      "sha256": "4e8086fe950aa458f54dcec5ce22542638de986d17daef9ee76af4675d187dba",
+      "title": "Primary matrix \u2014 Sapphire Glass"
+    },
+    {
+      "capture_ids": [
+        "PRIMARY-GR-L-M",
+        "PRIMARY-GR-L-Y",
+        "PRIMARY-GR-D-M",
+        "PRIMARY-GR-D-Y"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-02-primary-graphite.png",
+      "sha256": "b5aeceb0f99b8a83d439365e5ff0781d6ae09c146a6329b9702150ec72ebf310",
+      "title": "Primary matrix \u2014 Graphite"
+    },
+    {
+      "capture_ids": [
+        "PRIMARY-EM-L-M",
+        "PRIMARY-EM-L-Y",
+        "PRIMARY-EM-D-M",
+        "PRIMARY-EM-D-Y"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-03-primary-emerald.png",
+      "sha256": "5431535584b447a927c0b3fa3141a96f9ac951946bae1322462984efee5289ad",
+      "title": "Primary matrix \u2014 Emerald"
+    },
+    {
+      "capture_ids": [
+        "PRIMARY-HC-L-M",
+        "PRIMARY-HC-L-Y",
+        "PRIMARY-HC-D-M",
+        "PRIMARY-HC-D-Y"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-04-primary-high-contrast.png",
+      "sha256": "78d57c1310fa73bf39b7e57488d077da8e6058683af68fd722ec5de742f81914",
+      "title": "Primary matrix \u2014 High Contrast"
+    },
+    {
+      "capture_ids": [
+        "FRESH-SG-L-M",
+        "FRESH-SG-L-Y",
+        "FRESH-SG-D-M",
+        "FRESH-SG-D-Y"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-05-fresh-data.png",
+      "sha256": "9d9da93b0214a4dc6d436acfe64eb07029fc26d9e82b103165cf95417c24e8b8",
+      "title": "Fresh-data states"
+    },
+    {
+      "capture_ids": [
+        "RESP-SG-L-INTERMEDIATE",
+        "RESP-SG-D-INTERMEDIATE",
+        "RESP-SG-L-NARROW",
+        "RESP-SG-D-NARROW"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-06-responsive-01.png",
+      "sha256": "d93c5c0caf329dc2a048d49984ed94bc971ace497735ddfafd79479b8a5d87b7",
+      "title": "Responsive states \u2014 Sapphire"
+    },
+    {
+      "capture_ids": [
+        "RESP-HC-L-NARROW",
+        "RESP-HC-D-NARROW"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-07-responsive-02.png",
+      "sha256": "88d144b22d2474cfcb5b7c1ab3f9267a9f4a6f273548fdf17acfacfead0ac3a9",
+      "title": "Responsive states \u2014 High Contrast narrow"
+    },
+    {
+      "capture_ids": [
+        "STATE-COMBINED-TODAY",
+        "STATE-SELECTED-EVENT",
+        "STATE-NEXT-EVENT-FUTURE",
+        "STATE-PAST-TOOLTIP"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-08-calendar-states-01.png",
+      "sha256": "13ad18a38f668b8934208a47d302e9ac1d638e759cbaa5d8d520e34475bd133b",
+      "title": "Calendar states \u2014 markers, events, and tooltip"
+    },
+    {
+      "capture_ids": [
+        "STATE-FIVE-ROW-SUNDAY",
+        "STATE-SIX-ROW-MONDAY",
+        "STATE-YEAR-BOUNDARIES",
+        "STATE-COMPLETE-METRICS"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-09-calendar-states-02.png",
+      "sha256": "f977a623af98bdb3cc53aebcd5295c9cef8f6cc6db474774416e9e17b97441cb",
+      "title": "Calendar states \u2014 month and year boundaries"
+    },
+    {
+      "capture_ids": [
+        "BACKGROUND-SG-L",
+        "BACKGROUND-SG-D",
+        "BACKGROUND-EM-L",
+        "BACKGROUND-EM-D"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-10-backgrounds-01.png",
+      "sha256": "07b11ab3e2f5d78d2dc40b7ec4eda91d6b93d5579ea533e305b8edd89fcc57ce",
+      "title": "Background and opacity states"
+    },
+    {
+      "capture_ids": [
+        "BACKGROUND-REDUCED-OPACITY"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-11-backgrounds-02.png",
+      "sha256": "024994edcaec1840bb809eb34600e9eb274d93c2b856aa84ca2f6497171f6dbf",
+      "title": "Reduced-opacity state"
+    },
+    {
+      "capture_ids": [
+        "BIBLE-SHORT",
+        "BIBLE-LONG",
+        "BIBLE-CUSTOM-FONT",
+        "BIBLE-DISABLED"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-12-bible.png",
+      "sha256": "c724cc29b20dec98c883561af516a81dfb534b2ce08ccd90c065a80d7b968070",
+      "title": "Bible card states"
+    },
+    {
+      "capture_ids": [
+        "RUNTIME-INITIAL-LOADING",
+        "RUNTIME-DELAYED-LOADING",
+        "RUNTIME-FAILURE",
+        "RUNTIME-RETRY",
+        "RUNTIME-RESTART-PERSISTENCE"
+      ],
+      "dimensions": [
+        3600,
+        2400
+      ],
+      "file": "contact-sheet-13-runtime.png",
+      "sha256": "b5c235b03dcc9318ace341c4eec498803ce004050ec353dc79b4dd793b18075f",
+      "title": "Runtime loading, failure, and retry states"
+    }
+  ],
+  "status": "complete"
+}

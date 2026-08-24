@@ -1,0 +1,2350 @@
+{
+  "category_counts": {
+    "1": {
+      "count": 166,
+      "name": "Core theme token"
+    },
+    "2": {
+      "count": 32,
+      "name": "Stable semantic token"
+    },
+    "3": {
+      "count": 63,
+      "name": "Data visualization token"
+    },
+    "4": {
+      "count": 9,
+      "name": "Shadow or overlay"
+    },
+    "5": {
+      "count": 19,
+      "name": "Asset, configuration, or comparison-frame exception"
+    },
+    "6": {
+      "count": 0,
+      "name": "Unintentional component-level hardcoding"
+    }
+  },
+  "component_hardcoding_count": 0,
+  "entries": [
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "config.json",
+      "line": 58,
+      "literal": "#1E90FF",
+      "reason": "persisted user-configurable custom verse-color default"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "default_verses.json",
+      "line": 2,
+      "literal": "#1E90FF",
+      "reason": "persisted user-configurable custom verse-color default"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "default_verses.json",
+      "line": 358,
+      "literal": "white",
+      "reason": "quoted content word; not a rendered color declaration"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 537,
+      "literal": "#f8fafc",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 538,
+      "literal": "#a8b4c7",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 577,
+      "literal": "#111827",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 594,
+      "literal": "#e5e7eb",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 595,
+      "literal": "#64748b",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 599,
+      "literal": "#172033",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 649,
+      "literal": "#111827",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 670,
+      "literal": "#e5e7eb",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 671,
+      "literal": "#64748b",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 675,
+      "literal": "#172033",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 724,
+      "literal": "#111827",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 741,
+      "literal": "#e5e7eb",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 742,
+      "literal": "#64748b",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "qa/generate_final_release_contact_sheets.py",
+      "line": 746,
+      "literal": "#172033",
+      "reason": "QA-only fixture or comparison framing outside the represented viewport"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "settings.py",
+      "line": 256,
+      "literal": "white",
+      "reason": "Qt application-palette lookup; not a raw rendered color"
+    },
+    {
+      "category": 5,
+      "category_name": "Asset, configuration, or comparison-frame exception",
+      "file": "settings.py",
+      "line": 257,
+      "literal": "black",
+      "reason": "Qt application-palette lookup; not a raw rendered color"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 9,
+      "literal": "#1E90FF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 4,
+      "category_name": "Shadow or overlay",
+      "file": "themes.py",
+      "line": 33,
+      "literal": "rgba({}, {}, {}, {:.2f})",
+      "reason": "centralized opaque-overlay or shadow definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 58,
+      "literal": "#2F7DD3",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 59,
+      "literal": "#2468B6",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 60,
+      "literal": "#C76A00",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 61,
+      "literal": "#A85A00",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 62,
+      "literal": "#7C3AED",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 63,
+      "literal": "#7C3AED",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 64,
+      "literal": "#64748B",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 65,
+      "literal": "#64748B",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 66,
+      "literal": "#147A42",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 67,
+      "literal": "#147A42",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 68,
+      "literal": "#D0A146",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 69,
+      "literal": "#845A08",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 70,
+      "literal": "#D95C74",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 71,
+      "literal": "#A92948",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 72,
+      "literal": "#986800",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 73,
+      "literal": "#986800",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 76,
+      "literal": "#60A5FA",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 77,
+      "literal": "#60A5FA",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 78,
+      "literal": "#F59E0B",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 79,
+      "literal": "#F59E0B",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 80,
+      "literal": "#C084FC",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 81,
+      "literal": "#C084FC",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 82,
+      "literal": "#94A3B8",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 83,
+      "literal": "#94A3B8",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 84,
+      "literal": "#4ADE80",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 85,
+      "literal": "#4ADE80",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 86,
+      "literal": "#E4C05B",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 87,
+      "literal": "#E4C05B",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 88,
+      "literal": "#ED879A",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 89,
+      "literal": "#ED879A",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 90,
+      "literal": "#FACC15",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 2,
+      "category_name": "Stable semantic token",
+      "file": "themes.py",
+      "line": 91,
+      "literal": "#FACC15",
+      "reason": "centralized stable study-semantic definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 99,
+      "literal": "#F4F2F5",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 99,
+      "literal": "#F1EEF3",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 99,
+      "literal": "#EDE9F0",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 100,
+      "literal": "#242329",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 100,
+      "literal": "#27242D",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 100,
+      "literal": "#2B2632",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 105,
+      "literal": "#9C89AE",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 105,
+      "literal": "#846B9A",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 105,
+      "literal": "#65487C",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 106,
+      "literal": "#89719D",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 106,
+      "literal": "#A187B2",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 106,
+      "literal": "#BDA4CC",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 112,
+      "literal": "#F8FAFD",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 112,
+      "literal": "#EEF4FB",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 112,
+      "literal": "#D7E7F6",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 112,
+      "literal": "#AFCDEA",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 112,
+      "literal": "#78A8D2",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 112,
+      "literal": "#356F9F",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 113,
+      "literal": "#172434",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 113,
+      "literal": "#1F3449",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 113,
+      "literal": "#2B4B66",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 113,
+      "literal": "#3B6C90",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 113,
+      "literal": "#5A96BE",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 113,
+      "literal": "#87BCD9",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 116,
+      "literal": "#F7F8FA",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 116,
+      "literal": "#F1F3F5",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 116,
+      "literal": "#DCE1E5",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 116,
+      "literal": "#BAC2C9",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 116,
+      "literal": "#8D99A3",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 116,
+      "literal": "#5F6C76",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 117,
+      "literal": "#20252B",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 117,
+      "literal": "#2B3239",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 117,
+      "literal": "#3C4650",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 117,
+      "literal": "#58636D",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 117,
+      "literal": "#7E8994",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 117,
+      "literal": "#ADB6BF",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 120,
+      "literal": "#F8FAF9",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 120,
+      "literal": "#EDF7F1",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 120,
+      "literal": "#D1EBDD",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 120,
+      "literal": "#A7D7BE",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 120,
+      "literal": "#69B38E",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 120,
+      "literal": "#287A55",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 121,
+      "literal": "#17231D",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 121,
+      "literal": "#1D3427",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 121,
+      "literal": "#28503A",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 121,
+      "literal": "#397052",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 121,
+      "literal": "#58A074",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 121,
+      "literal": "#85C89C",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 124,
+      "literal": "#F4F7F8",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 124,
+      "literal": "#D9ECEF",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 124,
+      "literal": "#ABDCE0",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 124,
+      "literal": "#71C2C9",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 124,
+      "literal": "#1D7F89",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 124,
+      "literal": "#075E68",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 125,
+      "literal": "#11161A",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 125,
+      "literal": "#10343A",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 125,
+      "literal": "#0D5660",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 125,
+      "literal": "#0A737F",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 125,
+      "literal": "#2BA7B3",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 125,
+      "literal": "#6ACFD8",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 137,
+      "literal": "#F4F7FB",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 138,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 139,
+      "literal": "#F8FAFD",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 140,
+      "literal": "#EDF3F9",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 141,
+      "literal": "#E4EBF3",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 142,
+      "literal": "#D6E1ED",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 143,
+      "literal": "#7D91A8",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 144,
+      "literal": "#162235",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 145,
+      "literal": "#5E6E80",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 146,
+      "literal": "#5E6E80",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 147,
+      "literal": "#8B99A8",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 148,
+      "literal": "#4D7098",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 149,
+      "literal": "#2A63C7",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 150,
+      "literal": "#2457B2",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 151,
+      "literal": "#1F4996",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 152,
+      "literal": "#E7F0FC",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 153,
+      "literal": "#7FA6DC",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 154,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 155,
+      "literal": "#6097DD",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 156,
+      "literal": "#2A63C7",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 157,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 158,
+      "literal": "#FAFCFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 161,
+      "literal": "#0A131E",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 162,
+      "literal": "#101D2B",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 163,
+      "literal": "#142438",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 164,
+      "literal": "#1B2A3D",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 165,
+      "literal": "#1E3348",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 166,
+      "literal": "#28405A",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 167,
+      "literal": "#617B96",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 168,
+      "literal": "#F3F7FB",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 169,
+      "literal": "#A2B2C3",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 170,
+      "literal": "#A2B2C3",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 171,
+      "literal": "#637487",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 172,
+      "literal": "#9ABBDD",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 173,
+      "literal": "#58A6FF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 174,
+      "literal": "#7BB6F8",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 175,
+      "literal": "#478CD8",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 176,
+      "literal": "#173555",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 177,
+      "literal": "#477CAD",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 178,
+      "literal": "#08111D",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 179,
+      "literal": "#98C8FF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 180,
+      "literal": "#5796DF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 181,
+      "literal": "#152234",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 182,
+      "literal": "#111A27",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 187,
+      "literal": "#EFF1F3",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 188,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 189,
+      "literal": "#F7F8FA",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 190,
+      "literal": "#ECEFF2",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 191,
+      "literal": "#DDE2E7",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 192,
+      "literal": "#C6CDD4",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 193,
+      "literal": "#7D8791",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 194,
+      "literal": "#191C20",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 195,
+      "literal": "#515A64",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 196,
+      "literal": "#646E77",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 197,
+      "literal": "#979FA8",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 198,
+      "literal": "#5D6670",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 199,
+      "literal": "#506579",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 200,
+      "literal": "#303840",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 201,
+      "literal": "#232A31",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 202,
+      "literal": "#E9ECEF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 203,
+      "literal": "#8B949D",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 204,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 205,
+      "literal": "#4C7FC4",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 206,
+      "literal": "#4A535D",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 209,
+      "literal": "#101214",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 210,
+      "literal": "#171A1D",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 211,
+      "literal": "#1D2125",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 212,
+      "literal": "#232A31",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 213,
+      "literal": "#2B333B",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 214,
+      "literal": "#343A40",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 215,
+      "literal": "#65717D",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 216,
+      "literal": "#F4F6F8",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 217,
+      "literal": "#C2C9D0",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 218,
+      "literal": "#939CA6",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 219,
+      "literal": "#69737D",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 220,
+      "literal": "#AAB2BB",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 221,
+      "literal": "#8CA0B3",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 222,
+      "literal": "#B4C5D6",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 223,
+      "literal": "#849BAF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 224,
+      "literal": "#29343F",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 225,
+      "literal": "#60788E",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 226,
+      "literal": "#151A1F",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 227,
+      "literal": "#7CB2F0",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 228,
+      "literal": "#9BA6B1",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 233,
+      "literal": "#EFF4F1",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 234,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 3,
+      "category_name": "Data visualization token",
+      "file": "themes.py",
+      "line": 235,
+      "literal": "#F8FAF9",
+      "reason": "centralized completion or projected-review visualization definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 236,
+      "literal": "#EEF3F0",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 237,
+      "literal": "#D9E2DC",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 238,
+      "literal": "#C2CEC6",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 239,
+      "literal": "#789083",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 240,
+      "literal": "#17231C",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 241,
+      "literal": "#4D6154",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 242,
+      "literal": "#617367",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 243,
+      "literal": "#8F9F95",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 244,
+      "literal": "#47765C",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 245,
+      "literal": "#137C55",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 246,
+      "literal": "#106B49",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 247,
+      "literal": "#0C5A3E",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 248,
+      "literal": "#E5F2EB",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 249,
+      "literal": "#77A98F",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 250,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 251,
+      "literal": "#44A67B",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 252,
+      "literal": "#137C55",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 255,
+      "literal": "#0C1411",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 256,
+      "literal": "#13201B",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 257,
+      "literal": "#17271F",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 258,
+      "literal": "#203129",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 259,
+      "literal": "#2A3B32",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 260,
+      "literal": "#294538",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 261,
+      "literal": "#687E70",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 262,
+      "literal": "#F2F7F4",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 263,
+      "literal": "#BBCAC1",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 264,
+      "literal": "#8E9F95",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 265,
+      "literal": "#65766C",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 266,
+      "literal": "#74B38D",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 267,
+      "literal": "#39C887",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 268,
+      "literal": "#58CF94",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 269,
+      "literal": "#2FA76B",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 270,
+      "literal": "#173328",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 271,
+      "literal": "#3A7253",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 272,
+      "literal": "#07150D",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 273,
+      "literal": "#78E0AA",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 274,
+      "literal": "#37B577",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 279,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 280,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 281,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 282,
+      "literal": "#EDEFF1",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 283,
+      "literal": "#8C969F",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 284,
+      "literal": "#515B65",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 285,
+      "literal": "#20262D",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 286,
+      "literal": "#000000",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 287,
+      "literal": "#262D34",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 288,
+      "literal": "#4D5660",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 289,
+      "literal": "#6F7882",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 290,
+      "literal": "#005FCC",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 291,
+      "literal": "#005FCC",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 292,
+      "literal": "#004EA8",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 293,
+      "literal": "#003E86",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 294,
+      "literal": "#DDEBFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 295,
+      "literal": "#286FC2",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 296,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 297,
+      "literal": "#007BFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 298,
+      "literal": "#005FCC",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 301,
+      "literal": "#000000",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 302,
+      "literal": "#080A0D",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 303,
+      "literal": "#0E1115",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 304,
+      "literal": "#161A20",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 305,
+      "literal": "#626C76",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 306,
+      "literal": "#7B8590",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 307,
+      "literal": "#C7CDD4",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 308,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 309,
+      "literal": "#D8DDE3",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 310,
+      "literal": "#AAB2BB",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 311,
+      "literal": "#747D87",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 312,
+      "literal": "#7CB9FF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 313,
+      "literal": "#5EA9FF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 314,
+      "literal": "#7DBAFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 315,
+      "literal": "#3B8DE8",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 316,
+      "literal": "#102A46",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 317,
+      "literal": "#4D82B8",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 318,
+      "literal": "#06111E",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 319,
+      "literal": "#9DCEFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 320,
+      "literal": "#5EA9FF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 337,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 339,
+      "literal": "#FFFFFF",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 341,
+      "literal": "#0B1116",
+      "reason": "centralized neutral or accent theme definition"
+    },
+    {
+      "category": 4,
+      "category_name": "Shadow or overlay",
+      "file": "themes.py",
+      "line": 361,
+      "literal": "rgba(16, 24, 40, 0.05)",
+      "reason": "centralized opaque-overlay or shadow definition"
+    },
+    {
+      "category": 4,
+      "category_name": "Shadow or overlay",
+      "file": "themes.py",
+      "line": 361,
+      "literal": "rgba(16, 24, 40, 0.05)",
+      "reason": "centralized opaque-overlay or shadow definition"
+    },
+    {
+      "category": 4,
+      "category_name": "Shadow or overlay",
+      "file": "themes.py",
+      "line": 363,
+      "literal": "rgba(0, 0, 0, 0.50)",
+      "reason": "centralized opaque-overlay or shadow definition"
+    },
+    {
+      "category": 4,
+      "category_name": "Shadow or overlay",
+      "file": "themes.py",
+      "line": 363,
+      "literal": "rgba(0, 0, 0, 0.22)",
+      "reason": "centralized opaque-overlay or shadow definition"
+    },
+    {
+      "category": 4,
+      "category_name": "Shadow or overlay",
+      "file": "themes.py",
+      "line": 367,
+      "literal": "rgba(16, 24, 40, 0.10)",
+      "reason": "centralized opaque-overlay or shadow definition"
+    },
+    {
+      "category": 4,
+      "category_name": "Shadow or overlay",
+      "file": "themes.py",
+      "line": 367,
+      "literal": "rgba(16, 24, 40, 0.12)",
+      "reason": "centralized opaque-overlay or shadow definition"
+    },
+    {
+      "category": 4,
+      "category_name": "Shadow or overlay",
+      "file": "themes.py",
+      "line": 369,
+      "literal": "rgba(0, 0, 0, 0.48)",
+      "reason": "centralized opaque-overlay or shadow definition"
+    },
+    {
+      "category": 4,
+      "category_name": "Shadow or overlay",
+      "file": "themes.py",
+      "line": 369,
+      "literal": "rgba(0, 0, 0, 0.30)",
+      "reason": "centralized opaque-overlay or shadow definition"
+    },
+    {
+      "category": 1,
+      "category_name": "Core theme token",
+      "file": "themes.py",
+      "line": 412,
+      "literal": "blue",
+      "reason": "centralized neutral or accent theme definition"
+    }
+  ],
+  "files_scanned": 25,
+  "generated_at": "2026-08-23T19:18:02-05:00",
+  "match_count": 289,
+  "pattern": "#[0-9A-Fa-f]{3,8}\\b|rgba?\\([^)]*\\)|hsla?\\([^)]*\\)|(?<![-\\w])(?:white|black|blue|green|red)(?![-\\w])",
+  "schema_version": 1,
+  "scope": "Production CSS, JavaScript, HTML, SVG, Python renderers/settings, shipped JSON, and the active screenshot fixture/framing sources; tests, tools, vendor code, and generated evidence excluded",
+  "status": "passed"
+}
