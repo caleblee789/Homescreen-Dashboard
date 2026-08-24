@@ -729,11 +729,17 @@ class CalendarRepository:
                         editable=occurrence.editable,
                     )
                 cursor += timedelta(days=1)
-        reverse = False
+        order = "ascending"
         if self._config_getter is not None:
             config = self._config_getter()
-            reverse = config.get("events", {}).get("sort") == "descending" if isinstance(config, Mapping) else False
-        return sorted(rows.values(), key=lambda item: (item.date, item.name.casefold()), reverse=reverse)
+            if isinstance(config, Mapping):
+                order = str(config.get("events", {}).get("sort", "ascending"))
+        key = (
+            (lambda item: (item.name.casefold(), item.date, item.event_id))
+            if order == "name"
+            else (lambda item: (item.date, item.name.casefold(), item.event_id))
+        )
+        return sorted(rows.values(), key=key, reverse=order == "descending")
 
     def _source_template(self, source_id: str, kind: str, name: str, url: str = "") -> Dict[str, Any]:
         return {

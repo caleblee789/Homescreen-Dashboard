@@ -9,6 +9,48 @@ Theme = Dict[str, str]
 DEFAULT_CUSTOM_BIBLE_COLOR = "#1E90FF"
 
 
+# Native Settings follows Anki's application appearance only. Dashboard theme
+# selection never recolors the editor itself.
+SETTINGS_COLOR_TOKENS: Mapping[str, Mapping[str, str]] = {
+    "dark": {
+        "ui_bg": "#0F1318",
+        "ui_surface": "#171C22",
+        "ui_surface_raised": "#1D232A",
+        "ui_surface_hover": "#242C35",
+        "ui_border": "#2D3742",
+        "ui_border_strong": "#3C4856",
+        "ui_text_primary": "#F2F5F7",
+        "ui_text_secondary": "#BCC5CE",
+        "ui_text_muted": "#8995A3",
+        "ui_accent": "#9BB2C7",
+        "ui_accent_hover": "#ADC1D2",
+        "ui_accent_pressed": "#859DB4",
+        "ui_accent_ink": "#101820",
+        "ui_warning": "#D8B44C",
+        "ui_success": "#70BE8C",
+        "ui_danger": "#D67575",
+    },
+    "light": {
+        "ui_bg": "#F3F5F7",
+        "ui_surface": "#FFFFFF",
+        "ui_surface_raised": "#F7F9FB",
+        "ui_surface_hover": "#EDF1F4",
+        "ui_border": "#D5DDE5",
+        "ui_border_strong": "#B9C4CF",
+        "ui_text_primary": "#18212A",
+        "ui_text_secondary": "#4F5C69",
+        "ui_text_muted": "#758290",
+        "ui_accent": "#68839D",
+        "ui_accent_hover": "#58738C",
+        "ui_accent_pressed": "#4D667D",
+        "ui_accent_ink": "#FFFFFF",
+        "ui_warning": "#9A761E",
+        "ui_success": "#347A51",
+        "ui_danger": "#A84C4C",
+    },
+}
+
+
 def _channels(value: str) -> list[int]:
     raw = value.lstrip("#")
     if len(raw) != 6:
@@ -69,7 +111,7 @@ SEMANTIC_PALETTES: Mapping[str, Mapping[str, str]] = {
         "status_warning_text": "#845A08",
         "status_danger_fill": "#D95C74",
         "status_danger_text": "#A92948",
-        "status_event_fill": "#986800",
+        "status_event_fill": "#E0BF55",
         "status_event_text": "#986800",
     },
     "dark": {
@@ -87,7 +129,7 @@ SEMANTIC_PALETTES: Mapping[str, Mapping[str, str]] = {
         "status_warning_text": "#E4C05B",
         "status_danger_fill": "#ED879A",
         "status_danger_text": "#ED879A",
-        "status_event_fill": "#FACC15",
+        "status_event_fill": "#E0BF55",
         "status_event_text": "#FACC15",
     },
 }
@@ -102,8 +144,8 @@ PROJECTED_DUE_SCALES: Mapping[str, tuple[str, ...]] = {
 
 
 REVIEWS_DUE_INDICATORS: Mapping[str, tuple[str, ...]] = {
-    "light": ("", "#9C89AE", "#846B9A", "#65487C"),
-    "dark": ("", "#89719D", "#A187B2", "#BDA4CC"),
+    "light": ("", "#82708F", "#A58CB3", "#C6ACD1"),
+    "dark": ("", "#82708F", "#A58CB3", "#C6ACD1"),
 }
 
 
@@ -123,6 +165,88 @@ COMPLETION_SCALES: Mapping[str, Mapping[str, tuple[str, ...]]] = {
     "High Contrast": {
         "light": ("#F4F7F8", "#D9ECEF", "#ABDCE0", "#71C2C9", "#1D7F89", "#075E68"),
         "dark": ("#11161A", "#10343A", "#0D5660", "#0A737F", "#2BA7B3", "#6ACFD8"),
+    },
+}
+
+
+# Every saved palette identifier owns an authored light and dark ladder.  These
+# values are deliberately explicit: composing a translucent hue over white or
+# aliasing every identifier to the dashboard theme made the Settings choices
+# visually indistinguishable and produced surprising changes over host images.
+HEATMAP_COMPLETION_SCALES: Mapping[
+    str, Mapping[str, Mapping[str, tuple[str, ...]]]
+] = {
+    "Sapphire Glass": {
+        "Sapphire": {
+            "light": ("#F8FAFD", "#E7F0FA", "#D7E7F6", "#AFCDEA", "#78A8D2", "#356F9F"),
+            "dark": ("#172434", "#1F3449", "#2B4B66", "#3B6C90", "#5A96BE", "#87BCD9"),
+        },
+        "Amethyst": {
+            "light": ("#FAF8FC", "#EEE6F5", "#E0D3ED", "#C7ACE0", "#9B76C2", "#6E4697"),
+            "dark": ("#211A2B", "#30223E", "#443057", "#5D4275", "#7A5A94", "#A783BD"),
+        },
+        "Glacier": {
+            "light": ("#F7FAFC", "#E6F2F7", "#D1E6EF", "#AED2E0", "#75AEC3", "#3D7F98"),
+            "dark": ("#16252B", "#1D3740", "#284C58", "#386776", "#538697", "#79AABC"),
+        },
+        "Sea Glass": {
+            "light": ("#F6FAF9", "#E3F1EE", "#CEE5DF", "#A8D1C5", "#73AF9D", "#347A68"),
+            "dark": ("#172824", "#1E3A32", "#2A4F44", "#3B6B5A", "#578B74", "#7BB09A"),
+        },
+    },
+    "Graphite": {
+        "Slate": {
+            "light": ("#F5F7F9", "#E6EAEE", "#D7DDE3", "#B8C1CA", "#8E9BA7", "#63717F"),
+            "dark": ("#1B222A", "#303A45", "#424E5B", "#566474", "#6E7E90", "#8C9BAA"),
+        },
+        "Steel": {
+            "light": ("#F4F7F9", "#E1E8ED", "#CDD9E1", "#A8BBC8", "#7695A9", "#4F7289"),
+            "dark": ("#1B222A", "#283743", "#364B5B", "#476277", "#5F7F95", "#82A3BA"),
+        },
+        "Plum": {
+            "light": ("#F8F5F9", "#EDE4F0", "#DDCFE2", "#C5AACD", "#A17DAE", "#785583"),
+            "dark": ("#1B222A", "#352B3E", "#4A3856", "#62496F", "#7E6092", "#A483B6"),
+        },
+        "Mint": {
+            "light": ("#F4F8F6", "#E0ECE7", "#C9DDD4", "#A6C7B9", "#7FA894", "#527B68"),
+            "dark": ("#1B222A", "#24382F", "#315044", "#416958", "#58856F", "#7BA18A"),
+        },
+    },
+    "Emerald": {
+        "Emerald": {
+            "light": ("#F8FAF9", "#E5F3EB", "#D1EBDD", "#A7D7BE", "#69B38E", "#287A55"),
+            "dark": ("#17231D", "#1D3427", "#28503A", "#397052", "#58A074", "#85C89C"),
+        },
+        "Jade": {
+            "light": ("#F6FAF8", "#E1F1E9", "#CBE7D8", "#A3D2B9", "#68B18D", "#2F7A58"),
+            "dark": ("#16261F", "#1D392C", "#29503D", "#397057", "#549276", "#78B297"),
+        },
+        "Moss": {
+            "light": ("#F8F9F3", "#ECEFD9", "#DDE4BF", "#C1CE91", "#98AB5B", "#667B32"),
+            "dark": ("#22281A", "#303A23", "#43502D", "#5A6B3C", "#75894F", "#9CB06E"),
+        },
+        "Lagoon": {
+            "light": ("#F5FAFA", "#DFF0EF", "#C7E4E1", "#9CCFCB", "#61ADA8", "#297B78"),
+            "dark": ("#152827", "#1C3B39", "#28524F", "#386F6B", "#52918A", "#76B6AE"),
+        },
+    },
+    "High Contrast": {
+        "Cyan": {
+            "light": ("#F4F7F8", "#D9ECEF", "#ABDCE0", "#71C2C9", "#1D7F89", "#075E68"),
+            "dark": ("#11161A", "#10343A", "#0D5660", "#0A737F", "#2BA7B3", "#6ACFD8"),
+        },
+        "Gold": {
+            "light": ("#FCFAF2", "#F5EDCF", "#EBDDA1", "#D8BE5C", "#AD8513", "#765800"),
+            "dark": ("#1D190C", "#33270B", "#56410A", "#80600A", "#BA8E1A", "#F0C750"),
+        },
+        "Magenta": {
+            "light": ("#FCF7FB", "#F4DFEF", "#E9BDDE", "#D886C2", "#B23D93", "#7B1261"),
+            "dark": ("#210F1D", "#3A1432", "#5E1B4D", "#85266E", "#B33A94", "#E06ABC"),
+        },
+        "Monochrome": {
+            "light": ("#FFFFFF", "#ECECEC", "#D4D4D4", "#ABABAB", "#747474", "#333333"),
+            "dark": ("#090909", "#242424", "#3D3D3D", "#606060", "#919191", "#D0D0D0"),
+        },
     },
 }
 
@@ -331,14 +455,24 @@ HEATMAP_PRESET_NAMES: Mapping[str, tuple[str, ...]] = {
 }
 
 
-def _heat_tokens(theme_name: str, variant: str, core: Mapping[str, str]) -> Theme:
-    completion = COMPLETION_SCALES[theme_name][variant]
-    complete_text = (
-        (core["ui_text_primary"],) * 4 + ("#FFFFFF",) * 2
-        if variant == "light" and theme_name == "High Contrast"
-        else (core["ui_text_primary"],) * 5 + ("#FFFFFF",)
-        if variant == "light"
-        else (core["ui_text_primary"],) * 4 + ("#0B1116",) * 2
+def _heat_text(fill: str, primary: str) -> str:
+    """Choose the strongest readable date color for an authored heat cell."""
+
+    candidates = (primary, "#FFFFFF", "#0B1116", "#000000")
+    return max(candidates, key=lambda candidate: contrast_ratio(candidate, fill))
+
+
+def _heat_tokens(
+    theme_name: str,
+    variant: str,
+    core: Mapping[str, str],
+    preset_name: str | None = None,
+) -> Theme:
+    selected = preset_name or HEATMAP_PRESET_NAMES[theme_name][0]
+    completion = HEATMAP_COMPLETION_SCALES[theme_name][selected][variant]
+    complete_text = tuple(
+        _heat_text(fill, core["ui_text_primary"])
+        for fill in completion
     )
     return {
         **{"heat_complete_{}".format(level): color for level, color in enumerate(completion)},
@@ -394,9 +528,11 @@ def _build_theme(theme_name: str, variant: str) -> Theme:
         "calendar_future_bg": core["ui_surface_3"],
         "calendar_future_text": core["ui_text_tertiary"],
         "calendar_footer_bg": core["ui_surface_2"],
-        "calendar_today_ring": core["ui_accent"],
+        "calendar_today_ring": "#73B2E6",
         "calendar_selected_ring": core["ui_focus"],
-        "calendar_ring_halo": core["ui_surface_1"],
+        "calendar_ring_halo": (
+            core["ui_text_primary"] if variant == "light" else core["ui_canvas"]
+        ),
         "calendar_event_halo": core["ui_surface_1"],
         "theme_name": theme_name,
         "color_mode": variant,
@@ -414,15 +550,20 @@ PRESETS: Mapping[str, Mapping[str, Theme]] = {
 }
 
 
-# Historical heatmap preference identifiers remain valid. They intentionally
-# resolve to the theme's single canonical completion scale so a saved palette
-# cannot turn Graphite blue or make Emerald semantics monochromatic.
+# Historical heatmap preference identifiers remain valid.  Each identifier now
+# resolves to its own authored hue ladder while retaining the stable theme
+# boundary and the same persisted value.
 HEATMAP_PRESETS: Mapping[str, Mapping[str, Mapping[str, Theme]]] = {
     theme_name: {
         preset_name: {
             variant: {
                 key: value
-                for key, value in PRESETS[theme_name][variant].items()
+                for key, value in _heat_tokens(
+                    theme_name,
+                    variant,
+                    CORE_PALETTES[theme_name][variant],
+                    preset_name,
+                ).items()
                 if key.startswith("heat_complete_")
             }
             for variant in ("light", "dark")

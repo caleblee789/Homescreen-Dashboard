@@ -681,11 +681,11 @@ def _calendar_payload_dates(anchor_iso: str, view: str, week_start: int) -> list
         start, end = date(anchor.year, 1, 1), date(anchor.year, 12, 31)
     else:
         start = date(anchor.year, anchor.month, 1)
-        next_month = date(anchor.year + 1, 1, 1) if anchor.month == 12 else date(anchor.year, anchor.month + 1, 1)
-        end = next_month - timedelta(days=1)
         normalized = max(0, min(6, int(week_start)))
         start -= timedelta(days=(start.weekday() - normalized) % 7)
-        end += timedelta(days=(normalized + 6 - end.weekday()) % 7)
+        # Month uses one stable six-week body at every anchor so switching
+        # months never moves the legend, event summary, or following sections.
+        end = start + timedelta(days=41)
     return [
         (start + timedelta(days=offset)).isoformat()
         for offset in range((end - start).days + 1)
@@ -822,6 +822,36 @@ def _calendar(
         if config.get("visibility", {}).get("events", True)
         else ""
     )
+    due_legend = (
+        '<div class="hdo-legend-group hdo-legend-due">'
+        '<span class="hdo-legend-title">Due cards</span>'
+        '<span class="hdo-legend-scale hdo-due-legend" aria-hidden="true">'
+        '<i data-due-level="1"></i><i data-due-level="2"></i><i data-due-level="3"></i>'
+        '</span></div>'
+        if config.get("heatmap", {}).get("show_due_forecast", True)
+        else ""
+    )
+    event_summary = (
+        '<div class="hdo-next-event-line hdo-calendar-footer__event" data-hdo-context-event>'
+        '<span class="hdo-context-event-marker" data-hdo-event-marker aria-hidden="true" hidden></span>'
+        '<span class="hdo-event-summary">'
+        '<button type="button" class="hdo-event-title" data-hdo-open-events hidden></button>'
+        '<span class="hdo-event-meta" data-hdo-event-meta hidden></span>'
+        '<span class="hdo-event-more" data-hdo-event-more hidden></span>'
+        '<span class="hdo-event-empty" data-hdo-event-empty>No upcoming events</span></span></div>'
+        if config.get("visibility", {}).get("events", True)
+        else ""
+    )
+    event_edit = (
+        '<button type="button" class="hdo-edit-event-button hdo-icon-button" data-hdo-edit-event '
+        'aria-label="Edit event" title="Edit event" hidden>'
+        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+        '<path d="m4 16.8-.8 4 4-.8L18.6 8.6l-3.2-3.2L4 16.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
+        '<path d="m13.8 7 3.2 3.2M3.8 20.2h16.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'
+        '</svg></button>'
+        if config.get("visibility", {}).get("events", True)
+        else ""
+    )
     return (
         '<section class="hdo-card hdo-dashboard-panel hdo-calendar-card" data-hdo-primitive="{}" '
         'aria-labelledby="hdo-calendar-heading">'
@@ -843,31 +873,13 @@ def _calendar(
         '<span class="hdo-legend-endpoint">Low</span>'
         '<span class="hdo-legend-scale hdo-completion-legend" aria-hidden="true">'
         '<i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i><i data-level="5"></i>'
-        '</span><span class="hdo-legend-endpoint">High</span></div>'
-        '<div class="hdo-legend-group hdo-legend-due">'
-        '<span class="hdo-legend-title">Reviews due</span>'
-        '<span class="hdo-legend-scale hdo-due-legend" aria-hidden="true">'
-        '<i data-due-level="1"></i><i data-due-level="2"></i><i data-due-level="3"></i>'
-        '</span></div>{}</div>'
-        '<div class="hdo-calendar-context hdo-calendar-context-bar" aria-live="polite">'
+        '</span><span class="hdo-legend-endpoint">High</span></div>{}{}</div>'
+        '<div class="hdo-calendar-context hdo-calendar-context-bar{}" aria-live="polite">'
         '<div class="hdo-selected-date-line hdo-calendar-footer__date-context">'
         '<span class="hdo-date-state-chip" data-hdo-date-state>Today</span>'
-        '<time data-hdo-context-date></time></div>'
-        '<div class="hdo-next-event-line hdo-calendar-footer__event" data-hdo-context-event>'
-        '<span class="hdo-context-label" data-hdo-context-event-label>Next event</span>'
-        '<span class="hdo-context-event-marker" data-hdo-event-marker aria-hidden="true" hidden></span>'
-        '<span class="hdo-event-summary">'
-        '<button type="button" class="hdo-event-title" data-hdo-open-events hidden></button>'
-        '<span class="hdo-event-meta" data-hdo-event-meta hidden></span>'
-        '<span class="hdo-event-more" data-hdo-event-more hidden></span>'
-        '<span class="hdo-event-empty" data-hdo-event-empty>No upcoming event</span></span></div>'
+        '<time data-hdo-context-date></time></div>{}'
         '<div class="hdo-context-actions hdo-calendar-footer__actions">'
-        '<button type="button" class="hdo-edit-event-button hdo-icon-button" data-hdo-edit-event '
-        'aria-label="Edit event" title="Edit event" hidden>'
-        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
-        '<path d="m4 16.8-.8 4 4-.8L18.6 8.6l-3.2-3.2L4 16.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
-        '<path d="m13.8 7 3.2 3.2M3.8 20.2h16.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'
-        '</svg></button>'
+        '{}'
         '<button type="button" class="hdo-context-action hdo-calendar-card-action hdo-context-action--primary" data-hdo-primary-action hidden></button>'
         '<button type="button" class="hdo-context-action" data-hdo-most-missed hidden>Most missed</button>'
         '</div></div></footer>'
@@ -882,7 +894,11 @@ def _calendar(
         _calendar_controls(config),
         _escape(config.get("heatmap", {}).get("calendar_view", "year")),
         _dashboard_primitive("calendar-context-bar"),
+        due_legend,
         event_legend,
+        " hdo-calendar-context--no-event" if not event_summary else "",
+        event_summary,
+        event_edit,
         _safe_json(payload),
     )
 
@@ -895,18 +911,14 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
         configured_size = int(raw_size[:-2]) if raw_size.endswith("px") else 28
     except (TypeError, ValueError):
         configured_size = 28
-    display_size = min(17.0, max(14.0, configured_size * 0.61))
     plain_verse = html.unescape(re.sub(r"<[^>]+>", " ", snapshot.verse.body_html))
     character_count = len(" ".join(plain_verse.split()))
     if character_count <= 90:
         verse_class = "hdo-verse hdo-verse--short"
-        resolved_size = display_size
     elif character_count <= 180:
         verse_class = "hdo-verse hdo-verse--medium"
-        resolved_size = min(16.0, display_size)
     else:
         verse_class = "hdo-verse hdo-verse--long"
-        resolved_size = min(15.0, display_size)
     reference = (
         '<footer class="hdo-verse-reference">{}</footer>'.format(snapshot.verse.reference_html)
         if snapshot.verse.reference_html
@@ -924,7 +936,7 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
         verse_class,
         custom_color,
         _escape(bible.get("font_family", "Georgia, serif")),
-        resolved_size,
+        configured_size,
         snapshot.verse.body_html,
         reference,
     )

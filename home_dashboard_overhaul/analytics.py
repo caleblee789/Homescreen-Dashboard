@@ -985,8 +985,17 @@ def _events(config: Mapping[str, Any], today: date) -> List[EventItem]:
         except (KeyError, ValueError):
             continue
         items.append(EventItem(str(item["id"]), str(item["name"]), event_date.isoformat(), (event_date - today).days))
-    reverse = config["events"].get("sort") == "descending"
-    return sorted(items, key=lambda item: (item.date, item.name.casefold()), reverse=reverse)
+    order = config["events"].get("sort")
+    if order == "name":
+        return sorted(
+            items,
+            key=lambda item: (item.name.casefold(), item.date, item.event_id),
+        )
+    return sorted(
+        items,
+        key=lambda item: (item.date, item.name.casefold(), item.event_id),
+        reverse=order == "descending",
+    )
 
 
 def _relation(selected: date, scheduling_date: date) -> DayRelation:

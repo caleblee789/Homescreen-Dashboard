@@ -544,6 +544,31 @@ class SnapshotTests(unittest.TestCase):
         events = _events(config, date(2026, 8, 13))
         self.assertEqual([(item.name, item.days_remaining) for item in events], [("Today", 0), ("Tomorrow", 1)])
 
+    def test_events_can_sort_case_insensitively_by_name_then_date_and_id(self) -> None:
+        config = normalize_config({
+            "events": {
+                "sort": "name",
+                "items": [
+                    {"id": "z", "name": "alpha", "date": "2026-08-16", "archived": False},
+                    {"id": "a", "name": "ALPHA", "date": "2026-08-15", "archived": False},
+                    {"id": "b", "name": "alpha", "date": "2026-08-15", "archived": False},
+                    {"id": "c", "name": "Beta", "date": "2026-08-14", "archived": False},
+                ],
+            }
+        })
+
+        events = _events(config, date(2026, 8, 13))
+
+        self.assertEqual(
+            [(item.name, item.date, item.event_id) for item in events],
+            [
+                ("ALPHA", "2026-08-15", "a"),
+                ("alpha", "2026-08-15", "b"),
+                ("alpha", "2026-08-16", "z"),
+                ("Beta", "2026-08-14", "c"),
+            ],
+        )
+
     def test_dashboard_keeps_scheduler_today_and_civil_event_today_distinct(self) -> None:
         config = normalize_config({
             "events": {

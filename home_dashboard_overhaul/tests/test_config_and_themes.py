@@ -15,6 +15,7 @@ from home_dashboard_overhaul.themes import (
     COMPLETION_SCALES,
     DEFAULT_HEATMAP_PRESETS,
     HEATMAP_PRESETS,
+    HEATMAP_COMPLETION_SCALES,
     PRESETS,
     PROJECTED_DUE_SCALES,
     REVIEWS_DUE_INDICATORS,
@@ -170,6 +171,20 @@ class ConfigTests(unittest.TestCase):
         changed["heatmap"]["excluded_deck_ids"] = [123]
         self.assertNotEqual(analytics_config_fingerprint(base), analytics_config_fingerprint(changed))
 
+    def test_event_name_is_the_only_new_sort_value(self) -> None:
+        for value in ("ascending", "descending", "name"):
+            with self.subTest(value=value):
+                self.assertEqual(
+                    normalize_config({"events": {"sort": value}})["events"]["sort"],
+                    value,
+                )
+        for invalid in ("date", "NAME", "", None, 4):
+            with self.subTest(invalid=invalid):
+                self.assertEqual(
+                    normalize_config({"events": {"sort": invalid}})["events"]["sort"],
+                    "ascending",
+                )
+
     def test_committed_default_json_is_normalized_and_idempotent(self) -> None:
         path = Path(__file__).resolve().parents[1] / "config.json"
         raw = json.loads(path.read_text(encoding="utf-8"))
@@ -199,7 +214,7 @@ class ThemeTests(unittest.TestCase):
                     self.assertEqual(set(tokens), expected)
                     self.assertEqual(
                         tuple(tokens["heat_complete_{}".format(level)] for level in range(6)),
-                        COMPLETION_SCALES[theme_name][mode],
+                        HEATMAP_COMPLETION_SCALES[theme_name][preset_name][mode],
                     )
                     distances = [
                         _perceptual_distance(tokens["heat_complete_0"], tokens["heat_complete_{}".format(level)])
@@ -222,6 +237,12 @@ class ThemeTests(unittest.TestCase):
                     self.assertEqual(resolved["heatmap_preset"], preset_name)
                     for key, value in tokens.items():
                         self.assertEqual(resolved[key], value)
+            for mode in ("light", "dark"):
+                ladders = {
+                    HEATMAP_COMPLETION_SCALES[theme_name][preset_name][mode]
+                    for preset_name in preset_names
+                }
+                self.assertEqual(len(ladders), 4)
 
     def test_unknown_heatmap_value_uses_each_theme_default(self) -> None:
         for theme_name, default in DEFAULT_HEATMAP_PRESETS.items():
@@ -268,7 +289,7 @@ class ThemeTests(unittest.TestCase):
         )
         self.assertEqual(
             [light[key] for key in ("status_new_fill", "status_learning_fill", "status_review_fill", "status_success_fill", "status_event_fill")],
-            ["#2F7DD3", "#C76A00", "#7C3AED", "#147A42", "#986800"],
+            ["#2F7DD3", "#C76A00", "#7C3AED", "#147A42", "#E0BF55"],
         )
         self.assertEqual(
             [dark["heat_complete_{}".format(level)] for level in range(6)],
@@ -319,7 +340,7 @@ class ThemeTests(unittest.TestCase):
 
         graphite_dark = resolve_theme("Graphite", "dark", True)
         self.assertEqual(graphite_dark["progress_complete"], "#9BA6B1")
-        self.assertEqual(graphite_dark["heat_complete_5"], "#ADB6BF")
+        self.assertEqual(graphite_dark["heat_complete_5"], "#8C9BAA")
         self.assertNotEqual(graphite_dark["calendar_selected_ring"], graphite_dark["ui_border_strong"])
 
         for mode in ("light", "dark"):
@@ -328,7 +349,7 @@ class ThemeTests(unittest.TestCase):
 
     def test_light_level_one_heat_colors_match_the_release_palette(self) -> None:
         self.assertEqual(resolve_theme("Sapphire Glass", "light", False)["heat_complete_1"], "#E7F0FA")
-        self.assertEqual(resolve_theme("Graphite", "light", False)["heat_complete_1"], "#E9EDF1")
+        self.assertEqual(resolve_theme("Graphite", "light", False)["heat_complete_1"], "#E6EAEE")
         self.assertEqual(resolve_theme("Emerald", "light", False)["heat_complete_1"], "#E5F3EB")
 
 

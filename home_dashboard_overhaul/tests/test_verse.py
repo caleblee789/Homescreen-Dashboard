@@ -76,6 +76,20 @@ class RotationTests(unittest.TestCase):
         self.assertFalse(rotator.set_quote(self.quotes, "manual", "missing"))
         self.assertFalse(rotator.set_quote(self.quotes, "every render", "A"))
 
+    def test_manual_choice_can_be_prepared_without_mutating_disk_or_memory(self) -> None:
+        rotator = QuoteRotator(self.state, choose=lambda values: values[0])
+
+        prepared = rotator.prepare_quote(self.quotes, "manual", "B")
+
+        self.assertIsNotNone(prepared)
+        self.assertFalse(self.state.exists())
+        self.assertEqual(rotator._memory_quote, "")
+        rotator.persist_prepared(prepared or {})
+        self.assertEqual(json.loads(self.state.read_text(encoding="utf-8"))["quote"], "B")
+        self.assertEqual(rotator._memory_quote, "")
+        rotator.adopt_prepared(prepared or {})
+        self.assertEqual(rotator._memory_quote, "B")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -61,13 +61,13 @@
     var start = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
     var end = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
     var displayStart = startOfWeek(start, weekStart);
-    var displayEnd = endOfWeek(end, weekStart);
+    var displayEnd = addDays(displayStart, 41);
     return {
       start: start,
       end: end,
       displayStart: displayStart,
       displayEnd: displayEnd,
-      rows: Math.ceil((dayDifference(displayEnd, displayStart) + 1) / 7)
+      rows: 6
     };
   }
 
@@ -767,7 +767,7 @@
           eventMeta.textContent = "";
           eventMore.hidden = true;
           eventMore.textContent = "";
-          eventEmpty.textContent = eventContext.kind === "empty_today" ? "No upcoming event" : "";
+          eventEmpty.textContent = eventContext.kind === "empty_today" ? "No upcoming events" : "";
           eventEmpty.hidden = !eventEmpty.textContent;
         }
         var canEditEvents = state.payload.events_enabled !== false;
@@ -1437,11 +1437,98 @@
     root.dataset.hdoHostPreserved = "true";
   }
 
+  function visibleBottomActionContainer(root) {
+    if (!root || typeof document === "undefined" || !document.body) return null;
+    var controls = document.querySelectorAll(
+      "button, [role='button'], input[type='button'], input[type='submit']"
+    );
+    var candidates = [];
+    Array.prototype.forEach.call(controls, function (control) {
+      if (root.contains(control)) return;
+      var candidate = control;
+      while (candidate && candidate !== document.body) {
+        var style = global.getComputedStyle ? global.getComputedStyle(candidate) : null;
+        var position = style ? style.position : "";
+        if (position === "fixed" || position === "sticky") {
+          candidates.push(candidate);
+          break;
+        }
+        candidate = candidate.parentElement;
+      }
+    });
+    var viewportHeight = Math.max(0, Number(global.innerHeight) || 0);
+    var best = null;
+    var bestHeight = 0;
+    candidates.forEach(function (candidate) {
+      if (!candidate || !candidate.isConnected) return;
+      var style = global.getComputedStyle ? global.getComputedStyle(candidate) : null;
+      if (style && (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0)) return;
+      var rect = candidate.getBoundingClientRect();
+      if (!rect || rect.width < 80 || rect.height <= 0 || rect.height > 240) return;
+      if (viewportHeight && rect.bottom < viewportHeight - 8) return;
+      var visibleHeight = viewportHeight
+        ? Math.max(0, Math.min(viewportHeight, rect.bottom) - Math.max(0, rect.top))
+        : rect.height;
+      if (visibleHeight > bestHeight) {
+        best = candidate;
+        bestHeight = visibleHeight;
+      }
+    });
+    return best;
+  }
+
   function applyDocumentScrollClearance(root) {
     if (!root || root.dataset.hdoPreview === "true" || typeof document === "undefined") return null;
     var scrollOwner = document.scrollingElement;
     if (!scrollOwner || !scrollOwner.style) return null;
-    scrollOwner.style.setProperty("scroll-padding-block-end", "66px");
+    var observed = null;
+    var resizeObserver = null;
+
+    function update() {
+      var candidate = visibleBottomActionContainer(root);
+      var measured = 60;
+      if (candidate) {
+        var rect = candidate.getBoundingClientRect();
+        var viewportHeight = Math.max(0, Number(global.innerHeight) || rect.bottom);
+        measured = Math.max(
+          0,
+          Math.ceil(Math.min(viewportHeight, rect.bottom) - Math.max(0, rect.top))
+        );
+      }
+      var footerHeight = candidate ? measured : 60;
+      var clearance = footerHeight + 24;
+      root.style.setProperty("--hdo-native-footer-height", footerHeight + "px");
+      root.style.setProperty("padding-block-end", clearance + "px");
+      scrollOwner.style.setProperty("scroll-padding-block-end", clearance + "px");
+      if (document.documentElement && document.documentElement.style) {
+        document.documentElement.style.setProperty("scroll-padding-block-end", clearance + "px");
+      }
+      if (document.body && document.body.style) {
+        document.body.style.setProperty("scroll-padding-block-end", clearance + "px");
+      }
+      root.dataset.hdoFooterClearance = String(clearance);
+      root.dataset.hdoFooterClearanceSource = candidate ? "measured" : "fallback";
+      if (candidate !== observed && typeof global.ResizeObserver === "function") {
+        if (resizeObserver) resizeObserver.disconnect();
+        observed = candidate;
+        if (observed) {
+          resizeObserver = new global.ResizeObserver(update);
+          resizeObserver.observe(observed);
+        }
+      }
+    }
+
+    update();
+    global.addEventListener("resize", update);
+    if (typeof global.MutationObserver === "function" && document.body) {
+      new global.MutationObserver(function (mutations) {
+        if (mutations.some(function (mutation) { return !root.contains(mutation.target); })) update();
+      }).observe(document.body, {
+        attributes: true,
+        childList: true,
+        subtree: true
+      });
+    }
     root.dataset.hdoScrollOwner = scrollOwner === document.documentElement ? "documentElement" : "body";
     return scrollOwner;
   }
@@ -1504,6 +1591,7 @@
     formatNumber: formatNumber,
     formatDurationCompact: formatDurationCompact,
     applyDocumentTheme: applyDocumentTheme,
+    visibleBottomActionContainer: visibleBottomActionContainer,
     applyDocumentScrollClearance: applyDocumentScrollClearance,
     setDashboardUpdating: setDashboardUpdating,
     setDashboardRefreshFailed: setDashboardRefreshFailed,

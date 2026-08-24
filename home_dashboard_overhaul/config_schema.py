@@ -257,7 +257,11 @@ def normalize_config(raw: object) -> Dict[str, Any]:
         layout["order"] = list(canonical) + unrelated
 
     events = config["events"]
-    events["sort"] = _choice(events.get("sort"), {"ascending", "descending"}, "ascending")
+    events["sort"] = _choice(
+        events.get("sort"),
+        {"ascending", "descending", "name"},
+        "ascending",
+    )
     normalized_events: List[Dict[str, Any]] = []
     raw_events = events.get("items", [])
     if isinstance(raw_events, list):

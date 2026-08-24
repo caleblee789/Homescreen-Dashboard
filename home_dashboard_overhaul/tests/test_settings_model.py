@@ -18,9 +18,8 @@ from home_dashboard_overhaul.settings_model import (
     SECTION_GROUPS,
     SECTION_IDS,
     SECTION_LABELS,
-    SETTINGS_CONTENT_MODES,
-    SettingsLayoutMetrics,
     SettingsDraft,
+    clamp_window_size,
     changed_paths,
     font_family_value,
     history_range_choice,
@@ -29,7 +28,6 @@ from home_dashboard_overhaul.settings_model import (
     preview_snapshot_with_staged_events,
     resolve_section,
     resolve_section_target,
-    settings_content_mode,
     three_way_merge,
 )
 from home_dashboard_overhaul.tests.fixtures import sample_snapshot
@@ -141,6 +139,34 @@ class SettingsDraftTests(unittest.TestCase):
         self.assertEqual(preview.facts.today.reason, AvailabilityReason.QUERY_FAILED)
         self.assertIsNone(preview.facts.today.value)
         self.assertEqual(snapshot.facts.events.status, ValueStatus.UNAVAILABLE)
+
+    def test_preview_name_sort_is_case_insensitive_then_date_then_stable_id(self) -> None:
+        snapshot = sample_snapshot(date(2026, 8, 15))
+        config = normalize_config(
+            {
+                "events": {
+                    "sort": "name",
+                    "items": [
+                        {"id": "z", "date": "2026-08-18", "name": "alpha", "archived": False},
+                        {"id": "b", "date": "2026-08-17", "name": "Beta", "archived": False},
+                        {"id": "a", "date": "2026-08-16", "name": "ALPHA", "archived": False},
+                        {"id": "c", "date": "2026-08-16", "name": "alpha", "archived": False},
+                    ],
+                }
+            }
+        )
+
+        preview = preview_snapshot_with_staged_events(snapshot, config, "2026-08-15")
+
+        self.assertEqual(
+            [(item.name, item.date, item.event_id) for item in preview.facts.events.value or ()],
+            [
+                ("ALPHA", "2026-08-16", "a"),
+                ("alpha", "2026-08-16", "c"),
+                ("alpha", "2026-08-18", "z"),
+                ("Beta", "2026-08-17", "b"),
+            ],
+        )
 
     def test_dirty_state_tracks_leaf_diffs_and_can_return_clean(self) -> None:
         baseline = normalize_config({"appearance": {"preset": "Graphite"}})
@@ -276,66 +302,15 @@ class SettingsDraftTests(unittest.TestCase):
 
 
 class SettingsUtilityTests(unittest.TestCase):
-    def test_settings_modes_follow_measured_region_fit(self) -> None:
-        common = {
-            "font_height": 16,
-            "sidebar_width": 208,
-            "editor_width": 520,
-            "preview_width": 360,
-            "footer_width": 620,
-            "spacing": 10,
-        }
-        self.assertEqual(
-            settings_content_mode(SettingsLayoutMetrics(available_width=1240, **common)),
-            "extra-wide",
-        )
-        self.assertEqual(
-            settings_content_mode(SettingsLayoutMetrics(available_width=900, **common)),
-            "intermediate",
-        )
-        self.assertEqual(
-            settings_content_mode(SettingsLayoutMetrics(available_width=600, **common)),
-            "narrow",
-        )
-        self.assertEqual(
-            SETTINGS_CONTENT_MODES,
-            ("extra-wide", "intermediate", "narrow"),
-        )
+    def test_default_settings_size_is_1200_by_800(self) -> None:
+        self.assertEqual(clamp_window_size(None, (1440, 900)), (1200, 800))
 
-    def test_navigation_breakpoints_remain_stable_with_scaled_fonts(self) -> None:
-        normal = SettingsLayoutMetrics(
-            available_width=900,
-            font_height=16,
-            sidebar_width=208,
-            editor_width=500,
-            preview_width=360,
-            footer_width=620,
-            spacing=10,
-        )
-        scaled = SettingsLayoutMetrics(
-            available_width=900,
-            font_height=32,
-            sidebar_width=310,
-            editor_width=720,
-            preview_width=520,
-            footer_width=980,
-            spacing=10,
-        )
-        self.assertEqual(settings_content_mode(normal), "intermediate")
-        self.assertEqual(settings_content_mode(scaled), "intermediate")
+    def test_restored_settings_size_is_clamped_to_minimum_and_screen(self) -> None:
+        self.assertEqual(clamp_window_size((700, 500), (1440, 900)), (1040, 700))
+        self.assertEqual(clamp_window_size((4000, 3000), (1440, 900)), (1408, 868))
 
-    def test_settings_mode_rejects_invalid_measurements(self) -> None:
-        with self.assertRaises(ValueError):
-            settings_content_mode(
-                SettingsLayoutMetrics(
-                    available_width=-1,
-                    font_height=16,
-                    sidebar_width=200,
-                    editor_width=480,
-                    preview_width=360,
-                    footer_width=600,
-                )
-            )
+    def test_physically_small_screen_uses_same_shell_inside_available_geometry(self) -> None:
+        self.assertEqual(clamp_window_size((1200, 800), (800, 600)), (768, 568))
 
     def test_routes_keep_old_aliases(self) -> None:
         self.assertEqual(resolve_section("appearance"), "dashboard")

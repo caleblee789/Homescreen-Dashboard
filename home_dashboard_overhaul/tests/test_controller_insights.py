@@ -9,6 +9,7 @@ import sys
 import tempfile
 from types import ModuleType, SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from home_dashboard_overhaul.models import (
     BrowseTarget,
@@ -397,6 +398,66 @@ class ControllerCapabilityTests(unittest.TestCase):
         restarted.set_calendar_view("invalid")
         restarted.set_calendar_view("year")
         self.assertEqual(len(self.aqt.mw.addonManager.writes), writes)
+
+    def test_settings_save_commits_config_and_manual_verse_as_one_transaction(self) -> None:
+        staged = deepcopy(self.controller.config)
+        staged["appearance"]["mode"] = "dark"
+        staged["bible"]["rotation_mode"] = "manual"
+        preferred = staged["bible"]["quotes"][1]
+
+        self.controller.save_config(staged, preferred_verse=preferred)
+
+        self.assertEqual(self.aqt.mw.addonManager.config["appearance"]["mode"], "dark")
+        self.assertEqual(self.controller.config["appearance"]["mode"], "dark")
+        rotation = json.loads(self.module.ROTATION_STATE_PATH.read_text(encoding="utf-8"))
+        self.assertEqual(rotation["quote"], preferred)
+        self.assertEqual(self.controller.rotator._memory_quote, preferred)
+
+    def test_manual_verse_failure_rolls_back_config_and_previous_state_bytes(self) -> None:
+        previous_config = deepcopy(self.controller.config)
+        self.aqt.mw.addonManager.config = deepcopy(previous_config)
+        previous_rotation = b'{"version":1,"quote":"previous"}\n'
+        self.module.ROTATION_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        self.module.ROTATION_STATE_PATH.write_bytes(previous_rotation)
+        staged = deepcopy(previous_config)
+        staged["appearance"]["mode"] = "dark"
+        staged["bible"]["rotation_mode"] = "manual"
+        preferred = staged["bible"]["quotes"][0]
+
+        with patch.object(
+            self.controller.rotator,
+            "persist_prepared",
+            side_effect=OSError("verse disk unavailable"),
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Could not save the current manual verse; previous settings were restored",
+            ):
+                self.controller.save_config(staged, preferred_verse=preferred)
+
+        self.assertEqual(self.aqt.mw.addonManager.config, previous_config)
+        self.assertEqual(self.module.ROTATION_STATE_PATH.read_bytes(), previous_rotation)
+        self.assertEqual(self.controller.config, previous_config)
+        self.assertEqual(len(self.aqt.mw.addonManager.writes), 2)
+
+    def test_config_failure_never_mutates_manual_verse_state(self) -> None:
+        previous_rotation = b'{"version":1,"quote":"previous"}\n'
+        self.module.ROTATION_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        self.module.ROTATION_STATE_PATH.write_bytes(previous_rotation)
+        staged = deepcopy(self.controller.config)
+        staged["bible"]["rotation_mode"] = "manual"
+        preferred = staged["bible"]["quotes"][0]
+
+        with patch.object(
+            self.aqt.mw.addonManager,
+            "writeConfig",
+            side_effect=OSError("config disk unavailable"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "Could not write add-on configuration"):
+                self.controller.save_config(staged, preferred_verse=preferred)
+
+        self.assertEqual(self.module.ROTATION_STATE_PATH.read_bytes(), previous_rotation)
+        self.assertNotEqual(self.controller.config["bible"]["rotation_mode"], "manual")
 
     def test_refresh_failure_retains_previous_snapshot_and_exposes_retry_state(self) -> None:
         previous = sample_snapshot(date(2026, 8, 17))

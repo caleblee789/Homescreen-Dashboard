@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 import random
 import re
-from typing import Callable, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Iterable, List, Mapping, Optional, Tuple
 
 from .models import VerseContent
 
@@ -187,15 +187,54 @@ class QuoteRotator:
 
     def set_quote(self, quotes: List[str], mode: str, quote: str) -> bool:
         """Persist an explicit current choice for daily or manual rotation."""
-        if mode == "every render" or not quotes or quote not in quotes:
+        state = self.prepare_quote(quotes, mode, quote)
+        if state is None:
             return False
-        refresh_key = self._refresh_key(mode)
-        fingerprint = quote_fingerprint(quotes)
-        self._write(refresh_key, fingerprint, quote)
-        self._memory_key = refresh_key
-        self._memory_fingerprint = fingerprint
-        self._memory_quote = quote
+        self.persist_prepared(state)
+        self.adopt_prepared(state)
         return True
+
+    def prepare_quote(
+        self,
+        quotes: List[str],
+        mode: str,
+        quote: str,
+    ) -> Optional[dict[str, Any]]:
+        """Prepare manual/daily state without touching the filesystem."""
+
+        if mode == "every render" or not quotes or quote not in quotes:
+            return None
+        return {
+            "version": STATE_VERSION,
+            "refresh_key": self._refresh_key(mode),
+            "quote_fingerprint": quote_fingerprint(quotes),
+            "quote": quote,
+        }
+
+    def persist_prepared(self, state: Mapping[str, Any]) -> None:
+        """Atomically persist prepared state and report any write failure."""
+
+        temporary = self.state_path.with_suffix(self.state_path.suffix + ".tmp")
+        try:
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
+            temporary.write_text(
+                json.dumps(dict(state), ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            os.replace(str(temporary), str(self.state_path))
+        except OSError:
+            try:
+                temporary.unlink()
+            except OSError:
+                pass
+            raise
+
+    def adopt_prepared(self, state: Mapping[str, Any]) -> None:
+        """Adopt already-persisted state without writing a second time."""
+
+        self._memory_key = str(state.get("refresh_key", ""))
+        self._memory_fingerprint = str(state.get("quote_fingerprint", ""))
+        self._memory_quote = str(state.get("quote", ""))
 
     def _load(self) -> Optional[dict]:
         try:
@@ -211,16 +250,13 @@ class QuoteRotator:
             "quote_fingerprint": fingerprint,
             "quote": quote,
         }
-        temporary = self.state_path.with_suffix(self.state_path.suffix + ".tmp")
         try:
-            self.state_path.parent.mkdir(parents=True, exist_ok=True)
-            temporary.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-            os.replace(str(temporary), str(self.state_path))
+            self.persist_prepared(state)
         except OSError:
-            try:
-                temporary.unlink()
-            except OSError:
-                pass
+            # Automatic daily/every-render selection should remain usable when
+            # persistence is temporarily unavailable. Explicit Settings saves
+            # call ``persist_prepared`` directly and surface the same failure.
+            return
 
 
 def load_default_quotes(path: Path) -> List[str]:

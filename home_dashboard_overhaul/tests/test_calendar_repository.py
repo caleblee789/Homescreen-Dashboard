@@ -383,6 +383,26 @@ class CalendarRepositoryTests(unittest.TestCase):
         self.assertEqual([(row.name, row.source_name) for row in rows], [("Local", "Local")])
         self.assertEqual(self.config["events"]["items"][0]["name"], "Local")
 
+    def test_day_events_name_sort_is_case_insensitive_then_date_and_stable_id(self) -> None:
+        self.config["events"]["sort"] = "name"
+        self.config["events"]["items"] = [
+            {"id": "z", "name": "alpha", "date": "2026-08-16", "archived": False},
+            {"id": "a", "name": "ALPHA", "date": "2026-08-15", "archived": False},
+            {"id": "b", "name": "Beta", "date": "2026-08-14", "archived": False},
+        ]
+        repo = self.repository()
+
+        rows = repo.day_events_between(date(2026, 8, 13), date(2026, 8, 20))
+
+        self.assertEqual(
+            [(row.name, row.date) for row in rows],
+            [
+                ("ALPHA", "2026-08-15"),
+                ("alpha", "2026-08-16"),
+                ("Beta", "2026-08-14"),
+            ],
+        )
+
     def test_malformed_feed_and_bounded_limits_are_visible_errors(self) -> None:
         repo = self.repository()
         with self.assertRaises(CalendarSourceError):
