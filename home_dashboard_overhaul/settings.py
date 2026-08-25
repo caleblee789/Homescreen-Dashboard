@@ -611,7 +611,6 @@ class SelectChevron(QWidget):
         combo.installEventFilter(self)
         self._place()
         self.show()
-        self.raise_()
 
     def _place(self) -> None:
         size = 16
@@ -632,7 +631,6 @@ class SelectChevron(QWidget):
             getattr(QEvent.Type, "StyleChange", None),
         }:
             self._place()
-            self.raise_()
             self.update()
         return False
 
@@ -1612,25 +1610,27 @@ class EventEditDialog(SettingsEditorDialog):
         return self.name.text().strip(), self.date.date().toString("yyyy-MM-dd")
 
 
-class SettingsPromptOverlay(QWidget):
-    """Contained confirmation layer that never creates a native window."""
+class SettingsPromptPage(QWidget):
+    """Layout-managed confirmation page that never creates or stacks a window."""
 
     def __init__(
         self,
         parent: QWidget,
+        owner: "SettingsPanel",
         title: str,
         message: str,
         actions: List[tuple[str, str, Callable[[], None]]],
         dismiss: Callable[[], None],
     ) -> None:
         super().__init__(parent)
-        self.setObjectName("SettingsPromptOverlay")
+        self.owner = owner
+        self.setObjectName("SettingsPromptPage")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self._dismiss_callback = dismiss
         tokens = _palette_tokens()
         self.setStyleSheet(
             """
-QWidget#SettingsPromptOverlay {{ background: rgba(0, 0, 0, 118); }}
+QWidget#SettingsPromptPage {{ background: rgba(0, 0, 0, 118); }}
 QFrame#SettingsPromptCard {{ background: {window}; border: 1px solid {border}; border-radius: 10px; }}
 QLabel#SettingsPromptTitle {{ color: {text}; font-size: 17px; font-weight: 750; }}
 QLabel#SettingsPromptMessage {{ color: {secondary}; }}
@@ -1660,7 +1660,6 @@ QPushButton#DangerButton {{ background: {danger_bg}; border-color: {danger}; col
         buttons.setContentsMargins(0, 4, 0, 0)
         buttons.setSpacing(8)
         buttons.addStretch(1)
-        focus_button: Optional[QPushButton] = None
         for label, role, callback in actions:
             button = QPushButton(label)
             if role == "primary":
@@ -1671,25 +1670,13 @@ QPushButton#DangerButton {{ background: {danger_bg}; border-color: {danger}; col
                 lambda _checked=False, selected=callback: self._choose(selected)
             )
             buttons.addWidget(button)
-            if focus_button is None or role == "primary":
-                focus_button = button
         card_layout.addLayout(buttons)
         layout.addWidget(card, 0, 0, Qt.AlignmentFlag.AlignCenter)
-        self._focus_button = focus_button
         self.escape_action = QAction("Dismiss confirmation", self)
         self.escape_action.setShortcut(QKeySequence("Esc"))
-        self.escape_action.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.escape_action.setShortcutContext(Qt.ShortcutContext.WindowShortcut)
         self.escape_action.triggered.connect(self.dismiss)
         self.addAction(self.escape_action)
-
-    def present(self) -> None:
-        parent = self.parentWidget()
-        if parent is not None:
-            self.setGeometry(parent.rect())
-        self.show()
-        self.raise_()
-        if self._focus_button is not None:
-            self._focus_button.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def dismiss(self) -> None:
         self._finish(self._dismiss_callback)
@@ -1701,16 +1688,7 @@ QPushButton#DangerButton {{ background: {danger_bg}; border-color: {danger}; col
         self._finish(callback)
 
     def _finish(self, callback: Optional[Callable[[], None]]) -> None:
-        parent = self.parentWidget()
-        if parent is not None and getattr(parent, "_active_prompt", None) is self:
-            parent._active_prompt = None
-            escape_shortcut = getattr(parent, "escape_shortcut", None)
-            if escape_shortcut is not None:
-                escape_shortcut.setEnabled(not bool(getattr(parent, "_saving", False)))
-        self.hide()
-        self.deleteLater()
-        if callback is not None:
-            callback()
+        self.owner._finish_prompt(self, callback)
 
 
 class SettingsPanel(QWidget):
@@ -1755,7 +1733,7 @@ class SettingsPanel(QWidget):
         self._requested_dashboard_anchor = ""
         self._building = True
         self._saving = False
-        self._active_prompt: Optional[SettingsPromptOverlay] = None
+        self._active_prompt: Optional[SettingsPromptPage] = None
         self._last_save_error = ""
         self._reset_undo_values: Optional[Dict[str, Any]] = None
         self._undo_event_status_id = ""
@@ -1769,13 +1747,17 @@ class SettingsPanel(QWidget):
         dialog_layout = QHBoxLayout(self)
         dialog_layout.setContentsMargins(0, 0, 0, 0)
         self._dialog_layout = dialog_layout
+        self._content_stack = QStackedWidget(self)
+        self._content_stack.setObjectName("SettingsContentStack")
+        dialog_layout.addWidget(self._content_stack, 1)
         self.settings_shell = QWidget()
         self.settings_shell.setMaximumWidth(1240)
         self.settings_shell.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Expanding,
         )
-        dialog_layout.addWidget(self.settings_shell, 1)
+        self._content_stack.addWidget(self.settings_shell)
+        self._content_stack.setCurrentWidget(self.settings_shell)
         self._update_settings_shell_margins()
         outer = QGridLayout(self.settings_shell)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -1901,17 +1883,17 @@ class SettingsPanel(QWidget):
 
         self.save_shortcut = QAction("Save changes", self)
         self.save_shortcut.setShortcut(QKeySequence.StandardKey.Save)
-        self.save_shortcut.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.save_shortcut.setShortcutContext(Qt.ShortcutContext.WindowShortcut)
         self.save_shortcut.triggered.connect(self._save)
         self.addAction(self.save_shortcut)
         self.close_shortcut = QAction("Close Settings", self)
         self.close_shortcut.setShortcut(QKeySequence.StandardKey.Close)
-        self.close_shortcut.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.close_shortcut.setShortcutContext(Qt.ShortcutContext.WindowShortcut)
         self.close_shortcut.triggered.connect(self.request_close)
         self.addAction(self.close_shortcut)
         self.escape_shortcut = QAction("Close Settings", self)
         self.escape_shortcut.setShortcut(QKeySequence("Esc"))
-        self.escape_shortcut.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.escape_shortcut.setShortcutContext(Qt.ShortcutContext.WindowShortcut)
         self.escape_shortcut.triggered.connect(self.request_close)
         self.addAction(self.escape_shortcut)
 
@@ -1925,14 +1907,10 @@ class SettingsPanel(QWidget):
         self._apply_canonical_layout()
         if not self._requested_dashboard_anchor:
             self._settle_initial_scroll_top()
-        self.nav.setFocus(Qt.FocusReason.OtherFocusReason)
         _install_palette_watcher(self, self._current_stylesheet)
 
     def resizeEvent(self, event: Any) -> None:
         super().resizeEvent(event)
-        if self._active_prompt is not None:
-            self._active_prompt.setGeometry(self.rect())
-            self._active_prompt.raise_()
         if hasattr(self, "_dialog_layout"):
             self._update_settings_shell_margins()
         if hasattr(self, "heatmap_preset_grid"):
@@ -2076,17 +2054,6 @@ class SettingsPanel(QWidget):
         value = max(0, target_y - 2)
         scroll.verticalScrollBar().setValue(value)
         target.setProperty("hdoScrollMarginTop", 16)
-        heading = getattr(target, "heading", None)
-        if isinstance(heading, QLabel):
-            # Focusing the anchor must not enqueue the generic focus-visibility
-            # adjustment: QScrollArea can otherwise move a final tall card to
-            # its bottom edge after this method returns and clip the heading.
-            self._dashboard_anchor_focus_active = True
-            try:
-                heading.setFocus(Qt.FocusReason.OtherFocusReason)
-            finally:
-                self._dashboard_anchor_focus_active = False
-            scroll.verticalScrollBar().setValue(value)
 
     def _apply_canonical_layout(self) -> None:
         """Apply size hints without changing the single Settings composition."""
@@ -4488,7 +4455,6 @@ class SettingsPanel(QWidget):
         if self._font_color_invalid:
             self._last_save_error = "Enter a valid #RRGGBB color."
             self._update_dirty_state()
-            self.font_color.setFocus(Qt.FocusReason.OtherFocusReason)
             return
         manual_quote_dirty = (
             self.pending_manual_quote is not None
@@ -4616,14 +4582,32 @@ class SettingsPanel(QWidget):
         if self._active_prompt is not None:
             return
         self.escape_shortcut.setEnabled(False)
-        self._active_prompt = SettingsPromptOverlay(
+        prompt = SettingsPromptPage(
+            self._content_stack,
             self,
             title,
             message,
             actions,
             dismiss,
         )
-        self._active_prompt.present()
+        self._active_prompt = prompt
+        self._content_stack.addWidget(prompt)
+        self._content_stack.setCurrentWidget(prompt)
+
+    def _finish_prompt(
+        self,
+        prompt: SettingsPromptPage,
+        callback: Optional[Callable[[], None]],
+    ) -> None:
+        if self._active_prompt is not prompt:
+            return
+        self._active_prompt = None
+        self._content_stack.setCurrentWidget(self.settings_shell)
+        self._content_stack.removeWidget(prompt)
+        prompt.deleteLater()
+        self.escape_shortcut.setEnabled(not self._saving)
+        if callback is not None:
+            callback()
 
     def request_close(self) -> None:
         if self._saving or self._active_prompt is not None:
@@ -4649,8 +4633,8 @@ class SettingsPanel(QWidget):
         self._close_callback()
 
 
-class SettingsOverlay(QWidget):
-    """Full-host child overlay; it cannot own a macOS window or Space."""
+class SettingsWorkspace(QWidget):
+    """Layout-managed central workspace that cannot own a macOS window or Space."""
 
     PREFERRED_WIDTH = 680
     PREFERRED_HEIGHT = 620
@@ -4660,22 +4644,40 @@ class SettingsOverlay(QWidget):
     def __init__(
         self,
         host: QWidget,
+        host_layout: QBoxLayout,
+        insert_index: int,
         controller: Any,
         initial_page: str = "",
         selected_event_date: str = "",
         selected_event_id: str = "",
-        on_closed: Optional[Callable[["SettingsOverlay"], None]] = None,
+        on_closed: Optional[Callable[["SettingsWorkspace"], None]] = None,
     ) -> None:
         super().__init__(host)
         self.host = host
+        self.host_layout = host_layout
+        self.insert_index = insert_index
         self._on_closed = on_closed
         self._closed = False
-        self._previous_focus = QApplication.focusWidget()
-        self.setObjectName("HomeDashboardSettingsOverlay")
+        self._attached = False
+        self._backing_widgets: List[tuple[QWidget, bool, bool]] = []
+        for index in range(host_layout.count()):
+            item = host_layout.itemAt(index)
+            widget = item.widget() if item is not None else None
+            if widget is not None:
+                self._backing_widgets.append(
+                    (widget, widget.isVisible(), widget.isEnabled())
+                )
+        self.setObjectName("HomeDashboardSettingsWorkspace")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setStyleSheet(
-            "QWidget#HomeDashboardSettingsOverlay { background: rgba(0, 0, 0, 118); }"
+            "QWidget#HomeDashboardSettingsWorkspace { background: rgba(0, 0, 0, 118); }"
+        )
+        workspace_layout = QGridLayout(self)
+        workspace_layout.setContentsMargins(
+            self.HOST_MARGIN,
+            self.HOST_MARGIN,
+            self.HOST_MARGIN,
+            self.HOST_MARGIN,
         )
         self.panel = SettingsPanel(
             self,
@@ -4685,19 +4687,28 @@ class SettingsOverlay(QWidget):
             selected_event_date,
             selected_event_id,
         )
-        self.panel.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        host.installEventFilter(self)
-        self._sync_to_host()
+        self.panel.setMinimumSize(1, 1)
+        self.panel.setMaximumSize(self.PREFERRED_WIDTH, self.PREFERRED_HEIGHT)
+        self.panel.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding,
+        )
+        workspace_layout.addWidget(
+            self.panel,
+            0,
+            0,
+            Qt.AlignmentFlag.AlignCenter,
+        )
 
-    def present(self) -> None:
-        if self._closed:
+    def attach(self) -> None:
+        if self._closed or self._attached:
             return
-        self._sync_to_host()
+        self._attached = True
+        self.host_layout.insertWidget(self.insert_index, self, 1)
+        for widget, _was_visible, _was_enabled in self._backing_widgets:
+            widget.setEnabled(False)
+            widget.hide()
         self.show()
-        self.raise_()
-        self.panel.show()
-        self.panel.raise_()
-        self.panel.nav.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def open_page(
         self,
@@ -4708,82 +4719,24 @@ class SettingsOverlay(QWidget):
         if self._closed:
             return
         self.panel.open_page(page, selected_event_date, selected_event_id)
-        self.present()
-
-    def eventFilter(self, watched: object, event: Any) -> bool:
-        if watched is self.host and event.type() in {
-            getattr(QEvent.Type, "Resize", None),
-            getattr(QEvent.Type, "Show", None),
-            getattr(QEvent.Type, "LayoutRequest", None),
-        }:
-            self._sync_to_host()
-            QTimer.singleShot(0, self._raise_after_host_change)
-        return False
-
-    def resizeEvent(self, event: Any) -> None:
-        super().resizeEvent(event)
-        self._place_panel()
-
-    def _sync_to_host(self) -> None:
-        if self._closed:
-            return
-        self.setGeometry(self.host.rect())
-        self._place_panel()
-
-    def _place_panel(self) -> None:
-        available_width = max(1, self.width() - (2 * self.HOST_MARGIN))
-        available_height = max(1, self.height() - (2 * self.HOST_MARGIN))
-        width = min(self.PREFERRED_WIDTH, available_width)
-        preferred_height = (
-            self.PREFERRED_HEIGHT
-            if available_height >= self.PREFERRED_HEIGHT
-            else max(1, min(self.COMPACT_MIN_HEIGHT, available_height))
-        )
-        height = min(preferred_height, available_height)
-        self.panel.setGeometry(
-            max(0, (self.width() - width) // 2),
-            max(0, (self.height() - height) // 2),
-            width,
-            height,
-        )
-
-    def _raise_after_host_change(self) -> None:
-        if self._closed or not self.isVisible():
-            return
-        self.raise_()
-        self.panel.raise_()
 
     def close_panel(self) -> None:
         if self._closed:
             return
         self._closed = True
-        previous_focus = self._previous_focus
-        try:
-            self.host.removeEventFilter(self)
-        except RuntimeError:
-            pass
         self.hide()
+        if self._attached:
+            self.host_layout.removeWidget(self)
+            self._attached = False
+        for widget, was_visible, was_enabled in self._backing_widgets:
+            try:
+                widget.setEnabled(was_enabled)
+                widget.setVisible(was_visible)
+            except RuntimeError:
+                pass
         if self._on_closed is not None:
             self._on_closed(self)
         self.deleteLater()
-
-        def restore_focus() -> None:
-            try:
-                if (
-                    previous_focus is not None
-                    and previous_focus.isVisible()
-                    and previous_focus.isEnabled()
-                ):
-                    previous_focus.setFocus(Qt.FocusReason.OtherFocusReason)
-                    return
-            except RuntimeError:
-                pass
-            fallback = getattr(mw, "web", None)
-            setter = getattr(fallback, "setFocus", None)
-            if callable(setter):
-                setter(Qt.FocusReason.OtherFocusReason)
-
-        QTimer.singleShot(0, restore_focus)
 
     def force_close(self) -> None:
         if self._closed:
@@ -4838,6 +4791,6 @@ def install_settings_menu(controller: Any) -> None:
         text = action.text() if callable(getattr(action, "text", None)) else ""
         if text == ACTION_TEXT: mw._home_dashboard_overhaul_settings_action = action; return
     action = QAction(ACTION_TEXT, mw)
-    action.triggered.connect(controller.open_settings)
+    action.triggered.connect(controller.request_settings_open)
     submenu.addAction(action)
     mw._home_dashboard_overhaul_settings_action = action

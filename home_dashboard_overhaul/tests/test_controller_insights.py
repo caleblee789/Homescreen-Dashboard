@@ -147,19 +147,38 @@ class FakeQTimer:
         callback()
 
 
-class FakeSettingsOverlay:
+class FakeCentralLayout:
+    def __init__(self, web) -> None:
+        self.web = web
+
+    def indexOf(self, widget) -> int:
+        return 0 if widget is self.web else -1
+
+    def insertWidget(self, *_args) -> None:
+        return None
+
+
+class FakeCentralWidget:
+    def __init__(self, web) -> None:
+        self._layout = FakeCentralLayout(web)
+
+    def layout(self):
+        return self._layout
+
+
+class FakeSettingsWorkspace:
     instances = []
 
     def __init__(self, *args) -> None:
         self.args = args
         self.closed_callback = args[-1]
-        self.present_count = 0
+        self.attach_count = 0
         self.force_close_count = 0
         self.opened_pages = []
         self.__class__.instances.append(self)
 
-    def present(self) -> None:
-        self.present_count += 1
+    def attach(self) -> None:
+        self.attach_count += 1
 
     def open_page(self, *args) -> None:
         self.opened_pages.append(args)
@@ -197,7 +216,8 @@ class ControllerCapabilityTests(unittest.TestCase):
             addonManager=FakeAddonManager(),
             col=SimpleNamespace(sched=SimpleNamespace(today=500, day_cutoff=cutoff), mod=1),
         )
-        aqt.mw.form = SimpleNamespace(centralwidget=object())
+        aqt.mw.web = object()
+        aqt.mw.form = SimpleNamespace(centralwidget=FakeCentralWidget(aqt.mw.web))
         aqt.mw.centralWidget = lambda: aqt.mw.form.centralwidget
         deckbrowser = ModuleType("aqt.deckbrowser")
         deckbrowser.DeckBrowser = FakeDeckBrowser
@@ -303,50 +323,52 @@ class ControllerCapabilityTests(unittest.TestCase):
         self.assertFalse(self.controller._settings_open_pending)
         self.assertIsNone(self.controller._pending_settings_request)
 
-    def test_settings_reuses_one_central_widget_overlay(self) -> None:
-        FakeSettingsOverlay.instances.clear()
+    def test_settings_reuses_one_central_workspace(self) -> None:
+        FakeSettingsWorkspace.instances.clear()
         settings = ModuleType("home_dashboard_overhaul.settings")
-        settings.SettingsOverlay = FakeSettingsOverlay
+        settings.SettingsWorkspace = FakeSettingsWorkspace
 
         with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
             self.controller.open_settings("calendar_data", "2026-08-28", "exam-42")
-            overlay = FakeSettingsOverlay.instances[-1]
+            workspace = FakeSettingsWorkspace.instances[-1]
 
             self.assertEqual(
-                overlay.args[:-1],
+                workspace.args[:-1],
                 (
                     self.aqt.mw.form.centralwidget,
+                    self.aqt.mw.form.centralwidget.layout(),
+                    0,
                     self.controller,
                     "calendar_data",
                     "2026-08-28",
                     "exam-42",
                 ),
             )
-            self.assertEqual(overlay.present_count, 1)
-            self.assertIs(self.controller._settings_overlay, overlay)
+            self.assertEqual(workspace.attach_count, 1)
+            self.assertIs(self.controller._settings_workspace, workspace)
 
             self.controller.open_settings("events")
-            self.assertEqual(len(FakeSettingsOverlay.instances), 1)
-            self.assertEqual(overlay.opened_pages, [("events", "", "")])
+            self.assertEqual(len(FakeSettingsWorkspace.instances), 1)
+            self.assertEqual(workspace.opened_pages, [("events", "", "")])
 
-            overlay.force_close()
-            self.assertIsNone(self.controller._settings_overlay)
+            workspace.force_close()
+            self.assertIsNone(self.controller._settings_workspace)
 
-    def test_profile_close_force_closes_settings_overlay_and_pending_request(self) -> None:
-        FakeSettingsOverlay.instances.clear()
+    def test_profile_close_force_closes_settings_workspace_and_pending_request(self) -> None:
+        FakeSettingsWorkspace.instances.clear()
         settings = ModuleType("home_dashboard_overhaul.settings")
-        settings.SettingsOverlay = FakeSettingsOverlay
+        settings.SettingsWorkspace = FakeSettingsWorkspace
 
         with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
             self.controller.open_settings("dashboard")
-            overlay = FakeSettingsOverlay.instances[-1]
+            workspace = FakeSettingsWorkspace.instances[-1]
             self.controller._pending_settings_request = ("events", "", "")
             self.controller._settings_open_pending = True
 
             self.controller.on_profile_close()
 
-            self.assertEqual(overlay.force_close_count, 1)
-            self.assertIsNone(self.controller._settings_overlay)
+            self.assertEqual(workspace.force_close_count, 1)
+            self.assertIsNone(self.controller._settings_workspace)
             self.assertIsNone(self.controller._pending_settings_request)
             self.assertFalse(self.controller._settings_open_pending)
 

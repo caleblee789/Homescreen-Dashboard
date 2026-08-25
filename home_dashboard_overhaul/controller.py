@@ -134,7 +134,7 @@ class DashboardController:
         self.year_scroll_left: Optional[float] = None
         self._pending_settings_request: Optional[Tuple[str, str, str]] = None
         self._settings_open_pending = False
-        self._settings_overlay: Optional[Any] = None
+        self._settings_workspace: Optional[Any] = None
 
     def start(self) -> None:
         mw.addonManager.setWebExports(self.package, r"web/.*\.(css|js)")
@@ -219,13 +219,13 @@ class DashboardController:
     def on_profile_close(self, *_args: object) -> None:
         self._pending_settings_request = None
         self._settings_open_pending = False
-        overlay = self._settings_overlay
-        if overlay is not None:
+        workspace = self._settings_workspace
+        if workspace is not None:
             try:
-                overlay.force_close()
+                workspace.force_close()
             except RuntimeError:
                 pass
-        self._settings_overlay = None
+        self._settings_workspace = None
         self.profile_generation += 1
         self.snapshot = None
         self.cache_key = None
@@ -1193,18 +1193,18 @@ class DashboardController:
         selected_event_id: object = None,
         *_args: object,
     ) -> None:
-        from .settings import SettingsOverlay
+        from .settings import SettingsWorkspace
 
         page_name = page if isinstance(page, str) else ""
         date_value = selected_date if self._valid_bridge_date(selected_date) else ""
         event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
-        overlay = self._settings_overlay
-        if overlay is not None:
+        workspace = self._settings_workspace
+        if workspace is not None:
             try:
-                overlay.open_page(page_name, date_value, event_value)
+                workspace.open_page(page_name, date_value, event_value)
                 return
             except RuntimeError:
-                self._settings_overlay = None
+                self._settings_workspace = None
 
         host = getattr(getattr(mw, "form", None), "centralwidget", None)
         central_widget = getattr(mw, "centralWidget", None)
@@ -1217,20 +1217,35 @@ class DashboardController:
                 show_message("Home Screen Dashboard Settings could not attach to Anki.", 5000)
             return
 
-        def overlay_closed(closed_overlay: Any) -> None:
-            if self._settings_overlay is closed_overlay:
-                self._settings_overlay = None
+        host_layout = host.layout()
+        web = getattr(mw, "web", None)
+        insert_widget = getattr(host_layout, "insertWidget", None)
+        index_of = getattr(host_layout, "indexOf", None)
+        web_index = index_of(web) if callable(index_of) and web is not None else -1
+        if host_layout is None or not callable(insert_widget) or web_index < 0:
+            status_bar = getattr(mw, "statusBar", None)
+            status = status_bar() if callable(status_bar) else None
+            show_message = getattr(status, "showMessage", None)
+            if callable(show_message):
+                show_message("Home Screen Dashboard Settings could not attach to Anki.", 5000)
+            return
 
-        overlay = SettingsOverlay(
+        def workspace_closed(closed_workspace: Any) -> None:
+            if self._settings_workspace is closed_workspace:
+                self._settings_workspace = None
+
+        workspace = SettingsWorkspace(
             host,
+            host_layout,
+            web_index,
             self,
             page_name,
             date_value,
             event_value,
-            overlay_closed,
+            workspace_closed,
         )
-        self._settings_overlay = overlay
-        overlay.present()
+        self._settings_workspace = workspace
+        workspace.attach()
 
     def request_settings_open(
         self,
@@ -1238,7 +1253,7 @@ class DashboardController:
         selected_date: object = None,
         selected_event_id: object = None,
     ) -> None:
-        """Leave the WebEngine bridge callback before showing the child panel."""
+        """Leave the current callback before attaching the central workspace."""
 
         page_name = page if isinstance(page, str) else ""
         date_value = selected_date if self._valid_bridge_date(selected_date) else ""

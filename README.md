@@ -7,12 +7,13 @@ Browser or statistics classes.
 
 ## 1.8.7 highlights
 
-- Settings now opens as a compact 680×620 panel inside Anki's existing central
-  widget. It retains the familiar centered Settings workflow but cannot become
-  a separate macOS window or move Anki to another Space.
-- One child panel is retained while open so repeated menu or bridge requests
-  reroute the current draft. Bridge requests remain deferred and coalesced;
-  Save and dirty-close confirmations are contained inside the panel.
+- Settings now opens as a compact 680×620 workspace inserted into Anki's
+  existing central layout. The backing dashboard is hidden while Settings is
+  active, so there is no floating widget or separate macOS window to move to
+  another Space.
+- One central workspace is retained while open so repeated menu or bridge
+  requests reroute the current draft. Both opening paths are deferred and
+  coalesced; Save and dirty-close confirmations use stacked layout pages.
 - Schema 8, all Settings fields, dashboard rendering, and the corrected 1.8.6
   statistics calculations remain unchanged.
 
@@ -34,9 +35,10 @@ Browser or statistics classes.
   narrow shells, and hard restart are contractually checked
   against identical values from the same collection snapshot.
 - Settings keeps the compact visual workflow used by conventional add-on
-  settings while rendering as a non-window child of Anki. It never calls a
-  modal event loop, assigns screen coordinates, replaces Anki's central
-  widget, or contains a WebEngine preview surface.
+  settings while rendering as a non-window page in Anki's central layout. It
+  never calls a modal event loop, stacks or raises a floating child, assigns
+  screen coordinates, replaces Anki's central widget, or contains a WebEngine
+  preview surface.
 
 - Settings uses one native Qt composition at every size: a compact header,
   152 px text rail, one active page scroller, and a stable final-row footer.
@@ -62,7 +64,7 @@ The local 1.8.7 candidate is built as
 `home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon` for
 installation through **Tools → Add-ons → Install from file**. Its checksum is
 written alongside the archive: SHA-256
-`0792e96dbc68c56ed3b50f5ef27341fd270a065aeaaa239f6070a1fc9c25243f`.
+`5aeedd0b58893488cb6daa568235800d3beb6a55bef642c3f63f0fe0422dac28`.
 This candidate remains local until the native macOS full-screen Space check
 passes. Disable any legacy source add-ons named by the activation card.
 

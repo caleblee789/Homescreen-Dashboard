@@ -360,8 +360,8 @@ def validate_sources() -> dict:
             'command == "diagnostics"', 'self.request_settings_open("about_support")',
             "def _persist_settings_transaction", "_restore_optional_bytes",
             'getattr(getattr(mw, "form", None), "centralwidget", None)',
-            "overlay = SettingsOverlay(", "self._settings_overlay = overlay",
-            "overlay.present()", "QTimer.singleShot(0, self._open_pending_settings)",
+            "workspace = SettingsWorkspace(", "self._settings_workspace = workspace",
+            "workspace.attach()", "QTimer.singleShot(0, self._open_pending_settings)",
         ),
         "insights.py": (
             "ORDER BY again_count DESC, total_answers DESC, r.cid ASC",
@@ -378,10 +378,14 @@ def validate_sources() -> dict:
             "today_session", "data-hdo-has-bible",
         ),
         "settings.py": (
-            "class SettingsPanel(QWidget):", "class SettingsOverlay(QWidget):",
-            "class SettingsPromptOverlay(QWidget):", "super().__init__(host)",
+            "class SettingsPanel(QWidget):", "class SettingsWorkspace(QWidget):",
+            "class SettingsPromptPage(QWidget):", "super().__init__(host)",
             "PREFERRED_WIDTH = 680", "PREFERRED_HEIGHT = 620",
             "COMPACT_MIN_HEIGHT = 560", "HOST_MARGIN = 12",
+            "self.host_layout.insertWidget(self.insert_index, self, 1)",
+            "self.host_layout.removeWidget(self)",
+            "self._content_stack.setCurrentWidget(prompt)",
+            "action.triggered.connect(controller.request_settings_open)",
             "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
             "def _connect_change_signals(self) -> None:",
             "def _settings_changed(self, *_args: object) -> None:",
@@ -428,9 +432,9 @@ def validate_sources() -> dict:
             raise ValueError("{} is missing corrected release contracts: {}".format(relative, ", ".join(absent)))
 
     panel_source = sources["settings.py"].split("class SettingsPanel(QWidget):", 1)[1].split(
-        "class SettingsOverlay(QWidget):", 1
+        "class SettingsWorkspace(QWidget):", 1
     )[0]
-    overlay_source = sources["settings.py"].split("class SettingsOverlay(QWidget):", 1)[1].split(
+    workspace_source = sources["settings.py"].split("class SettingsWorkspace(QWidget):", 1)[1].split(
         "def _object_name", 1
     )[0]
     for forbidden in (
@@ -438,13 +442,20 @@ def validate_sources() -> dict:
         "self.screen()", "self.move(", "setWindowModality", "setModal(",
         "def showEvent", "AnkiWebView", "QWebEngine",
     ):
-        if forbidden in panel_source + overlay_source:
+        if forbidden in panel_source + workspace_source:
             raise ValueError("Settings panel retains forbidden marker: {}".format(forbidden))
+
+    for forbidden in (
+        "raise_()", "setFocus(", "installEventFilter(self)", "setGeometry(",
+        "setWindowFlags", "activateWindow()",
+    ):
+        if forbidden in workspace_source:
+            raise ValueError("Settings workspace retains manual window behavior: {}".format(forbidden))
 
     if "class SettingsDialog(QDialog):" in sources["settings.py"]:
         raise ValueError("primary Settings still creates a native dialog")
     save_tail = sources["settings.py"].split("    def _save(self) -> None:", 1)[1].split(
-        "class SettingsOverlay(QWidget):", 1
+        "class SettingsWorkspace(QWidget):", 1
     )[0]
     if "message = QMessageBox(self)" in save_tail or "message.exec()" in save_tail:
         raise ValueError("primary Settings prompts must remain embedded children")
@@ -514,7 +525,7 @@ def validate_sources() -> dict:
         or settings_window_contract.get("native_window") is not False
         or settings_window_contract.get("top_level_fallback") is not False
     ):
-        raise ValueError("focused Settings contract does not require the in-Anki child panel")
+        raise ValueError("focused Settings contract does not require the in-Anki workspace")
     if capture_contract.get("runtime_smoke_requirements") != {
         "active_head_deck": "A",
         "raw_new_cards_per_head_minimum": 40,

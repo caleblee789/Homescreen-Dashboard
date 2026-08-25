@@ -4,15 +4,15 @@
 
 ## 1.8.7 — 2026-08-25
 
-- Replaced the primary Settings `QDialog` with a centered child panel hosted by
-  Anki's persistent central widget, eliminating the separate native window
-  that macOS could assign to another Space.
+- Replaced the primary Settings `QDialog` and later floating child overlay with
+  a centered workspace inserted into Anki's persistent central layout. The
+  dashboard slot is hidden and restored without creating or stacking a window.
 - Preserved the compact 680×620 presentation, 152-pixel rail, page scrolling,
-  fixed footer, staged changes, and direct menu workflow. Smaller Anki windows
-  receive a responsive panel within 12-pixel host margins.
-- Reused one controller-owned panel for menu and deferred bridge requests.
-  Primary Save-conflict and dirty-close prompts now remain inside the panel;
-  profile shutdown force-cleans the panel without prompting.
+  fixed footer, and staged changes. Smaller Anki windows receive a responsive
+  panel within 12-pixel host margins.
+- Reused one controller-owned workspace for deferred, coalesced menu and bridge
+  requests. Primary Save-conflict and dirty-close prompts are stacked layout
+  pages; profile shutdown force-cleans the workspace without prompting.
 - Preserved schema 8, Settings pages and staged-save behavior, dashboard and
   statistics calculations, bridge commands, and the frozen 1.8.6 evidence.
   Full-screen macOS Space behavior remains a manual acceptance gate before any

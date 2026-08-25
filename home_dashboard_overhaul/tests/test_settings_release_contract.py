@@ -110,7 +110,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
     def test_settings_use_one_canonical_native_shell(self) -> None:
         for marker in (
             "class SettingsPanel(QWidget):",
-            "class SettingsOverlay(QWidget):",
+            "class SettingsWorkspace(QWidget):",
             "PREFERRED_WIDTH = 680",
             "PREFERRED_HEIGHT = 620",
             "COMPACT_MIN_HEIGHT = 560",
@@ -153,24 +153,29 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired, self.settings)
 
-    def test_settings_uses_a_centered_non_window_child_overlay(self) -> None:
+    def test_settings_uses_a_layout_managed_non_window_central_workspace(self) -> None:
         for marker in (
             "super().__init__(host)",
-            'self.setObjectName("HomeDashboardSettingsOverlay")',
-            "host.installEventFilter(self)",
-            "self.setGeometry(self.host.rect())",
-            "self.panel.setGeometry(",
+            'self.setObjectName("HomeDashboardSettingsWorkspace")',
+            "self.host_layout.insertWidget(self.insert_index, self, 1)",
+            "self.host_layout.removeWidget(self)",
+            "widget.hide()",
+            "widget.setVisible(was_visible)",
+            "workspace_layout.addWidget(",
+            "Qt.AlignmentFlag.AlignCenter",
+            "self.panel.setMaximumSize(self.PREFERRED_WIDTH, self.PREFERRED_HEIGHT)",
             "self._settle_initial_scroll_top()",
-            "self.nav.setFocus(Qt.FocusReason.OtherFocusReason)",
         ):
             self.assertIn(marker, self.settings)
         opener = self.controller.split("    def open_settings(", 1)[1].split(
             "    def request_settings_open", 1
         )[0]
         self.assertIn('getattr(getattr(mw, "form", None), "centralwidget", None)', opener)
-        self.assertIn("overlay = SettingsOverlay(", opener)
-        self.assertIn("self._settings_overlay = overlay", opener)
-        self.assertIn("overlay.present()", opener)
+        self.assertIn("host_layout = host.layout()", opener)
+        self.assertIn("web_index = index_of(web)", opener)
+        self.assertIn("workspace = SettingsWorkspace(", opener)
+        self.assertIn("self._settings_workspace = workspace", opener)
+        self.assertIn("workspace.attach()", opener)
         for forbidden_opening_marker in (
             "SettingsDialog",
             "dialog.exec()",
@@ -185,9 +190,9 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden_opening_marker, opener)
         panel_source = self.settings.split("class SettingsPanel(QWidget):", 1)[1].split(
-            "class SettingsOverlay(QWidget):", 1
+            "class SettingsWorkspace(QWidget):", 1
         )[0]
-        overlay_source = self.settings.split("class SettingsOverlay(QWidget):", 1)[1].split(
+        workspace_source = self.settings.split("class SettingsWorkspace(QWidget):", 1)[1].split(
             "def _object_name", 1
         )[0]
         for forbidden_geometry in (
@@ -200,13 +205,17 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "def _settle_window_to_screen",
             "def showEvent",
         ):
-            self.assertNotIn(forbidden_geometry, panel_source + overlay_source)
+            self.assertNotIn(forbidden_geometry, panel_source + workspace_source)
         for forbidden_primary_window_marker in (
             "class SettingsDialog(QDialog):",
             "setWindowFlags",
             "activateWindow()",
+            "raise_()",
+            "setFocus(",
+            "installEventFilter(self)",
+            "setGeometry(",
         ):
-            self.assertNotIn(forbidden_primary_window_marker, overlay_source)
+            self.assertNotIn(forbidden_primary_window_marker, workspace_source)
         self.assertNotIn("class SettingsDialog(QDialog):", self.settings)
         for retired_window_marker in (
             "Qt.WindowType.Tool",
@@ -231,17 +240,19 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )
 
     def test_primary_save_and_close_prompts_are_embedded_children(self) -> None:
-        self.assertIn("class SettingsPromptOverlay(QWidget):", self.settings)
+        self.assertIn("class SettingsPromptPage(QWidget):", self.settings)
+        self.assertIn("self._content_stack.setCurrentWidget(prompt)", self.settings)
+        self.assertIn("self._content_stack.setCurrentWidget(self.settings_shell)", self.settings)
         self.assertIn('"Discard unsaved changes?"', self.settings)
         self.assertIn('"Settings changed elsewhere"', self.settings)
         self.assertIn("self._show_prompt(", self.settings)
         primary_source = self.settings.split("    def _save(self) -> None:", 1)[1].split(
-            "class SettingsOverlay(QWidget):", 1
+            "class SettingsWorkspace(QWidget):", 1
         )[0]
         self.assertNotIn("message = QMessageBox(self)", primary_source)
         self.assertNotIn("message.exec()", primary_source)
 
-    def test_bridge_settings_open_is_deferred_and_controller_retains_one_overlay(self) -> None:
+    def test_all_settings_opening_is_deferred_and_controller_retains_one_workspace(self) -> None:
         bridge_source = self.controller.split("    def request_settings_open(", 1)[1].split(
             "    def save_config", 1
         )[0]
@@ -250,9 +261,11 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertIn("self._settings_open_pending", bridge_source)
         self.assertNotIn("SettingsDialog", bridge_source)
         self.assertNotIn("settings_dialog", bridge_source)
-        self.assertIn("self._settings_overlay: Optional[Any] = None", self.controller)
-        self.assertIn("overlay.open_page(page_name, date_value, event_value)", self.controller)
-        self.assertIn("overlay.force_close()", self.controller)
+        self.assertIn("self._settings_workspace: Optional[Any] = None", self.controller)
+        self.assertIn("workspace.open_page(page_name, date_value, event_value)", self.controller)
+        self.assertIn("workspace.force_close()", self.controller)
+        menu_source = self.settings.split("def install_settings_menu", 1)[1]
+        self.assertIn("action.triggered.connect(controller.request_settings_open)", menu_source)
 
     def test_native_probe_window_overrides_remain_outside_product_code(self) -> None:
         self.assertNotIn("SETTINGS_SIZE_KEY", self.settings)
