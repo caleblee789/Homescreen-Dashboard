@@ -58,15 +58,14 @@
     {"id": "PROD-STATS-WIDE-MONTH", "layout": "wide-2x2", "view": "month"},
     {"id": "PROD-STATS-WIDE-YEAR", "layout": "wide-2x2", "view": "year"},
     {"id": "PROD-STATS-INTERMEDIATE", "layout": "intermediate", "view": "month"},
-    {"id": "PROD-STATS-NARROW", "layout": "narrow-stacked", "view": "month"},
-    {"id": "SET-STATS-PREVIEW", "layout": "settings-preview", "view": "month"}
+    {"id": "PROD-STATS-NARROW", "layout": "narrow-stacked", "view": "month"}
   ],
   "settings_quality_assertions": [
     "decorated-window-and-footer-fully-onscreen",
-    "attached-window-modal-sheet-in-anki-full-screen-space",
-    "preview-webview-created-after-sheet-visible",
+    "standard-parented-dialog-in-anki-full-screen-space",
+    "native-qt-settings-without-webengine",
     "single-unambiguous-active-rail-row",
-    "content-aware-compact-preview-fit-canvas",
+    "timer-free-sidebar-page-switching",
     "legacy-calendar-card-clean-top-alignment",
     "about-lead-cards-matched-height"
   ],

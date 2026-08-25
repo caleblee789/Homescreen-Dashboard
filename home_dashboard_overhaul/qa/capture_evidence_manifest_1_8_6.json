@@ -107,19 +107,12 @@
       "id": "settings-pages",
       "count": 24,
       "id_pattern": "SET-PAGE-{DASHBOARD|EVENTS|BIBLE|ABOUT}-{1040|1200|FULL}-{100|150}",
-      "requirements": ["one-unambiguous-active-rail-row", "same-page-tree", "main-page-scroller", "footer-final-row-fully-onscreen", "compact-content-aware-fit-preview"]
+      "requirements": ["one-unambiguous-active-rail-row", "same-page-tree", "main-page-scroller", "footer-final-row-fully-onscreen", "native-qt-controls-only"]
     },
     {
       "id": "settings-contract",
-      "count": 23,
+      "count": 16,
       "capture_ids": [
-        "SET-DOCK-SHOWN",
-        "SET-DOCK-HIDDEN",
-        "SET-PREVIEW-SECTION-FIT",
-        "SET-PREVIEW-SECTION-100",
-        "SET-PREVIEW-FULL-FIT",
-        "SET-PREVIEW-FULL-100",
-        "SET-OVERLAY-SUBMIN",
         "SET-EVENTS-EMPTY",
         "SET-EVENTS-POPULATED",
         "SET-EVENTS-SELECTED",
@@ -134,26 +127,25 @@
         "SET-SAVE-SUCCESS",
         "SET-SAVE-ERROR",
         "SET-LEGACY-ROUTE",
-        "SET-WINDOW-FIXED",
+        "SET-WINDOW-STANDARD",
         "SET-WINDOW-CLAMP"
       ],
-      "requirements": ["no-dead-full-height-fit-panel", "clean-legacy-card-anchor", "matched-about-lead-cards", "fixed-size-decorated-window-clamped", "parented-window-modal-open-lifecycle", "set-window-fixed-captures-anki-with-attached-sheet", "preview-webview-created-after-sheet-visible"]
+      "requirements": ["clean-legacy-card-anchor", "matched-about-lead-cards", "resizable-decorated-window-clamped", "parented-standard-dialog-exec-lifecycle", "set-window-standard-captures-anki-with-dialog", "no-settings-webview-or-preview"]
     },
     {
       "id": "statistics-accuracy",
-      "count": 5,
+      "count": 4,
       "capture_ids": [
         "PROD-STATS-WIDE-MONTH",
         "PROD-STATS-WIDE-YEAR",
         "PROD-STATS-INTERMEDIATE",
-        "PROD-STATS-NARROW",
-        "SET-STATS-PREVIEW"
+        "PROD-STATS-NARROW"
       ],
       "requirements": [
         "native-graphs-and-scheduler-parity",
         "86-percent-retention-and-14-percent-again",
         "one-snapshot-across-responsive-shells",
-        "initial-live-refresh-preview-and-restart-parity"
+        "initial-live-refresh-responsive-and-restart-parity"
       ]
     },
     {
@@ -167,9 +159,9 @@
     }
   ],
   "derived_native_frame_count": {
-    "initial": 100,
+    "initial": 92,
     "restart": 2,
-    "total": 102,
+    "total": 94,
     "derivation": "sum(capture_families.count)"
   },
   "runtime_smoke_requirements": {
@@ -200,16 +192,15 @@
       "settings-bible-widths",
       "settings-about-widths",
       "settings-font-150",
-      "settings-preview-modes",
       "settings-events-states",
       "settings-bible-states",
       "settings-save-workflow",
-      "settings-window-route-overlay",
+      "settings-window-route",
       "statistics-accuracy",
       "restart-persistence",
       "package-and-isolation-reports"
     ],
-    "detail_sheet_count": 19,
+    "detail_sheet_count": 18,
     "native_scale": "100-percent-capture-pixels"
   },
   "required_automated_gates": [

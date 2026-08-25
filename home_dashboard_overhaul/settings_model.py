@@ -158,11 +158,10 @@ def preview_snapshot_with_staged_events(
     config: Mapping[str, Any],
     reference_date: str,
 ) -> DashboardSnapshot:
-    """Overlay staged local events without reading or replacing study data.
+    """Overlay configured local events without replacing canonical study data.
 
-    Settings previews are allowed to reflect unsaved appearance and event edits,
-    but collection-backed values remain the controller's saved snapshot.  The
-    returned snapshot updates only the canonical facts used by every renderer.
+    The returned snapshot updates only event-bearing facts used by production
+    rendering; collection-backed study values remain unchanged.
     """
 
     try:

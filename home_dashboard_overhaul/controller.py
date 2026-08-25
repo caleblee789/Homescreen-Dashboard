@@ -115,7 +115,6 @@ class DashboardController:
             List[Tuple[Any, int]],
         ] = {}
         self.pending_most_missed: set[Tuple[Tuple[Any, ...], str]] = set()
-        self.settings_dialog: Any = None
         self._hooks_installed = False
         self.last_event_archive_date: Optional[date] = None
         self.facts_revision = 0
@@ -1181,29 +1180,13 @@ class DashboardController:
         selected_event_id: object = None,
         *_args: object,
     ) -> None:
-        from .settings import SETTINGS_WINDOW_MODALITY, SettingsDialog
+        from .settings import SettingsDialog
 
         page_name = page if isinstance(page, str) else ""
         date_value = selected_date if self._valid_bridge_date(selected_date) else ""
         event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
-        if self.settings_dialog is not None:
-            return
         dialog = SettingsDialog(self, page_name, date_value, event_value)
-        self.settings_dialog = dialog
-        dialog.setWindowModality(SETTINGS_WINDOW_MODALITY)
-        dialog.finished.connect(
-            lambda _result, candidate=dialog: self._settings_dialog_finished(candidate)
-        )
-        # A parented, window-modal open maps to an attached sheet on macOS.
-        # Leave placement and native-window ownership entirely to Qt.
-        dialog.open()
-
-    def _settings_dialog_finished(self, dialog: Any) -> None:
-        """Release only the Settings instance that actually finished."""
-
-        if self.settings_dialog is dialog:
-            self.settings_dialog = None
-        dialog.deleteLater()
+        dialog.exec()
 
     def save_config(self, config: Mapping[str, Any], preferred_verse: object = None) -> None:
         normalized = normalize_config(config)

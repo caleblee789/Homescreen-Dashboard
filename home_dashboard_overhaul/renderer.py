@@ -1,4 +1,4 @@
-"""Shared production renderer for the dashboard and staged Settings preview."""
+"""Production renderer for the Home Screen Dashboard."""
 
 from __future__ import annotations
 

@@ -31,15 +31,15 @@
   buried cards while excluding buried backlog/work due in the active day.
   Calendar history and detail actions now consume the same canonical records
   as the metric cards.
-- Changed Settings to a parented Qt window-modal sheet opened asynchronously
-  through `open()`. Removed explicit screen positioning and deferred Preview
-  WebView creation until after the sheet is visible, allowing Qt/macOS to keep
-  the dialog attached to Anki's active full-screen Space without native-window
-  hacks. The fixed 1200×800 default, screen clamping, and no-saved-geometry
-  policy remain intact.
+- Changed Settings to the conventional add-on window contract used by Progress
+  Bar: a normal parented, resizable `QDialog` opened synchronously through
+  `exec()` with default window flags and no explicit positioning. Removed every
+  Settings preview, embedded WebEngine instance, preview timer, global focus
+  hook, and secondary preview dialog so opening Settings and switching pages
+  remain native Qt operations.
 - Preserved schema 8, every JSON/DOM metric key, bridge command, label, order,
-  whole-percent presentation, 2×2 and responsive layouts, and the production
-  Settings preview. Added a 102-frame exact-package evidence contract with
+  whole-percent presentation, and 2×2 and responsive layouts. Added a 94-frame
+  exact-package evidence contract with
   native Graphs/Scheduler comparisons, responsive snapshot parity, a hard
   restart, and explicit unrun platform/accessibility boundaries.
 

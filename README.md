@@ -22,19 +22,18 @@ Browser or statistics classes.
   queues -2/-3 that are New or currently due/overdue. Future Learning and
   Review cards and transient queue-hidden siblings are excluded.
 - Initial HTML, live refresh, wide Month and Year 2×2 layouts, intermediate and
-  narrow shells, Settings Preview, and hard restart are contractually checked
+  narrow shells, and hard restart are contractually checked
   against identical values from the same collection snapshot.
-- Settings remains one fixed, parented native Qt composition. It now opens as
-  a Qt window-modal sheet with `open()`, never assigns screen coordinates, and
-  creates its Preview WebView only after the sheet is visible. This lets
-  Qt/macOS keep Settings attached to Anki's active full-screen Space; geometry
-  is not saved.
+- Settings now matches the conventional add-on window used by Progress Bar: a
+  parented, resizable `QDialog` opened synchronously with `exec()` and default
+  window flags. It never assigns screen coordinates and contains no WebEngine
+  or preview surface, so opening Settings and switching pages remain native Qt
+  operations rather than macOS window-modal sheet transitions.
 
 - Settings uses one native Qt composition at every size: a compact header,
-  152 px text rail, one active page scroller, one shared optional Preview dock,
-  and a stable final-row footer.
+  152 px text rail, one active page scroller, and a stable final-row footer.
 - Dashboard, Events, Bible verse, and About use compact content-sized controls
-  while retaining schema 8, staged previews, three-way merge behavior, and all
+  while retaining schema 8, staged changes, three-way merge behavior, and all
   existing configuration keys. Event sorting additionally accepts `name`.
 - Month is a stable 42-cell grid and Year remains a true 53-week grid. The
   production dashboard is capped at 1,120 px and measures Anki's visible
@@ -52,7 +51,7 @@ Browser or statistics classes.
 The local 1.8.6 candidate is built as
 `home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.6.ankiaddon` for
 installation through **Tools → Add-ons → Install from file**. Its SHA-256 is
-`483d289fb336e2920c8952275dba99c120538ba0a31e4b6350393fa48d268e2c`.
+`8c47cd2d7878452b744f009e6c7af91432bdf99bc702a927628c752dabb62bd9`.
 It will be copied into versioned native release evidence only after the
 remaining runtime gate is completed. Disable any legacy source add-ons named
 by the activation card.
@@ -75,7 +74,7 @@ The builder creates one 24-member allowlisted archive and verifies its version,
 safe paths, and source/archive byte parity. Release validation installs that
 exact archive in a fresh sync-disabled disposable Anki profile, proves four
 isolation gates before interaction and after one controlled restart, and
-captures the 102 states derived from the current implementation contract.
+captures the 94 states derived from the current implementation contract.
 
 The current machine-readable release authorities are:
 
@@ -84,8 +83,8 @@ The current machine-readable release authorities are:
 - [visual_regression_matrix_1_8_6.json](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_6.json)
 - [capture_evidence_manifest_1_8_6.json](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_6.json)
 
-The pending 1.8.6 evidence contract requires the exact 24-member archive, 102
-contract-owned native captures, all 19 detail sheets, an overview contact
+The pending 1.8.6 evidence contract requires the exact 24-member archive, 94
+contract-owned native captures, all 18 detail sheets, an overview contact
 sheet, restart-persistence results, archive parity, and four-gate isolation
 reports. None of those runtime deliverables are claimed complete until the
 remaining native capture and restart gate is run successfully.

@@ -272,16 +272,15 @@ def _validate_visual_matrix(matrix: dict) -> None:
     statistics_cases = matrix.get("statistics_accuracy_cases", [])
     if (
         not isinstance(statistics_cases, list)
-        or len(statistics_cases) != 5
+        or len(statistics_cases) != 4
         or {entry.get("id") for entry in statistics_cases} != {
             "PROD-STATS-WIDE-MONTH",
             "PROD-STATS-WIDE-YEAR",
             "PROD-STATS-INTERMEDIATE",
             "PROD-STATS-NARROW",
-            "SET-STATS-PREVIEW",
         }
     ):
-        raise ValueError("statistics visual matrix must cover every responsive and preview shell")
+        raise ValueError("statistics visual matrix must cover every responsive production shell")
 
 
 def validate_sources() -> dict:
@@ -357,9 +356,8 @@ def validate_sources() -> dict:
             "def _open_browser_target", "browser_will_search", "context.ids = ids",
             'command == "diagnostics"', 'self.open_settings("about_support")',
             "def _persist_settings_transaction", "_restore_optional_bytes",
-            "dialog.setWindowModality(SETTINGS_WINDOW_MODALITY)",
-            "dialog.finished.connect(", "dialog.open()",
-            "def _settings_dialog_finished", "if self.settings_dialog is dialog:",
+            "dialog = SettingsDialog(self, page_name, date_value, event_value)",
+            "dialog.exec()",
         ),
         "insights.py": (
             "ORDER BY again_count DESC, total_answers DESC, r.cid ASC",
@@ -376,15 +374,12 @@ def validate_sources() -> dict:
             "today_session", "data-hdo-has-bible",
         ),
         "settings.py": (
-            "self.setFixedSize(1200, 800)", "self.setFixedSize(width, height)",
-            "super().__init__(mw)", "SETTINGS_WINDOW_MODALITY = Qt.WindowModality.WindowModal",
-            "self.preview: Optional[AnkiWebView] = None",
-            "QTimer.singleShot(0, self._initialize_preview)",
-            "def _initialize_preview(self) -> None:",
+            "self.setMinimumSize(1040, 700)", "self.resize(1200, 800)",
+            "self.setMinimumSize(min(1040, width), min(700, height))",
+            "self.resize(width, height)", "super().__init__(mw)",
             "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
-            'self.preview_wrap.setObjectName("PreviewDock")',
-            '[("Section", "context"), ("Full dashboard", "full")]',
-            '[("Fit", "fit"), ("100%", "actual")]',
+            "def _connect_change_signals(self) -> None:",
+            "def _settings_changed(self, *_args: object) -> None:",
             'SettingsCard("Study calculations")', 'SettingsCard("Calendar display")',
             'SettingsCard("Calendar range")', 'SettingsCard("Data and reset"',
             "class EventRowWidget", "class VerseRowWidget", "def _attach_event_menu",
@@ -437,12 +432,20 @@ def validate_sources() -> dict:
             raise ValueError("retired macOS Settings panel behavior remains: {}".format(retired))
 
     for retired in (
-        "self.settings_dialog.exec()", "self.settings_dialog.show()",
-        "dialog.exec()", "dialog.show()",
-        "self.settings_dialog.raise_()", "self.settings_dialog.activateWindow()",
+        "self.settings_dialog", "SETTINGS_WINDOW_MODALITY",
+        "setWindowModality", "dialog.open()", "dialog.show()",
+        "dialog.finished.connect(", "def _settings_dialog_finished",
+        "dialog.raise_()", "dialog.activateWindow()",
     ):
         if retired in sources["controller.py"]:
             raise ValueError("retired top-level Settings lifecycle remains: {}".format(retired))
+
+    for retired in (
+        "AnkiWebView", "aqt.webview", "stdHtml", "focusChanged",
+        "PreviewDock", "_schedule_preview", "_render_preview", "_open_full_preview",
+    ):
+        if retired in sources["settings.py"]:
+            raise ValueError("retired Settings preview behavior remains: {}".format(retired))
 
     dashboard_surface_source = sources["renderer.py"] + sources["web/dashboard.js"] + sources["web/dashboard.css"]
     for forbidden in (
@@ -489,14 +492,14 @@ def validate_sources() -> dict:
         "production-palettes": 32,
         "production-core": 16,
         "settings-pages": 24,
-        "settings-contract": 23,
-        "statistics-accuracy": 5,
+        "settings-contract": 16,
+        "statistics-accuracy": 4,
         "restart": 2,
     }:
         raise ValueError("capture families do not match the implemented UI contract")
     derived = capture_contract.get("derived_native_frame_count", {})
-    if sum(counts.values()) != 102 or derived.get("total") != 102:
-        raise ValueError("capture plan must derive exactly 102 native frames")
+    if sum(counts.values()) != 94 or derived.get("total") != 94:
+        raise ValueError("capture plan must derive exactly 94 native frames")
 
     verses = verse_data.get("quote")
     if (

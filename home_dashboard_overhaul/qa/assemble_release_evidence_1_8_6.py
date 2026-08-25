@@ -19,9 +19,9 @@ from PIL import Image, ImageDraw, ImageFont
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY_ROOT = SOURCE_ROOT.parent
 RELEASE = "1.8.6"
-EXPECTED_INITIAL = 100
+EXPECTED_INITIAL = 92
 EXPECTED_RESTART = 2
-EXPECTED_TOTAL = 102
+EXPECTED_TOTAL = 94
 DEFAULT_CANDIDATE = SOURCE_ROOT / "dist" / "home-dashboard-overhaul-1.8.6.ankiaddon"
 DEFAULT_OUTPUT = SOURCE_ROOT / "qa" / "release-evidence-1.8.6-2026-08-24"
 
@@ -63,7 +63,7 @@ def expected_capture_ids() -> list[str]:
     ids.extend(str(value) for value in families["settings-contract"]["capture_ids"])
     ids.extend(str(value) for value in families["statistics-accuracy"]["capture_ids"])
     ids.extend(str(value) for value in families["restart"]["capture_ids"])
-    require(len(ids) == EXPECTED_TOTAL and len(set(ids)) == EXPECTED_TOTAL, "capture contract does not derive 102 unique IDs")
+    require(len(ids) == EXPECTED_TOTAL and len(set(ids)) == EXPECTED_TOTAL, "capture contract does not derive 94 unique IDs")
     return ids
 
 
@@ -123,14 +123,6 @@ def validate_runtime(run_output: Path, candidate_hash: str) -> tuple[dict[str, A
     require(
         restart.get("statistics_responsive_parity", {}).get("PROD-RESTART-PERSISTENCE", {}).get("status") == "passed",
         "restart statistics parity is incomplete",
-    )
-    require(
-        initial.get("captures", {}).get("SET-STATS-PREVIEW", {}).get("state", {}).get("statistics_parity") == "passed",
-        "Settings preview statistics parity is incomplete",
-    )
-    require(
-        restart.get("captures", {}).get("SET-RESTART-PERSISTENCE", {}).get("state", {}).get("statistics_parity") == "passed",
-        "restart Settings statistics parity is incomplete",
     )
     isolation = {
         "initial": isolation_summary(initial),
@@ -306,8 +298,8 @@ def detail_groups() -> list[tuple[str, list[str]]]:
     expected = expected_capture_ids()
     palette = expected[:32]
     page_ids = expected[48:72]
-    contract = expected[72:95]
-    statistics = expected[95:100]
+    contract = expected[72:88]
+    statistics = expected[88:92]
     return [
         ("Production palettes · Sapphire Glass", palette[0:8]),
         ("Production palettes · Graphite", palette[8:16]),
@@ -320,13 +312,12 @@ def detail_groups() -> list[tuple[str, list[str]]]:
         ("Settings Bible verse · 100% application font", [value for value in page_ids if "BIBLE" in value and value.endswith("-100")]),
         ("Settings About · 100% application font", [value for value in page_ids if "ABOUT" in value and value.endswith("-100")]),
         ("Settings pages · 150% application font", [value for value in page_ids if value.endswith("-150")]),
-        ("Settings Preview modes", contract[0:6]),
-        ("Settings Events states", contract[7:12]),
-        ("Settings Bible states", contract[12:15]),
-        ("Settings dirty, revert, save, and error", contract[16:20]),
-        ("Settings overlay, About bottom, legacy route, fixed window, and clamp", [contract[index] for index in (6, 15, 20, 21, 22)]),
-        ("Statistics accuracy · responsive shells and Settings preview", statistics),
-        ("Controlled restart persistence", expected[100:102]),
+        ("Settings Events states", contract[0:5]),
+        ("Settings Bible states", contract[5:8]),
+        ("Settings dirty, revert, save, and error", contract[9:13]),
+        ("Settings About bottom, legacy route, standard window, and clamp", [contract[index] for index in (8, 13, 14, 15)]),
+        ("Statistics accuracy · responsive shells", statistics),
+        ("Controlled restart persistence", expected[92:94]),
     ]
 
 
@@ -345,7 +336,7 @@ def make_contact_sheets(output: Path, isolation: Mapping[str, Any], archive: Map
         ))
         covered.extend(capture_ids)
     sheets.append(report_sheet(output, isolation, archive))
-    require(len(sheets) == 20, "contact-sheet set must contain one overview and 19 detail sheets")
+    require(len(sheets) == 19, "contact-sheet set must contain one overview and 18 detail sheets")
     require(
         len(covered) == len(expected) and set(covered) == set(expected),
         "detail sheets must cover every native capture exactly once",
@@ -354,7 +345,7 @@ def make_contact_sheets(output: Path, isolation: Mapping[str, Any], archive: Map
         "schema_version": 2,
         "release": RELEASE,
         "overview_count": 1,
-        "detail_sheet_count": 19,
+        "detail_sheet_count": 18,
         "native_capture_count": EXPECTED_TOTAL,
         "each_native_capture_in_details_exactly_once": True,
         "sheets": sheets,
@@ -369,10 +360,10 @@ def write_readme(output: Path, candidate_hash: str) -> None:
 This immutable evidence set was assembled from the exact reproducible package
 `home-dashboard-overhaul-1.8.6.ankiaddon` with SHA-256 `{}`.
 
-- `captures/` contains 102 native frames derived from the current implementation
-  contract: 100 initial and two controlled-restart frames.
+- `captures/` contains 94 native frames derived from the current implementation
+  contract: 92 initial and two controlled-restart frames.
 - `contact-sheets/contact-sheet-00-overview.png` indexes all frames.
-- The 19 detail sheets cover every native frame exactly once; the final sheet
+- The 18 detail sheets cover every native frame exactly once; the final sheet
   summarizes package and isolation proof.
 - `reports/runtime-report-initial.json` and `runtime-report-restart.json` retain
   exact-package, scheduler-count, Settings, persistence, and all four isolation

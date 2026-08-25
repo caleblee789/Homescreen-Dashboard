@@ -32,19 +32,16 @@ Browser or statistics classes.
   including filtered-deck original due dates and future buried cards while
   excluding buried work due in the active day. Tooltips and selected-day
   details consume the same canonical history records as the metric cards.
-- Initial HTML, live refresh, Month/Year 2×2, intermediate, narrow, Settings
-  Preview, and restart states are checked for identical metric values. Schema
+- Initial HTML, live refresh, Month/Year 2×2, intermediate, narrow, and restart
+  states are checked for identical metric values. Schema
   8, all existing labels/order/JSON/DOM keys, and bridge commands are unchanged.
 
 - Settings has one native Qt widget tree at every size: a compact global
-  header, fixed 152 px text rail, one page scroller, one shared optional
-  Preview dock, and a true final-row footer. On a physically smaller screen,
-  the same dock becomes a layout-managed overlay.
+  header, fixed 152 px text rail, one page scroller, and a true final-row
+  footer.
 - Dashboard, Events, Bible verse, and About use compact shared rows and
-  content-sized controls. Preview starts open each Dashboard, Events, and
-  Bible session, is omitted on About, and is not persisted.
-- Preview uses the production renderer for Section/Full dashboard and
-  Fit/100%, reflects all staged state, and writes nothing until Save.
+  content-sized controls. All controls are native Qt and staged state writes
+  nothing until Save.
 - Month is always 42 cells. Year always uses one responsive 53-week tree that
   stays inside the dashboard without horizontal scrolling at 480 px and above;
   only the heatmap may scroll below that boundary. Calendar legend and
@@ -86,12 +83,12 @@ until **Save changes**. **Revert changes** returns every staged field to the
 saved baseline. The baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
-appearance. Dashboard themes affect only swatches and production-rendered
-preview content. Settings opens as a parented Qt window-modal sheet through
-`open()`. It assigns no screen coordinates, and creates the Preview WebView
-only after the sheet is visible, so Qt/macOS owns the native parent and active
-full-screen Space. It uses a fixed 1200×800 size, clamped for smaller screens
-instead of restoring a saved size.
+appearance. Dashboard themes affect only swatches and production rendering.
+Settings opens as a normal parented, resizable `QDialog` through `exec()` with
+default window flags, matching conventional Anki add-on settings windows. It
+assigns no screen coordinates, contains no embedded WebEngine content, targets
+1200×800, and clamps its initial size for smaller screens without restoring a
+saved size.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source
@@ -117,7 +114,7 @@ python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 The builder creates one 24-file allowlisted archive, checks its version and
 safe paths, and verifies every packaged byte against source. That exact archive
 is installed into one fresh sync-disabled Anki 26.8 profile for an initial pass
-and a controlled restart. Native acceptance follows the current contract: 102
+and a controlled restart. Native acceptance follows the current contract: 94
 captures spanning production, Settings, and restart states, with validated
 contact-sheet coverage and direct Anki Graphs/Scheduler parity.
 

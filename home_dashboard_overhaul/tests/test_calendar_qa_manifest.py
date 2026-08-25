@@ -42,7 +42,9 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(settings["minimum_normal_window"], [1040, 700])
         self.assertEqual(settings["maximum_inner_width"], 1240)
         self.assertEqual(settings["rail_width"], 152)
-        self.assertFalse(settings["preview_persisted"])
+        self.assertEqual(settings["embedded_web_content"], "none")
+        self.assertEqual(settings["window_lifecycle"], "parented-standard-dialog-exec")
+        self.assertEqual(settings["page_switching"], "native-stacked-widget-only-no-render-timer")
         dashboard = self.manifest["dashboard_architecture"]
         self.assertEqual(dashboard["maximum_width"], 1120)
         self.assertEqual(dashboard["month_cells"], 42)
@@ -99,9 +101,9 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         derived = self.capture["derived_native_frame_count"]
         self.assertEqual(sum(family["count"] for family in families), derived["total"])
         self.assertEqual(derived, {
-            "initial": 100,
+            "initial": 92,
             "restart": 2,
-            "total": 102,
+            "total": 94,
             "derivation": "sum(capture_families.count)",
         })
         self.assertEqual(
@@ -110,8 +112,8 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
                 "production-palettes": 32,
                 "production-core": 16,
                 "settings-pages": 24,
-                "settings-contract": 23,
-                "statistics-accuracy": 5,
+                "settings-contract": 16,
+                "statistics-accuracy": 4,
                 "restart": 2,
             },
         )
@@ -133,16 +135,12 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
             if item["id"] == "settings-contract"
         )
         required = {
-            "SET-DOCK-SHOWN", "SET-DOCK-HIDDEN",
-            "SET-PREVIEW-SECTION-FIT", "SET-PREVIEW-SECTION-100",
-            "SET-PREVIEW-FULL-FIT", "SET-PREVIEW-FULL-100",
-            "SET-OVERLAY-SUBMIN",
             "SET-EVENTS-EMPTY", "SET-EVENTS-POPULATED", "SET-EVENTS-SELECTED",
             "SET-EVENTS-SEARCHED", "SET-EVENTS-ARCHIVED",
             "SET-BIBLE-SHORT", "SET-BIBLE-LONG", "SET-BIBLE-CUSTOM",
             "SET-ABOUT-BOTTOM", "SET-DIRTY", "SET-REVERT",
             "SET-SAVE-SUCCESS", "SET-SAVE-ERROR", "SET-LEGACY-ROUTE",
-            "SET-WINDOW-FIXED", "SET-WINDOW-CLAMP",
+            "SET-WINDOW-STANDARD", "SET-WINDOW-CLAMP",
         }
         self.assertEqual(set(family["capture_ids"]), required)
 
@@ -156,7 +154,6 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
             "PROD-STATS-WIDE-YEAR",
             "PROD-STATS-INTERMEDIATE",
             "PROD-STATS-NARROW",
-            "SET-STATS-PREVIEW",
         }
         self.assertEqual(set(family["capture_ids"]), expected)
         self.assertEqual(

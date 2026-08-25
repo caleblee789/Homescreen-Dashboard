@@ -1,19 +1,19 @@
 # Release visual contract
 
-Status: Home Screen Dashboard 1.8.5 canonical UI release contract.
+Status: Home Screen Dashboard 1.8.6 canonical UI release contract.
 
 ## Authority and retained history
 
 The current machine-readable authorities are:
 
-- `qa/calendar_surface_manifest_1_8_5.json`
-- `qa/ui-surface-registry_1_8_5.json`
-- `qa/visual_regression_matrix_1_8_5.json`
-- `qa/capture_evidence_manifest_1_8_5.json`
+- `qa/calendar_surface_manifest_1_8_6.json`
+- `qa/ui-surface-registry_1_8_6.json`
+- `qa/visual_regression_matrix_1_8_6.json`
+- `qa/capture_evidence_manifest_1_8_6.json`
 
-The supplied 3420×2214 screenshot and complete 1.8.0 through 1.8.4 packages,
+The supplied 3420×2214 screenshot and complete 1.8.0 through 1.8.5 packages,
 reports, captures, and contact sheets are immutable calibration history. They
-must not be overwritten or represented as new 1.8.5 evidence.
+must not be overwritten or represented as new 1.8.6 evidence.
 
 ## Production composition
 
@@ -46,17 +46,14 @@ bottom-scrolled clearance above Anki's native actions.
 ## Settings composition
 
 - One native Qt tree owns all widths: compact header, fixed 152 px rail, one
-  page scroller, optional shared Preview dock, and final-row footer.
-- Default size is 1200×800. Minimum 1040×700 is enforced when the screen permits;
-  restored size and the complete decorated frame are clamped to available
-  geometry so the final-row footer remains onscreen. The inner shell is
-  centered and capped at 1,240 px.
-- On a physically smaller screen, the same Preview dock becomes a
-  layout-managed overlay. No alternate controls or page trees are created.
-- Preview starts shown each Dashboard, Events, and Bible verse session, is
-  omitted on About, and is not persisted. Section/Full and Fit/100% use the
-  production renderer. Fit uses a content-aware compact canvas instead of a
-  dead full-height panel; Full and 100% retain a larger scrollable canvas.
+  page scroller, and final-row footer. No WebEngine content is embedded.
+- The resizable dialog targets 1200×800. A minimum up to 1040×700 is enforced
+  when the screen permits, and the initial size is clamped to available
+  geometry so the footer remains onscreen. The inner shell is centered and
+  capped at 1,240 px; no geometry is persisted or positioned manually.
+- Production opens a normal `QDialog(mw)` synchronously with `exec()` and
+  default flags. Sidebar navigation only changes the native stacked page; it
+  creates no timer, WebView, secondary window, or focus hook.
 - The rail paints exactly one active row, legacy Calendar routing aligns the
   Calendar display card without exposing a preceding-card sliver, and the
   About lead cards share a matched visual row.
@@ -67,18 +64,17 @@ bottom-scrolled clearance above Anki's native actions.
   belong to the main page scroller. Verse loading remains incremental.
 
 Settings captures cover all four pages at 1040, 1200, and full-screen widths;
-100% and 150% application fonts; dock shown/hidden; Section/Full and Fit/100%;
-the sub-minimum overlay; required Events/Bible/About states; dirty, revert,
-save, and error states; legacy routing; window restore/clamp; and restart.
+100% and 150% application fonts; required Events/Bible/About states; dirty,
+revert, save, and error states; legacy routing; standard/clamped windows; and
+restart.
 
 ## Persistence and meaning
 
 - Schema remains 8. The only persisted config-domain expansion is
   `events.sort = "name"`.
 - Existing completion-palette IDs and per-theme selections remain stable.
-- Settings size is a non-schema Qt preference; Preview visibility is not
-  persisted.
-- `SettingsDraft`, staged preview, three-way merge, dependency retention, and
+- Settings size remains unpersisted and there is no preview preference.
+- `SettingsDraft`, staged changes, three-way merge, dependency retention, and
   list-as-one-field dirty counting remain authoritative.
 - Saving validates all staged state before either write, disables Save while
   active, updates the baseline only after complete success, and uses
@@ -91,13 +87,13 @@ save, and error states; legacy routing; window restore/clamp; and restart.
 
 Pass the Python and JavaScript suites, compilation, manifest/assets checks,
 `git diff --check`, source/archive parity, safe-path inspection, and secret/link
-audits. Build `home-dashboard-overhaul-1.8.5.ankiaddon` reproducibly.
+audits. Build `home-dashboard-overhaul-1.8.6.ankiaddon` reproducibly.
 
 Install that exact hash into one fresh disposable sync-disabled Anki 26.8
 profile. Prove process, window, filesystem, and sync isolation before
 interaction, then repeat all four gates after one controlled restart.
 
-The implementation-derived evidence contract contains 97 native captures: 95
+The implementation-derived evidence contract contains 94 native captures: 92
 initial production/Settings states and two controlled-restart states. Every
 capture ID must appear exactly once in validated contact-sheet coverage.
 

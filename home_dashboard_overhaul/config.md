@@ -102,29 +102,21 @@ records. Forecasting follows Anki's non-new, non-suspended future-due logic,
 uses filtered-deck original due dates, includes future buried cards, and
 excludes buried backlog/work due in the active scheduler day.
 
-## Settings and preview
+## Settings
 
-The Settings window is a `QDialog(mw)` opened as a Qt window-modal sheet through
-`open()`, so Qt/macOS manages the native parent and active full-screen Space.
-It never assigns opening coordinates. Preview reserves its normal dock space
-with a lightweight placeholder, then creates the shared WebView only after the
-sheet is visible. The window uses a fixed 1200×800 size; smaller screens receive
-a clamped fixed size with a 32 px safety margin, and the opening size is not
-persisted. It uses one compact header, 152 px rail, active-page scroller,
-optional shared right Preview dock, and final-row footer. A physically smaller
-screen keeps the same rail and page and places the same Preview dock in a
-layout-managed overlay.
+The Settings window is a normal `QDialog(mw)` opened synchronously through
+`exec()` with default window flags, matching conventional Anki add-on settings
+windows. It never assigns opening coordinates and contains no `AnkiWebView` or
+other embedded WebEngine content. The resizable window targets 1200×800;
+smaller screens receive a clamped initial size with a 32 px safety margin, and
+the opening size is not persisted. It uses one compact header, 152 px rail,
+active-page scroller, and final-row footer.
 
-Preview is open by default for Dashboard, Events, and Bible verse each session,
-is omitted on About, and is never persisted. `Section | Full dashboard` and
-`Fit | 100%` use the production renderer. Fit scales a top-aligned wrapper;
-100% owns Preview's secondary vertical scrollbar. Settings colors derive only
-from Anki's light/dark appearance; dashboard themes affect swatches and preview
-content.
-
-Collection-backed preview figures use the most recent saved Home snapshot.
-Staged display, event, heatmap, and Bible changes update Preview immediately
-but write nothing until Save. Revert restores the complete saved baseline.
+Settings colors derive only from Anki's light/dark appearance; dashboard themes
+affect swatches and production rendering. Staged display, event, heatmap, and
+Bible changes update the draft synchronously but write nothing until Save.
+Sidebar changes only select a native stacked page. Revert restores the complete
+saved baseline.
 Saving validates all staged state, prepares both config and manual-verse
 writes, replaces atomically where supported, and rolls back best-effort on a
 partial failure before reporting a specific inline error.
