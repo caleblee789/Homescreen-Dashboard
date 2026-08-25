@@ -1029,6 +1029,9 @@ def _set_accessibility(widget: QWidget, name: str, description: str = "") -> Non
 class SettingsSidebar(QListWidget):
     """Shared section rail whose width follows its live label metrics."""
 
+    _ITEM_HORIZONTAL_INSET = 24
+    _ITEM_VERTICAL_INSET = 12
+
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setProperty("hdoPrimitive", _settings_primitive("settings-sidebar"))
@@ -1036,8 +1039,40 @@ class SettingsSidebar(QListWidget):
         self.setAccessibleName("Settings sections")
         self.setAccessibleDescription("Choose a Home Screen Dashboard settings section")
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setWordWrap(True)
+        self.setTextElideMode(Qt.TextElideMode.ElideNone)
+        self.setUniformItemSizes(False)
         self.setFixedWidth(152)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+
+    def refresh_item_sizes(self) -> None:
+        """Give wrapped navigation labels enough height at large app fonts."""
+
+        metrics = self.fontMetrics()
+        available_width = max(1, self.width() - self._ITEM_HORIZONTAL_INSET)
+        space_width = metrics.horizontalAdvance(" ")
+        for row in range(self.count()):
+            item = self.item(row)
+            if item is None:
+                continue
+            lines = 1
+            line_width = 0
+            for word in item.text().split():
+                word_width = metrics.horizontalAdvance(word)
+                candidate = word_width if not line_width else line_width + space_width + word_width
+                if line_width and candidate > available_width:
+                    lines += 1
+                    line_width = word_width
+                else:
+                    line_width = candidate
+            item.setSizeHint(
+                QSize(0, max(34, lines * metrics.lineSpacing() + self._ITEM_VERTICAL_INSET))
+            )
+
+    def changeEvent(self, event: QEvent) -> None:
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.FontChange:
+            self.refresh_item_sizes()
 
     def measured_width(self) -> int:
         font_metrics = self.fontMetrics()
@@ -1850,6 +1885,7 @@ class SettingsDialog(QDialog):
         item.setData(Qt.ItemDataRole.UserRole, section_id)
         item.setData(Qt.ItemDataRole.AccessibleTextRole, name)
         self.nav.addItem(item)
+        self.nav.refresh_item_sizes()
         self.nav_rows[section_id] = self.nav.count() - 1
         self.page_indices[section_id] = self.stack.count()
         page.setAccessibleName("{} settings".format(name))

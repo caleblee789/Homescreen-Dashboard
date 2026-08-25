@@ -1,0 +1,45 @@
+{
+  "all_four_gates_repeated_after_restart": true,
+  "initial": {
+    "candidate": {
+      "candidate": "/Users/test/Documents/ChatGPT.nosync/Homescreen Statistics Overhaul/home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.6.ankiaddon",
+      "candidate_sha256": "095bada7a6daf7cb9687feee81fb5918cacca1b51cfc62959c431fce120da724",
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.6",
+      "member_count": 24
+    },
+    "collection_path": "/private/tmp/anki-release-qa._0ua6aus/Codex QA HDO 1.8.6 Final B 20260825-0225/collection.anki2",
+    "gated_before_window_interaction": true,
+    "gates": {
+      "filesystem": true,
+      "process": true,
+      "sync": true,
+      "window": true
+    },
+    "profile": "Codex QA HDO 1.8.6 Final B 20260825-0225",
+    "run_root": "/private/tmp/anki-release-qa._0ua6aus",
+    "status": "passed",
+    "window_title": "Codex QA HDO 1.8.6 Final B 20260825-0225 - Anki"
+  },
+  "restart": {
+    "candidate": {
+      "candidate": "/Users/test/Documents/ChatGPT.nosync/Homescreen Statistics Overhaul/home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.6.ankiaddon",
+      "candidate_sha256": "095bada7a6daf7cb9687feee81fb5918cacca1b51cfc62959c431fce120da724",
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.6",
+      "member_count": 24
+    },
+    "collection_path": "/private/tmp/anki-release-qa._0ua6aus/Codex QA HDO 1.8.6 Final B 20260825-0225/collection.anki2",
+    "gated_before_window_interaction": true,
+    "gates": {
+      "filesystem": true,
+      "process": true,
+      "sync": true,
+      "window": true
+    },
+    "profile": "Codex QA HDO 1.8.6 Final B 20260825-0225",
+    "run_root": "/private/tmp/anki-release-qa._0ua6aus",
+    "status": "passed",
+    "window_title": "Codex QA HDO 1.8.6 Final B 20260825-0225 - Anki"
+  }
+}

@@ -21,3 +21,6 @@ home_dashboard_overhaul/qa/live-ui-*/
 **/.DS_Store
 home_dashboard_overhaul/qa/CALENDAR_UI_AUDIT_1.5.1.md
 home_dashboard_overhaul/qa/CALENDAR_POLISH_BEFORE_AFTER.md
+
+# Keep the generated 1.8.6 presentation sheets as local release evidence.
+home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-24/contact-sheets/

@@ -82,6 +82,8 @@ base.QA_HEAD_A = "HDO 1.8.6 QA Head A"
 base.QA_HEAD_B = "HDO 1.8.6 QA Head B"
 base.QA_CONFIG_A = "HDO 1.8.6 QA Limit 3"
 base.QA_CONFIG_B = "HDO 1.8.6 QA Limit 7"
+base.RESTART_PRE_FIXTURE_EXPECTED_NEW = None
+base.RESTART_MULTI_DECK_EXPECTED_TOTAL = 12
 base.OUTPUT_ROOT = OUTPUT_ROOT
 base.CAPTURE_ROOT = CAPTURE_ROOT
 base.REPORT_PATH = REPORT_PATH
@@ -861,6 +863,22 @@ def _settings_screen(dialog: SettingsDialog | None = None) -> Any:
     return screen or base._qa_screen()
 
 
+def _center_decorated_settings_frame(dialog: SettingsDialog, available: Any) -> None:
+    """Center the settled native frame, including macOS window decorations."""
+
+    QApplication.processEvents()
+    for _attempt in range(3):
+        frame = dialog.frameGeometry()
+        target_x = available.x() + max(0, (available.width() - frame.width()) // 2)
+        target_y = available.y() + max(0, (available.height() - frame.height()) // 2)
+        delta_x = target_x - frame.x()
+        delta_y = target_y - frame.y()
+        if abs(delta_x) <= 1 and abs(delta_y) <= 1:
+            return
+        dialog.move(dialog.x() + delta_x, dialog.y() + delta_y)
+        QApplication.processEvents()
+
+
 def _prepare_settings_case(case: Mapping[str, Any]) -> SettingsDialog:
     _set_application_font(int(case.get("font_percent", 100)))
     special = str(case.get("special", ""))
@@ -905,6 +923,8 @@ def _prepare_settings_case(case: Mapping[str, Any]) -> SettingsDialog:
         )
         dialog.move(settled_available.center() - dialog.rect().center())
         available = settled_available
+    if special not in {"window-clamp", "window-standard"}:
+        _center_decorated_settings_frame(dialog, available)
 
     if special == "events-selected":
         dialog._select_event_id("evt-a", False)
@@ -952,6 +972,8 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
     archived_tree = getattr(dialog, "archived_events", None)
     quote_list = getattr(dialog, "quote_list", None)
     deck_tree = getattr(dialog, "deck_tree", None)
+    about_item = dialog.nav.item(dialog.nav_rows.get("about_support", -1))
+    about_item_height = dialog.nav.visualItemRect(about_item).height() if about_item is not None else 0
     scrollbar_off = Qt.ScrollBarPolicy.ScrollBarAlwaysOff
     settings_screen = _settings_screen(dialog)
     available_geometry = settings_screen.availableGeometry()
@@ -966,6 +988,13 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         "window_size": [dialog.width(), dialog.height()],
         "minimum_size": [dialog.minimumWidth(), dialog.minimumHeight()],
         "available_size": [available_geometry.width(), available_geometry.height()],
+        "available_geometry": [
+            available_geometry.x(),
+            available_geometry.y(),
+            available_geometry.width(),
+            available_geometry.height(),
+        ],
+        "decorated_frame": [frame.x(), frame.y(), frame.width(), frame.height()],
         "screen_name": settings_screen.name(),
         "screen_device_pixel_ratio": settings_screen.devicePixelRatio(),
         "decorated_frame_inside_available": (
@@ -982,6 +1011,10 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         "font_percent": int(case.get("font_percent", 100)),
         "application_font_point_size": QApplication.font().pointSizeF(),
         "nav_width": dialog.nav.width(),
+        "nav_word_wrap": dialog.nav.wordWrap(),
+        "nav_elision_disabled": dialog.nav.textElideMode() == Qt.TextElideMode.ElideNone,
+        "nav_about_visual_height": about_item_height,
+        "nav_font_line_spacing": dialog.nav.fontMetrics().lineSpacing(),
         "page_count": dialog.stack.count(),
         "main_page_scroller": isinstance(current, QScrollArea),
         "body_height": dialog.body_shell.height(),
@@ -1012,6 +1045,14 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
 
 def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     base._require(state.get("nav_width") == 152, "Settings rail is not 152px")
+    base._require(bool(state.get("nav_word_wrap")), "Settings rail does not wrap long labels")
+    base._require(bool(state.get("nav_elision_disabled")), "Settings rail still elides long labels")
+    if int(state.get("font_percent", 100)) >= 150:
+        base._require(
+            int(state.get("nav_about_visual_height", 0))
+            >= 2 * int(state.get("nav_font_line_spacing", 0)),
+            "About & support did not receive a two-line row at 150 percent app font",
+        )
     base._require(state.get("page_count") == 4, "Settings does not own exactly four pages")
     base._require(bool(state.get("main_page_scroller")), "active Settings page is not the main scroller")
     base._require(bool(state.get("footer_after_body")), "Settings footer is not the final layout row")

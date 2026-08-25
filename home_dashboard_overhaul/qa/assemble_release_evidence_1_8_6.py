@@ -270,9 +270,9 @@ def report_sheet(output: Path, isolation: Mapping[str, Any], archive: Mapping[st
         "Controlled restart window/profile gate: PASS",
         "Controlled restart disposable filesystem gate: PASS",
         "Controlled restart sync-disabled gate: PASS",
-        "Scheduler-authoritative count: 3 + 7 = 10; excluding head B = 3; restart = 10",
+        "Scheduler-authoritative New: 3 + 7 = 10; excluding head B = 3; restart New = 10, Total = 12",
         "Native statistics parity: Anki Graphs + Scheduler = dashboard cards and calendar PASS",
-        "Restart persistence: production Year + Settings clean state + event name sort + fixed window policy",
+        "Restart persistence: production Year + Settings clean state + event name sort + resizable window policy",
         "VoiceOver, Windows, Linux, forced-colors, DPR 1, and OS display scaling: UNRUN",
     ]
     y = 150
@@ -362,9 +362,10 @@ This immutable evidence set was assembled from the exact reproducible package
 
 - `captures/` contains 94 native frames derived from the current implementation
   contract: 92 initial and two controlled-restart frames.
-- `contact-sheets/contact-sheet-00-overview.png` indexes all frames.
-- The 18 detail sheets cover every native frame exactly once; the final sheet
-  summarizes package and isolation proof.
+- The 19 generated contact sheets are retained as local-only release evidence
+  and intentionally excluded from version control. Their 18 detail sheets cover
+  every native frame exactly once; the final sheet summarizes package and
+  isolation proof.
 - `reports/runtime-report-initial.json` and `runtime-report-restart.json` retain
   exact-package, scheduler-count, Settings, persistence, and all four isolation
   gates.
@@ -436,9 +437,11 @@ def assemble(run_root: Path, candidate: Path, output: Path) -> Path:
         },
         "native_captures": {"initial": EXPECTED_INITIAL, "restart": EXPECTED_RESTART, "total": EXPECTED_TOTAL},
         "contact_sheets": {
-            "overview": 1,
-            "details": 19,
+            "overview": contact_sheets["overview_count"],
+            "details": contact_sheets["detail_sheet_count"],
+            "total": len(contact_sheets["sheets"]),
             "exact_once_detail_coverage": contact_sheets["each_native_capture_in_details_exactly_once"],
+            "repository_tracking": "local-only",
         },
         "isolation": isolation,
         "restart_persistence": "passed",

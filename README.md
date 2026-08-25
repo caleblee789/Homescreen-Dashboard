@@ -32,6 +32,8 @@ Browser or statistics classes.
 
 - Settings uses one native Qt composition at every size: a compact header,
   152 px text rail, one active page scroller, and a stable final-row footer.
+- At 150% application font size, long Settings rail labels wrap within that
+  fixed rail instead of being clipped or elided.
 - Dashboard, Events, Bible verse, and About use compact content-sized controls
   while retaining schema 8, staged changes, three-way merge behavior, and all
   existing configuration keys. Event sorting additionally accepts `name`.
@@ -51,10 +53,10 @@ Browser or statistics classes.
 The local 1.8.6 candidate is built as
 `home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.6.ankiaddon` for
 installation through **Tools → Add-ons → Install from file**. Its SHA-256 is
-`8c47cd2d7878452b744f009e6c7af91432bdf99bc702a927628c752dabb62bd9`.
-It will be copied into versioned native release evidence only after the
-remaining runtime gate is completed. Disable any legacy source add-ons named
-by the activation card.
+`095bada7a6daf7cb9687feee81fb5918cacca1b51cfc62959c431fce120da724`.
+The byte-identical archive is retained in the completed versioned native
+release evidence. Disable any legacy source add-ons named by the activation
+card.
 
 The manifest supports Anki Desktop 26.8 (`min_point_version` and
 `max_point_version` 260800).
@@ -83,11 +85,14 @@ The current machine-readable release authorities are:
 - [visual_regression_matrix_1_8_6.json](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_6.json)
 - [capture_evidence_manifest_1_8_6.json](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_6.json)
 
-The pending 1.8.6 evidence contract requires the exact 24-member archive, 94
-contract-owned native captures, all 18 detail sheets, an overview contact
-sheet, restart-persistence results, archive parity, and four-gate isolation
-reports. None of those runtime deliverables are claimed complete until the
-remaining native capture and restart gate is run successfully.
+The completed [1.8.6 native release evidence](home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-24/README.md)
+contains the exact 24-member archive, 94 contract-owned native captures,
+passing restart-persistence and archive-parity reports, and four-gate isolation
+proof repeated after restart. Its 19 generated presentation sheets were
+reviewed locally, cover every native frame exactly once across 18 detail
+sheets, and are intentionally excluded from version control. The
+[evidence manifest](home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-24/capture-evidence-manifest.json)
+records the sheet counts, exact package hash, and deferred gates.
 The [1.8.3 Settings contact-sheet baseline](home_dashboard_overhaul/qa/settings-menu-contact-sheets-1.8.3-2026-08-23-2222/capture-manifest.json)
 is preserved separately as historical design evidence with 21 raw captures and
 six presentation sheets.

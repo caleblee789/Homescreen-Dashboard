@@ -24,6 +24,21 @@ class SettingsReleaseContractTests(unittest.TestCase):
         cls.release_probe = (ROOT / "qa" / "runtime_probe_release_1_8_6.py").read_text(
             encoding="utf-8"
         )
+        cls.release_probe_base = (ROOT / "qa" / "runtime_probe_release_1_8_4.py").read_text(
+            encoding="utf-8"
+        )
+        cls.evidence_assembler = (
+            ROOT / "qa" / "assemble_release_evidence_1_8_6.py"
+        ).read_text(encoding="utf-8")
+        cls.repository_ignore = (ROOT.parent / ".gitignore").read_text(encoding="utf-8")
+        cls.release_evidence_manifest = json.loads(
+            (
+                ROOT
+                / "qa"
+                / "release-evidence-1.8.6-2026-08-24"
+                / "capture-evidence-manifest.json"
+            ).read_text(encoding="utf-8")
+        )
         cls.config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
         cls.manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
@@ -168,6 +183,66 @@ class SettingsReleaseContractTests(unittest.TestCase):
     def test_native_probe_window_overrides_remain_outside_product_code(self) -> None:
         self.assertNotIn("SETTINGS_SIZE_KEY", self.settings)
         self.assertNotIn("QSettings", self.settings)
+        self.assertIn("def _center_decorated_settings_frame", self.release_probe)
+        self.assertIn(
+            "dialog.move(dialog.x() + delta_x, dialog.y() + delta_y)",
+            self.release_probe,
+        )
+        self.assertIn('"decorated_frame": [frame.x(), frame.y(), frame.width(), frame.height()]', self.release_probe)
+
+    def test_fixed_settings_rail_wraps_without_eliding_large_font_labels(self) -> None:
+        for marker in (
+            "self.setWordWrap(True)",
+            "self.setTextElideMode(Qt.TextElideMode.ElideNone)",
+            "def refresh_item_sizes(self) -> None:",
+            "lines * metrics.lineSpacing() + self._ITEM_VERTICAL_INSET",
+            "self.nav.refresh_item_sizes()",
+        ):
+            self.assertIn(marker, self.settings)
+        for marker in (
+            '"nav_word_wrap": dialog.nav.wordWrap()',
+            '"nav_elision_disabled": dialog.nav.textElideMode() == Qt.TextElideMode.ElideNone',
+            '"nav_about_visual_height": about_item_height',
+            '"About & support did not receive a two-line row at 150 percent app font"',
+        ):
+            self.assertIn(marker, self.release_probe)
+
+    def test_restart_smoke_separates_transient_queue_state_from_exact_fixture_limits(self) -> None:
+        self.assertIn("RESTART_PRE_FIXTURE_EXPECTED_NEW = 10", self.release_probe_base)
+        self.assertIn("base.RESTART_PRE_FIXTURE_EXPECTED_NEW = None", self.release_probe)
+        self.assertIn("RESTART_MULTI_DECK_EXPECTED_TOTAL = 10", self.release_probe_base)
+        self.assertIn("base.RESTART_MULTI_DECK_EXPECTED_TOTAL = 12", self.release_probe)
+        self.assertIn(
+            'pre_fixture_queue["new"] + pre_fixture_queue["learning"] + pre_fixture_queue["review"]',
+            self.release_probe_base,
+        )
+        self.assertIn('expected_new=10', self.release_probe_base)
+        self.assertIn('expected_total=(RESTART_MULTI_DECK_EXPECTED_TOTAL if STAGE == "restart" else 10)', self.release_probe_base)
+        self.assertIn("expected_progress = _progress_presentation(snapshot).label", self.release_probe_base)
+        self.assertIn('state.get("progressLabel") != expected_progress', self.release_probe_base)
+
+    def test_report_sheet_distinguishes_new_limit_from_total_restart_workload(self) -> None:
+        self.assertIn(
+            "restart New = 10, Total = 12",
+            self.evidence_assembler,
+        )
+        self.assertIn("resizable window policy", self.evidence_assembler)
+        self.assertNotIn("fixed window policy", self.evidence_assembler)
+        self.assertIn('"details": contact_sheets["detail_sheet_count"]', self.evidence_assembler)
+        self.assertIn('"total": len(contact_sheets["sheets"])', self.evidence_assembler)
+
+    def test_generated_1_8_6_contact_sheets_remain_local_only(self) -> None:
+        ignored_directory = (
+            "home_dashboard_overhaul/qa/"
+            "release-evidence-1.8.6-2026-08-24/contact-sheets/"
+        )
+        self.assertIn(ignored_directory, self.repository_ignore)
+        self.assertEqual(
+            self.release_evidence_manifest["contact_sheets"]["repository_tracking"],
+            "local-only",
+        )
+        self.assertIn('"repository_tracking": "local-only"', self.evidence_assembler)
+        self.assertIn("retained as local-only release evidence", self.evidence_assembler)
 
     def test_settings_is_native_only_and_contains_no_preview_path(self) -> None:
         self.assertNotIn("preview", self.settings.casefold())
