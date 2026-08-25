@@ -19,15 +19,31 @@ class SettingsReleaseContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.settings = (ROOT / "settings.py").read_text(encoding="utf-8")
+        cls.controller = (ROOT / "controller.py").read_text(encoding="utf-8")
         cls.model = (ROOT / "settings_model.py").read_text(encoding="utf-8")
-        cls.release_probe = (ROOT / "qa" / "runtime_probe_release_1_8_5.py").read_text(
+        cls.release_probe = (ROOT / "qa" / "runtime_probe_release_1_8_6.py").read_text(
             encoding="utf-8"
+        )
+        cls.release_probe_base = (ROOT / "qa" / "runtime_probe_release_1_8_4.py").read_text(
+            encoding="utf-8"
+        )
+        cls.evidence_assembler = (
+            ROOT / "qa" / "assemble_release_evidence_1_8_6.py"
+        ).read_text(encoding="utf-8")
+        cls.repository_ignore = (ROOT.parent / ".gitignore").read_text(encoding="utf-8")
+        cls.release_evidence_manifest = json.loads(
+            (
+                ROOT
+                / "qa"
+                / "release-evidence-1.8.6-2026-08-24"
+                / "capture-evidence-manifest.json"
+            ).read_text(encoding="utf-8")
         )
         cls.config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
         cls.manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
     def test_release_metadata_and_schema_eight_are_current(self) -> None:
-        self.assertEqual(self.manifest["human_version"], "1.8.5")
+        self.assertEqual(self.manifest["human_version"], "1.8.6")
         self.assertEqual(self.config["schema_version"], 8)
         self.assertEqual(self.config["appearance"]["opacity"], 96)
         self.assertEqual(self.config["appearance"]["blur"], 12)
@@ -80,10 +96,12 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertIn('SETTINGS_COLOR_TOKENS["dark" if anki_dark else "light"]', theme_source)
         self.assertNotIn("resolve_theme", theme_source)
 
-    def test_settings_use_one_canonical_shell_and_one_shared_preview_dock(self) -> None:
+    def test_settings_use_one_canonical_native_shell(self) -> None:
         for marker in (
-            "self.resize(1200, 800)",
+            "self.setMinimumSize(min(1040, width), min(700, height))",
+            "self.resize(width, height)",
             "self.setMinimumSize(1040, 700)",
+            "self.resize(1200, 800)",
             "self.settings_shell.setMaximumWidth(1240)",
             "self.settings_shell.setSizePolicy(",
             "self._update_settings_shell_margins()",
@@ -93,16 +111,14 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "outer.addWidget(self.header_shell, 0, 0)",
             "outer.addWidget(self.body_shell, 1, 0)",
             "outer.addWidget(self.footer_shell, 2, 0)",
-            'self.preview_wrap.setObjectName("PreviewDock")',
-            "available.width() < 1040",
-            "1 if self._preview_overlay_mode else 2",
             'self._add_page("dashboard", page)',
             'self._add_page("events", page)',
             'self._add_page("bible_verse", page)',
             'self._add_page("about_support", page)',
         ):
             self.assertIn(marker, self.settings)
-        self.assertEqual(self.settings.count('setObjectName("PreviewDock")'), 1)
+        self.assertNotIn("setFixedSize(width, height)", self.settings)
+        self.assertNotIn("setFixedSize(1200, 800)", self.settings)
         shell_source = self.settings.split("dialog_layout = QHBoxLayout(self)", 1)[1].split(
             "outer = QGridLayout(self.settings_shell)", 1
         )[0]
@@ -119,63 +135,145 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired, self.settings)
 
-    def test_window_size_is_restored_clamped_centered_and_non_schema(self) -> None:
+    def test_window_uses_parented_standard_dialog_exec_contract(self) -> None:
         for marker in (
-            '"HomeScreenDashboard/settingsWindowSize"',
+            "super().__init__(mw)",
             "width, height = clamp_window_size(",
-            "available.center() - self.rect().center()",
-            "def _settle_window_to_screen(self) -> None:",
-            "frame_extra_height = max(0, frame.height() - client.height())",
-            "self.setMaximumSize(maximum_width, maximum_height)",
-            "self._window_settings.setValue(",
+            "self.setMinimumSize(min(1040, width), min(700, height))",
+            "self.resize(width, height)",
+            "QTimer.singleShot(0, self._settle_initial_scroll_top)",
         ):
             self.assertIn(marker, self.settings)
+        opener = self.controller.split("    def open_settings(", 1)[1].split(
+            "    def save_config", 1
+        )[0]
+        self.assertIn("dialog = SettingsDialog(self, page_name, date_value, event_value)", opener)
+        self.assertIn("dialog.exec()", opener)
+        for forbidden_opening_marker in (
+            "settings_dialog",
+            "setWindowModality",
+            "WindowModal",
+            "dialog.open()",
+            "dialog.show()",
+            "dialog.finished",
+            "dialog.deleteLater()",
+            "dialog.raise_()",
+            "dialog.activateWindow()",
+        ):
+            self.assertNotIn(forbidden_opening_marker, opener)
+        self.assertNotIn("available.center() - self.rect().center()", self.settings)
+        self.assertNotIn("self.move(", self.settings)
+        self.assertNotIn("settingsWindowSize", self.settings)
+        self.assertNotIn("def _settle_window_to_screen", self.settings)
+        for retired_window_marker in (
+            "Qt.WindowType.Tool",
+            "Qt.WindowModality.NonModal",
+            "setTransientParent",
+            "_attach_transient_parent",
+            "_attach_macos_settings_window",
+            "_detach_macos_settings_window",
+            "objc_msgSend",
+            "self.winId()",
+        ):
+            self.assertNotIn(retired_window_marker, self.settings)
         self.assertIn("default: Tuple[int, int] = (1200, 800)", self.model)
         self.assertIn("minimum: Tuple[int, int] = (1040, 700)", self.model)
         self.assertNotIn("settingsWindowSize", json.dumps(self.config))
 
-    def test_native_probe_does_not_override_or_clear_window_persistence_cases(self) -> None:
+    def test_native_probe_window_overrides_remain_outside_product_code(self) -> None:
+        self.assertNotIn("SETTINGS_SIZE_KEY", self.settings)
+        self.assertNotIn("QSettings", self.settings)
+        self.assertIn("def _center_decorated_settings_frame", self.release_probe)
         self.assertIn(
-            'if special not in {"window-restore", "window-clamp", "restart-persistence"}:',
+            "dialog.move(dialog.x() + delta_x, dialog.y() + delta_y)",
             self.release_probe,
         )
+        self.assertIn('"decorated_frame": [frame.x(), frame.y(), frame.width(), frame.height()]', self.release_probe)
+
+    def test_fixed_settings_rail_wraps_without_eliding_large_font_labels(self) -> None:
+        for marker in (
+            "self.setWordWrap(True)",
+            "self.setTextElideMode(Qt.TextElideMode.ElideNone)",
+            "def refresh_item_sizes(self) -> None:",
+            "lines * metrics.lineSpacing() + self._ITEM_VERTICAL_INSET",
+            "self.nav.refresh_item_sizes()",
+        ):
+            self.assertIn(marker, self.settings)
+        for marker in (
+            '"nav_word_wrap": dialog.nav.wordWrap()',
+            '"nav_elision_disabled": dialog.nav.textElideMode() == Qt.TextElideMode.ElideNone',
+            '"nav_about_visual_height": about_item_height',
+            '"About & support did not receive a two-line row at 150 percent app font"',
+        ):
+            self.assertIn(marker, self.release_probe)
+
+    def test_restart_smoke_separates_transient_queue_state_from_exact_fixture_limits(self) -> None:
+        self.assertIn("RESTART_PRE_FIXTURE_EXPECTED_NEW = 10", self.release_probe_base)
+        self.assertIn("base.RESTART_PRE_FIXTURE_EXPECTED_NEW = None", self.release_probe)
+        self.assertIn("RESTART_MULTI_DECK_EXPECTED_TOTAL = 10", self.release_probe_base)
+        self.assertIn("base.RESTART_MULTI_DECK_EXPECTED_TOTAL = 12", self.release_probe)
         self.assertIn(
-            'if special != "restart-persistence":\n        settings.remove(SETTINGS_SIZE_KEY)',
-            self.release_probe,
+            'pre_fixture_queue["new"] + pre_fixture_queue["learning"] + pre_fixture_queue["review"]',
+            self.release_probe_base,
         )
+        self.assertIn('expected_new=10', self.release_probe_base)
+        self.assertIn('expected_total=(RESTART_MULTI_DECK_EXPECTED_TOTAL if STAGE == "restart" else 10)', self.release_probe_base)
+        self.assertIn("expected_progress = _progress_presentation(snapshot).label", self.release_probe_base)
+        self.assertIn('state.get("progressLabel") != expected_progress', self.release_probe_base)
 
-    def test_preview_uses_the_production_renderer_and_approved_controls(self) -> None:
-        for marker in (
-            "render_dashboard(",
-            "preview=True",
-            '[("Section", "context"), ("Full dashboard", "full")]',
-            '[("Fit", "fit"), ("100%", "actual")]',
-            'self.preview_full_button = QPushButton("Open")',
-            '"calendar": ".hdo-calendar-card"',
-            '"bible_verse": ".hdo-bible-card"',
-            "preview_snapshot_with_staged_events",
-            "verse_content(self.quotes[selected_quote])",
-            "root.style.transform = 'scale(' + scale + ')'",
-            "document.documentElement.style.overflowY = 'auto'",
-            "document.documentElement.style.overflowY = 'hidden'",
-            "def _update_preview_canvas_height(self) -> None:",
-            "rendered_height = max(0, self._preview_content_size.height())",
-            "preferred = max(150, min(320, rendered_height + 8))",
-            "self.preview_wrap.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Maximum)",
-        ):
-            self.assertIn(marker, self.settings)
-        self.assertNotIn("sample_snapshot", self.settings)
+    def test_report_sheet_distinguishes_new_limit_from_total_restart_workload(self) -> None:
+        self.assertIn(
+            "restart New = 10, Total = 12",
+            self.evidence_assembler,
+        )
+        self.assertIn("resizable window policy", self.evidence_assembler)
+        self.assertNotIn("fixed window policy", self.evidence_assembler)
+        self.assertIn('"details": contact_sheets["detail_sheet_count"]', self.evidence_assembler)
+        self.assertIn('"total": len(contact_sheets["sheets"])', self.evidence_assembler)
 
-    def test_preview_visibility_is_session_only_and_about_omits_it(self) -> None:
-        for marker in (
-            "self._preview_visible = True",
-            'if section_id != "about_support"',
-            'self.current_section in {"dashboard", "events", "bible_verse"}',
-            'if self.current_section == "about_support"',
+    def test_generated_1_8_6_contact_sheets_remain_local_only(self) -> None:
+        ignored_directory = (
+            "home_dashboard_overhaul/qa/"
+            "release-evidence-1.8.6-2026-08-24/contact-sheets/"
+        )
+        self.assertIn(ignored_directory, self.repository_ignore)
+        self.assertEqual(
+            self.release_evidence_manifest["contact_sheets"]["repository_tracking"],
+            "local-only",
+        )
+        self.assertIn('"repository_tracking": "local-only"', self.evidence_assembler)
+        self.assertIn("retained as local-only release evidence", self.evidence_assembler)
+
+    def test_settings_is_native_only_and_contains_no_preview_path(self) -> None:
+        self.assertNotIn("preview", self.settings.casefold())
+        for forbidden in (
+            "AnkiWebView",
+            "aqt.webview",
+            "QWebEngine",
+            "stdHtml",
+            "focusChanged",
+            "setWindowModality",
+            "setModal(",
         ):
-            self.assertIn(marker, self.settings)
-        self.assertNotIn("previewVisibility", self.settings)
-        self.assertNotIn("preview_visible", json.dumps(self.config))
+            self.assertNotIn(forbidden, self.settings)
+
+    def test_page_changes_are_timer_free_and_controls_sync_immediately(self) -> None:
+        section_source = self.settings.split("    def _show_section", 1)[1].split(
+            "    def _schedule_dashboard_anchor", 1
+        )[0]
+        self.assertIn("self.stack.setCurrentIndex(self.page_indices[section_id])", section_source)
+        self.assertNotIn("QTimer", section_source)
+        self.assertNotIn("SettingsDialog", section_source)
+        self.assertNotIn("_settings_changed", section_source)
+        connect_source = self.settings.split("    def _connect_change_signals", 1)[1].split(
+            "    @staticmethod", 1
+        )[0]
+        self.assertIn("connect(self._settings_changed)", connect_source)
+        changed_source = self.settings.split("    def _settings_changed", 1)[1].split(
+            "    def _gather", 1
+        )[0]
+        self.assertIn("self._sync_draft()", changed_source)
+        self.assertNotIn("QTimer", changed_source)
 
     def test_visual_polish_regressions_from_native_review_are_locked(self) -> None:
         for marker in (
@@ -238,7 +336,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
         for marker in (
             "class VerseRowWidget(QWidget)",
             'self.current_badge = QLabel("Current")',
-            'self.preview_badge = QLabel("Preview")',
+            'self.selected_badge = QLabel("Selected")',
             "split_quote_reference(quote)",
             "self._quote_render_limit = 100",
             "self._quote_render_limit += 100",

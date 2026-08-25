@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import replace
-from datetime import date, datetime
-import hashlib
+from datetime import datetime
 import html as html_module
 import json
 from pathlib import Path
@@ -53,7 +51,6 @@ from aqt.qt import (
     QPushButton,
     QEvent,
     QScrollArea,
-    QSettings,
     QSize,
     QSizePolicy,
     QSlider,
@@ -69,11 +66,8 @@ from aqt.qt import (
     QTreeWidgetItem,
     Qt,
 )
-from aqt.webview import AnkiWebView
 
-from .analytics import representative_preview_snapshot
 from .config_schema import normalize_config
-from .renderer import render_dashboard
 from .settings_model import (
     SECTION_LABELS,
     SettingsDraft,
@@ -82,7 +76,6 @@ from .settings_model import (
     history_range_choice,
     history_range_values,
     import_quotes,
-    preview_snapshot_with_staged_events,
     resolve_section_target,
 )
 from .themes import (
@@ -104,7 +97,6 @@ from .verse import (
     MAX_VERSE_BYTES,
     MAX_VERSE_CHARS,
     split_quote_reference,
-    verse_content,
     verse_within_limit,
 )
 
@@ -115,13 +107,6 @@ ACTION_TEXT = "Home Screen Dashboard settings"
 PROJECT_URL = "https://github.com/caleblee789/Homescreen-Dashboard"
 ISSUES_URL = "https://github.com/caleblee789/Homescreen-Dashboard/issues"
 PACKAGE_ROOT = Path(__file__).resolve().parent
-
-
-def _web_asset_url(package: str, filename: str) -> str:
-    """Use packaged-byte revisions so Settings previews cannot reuse stale assets."""
-
-    digest = hashlib.sha256((PACKAGE_ROOT / "web" / filename).read_bytes()).hexdigest()[:16]
-    return "/_addons/{}/web/{}?v={}".format(package, filename, digest)
 
 SETTINGS_ROW_PRIMITIVE_ROLE = Qt.ItemDataRole.UserRole + 1
 SETTINGS_ROW_TARGET_ROLE = Qt.ItemDataRole.UserRole + 2
@@ -253,7 +238,6 @@ QDialog#HomeDashboardSettings QListWidget#SettingsNav::item:focus {{ border: {fo
 QDialog#HomeDashboardSettings QScrollArea {{ background: transparent; border: 0; }}
 QDialog#HomeDashboardSettings QWidget#SettingsPage {{ background: transparent; border: 0; }}
 QDialog#HomeDashboardSettings QWidget#SettingsCard {{ background: {base}; border: 1px solid {border}; border-radius: 8px; }}
-QDialog#HomeDashboardSettings QWidget#PreviewDock {{ background: {base}; border: 1px solid {border}; border-radius: 8px; }}
 QDialog#HomeDashboardSettings QWidget#SettingsHeader {{ background: {window}; border: 0; }}
 QDialog#HomeDashboardSettings QLabel#GlobalTitle {{ font-size: 20px; font-weight: 700; color: {text}; }}
 QDialog#HomeDashboardSettings QLabel#PageTitle {{ font-size: 18px; font-weight: 650; color: {text}; }}
@@ -1045,6 +1029,9 @@ def _set_accessibility(widget: QWidget, name: str, description: str = "") -> Non
 class SettingsSidebar(QListWidget):
     """Shared section rail whose width follows its live label metrics."""
 
+    _ITEM_HORIZONTAL_INSET = 24
+    _ITEM_VERTICAL_INSET = 12
+
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setProperty("hdoPrimitive", _settings_primitive("settings-sidebar"))
@@ -1052,8 +1039,40 @@ class SettingsSidebar(QListWidget):
         self.setAccessibleName("Settings sections")
         self.setAccessibleDescription("Choose a Home Screen Dashboard settings section")
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setWordWrap(True)
+        self.setTextElideMode(Qt.TextElideMode.ElideNone)
+        self.setUniformItemSizes(False)
         self.setFixedWidth(152)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+
+    def refresh_item_sizes(self) -> None:
+        """Give wrapped navigation labels enough height at large app fonts."""
+
+        metrics = self.fontMetrics()
+        available_width = max(1, self.width() - self._ITEM_HORIZONTAL_INSET)
+        space_width = metrics.horizontalAdvance(" ")
+        for row in range(self.count()):
+            item = self.item(row)
+            if item is None:
+                continue
+            lines = 1
+            line_width = 0
+            for word in item.text().split():
+                word_width = metrics.horizontalAdvance(word)
+                candidate = word_width if not line_width else line_width + space_width + word_width
+                if line_width and candidate > available_width:
+                    lines += 1
+                    line_width = word_width
+                else:
+                    line_width = candidate
+            item.setSizeHint(
+                QSize(0, max(34, lines * metrics.lineSpacing() + self._ITEM_VERTICAL_INSET))
+            )
+
+    def changeEvent(self, event: QEvent) -> None:
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.FontChange:
+            self.refresh_item_sizes()
 
     def measured_width(self) -> int:
         font_metrics = self.fontMetrics()
@@ -1208,7 +1227,7 @@ class EventRowWidget(QWidget):
 
 
 class VerseRowWidget(QWidget):
-    """Reference-first verse row with current/preview state and one menu."""
+    """Reference-first verse row with current/selection state and one menu."""
 
     def __init__(
         self,
@@ -1240,16 +1259,16 @@ class VerseRowWidget(QWidget):
         self.current_badge.setObjectName("DataBadge")
         self.current_badge.setVisible(current)
         heading.addWidget(self.current_badge)
-        self.preview_badge = QLabel("Preview")
-        self.preview_badge.setObjectName("DataBadge")
-        self.preview_badge.hide()
-        heading.addWidget(self.preview_badge)
+        self.selected_badge = QLabel("Selected")
+        self.selected_badge.setObjectName("DataBadge")
+        self.selected_badge.hide()
+        heading.addWidget(self.selected_badge)
         heading.addStretch()
         self.excerpt = QLabel(excerpt)
         self.excerpt.setObjectName("VerseRowExcerpt")
         self.excerpt.setTextFormat(Qt.TextFormat.PlainText)
         self.excerpt.setWordWrap(False)
-        for label in (self.reference, self.current_badge, self.preview_badge, self.excerpt):
+        for label in (self.reference, self.current_badge, self.selected_badge, self.excerpt):
             label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         copy.addLayout(heading)
         copy.addWidget(self.excerpt)
@@ -1261,7 +1280,7 @@ class VerseRowWidget(QWidget):
 
     def set_selected(self, selected: bool) -> None:
         self.setProperty("selected", bool(selected))
-        self.preview_badge.setVisible(bool(selected) and not self.current_badge.isVisible())
+        self.selected_badge.setVisible(bool(selected) and not self.current_badge.isVisible())
         self.style().unpolish(self)
         self.style().polish(self)
 
@@ -1413,7 +1432,7 @@ def _manifest_compatibility(manifest: Mapping[str, Any]) -> str:
 
 def _editor_tokens(parent: QWidget) -> Dict[str, str]:
     # Native Settings dialogs follow Anki even while a dashboard preset is
-    # staged. Preset colors are confined to preview/swatch surfaces.
+    # staged. Preset colors are confined to dashboard and swatch surfaces.
     return _palette_tokens()
 
 
@@ -1602,6 +1621,9 @@ class SettingsDialog(QDialog):
         selected_event_date: str = "",
         selected_event_id: str = "",
     ) -> None:
+        # Match Anki's conventional add-on Settings lifecycle: an ordinary
+        # parented QDialog with default window flags, opened synchronously by
+        # the controller. Qt owns placement and native-window behavior.
         super().__init__(mw)
         self.controller = controller
         self.draft = SettingsDraft(controller.config)
@@ -1631,11 +1653,6 @@ class SettingsDialog(QDialog):
         self.selected_event_id = selected_event_id
         self.current_section = "dashboard"
         self._requested_dashboard_anchor = ""
-        self._preview_fit_mode = "fit"
-        self._preview_scope_mode = "context"
-        self._preview_context = "appearance"
-        self._preview_visible = True
-        self._preview_overlay_mode = False
         self._initial_scroll_settled = False
         self._building = True
         self._allow_close = False
@@ -1648,34 +1665,21 @@ class SettingsDialog(QDialog):
         ] = {}
         self.setObjectName("HomeDashboardSettings")
         self.setWindowTitle("Home Screen Dashboard settings")
-        self._window_settings = QSettings()
-        screen = self.screen() or QApplication.primaryScreen()
+        parent = self.parentWidget()
+        screen = parent.screen() if parent is not None else None
+        screen = screen or self.screen() or QApplication.primaryScreen()
         if screen is not None:
             available = screen.availableGeometry()
-            remembered = self._window_settings.value(
-                "HomeScreenDashboard/settingsWindowSize"
-            )
-            saved_size = (
-                (remembered.width(), remembered.height())
-                if isinstance(remembered, QSize)
-                else None
-            )
             width, height = clamp_window_size(
-                saved_size,
+                None,
                 (available.width(), available.height()),
             )
-            usable_width = max(1, available.width() - 32)
-            usable_height = max(1, available.height() - 32)
-            self.setMinimumSize(min(1040, usable_width), min(700, usable_height))
-            self.setMaximumSize(available.width(), available.height())
+            self.setMinimumSize(min(1040, width), min(700, height))
             self.resize(width, height)
-            self.move(available.center() - self.rect().center())
-            self._preview_overlay_mode = available.width() < 1040
         else:
             self.setMinimumSize(1040, 700)
             self.resize(1200, 800)
         self._hdo_theme_tokens = _theme_tokens(self.staged, self.controller.is_dark())
-        self._preview_content_size = QSize()
         self.setStyleSheet(_settings_style(self.staged, self.controller.is_dark()))
         dialog_layout = QHBoxLayout(self)
         dialog_layout.setContentsMargins(0, 0, 0, 0)
@@ -1709,7 +1713,7 @@ class SettingsDialog(QDialog):
         header_text.setSpacing(2)
         self.header_title = QLabel("Home Screen Dashboard")
         self.header_title.setObjectName("GlobalTitle")
-        self.header_subtitle = QLabel("Changes preview immediately. Save to apply them.")
+        self.header_subtitle = QLabel("Changes stay staged until you save them.")
         self.header_subtitle.setObjectName("PageHelp")
         self.header_subtitle.setWordWrap(True)
         header_text.addWidget(self.header_title)
@@ -1743,85 +1747,7 @@ class SettingsDialog(QDialog):
         self.body_grid.addWidget(self.stack, 0, 1)
         self.body_grid.setColumnStretch(0, 0)
         self.body_grid.setColumnStretch(1, 1)
-
-        self.preview_wrap = QWidget()
-        self.preview_wrap.setObjectName("PreviewDock")
-        self.preview_wrap.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.preview_wrap.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Maximum)
-        self.preview_wrap.setMinimumWidth(288)
-        self.preview_wrap.setMaximumWidth(320)
-        self.preview_wrap.setFixedWidth(304)
-        preview_layout = QVBoxLayout(self.preview_wrap)
-        preview_layout.setContentsMargins(12, 12, 12, 12)
-        preview_layout.setSpacing(8)
-        preview_header = QHBoxLayout()
-        self.preview_label = QLabel("Preview")
-        self.preview_label.setObjectName("CardTitle")
-        preview_header.addWidget(self.preview_label)
-        self.preview_sample_badge = QLabel("Sample data")
-        self.preview_sample_badge.setObjectName("DataBadge")
-        self.preview_sample_badge.setAccessibleName("Deterministic sample study data")
-        self.preview_sample_badge.setVisible(self.controller.snapshot is None)
-        preview_header.addWidget(self.preview_sample_badge)
-        preview_header.addStretch()
-        preview_layout.addLayout(preview_header)
-        self.preview_scope = SegmentedControl(
-            [("Section", "context"), ("Full dashboard", "full")],
-            "context",
-            "Preview content",
-        )
-        self.preview_scope.set_option_width(112)
-        self.preview_scope.connect_changed(self._set_preview_scope_mode)
-        preview_layout.addWidget(self.preview_scope)
-        preview_actions = QHBoxLayout()
-        self.preview_scale = SegmentedControl(
-            [("Fit", "fit"), ("100%", "actual")],
-            "fit",
-            "Preview scale",
-        )
-        self.preview_scale.set_option_width(74)
-        self.preview_scale.connect_changed(
-            lambda *_args: self._set_preview_fit_mode(self.preview_scale.value("fit"))
-        )
-        preview_actions.addWidget(self.preview_scale)
-        self.preview_full_button = QPushButton("Open")
-        self.preview_full_button.clicked.connect(self._open_full_preview)
-        _set_accessibility(
-            self.preview_full_button,
-            "Open preview",
-            "Open the production-rendered preview in a separate resizable window.",
-        )
-        preview_actions.addWidget(self.preview_full_button)
-        preview_actions.addStretch()
-        preview_layout.addLayout(preview_actions)
-        self.preview_empty_label = QLabel("Select a verse to preview")
-        self.preview_empty_label.setObjectName("EmptyState")
-        self.preview_empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.preview_empty_label.setMinimumHeight(120)
-        self.preview_empty_label.hide()
-        preview_layout.addWidget(self.preview_empty_label)
-        self.preview = AnkiWebView(self.preview_wrap, title="Home Screen Dashboard preview")
-        self.preview.setAccessibleName("Home Screen Dashboard contextual preview")
-        self.preview.setAccessibleDescription("A production-rendered preview of the current settings section.")
-        self.preview.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.preview.setFixedHeight(180)
-        preview_layout.addWidget(self.preview, 1)
-        self.body_grid.addWidget(
-            self.preview_wrap,
-            0,
-            1 if self._preview_overlay_mode else 2,
-            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight,
-        )
-        if not self._preview_overlay_mode:
-            self.body_grid.setColumnMinimumWidth(2, 288)
-        else:
-            self.preview_wrap.raise_()
         outer.addWidget(self.body_shell, 1, 0)
-
-        self.preview_timer = QTimer(self)
-        self.preview_timer.setSingleShot(True)
-        self.preview_timer.setInterval(140)
-        self.preview_timer.timeout.connect(self._render_preview)
 
         self._build_dashboard_page()
         self._build_events_page()
@@ -1894,11 +1820,7 @@ class SettingsDialog(QDialog):
         self.save_shortcut.triggered.connect(self._save)
         self.addAction(self.save_shortcut)
 
-        application = QApplication.instance()
-        if application is not None:
-            application.focusChanged.connect(self._ensure_settings_focus_visible)
-
-        self._connect_preview_signals()
+        self._connect_change_signals()
         self._refresh_event_lists()
         self._refresh_quote_list()
         self._building = False
@@ -1906,8 +1828,7 @@ class SettingsDialog(QDialog):
         self._sync_draft()
         _apply_control_targets(self)
         self._apply_canonical_layout()
-        self._render_preview()
-        _install_palette_watcher(self, self._current_stylesheet, self._schedule_preview)
+        _install_palette_watcher(self, self._current_stylesheet)
 
     def resizeEvent(self, event: Any) -> None:
         super().resizeEvent(event)
@@ -1917,8 +1838,6 @@ class SettingsDialog(QDialog):
             QTimer.singleShot(0, self._reflow_heatmap_grid)
         if hasattr(self, "appearance_grid"):
             QTimer.singleShot(0, self._reflow_compact_grids)
-        if hasattr(self, "preview"):
-            QTimer.singleShot(0, self._update_preview_canvas_height)
 
     def showEvent(self, event: Any) -> None:
         super().showEvent(event)
@@ -1931,8 +1850,6 @@ class SettingsDialog(QDialog):
         # the rail and explicitly settle a normal route at the top. Legacy
         # dashboard anchors retain their separately scheduled destination.
         self.nav.setFocus(Qt.FocusReason.OtherFocusReason)
-        QTimer.singleShot(0, self._settle_window_to_screen)
-        QTimer.singleShot(80, self._settle_window_to_screen)
         if not self._requested_dashboard_anchor:
             QTimer.singleShot(0, self._settle_initial_scroll_top)
             QTimer.singleShot(80, self._settle_initial_scroll_top)
@@ -1942,32 +1859,6 @@ class SettingsDialog(QDialog):
         if isinstance(scroll, QScrollArea):
             scroll.verticalScrollBar().setValue(0)
 
-    def _settle_window_to_screen(self) -> None:
-        """Keep the complete decorated window inside available geometry."""
-
-        screen = self.screen() or QApplication.primaryScreen()
-        if screen is None:
-            return
-        available = screen.availableGeometry()
-        frame = self.frameGeometry()
-        client = self.geometry()
-        frame_extra_width = max(0, frame.width() - client.width())
-        frame_extra_height = max(0, frame.height() - client.height())
-        maximum_width = max(1, available.width() - frame_extra_width)
-        maximum_height = max(1, available.height() - frame_extra_height)
-        self.setMaximumSize(maximum_width, maximum_height)
-        if self.width() > maximum_width or self.height() > maximum_height:
-            self.resize(
-                min(self.width(), maximum_width),
-                min(self.height(), maximum_height),
-            )
-        frame = self.frameGeometry()
-        rightmost = max(available.left(), available.right() - frame.width() + 1)
-        bottommost = max(available.top(), available.bottom() - frame.height() + 1)
-        target_x = min(max(frame.x(), available.left()), rightmost)
-        target_y = min(max(frame.y(), available.top()), bottommost)
-        self.move(self.pos() + QPoint(target_x - frame.x(), target_y - frame.y()))
-
     def _update_settings_shell_margins(self) -> None:
         """Fill the dialog through 1240px, then center the capped shell."""
 
@@ -1976,8 +1867,7 @@ class SettingsDialog(QDialog):
 
     def changeEvent(self, event: Any) -> None:
         if _is_palette_change(event):
-            callback = self._schedule_preview if hasattr(self, "preview_timer") else None
-            _queue_palette_style(self, self._current_stylesheet, callback)
+            _queue_palette_style(self, self._current_stylesheet)
         if event.type() in {
             getattr(QEvent.Type, "FontChange", None),
             getattr(QEvent.Type, "ApplicationFontChange", None),
@@ -1995,25 +1885,10 @@ class SettingsDialog(QDialog):
         item.setData(Qt.ItemDataRole.UserRole, section_id)
         item.setData(Qt.ItemDataRole.AccessibleTextRole, name)
         self.nav.addItem(item)
+        self.nav.refresh_item_sizes()
         self.nav_rows[section_id] = self.nav.count() - 1
         self.page_indices[section_id] = self.stack.count()
         page.setAccessibleName("{} settings".format(name))
-        actions = getattr(page, "_hdo_header_actions", None)
-        if section_id != "about_support" and isinstance(actions, QHBoxLayout):
-            preview_toggle = QPushButton("Preview")
-            preview_toggle.setCheckable(True)
-            preview_toggle.setChecked(True)
-            preview_toggle.setObjectName("LinkButton")
-            preview_toggle.toggled.connect(self._toggle_preview_visibility)
-            _set_accessibility(
-                preview_toggle,
-                "Show preview",
-                "Show or hide the shared staged preview dock for this Settings session.",
-            )
-            actions.insertWidget(0, preview_toggle)
-            if not hasattr(self, "page_preview_toggles"):
-                self.page_preview_toggles: Dict[str, QPushButton] = {}
-            self.page_preview_toggles[section_id] = preview_toggle
         scroll = QScrollArea()
         scroll.setObjectName("SettingsScrollBody")
         scroll.setAccessibleName("{} settings content".format(name))
@@ -2061,28 +1936,14 @@ class SettingsDialog(QDialog):
 
     def _show_section(self, section_id: str, source: str = "") -> None:
         self.current_section = section_id
-        if section_id == "bible_verse":
-            self._preview_context = "bible_verse"
-        elif section_id == "events":
-            self._preview_context = "calendar"
         self.stack.setCurrentIndex(self.page_indices[section_id])
         if source != "nav":
             self.nav.setCurrentRow(self.nav_rows[section_id])
-        self._update_section_chrome()
-        self._schedule_preview()
 
     def _schedule_dashboard_anchor(self, anchor: str) -> None:
         """Resolve a legacy anchor after the canonical page layout settles."""
 
         self._requested_dashboard_anchor = anchor
-        self._preview_context = {
-            "appearance": "appearance",
-            "content": "visible_sections",
-            "dashboard_sections": "visible_sections",
-            "calendar": "calendar",
-        }.get(anchor, self._preview_context)
-        if hasattr(self, "preview_timer"):
-            self._schedule_preview()
         QTimer.singleShot(0, lambda: self._settle_dashboard_anchor(anchor, -1, 0))
 
     def _settle_dashboard_anchor(
@@ -2165,7 +2026,6 @@ class SettingsDialog(QDialog):
             spin.setMaximumWidth(92)
         for form in self.findChildren(QFormLayout):
             form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
-        self._update_section_chrome()
         if hasattr(self, "heatmap_preset_grid"):
             self._reflow_heatmap_grid()
         if hasattr(self, "appearance_grid"):
@@ -2190,96 +2050,6 @@ class SettingsDialog(QDialog):
                 page_layout.setContentsMargins(*base)
         return 0
 
-    def _toggle_preview_visibility(self, checked: bool) -> None:
-        self._preview_visible = bool(checked)
-        for section_id, button in getattr(self, "page_preview_toggles", {}).items():
-            if section_id == self.current_section or button.isChecked() == checked:
-                continue
-            button.blockSignals(True)
-            button.setChecked(checked)
-            button.blockSignals(False)
-        self._update_preview_visibility()
-        if checked:
-            self._schedule_preview()
-
-    def _set_preview_fit_mode(self, mode: str) -> None:
-        self._preview_fit_mode = "actual" if mode == "actual" else "fit"
-        self.preview_scale.setValue(self._preview_fit_mode)
-        self._update_preview_canvas_height()
-        self._fit_inline_preview()
-
-    def _set_preview_scope_mode(self, *_args: object) -> None:
-        self._preview_scope_mode = self.preview_scope.value("context")
-        self._update_preview_canvas_height()
-        self._schedule_preview()
-
-    def _update_section_chrome(self) -> None:
-        preview_section = self.current_section in {"dashboard", "events", "bible_verse"}
-        self.preview_label.setText("Preview")
-        self.preview_sample_badge.setVisible(
-            preview_section and self.controller.snapshot is None
-        )
-        self.preview_scope.setVisible(preview_section)
-        self._update_preview_visibility()
-
-    def _ensure_settings_focus_visible(
-        self,
-        _previous: Optional[QWidget],
-        current: Optional[QWidget],
-    ) -> None:
-        """Keep the focused control above the measured persistent footer."""
-
-        if (
-            current is None
-            or not self.isAncestorOf(current)
-            or getattr(self, "_dashboard_anchor_focus_active", False)
-        ):
-            return
-        if self.current_section == "dashboard":
-            candidate: Optional[QWidget] = current
-            context = ""
-            while candidate is not None and candidate is not self:
-                value = candidate.property("hdoPreviewContext")
-                if isinstance(value, str) and value:
-                    context = value
-                    break
-                candidate = candidate.parentWidget()
-            if context and context != self._preview_context:
-                self._preview_context = context
-                if self._preview_scope_mode == "context":
-                    self._schedule_preview()
-        scroll = self.stack.currentWidget() if hasattr(self, "stack") else None
-        if not isinstance(scroll, QScrollArea):
-            return
-        page = scroll.widget()
-        if page is None or (current is not page and not page.isAncestorOf(current)):
-            return
-        focus_margin = FOCUS_RING_PX + FOCUS_RING_OFFSET_PX + 8
-        QTimer.singleShot(
-            0,
-            lambda: scroll.ensureWidgetVisible(
-                current,
-                focus_margin,
-                focus_margin,
-            ),
-        )
-
-    def _update_preview_visibility(self) -> None:
-        visible = self._preview_visible and self.current_section in {
-            "dashboard",
-            "events",
-            "bible_verse",
-        }
-        self.preview_wrap.setVisible(visible)
-        self.body_grid.setColumnMinimumWidth(
-            2,
-            288 if visible and not self._preview_overlay_mode else 0,
-        )
-        if visible and self._preview_overlay_mode:
-            self.preview_wrap.raise_()
-        if visible:
-            self._update_preview_canvas_height()
-
     def _create_appearance_card(self) -> SettingsCard:
         card = SettingsCard(
             "Appearance",
@@ -2287,7 +2057,6 @@ class SettingsDialog(QDialog):
             "Reset",
         )
         self.appearance_card = card
-        card.setProperty("hdoPreviewContext", "appearance")
         if card.reset_button is not None:
             card.reset_button.clicked.connect(
                 lambda: self._reset_card("appearance", "Appearance")
@@ -2434,7 +2203,6 @@ class SettingsDialog(QDialog):
         sections_card = SettingsCard(
             "Dashboard sections",
         )
-        sections_card.setProperty("hdoPreviewContext", "visible_sections")
         if sections_card.reset_button is not None:
             sections_card.reset_button.clicked.connect(
                 lambda: self._reset_card("dashboard_sections", "Content & study metrics")
@@ -2449,7 +2217,6 @@ class SettingsDialog(QDialog):
 
         def add_visibility(key: str, title: str, description: str) -> None:
             row, box = _switch_row(title, description, visibility[key])
-            box.setProperty("hdoPreviewContext", "visibility_{}".format(key))
             self.visibility[key] = box
             sections_layout.addWidget(row)
 
@@ -2479,7 +2246,6 @@ class SettingsDialog(QDialog):
             visibility["bible"],
         )
         self.visibility["bible"] = bible_switch
-        bible_switch.setProperty("hdoPreviewContext", "visibility_bible")
         configure_bible = QPushButton("Configure")
         configure_bible.setObjectName("LinkButton")
         configure_bible.clicked.connect(lambda: self._show_section("bible_verse"))
@@ -2489,7 +2255,6 @@ class SettingsDialog(QDialog):
         layout.addWidget(sections_card)
 
         study_card = SettingsCard("Study calculations")
-        study_card.setProperty("hdoPreviewContext", "study_calculations")
 
         dependent_form = QFormLayout()
         dependent_form.setVerticalSpacing(10)
@@ -2525,18 +2290,11 @@ class SettingsDialog(QDialog):
             "Counts the first qualifying answer after a manual reschedule.",
             self.staged["new_cards"]["include_rescheduled"],
         )
-        for control in (
-            self.pace_unit,
-            self.retention_target,
-            self.include_rescheduled,
-        ):
-            control.setProperty("hdoPreviewContext", "study_calculations")
         dependent_form.addRow(new_row)
         study_card.add_layout(dependent_form)
         layout.addWidget(study_card)
 
         calendar_cards = self._create_calendar_cards()
-        calendar_cards[0].setProperty("hdoPreviewContext", "calendar")
         calendar_cards[0].setProperty("hdoAnchor", "calendar")
         self.dashboard_anchors["calendar"] = calendar_cards[0]
         for calendar_card in calendar_cards:
@@ -2904,7 +2662,6 @@ class SettingsDialog(QDialog):
                 widget = tree.itemWidget(item, 0)
                 if isinstance(widget, EventRowWidget):
                     widget.set_selected(item is current and tree is self.event_tabs.currentWidget())
-        self._schedule_preview()
 
     def _build_bible_page(self) -> None:
         page, layout, root_form = _page(
@@ -2919,7 +2676,6 @@ class SettingsDialog(QDialog):
             "Reset",
         )
         self.bible_display_card = display_card
-        display_card.setProperty("hdoPreviewContext", "bible_verse")
         if display_card.reset_button is not None:
             display_card.reset_button.clicked.connect(
                 lambda: self._reset_card("bible_appearance", "Verse appearance")
@@ -2967,7 +2723,7 @@ class SettingsDialog(QDialog):
         _set_accessibility(
             self.rotation,
             "Verse rotation",
-            "Choose daily, every dashboard refresh, or manual rotation. Previewing a selection does not rotate it.",
+            "Choose daily, every dashboard refresh, or manual rotation. Selecting a library row does not rotate it.",
         )
         self.font_family.setToolTip("Applies only to verse body and reference text.")
         self.font_size.setToolTip("The verse card remains responsive at larger values.")
@@ -3039,7 +2795,7 @@ class SettingsDialog(QDialog):
         search_row.addWidget(self.quote_add)
         library_card.add_layout(search_row)
         self.quote_list = QListWidget(); self.quote_list.setObjectName("ManagerList"); self.quote_list.setTextElideMode(Qt.TextElideMode.ElideRight); self.quote_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff); self.quote_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff); _install_settings_row_delegate(self.quote_list)
-        _set_accessibility(self.quote_list, "Verse library", "Choose a staged verse to read, edit, duplicate, delete, or preview.")
+        _set_accessibility(self.quote_list, "Verse library", "Choose a staged verse to read, edit, duplicate, delete, or select.")
         library_card.add_widget(self.quote_count)
         library_card.add_widget(self.quote_list, 1)
         self._quote_render_limit = 100
@@ -3219,14 +2975,14 @@ class SettingsDialog(QDialog):
         layout.addStretch()
         self._add_page("about_support", page)
 
-    def _connect_preview_signals(self) -> None:
+    def _connect_change_signals(self) -> None:
         for combo in (
             self.preset,
             self.home_screen_position,
             self.pace_unit,
             self.history_range,
         ):
-            combo.currentIndexChanged.connect(self._schedule_preview)
+            combo.currentIndexChanged.connect(self._settings_changed)
         for segmented in (
             self.mode,
             self.week_start,
@@ -3234,7 +2990,7 @@ class SettingsDialog(QDialog):
             self.rotation,
             self.theme_color,
         ):
-            segmented.connect_changed(self._schedule_preview)
+            segmented.connect_changed(self._settings_changed)
         for spin in (
             self.opacity,
             self.blur,
@@ -3243,7 +2999,7 @@ class SettingsDialog(QDialog):
             self.font_size,
             self.retention_target,
         ):
-            spin.valueChanged.connect(self._schedule_preview)
+            spin.valueChanged.connect(self._settings_changed)
         checks = list(self.visibility.values()) + [
             self.include_rescheduled,
             self.exclude_reschedules,
@@ -3251,11 +3007,10 @@ class SettingsDialog(QDialog):
             self.show_forecast,
         ]
         for check in checks:
-            check.toggled.connect(self._schedule_preview)
-        self.ignore_before.dateChanged.connect(self._schedule_preview)
+            check.toggled.connect(self._settings_changed)
+        self.ignore_before.dateChanged.connect(self._settings_changed)
         self.font_family.currentFontChanged.connect(self._font_family_changed)
         self.quote_search.textChanged.connect(self._quote_search_changed)
-        self.quote_list.currentRowChanged.connect(self._schedule_preview)
         self.quote_list.currentRowChanged.connect(self._update_quote_detail)
         self.rotation.connect_changed(self._update_quote_actions)
 
@@ -3366,7 +3121,7 @@ class SettingsDialog(QDialog):
                 indicator.setVisible(active)
             button.style().unpolish(button)
             button.style().polish(button)
-        self._schedule_preview()
+        self._settings_changed()
 
     def _refresh_heatmap_preset_cards(self, *_args: object) -> None:
         if not hasattr(self, "heatmap_preset_grid"):
@@ -3614,7 +3369,6 @@ class SettingsDialog(QDialog):
         self._apply_config_to_widgets(self.staged)
         self.undo_toast.hide()
         self._sync_draft()
-        self._schedule_preview()
 
     def _reset_current_section(self) -> None:
         self._reset_card(self.current_section, SECTION_LABELS.get(self.current_section, "Section"))
@@ -3633,7 +3387,6 @@ class SettingsDialog(QDialog):
         self.undo_message.setText("{} reset to defaults.".format(label))
         self.undo_toast.show()
         self.undo_timer.start()
-        self._schedule_preview()
 
     def _undo_reset(self) -> None:
         if self._reset_undo_values is None:
@@ -3648,7 +3401,6 @@ class SettingsDialog(QDialog):
         self._apply_config_to_widgets(self.staged)
         self.undo_toast.hide()
         self._sync_draft()
-        self._schedule_preview()
 
     def _week_start_changed(self, *_args: object) -> None:
         if not self._building:
@@ -4030,8 +3782,7 @@ class SettingsDialog(QDialog):
             )
         if hasattr(self, "deck_tree"):
             self._fit_deck_tree()
-        if hasattr(self, "preview_timer"):
-            self._schedule_preview()
+        self._settings_changed()
 
     def _filter_decks(self, value: str) -> None:
         needle = value.strip().casefold()
@@ -4064,7 +3815,7 @@ class SettingsDialog(QDialog):
         self.font_color_value = selected.name()
         self.font_color.setText(self.font_color_value.upper())
         self._update_color_swatch()
-        self._schedule_preview()
+        self._settings_changed()
 
     def _font_color_edited(self) -> None:
         candidate = self.font_color.text().strip()
@@ -4073,7 +3824,7 @@ class SettingsDialog(QDialog):
             self.font_color_value = candidate.lower()
             self.font_color.setText(candidate.upper())
             self._update_color_swatch()
-            self._schedule_preview()
+            self._settings_changed()
         else:
             self._font_color_invalid = True
             self.font_color_warning.setVisible(True)
@@ -4093,19 +3844,20 @@ class SettingsDialog(QDialog):
             return
         self.font_color_value = candidate
         self._update_color_swatch()
-        self._schedule_preview()
+        self._settings_changed()
 
     def _font_family_changed(self, *_args: object) -> None:
         if self._building:
             return
         self._font_family_touched = True
-        self._schedule_preview()
+        self._settings_changed()
 
-    def _schedule_preview(self, *_args: object) -> None:
-        if self._building or not hasattr(self, "preview_timer"):
+    def _settings_changed(self, *_args: object) -> None:
+        """Synchronize native control changes without timers or secondary UI."""
+
+        if self._building:
             return
         self._sync_draft()
-        self.preview_timer.start()
 
     def _gather(self) -> Dict[str, Any]:
         config = deepcopy(self.staged)
@@ -4165,294 +3917,6 @@ class SettingsDialog(QDialog):
             rotation_mode=_combo_value(self.rotation, "daily"),
         )
         return normalize_config(config)
-
-    def _contextual_preview_config(self) -> Dict[str, Any]:
-        config = deepcopy(self.draft.values)
-        config["_preview_variant"] = (
-            "complete"
-            if self._preview_scope_mode == "full"
-            else self._preview_context
-        )
-        if self.current_section == "events":
-            selected = self._selected_event()
-            selected_date = (
-                str(selected.get("date")) if selected is not None else self.selected_event_date
-            )
-            if selected_date:
-                config["_preview_selected_date"] = selected_date
-        return config
-
-    def _render_preview(self) -> None:
-        if self.current_section == "about_support" or not self.preview_wrap.isVisible():
-            return
-        self._sync_draft()
-        config = self._contextual_preview_config()
-        snapshot = self.controller.snapshot
-        preview_date = date.today().isoformat()
-        if snapshot is not None:
-            for candidate in (
-                snapshot.facts.scheduling_date,
-                snapshot.facts.calendar_date,
-            ):
-                try:
-                    preview_date = date.fromisoformat(str(candidate)).isoformat()
-                    break
-                except (TypeError, ValueError):
-                    continue
-        if snapshot is None:
-            snapshot = representative_preview_snapshot(preview_date)
-        snapshot = preview_snapshot_with_staged_events(snapshot, config, preview_date)
-        selected_quote = self._selected_quote_index()
-        bible_missing = self.current_section == "bible_verse" and selected_quote is None
-        self.preview_empty_label.setVisible(bible_missing)
-        self.preview.setVisible(not bible_missing)
-        if bible_missing:
-            return
-        if self.current_section == "bible_verse":
-            snapshot = replace(snapshot, verse=verse_content(self.quotes[selected_quote]))
-        self.preview_label.setText(
-            "Bible verse preview"
-            if self.current_section == "bible_verse"
-            else "Calendar preview"
-            if self.current_section == "events"
-            else "Dashboard preview"
-        )
-        self.preview_sample_badge.setVisible(
-            self.current_section == "dashboard" and self.controller.snapshot is None
-        )
-        package = mw.addonManager.addonFromModule(__name__)
-        self.preview.stdHtml(
-            render_dashboard(
-                snapshot,
-                config,
-                anki_dark=self.controller.is_dark(),
-                preview=True,
-            ),
-            css=[_web_asset_url(package, "dashboard.css")],
-            js=[_web_asset_url(package, "dashboard.js")],
-            context=self,
-        )
-        QTimer.singleShot(180, self._fit_inline_preview)
-        QTimer.singleShot(260, self._measure_preview_content)
-
-    def _open_full_preview(self) -> None:
-        """Open a temporary full-size production preview from cached facts."""
-
-        self._sync_draft()
-        config = self._contextual_preview_config()
-        config.pop("_preview_variant", None)
-        snapshot = self.controller.snapshot
-        preview_date = date.today().isoformat()
-        if snapshot is not None:
-            for candidate in (snapshot.facts.scheduling_date, snapshot.facts.calendar_date):
-                try:
-                    preview_date = date.fromisoformat(str(candidate)).isoformat()
-                    break
-                except (TypeError, ValueError):
-                    continue
-        if snapshot is None:
-            snapshot = representative_preview_snapshot(preview_date)
-        snapshot = preview_snapshot_with_staged_events(snapshot, config, preview_date)
-        selected_quote = self._selected_quote_index()
-        if self.current_section == "bible_verse" and selected_quote is not None:
-            snapshot = replace(snapshot, verse=verse_content(self.quotes[selected_quote]))
-        return_focus = QApplication.focusWidget()
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Home Screen Dashboard full preview")
-        dialog.setObjectName("HomeDashboardSettings")
-        dialog.setModal(True)
-        screen = self.screen() or QApplication.primaryScreen()
-        available = screen.availableGeometry() if screen is not None else None
-        if available is not None:
-            dialog.resize(
-                max(720, round(available.width() * .9)),
-                max(560, round(available.height() * .9)),
-            )
-        else:
-            dialog.resize(980, 720)
-        outer = QVBoxLayout(dialog)
-        web = AnkiWebView(dialog, title="Home Screen Dashboard full preview")
-        web.setAccessibleName("Full Home Screen Dashboard preview")
-        package = mw.addonManager.addonFromModule(__name__)
-        web.stdHtml(
-            render_dashboard(
-                snapshot,
-                config,
-                anki_dark=self.controller.is_dark(),
-                preview=True,
-            ),
-            css=[_web_asset_url(package, "dashboard.css")],
-            js=[_web_asset_url(package, "dashboard.js")],
-            context=dialog,
-        )
-        outer.addWidget(web, 1)
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-        buttons.rejected.connect(dialog.reject)
-        outer.addWidget(buttons)
-        dialog.setStyleSheet(self._current_stylesheet())
-        dialog.exec()
-        if isinstance(return_focus, QWidget) and return_focus.isVisible():
-            return_focus.setFocus(Qt.FocusReason.OtherFocusReason)
-
-    def _inline_preview_script(self) -> str:
-        use_actual = "true" if self._preview_fit_mode == "actual" else "false"
-        variant = (
-            "complete"
-            if self._preview_scope_mode == "full"
-            else "bible_verse" if self.current_section == "bible_verse" else self._preview_context
-        )
-        focus_selector = {
-            "calendar": ".hdo-calendar-card",
-            "study_calculations": ".hdo-summary-metrics-grid",
-            "bible_verse": ".hdo-bible-card",
-        }.get(variant, "")
-        emphasis_selector = {
-            "visibility_heatmap": ".hdo-calendar-card",
-            "visibility_remaining": 'section[aria-labelledby="hdo-progress-title"]',
-            "visibility_today": 'section[aria-labelledby="hdo-session-title"]',
-            "visibility_heatmap_metrics": 'section[aria-labelledby="hdo-last-seven-title"], section[aria-labelledby="hdo-all-time-title"]',
-            "visibility_bible": ".hdo-bible-card",
-        }.get(variant, "")
-        return """
-(function () {
-  var root = document.getElementById('hdo-dashboard');
-  var stack = root && root.querySelector('.hdo-stack');
-  if (!root || !stack) return null;
-  document.documentElement.style.overflowX = 'hidden';
-  document.body.style.overflowX = 'hidden';
-  document.body.style.margin = '0';
-  document.body.style.minHeight = '0';
-  var canvas = getComputedStyle(root).getPropertyValue('--ui-canvas');
-  document.documentElement.style.background = canvas;
-  document.body.style.background = canvas;
-  document.documentElement.style.colorScheme = root.dataset.hdoColorMode || 'light';
-  document.body.style.colorScheme = root.dataset.hdoColorMode || 'light';
-  root.style.zoom = '1';
-  root.style.transform = 'none';
-  root.style.transformOrigin = 'top left';
-  root.style.maxWidth = 'none';
-  root.style.minHeight = '0';
-  root.style.margin = '0';
-  root.style.paddingBottom = '0';
-  var selector = %s;
-  var emphasisSelector = %s;
-  var target = selector ? document.querySelector(selector) : null;
-  var focusOnly = Boolean(target);
-  var useActual = %s;
-  var viewportWidth = Math.max(1, document.documentElement.clientWidth);
-  var viewportHeight = Math.max(1, document.documentElement.clientHeight);
-  var naturalWidth = 1000;
-  root.style.width = naturalWidth + 'px';
-  if (focusOnly && target) {
-    var layout = root.querySelector('.hdo-dashboard-layout');
-    var rail = root.querySelector('.hdo-insight-rail');
-    var calendar = root.querySelector('.hdo-calendar-card');
-    var metrics = root.querySelector('.hdo-summary-metrics-grid');
-    var bible = root.querySelector('.hdo-bible-card');
-    [calendar, metrics, bible].forEach(function (surface) {
-      if (surface) surface.style.display = surface === target ? '' : 'none';
-    });
-    if (layout) layout.style.gridTemplateColumns = 'minmax(0, 1fr)';
-    if (rail) {
-      rail.style.display = target === calendar ? 'none' : 'grid';
-      rail.style.height = 'auto';
-      rail.style.gridTemplateRows = target === metrics ? 'max-content' : 'minmax(108px, auto)';
-    }
-    root.dataset.hdoSettingsPreviewFocus = 'true';
-  }
-  if (emphasisSelector) {
-    Array.prototype.forEach.call(document.querySelectorAll(emphasisSelector), function (node) {
-      node.style.outline = '3px solid var(--ui-focus)';
-      node.style.outlineOffset = '3px';
-    });
-  }
-  var naturalHeight = Math.ceil(Math.max(120, root.scrollHeight));
-  var scale = useActual ? 1 : Math.min(1, viewportWidth / naturalWidth, viewportHeight / naturalHeight);
-  if (useActual) {
-    document.documentElement.style.overflowY = 'auto';
-    document.body.style.overflowY = 'auto';
-    document.body.style.width = naturalWidth + 'px';
-    document.body.style.height = naturalHeight + 'px';
-  } else {
-    document.documentElement.style.overflowY = 'hidden';
-    document.body.style.overflowY = 'hidden';
-    document.body.style.width = Math.ceil(naturalWidth * scale) + 'px';
-    document.body.style.height = Math.ceil(naturalHeight * scale) + 'px';
-    root.style.transform = 'scale(' + scale + ')';
-  }
-  root.dataset.hdoSettingsPreviewFit = useActual ? 'actual-size' : 'fit';
-  return {
-    width: naturalWidth,
-    height: naturalHeight,
-    renderedWidth: Math.ceil(naturalWidth * scale),
-    renderedHeight: Math.ceil(naturalHeight * scale),
-    scale: scale
-  };
-})()
-""" % (
-            json.dumps(focus_selector),
-            json.dumps(emphasis_selector),
-            use_actual,
-        )
-
-    def _fit_inline_preview(self) -> None:
-        if not self.preview_wrap.isVisible():
-            return
-        try:
-            self.preview.eval(self._inline_preview_script())
-        except Exception:
-            return
-
-    def _update_preview_canvas_height(self) -> None:
-        """Size the dock to its rendered content instead of a dead full-height panel."""
-
-        if not hasattr(self, "preview") or not self.preview_wrap.isVisible():
-            return
-        rendered_height = max(0, self._preview_content_size.height())
-        if self._preview_fit_mode == "actual":
-            preferred = max(220, min(480, rendered_height + 8))
-        elif self._preview_scope_mode == "full":
-            preferred = max(220, min(420, rendered_height + 8))
-        else:
-            preferred = max(150, min(320, rendered_height + 8))
-
-        body_height = max(0, self.body_shell.height())
-        chrome_height = max(
-            0,
-            self.preview_wrap.sizeHint().height() - self.preview.height(),
-        )
-        available = max(140, body_height - chrome_height)
-        target = max(140, min(preferred, available))
-        if self.preview.height() == target:
-            return
-        self.preview.setFixedHeight(target)
-        self.preview_wrap.updateGeometry()
-        QTimer.singleShot(0, self._fit_inline_preview)
-
-    def _measure_preview_content(self) -> None:
-        if not self.preview_wrap.isVisible():
-            return
-        script = self._inline_preview_script()
-
-        def measured(value: object) -> None:
-            if not isinstance(value, Mapping):
-                return
-            try:
-                width = max(1, int(value.get("width", 0)))
-                height = max(1, int(value.get("renderedHeight", value.get("height", 0))))
-            except (TypeError, ValueError, OverflowError):
-                return
-            next_size = QSize(width, height)
-            if next_size == self._preview_content_size:
-                return
-            self._preview_content_size = next_size
-            self._update_preview_canvas_height()
-            self.preview_wrap.updateGeometry()
-
-        try:
-            self.preview.evalWithCallback(script, measured)
-        except Exception:
-            return
 
     def _selected_event(self) -> Optional[MutableMapping[str, Any]]:
         widget = self.active_events if self.event_tabs.currentIndex() == 0 else self.archived_events
@@ -4532,7 +3996,7 @@ class SettingsDialog(QDialog):
             self._select_event_id(select_event_id, bool(select_archived))
         self._fit_event_tree(self.active_events)
         self._fit_event_tree(self.archived_events)
-        self._schedule_preview()
+        self._settings_changed()
         self._update_event_actions()
 
     def _attach_event_menu(
@@ -4625,7 +4089,6 @@ class SettingsDialog(QDialog):
         empty_library = not bool(self.staged["events"]["items"])
         self.event_add.setVisible(not empty_library)
         self._event_selection_changed()
-        self._schedule_preview()
 
     def _select_event_date(self, selected_date: str) -> None:
         self.selected_event_date = selected_date
@@ -4779,7 +4242,7 @@ class SettingsDialog(QDialog):
         self.quote_load_more.setVisible(rendered < total)
         self._update_quote_detail()
         self._update_quote_actions()
-        self._schedule_preview()
+        self._settings_changed()
 
     def _fit_quote_list(self) -> None:
         row_height = max(56, (2 * self.quote_list.fontMetrics().lineSpacing()) + 20)
@@ -4987,7 +4450,6 @@ class SettingsDialog(QDialog):
                 self._update_dependencies()
                 self._update_dirty_state()
                 self._apply_theme()
-                self._schedule_preview()
                 self._saving = False
                 if self.close_button is not None:
                     self.close_button.setEnabled(True)
@@ -5079,21 +4541,6 @@ class SettingsDialog(QDialog):
             super().closeEvent(event)
         else:
             event.ignore()
-
-    def done(self, result: int) -> None:
-        try:
-            self._window_settings.setValue(
-                "HomeScreenDashboard/settingsWindowSize",
-                self.size(),
-            )
-        except Exception:
-            pass
-        try:
-            self.preview.cleanup()
-        except Exception:
-            pass
-        super().done(result)
-
 
 def _object_name(menu: Any) -> str:
     getter = getattr(menu, "objectName", None)

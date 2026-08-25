@@ -31,6 +31,7 @@ from home_dashboard_overhaul.analytics import (
     unavailable_snapshot,
 )
 from home_dashboard_overhaul.config_schema import normalize_config
+from home_dashboard_overhaul.renderer import _progress_presentation
 from home_dashboard_overhaul.models import (
     AvailabilityReason,
     BrowseTarget,
@@ -65,6 +66,8 @@ EXPECTED_INSTANCE_KEY = os.environ.get("HDO_RELEASE_INSTANCE_KEY", "")
 EXPECTED_NORMAL_PID = int(os.environ.get("HDO_RELEASE_EXCLUDED_PID", "0") or 0)
 EXPECTED_CAPTURE_SCREEN = os.environ.get("HDO_RELEASE_CAPTURE_SCREEN", "").strip()
 STAGE = os.environ.get("HDO_RELEASE_PROBE_STAGE", "initial")
+RESTART_PRE_FIXTURE_EXPECTED_NEW = 10
+RESTART_MULTI_DECK_EXPECTED_TOTAL = 10
 OUTPUT_ROOT = RUN_ROOT / "hdo-release-evidence-1.8.4"
 CAPTURE_ROOT = OUTPUT_ROOT / "captures"
 REPORT_PATH = OUTPUT_ROOT / ("runtime-report-{}.json".format(STAGE))
@@ -384,12 +387,14 @@ def _show_live_snapshot(
     config: dict[str, Any],
     snapshot: DashboardSnapshot,
     expected_new: int,
+    expected_total: int,
     continuation: Any,
 ) -> None:
     try:
         queue = _queue_values(snapshot)
         _require(queue["new"] == expected_new, "{} analytics New remaining mismatch".format(label))
-        _require(queue["total"] == expected_new, "{} analytics Total remaining mismatch".format(label))
+        _require(queue["total"] == expected_total, "{} analytics Total remaining mismatch".format(label))
+        expected_progress = _progress_presentation(snapshot).label
         _controller.config = config
         _controller.snapshot = snapshot
         _controller.cache_key = _controller._key()
@@ -404,6 +409,8 @@ def _show_live_snapshot(
                 label=label,
                 queue=queue,
                 expected_new=expected_new,
+                expected_total=expected_total,
+                expected_progress=expected_progress,
                 continuation=continuation,
                 attempt=0,
             ),
@@ -417,6 +424,8 @@ def _inspect_live_snapshot(
     label: str,
     queue: Mapping[str, Any],
     expected_new: int,
+    expected_total: int,
+    expected_progress: str,
     continuation: Any,
     attempt: int,
 ) -> None:
@@ -434,12 +443,13 @@ def _inspect_live_snapshot(
         def inspected(value: object) -> None:
             try:
                 state = value if isinstance(value, dict) else {}
-                expected = str(expected_new)
+                expected_new_text = str(expected_new)
+                expected_total_text = str(expected_total)
                 if (
                     state.get("mounted") is not True
-                    or state.get("newText") != expected
-                    or state.get("totalText") != expected
-                    or "0%" not in str(state.get("progressLabel", ""))
+                    or state.get("newText") != expected_new_text
+                    or state.get("totalText") != expected_total_text
+                    or state.get("progressLabel") != expected_progress
                 ):
                     if attempt < 12:
                         QTimer.singleShot(
@@ -448,6 +458,8 @@ def _inspect_live_snapshot(
                                 label=label,
                                 queue=queue,
                                 expected_new=expected_new,
+                                expected_total=expected_total,
+                                expected_progress=expected_progress,
                                 continuation=continuation,
                                 attempt=attempt + 1,
                             ),
@@ -459,6 +471,8 @@ def _inspect_live_snapshot(
                 ).append({
                     "label": label,
                     "expected_new_remaining": expected_new,
+                    "expected_total_remaining": expected_total,
+                    "expected_progress_label": expected_progress,
                     "analytics": dict(queue),
                     "dom": dict(state),
                     "production_dashboard_mounted": True,
@@ -477,12 +491,24 @@ def _run_multi_deck_smoke(continuation: Any) -> None:
     try:
         _require(_live_snapshot is not None, "the production dashboard never completed its initial load")
         pre_fixture_queue = _queue_values(_live_snapshot)
-        expected_pre_fixture = 0 if STAGE == "initial" else 10
-        _require(
-            pre_fixture_queue["new"] == expected_pre_fixture
-            and pre_fixture_queue["total"] == expected_pre_fixture,
-            "{} initial production snapshot has the wrong remaining count".format(STAGE),
-        )
+        if STAGE == "initial":
+            _require(
+                pre_fixture_queue["new"] == 0 and pre_fixture_queue["total"] == 0,
+                "initial production snapshot has the wrong remaining count",
+            )
+        elif RESTART_PRE_FIXTURE_EXPECTED_NEW is None:
+            _require(
+                all(pre_fixture_queue[key] >= 0 for key in ("new", "learning", "review", "total"))
+                and pre_fixture_queue["total"]
+                == pre_fixture_queue["new"] + pre_fixture_queue["learning"] + pre_fixture_queue["review"],
+                "restart initial production snapshot has an inconsistent scheduler queue",
+            )
+        else:
+            _require(
+                pre_fixture_queue["new"] == RESTART_PRE_FIXTURE_EXPECTED_NEW
+                and pre_fixture_queue["total"] == RESTART_PRE_FIXTURE_EXPECTED_NEW,
+                "restart initial production snapshot has the wrong remaining count",
+            )
         fixture = _prepare_multi_deck_fixture(allow_create=STAGE == "initial")
         base_config = normalize_config(_controller.config)
         base_config["heatmap"]["excluded_deck_ids"] = []
@@ -518,6 +544,7 @@ def _run_multi_deck_smoke(continuation: Any) -> None:
                 config=excluded_config,
                 snapshot=excluded,
                 expected_new=3,
+                expected_total=3,
                 continuation=finished_excluded,
             )
 
@@ -526,6 +553,7 @@ def _run_multi_deck_smoke(continuation: Any) -> None:
             config=base_config,
             snapshot=unexcluded,
             expected_new=10,
+            expected_total=(RESTART_MULTI_DECK_EXPECTED_TOTAL if STAGE == "restart" else 10),
             continuation=finished_unexcluded,
         )
     except Exception as exc:

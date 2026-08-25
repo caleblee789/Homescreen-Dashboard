@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the machine-readable Home Screen Dashboard 1.8.5 UI contract."""
+"""Validate the machine-readable Home Screen Dashboard 1.8.6 UI contract."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from typing import Any, List, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT.parent
-RELEASE = "1.8.5"
+RELEASE = "1.8.6"
 
 
 def _read(name: str) -> dict[str, Any]:
@@ -70,6 +70,16 @@ def _validate_palette_matrix(errors: List[str], matrix: Mapping[str, Any]) -> No
         settings_count = 0
     if settings_count != 24 or matrix.get("settings_page_case_count") != 24:
         errors.append("Settings page matrix must derive 24 page-width-font cases")
+    statistics = matrix.get("statistics_accuracy_cases", [])
+    if {
+        case.get("id") for case in statistics if isinstance(case, Mapping)
+    } != {
+        "PROD-STATS-WIDE-MONTH",
+        "PROD-STATS-WIDE-YEAR",
+        "PROD-STATS-INTERMEDIATE",
+        "PROD-STATS-NARROW",
+    }:
+        errors.append("statistics matrix must cover Month, Year, and responsive production shells")
 
 
 def _validate_capture_plan(errors: List[str], capture: Mapping[str, Any]) -> None:
@@ -85,14 +95,15 @@ def _validate_capture_plan(errors: List[str], capture: Mapping[str, Any]) -> Non
         "production-palettes": 32,
         "production-core": 16,
         "settings-pages": 24,
-        "settings-contract": 23,
+        "settings-contract": 16,
+        "statistics-accuracy": 4,
         "restart": 2,
     }:
-        errors.append("capture families do not match the implemented 1.8.5 contract")
+        errors.append("capture families do not match the implemented 1.8.6 contract")
     total = sum(value for value in counts.values() if isinstance(value, int))
     derived = capture.get("derived_native_frame_count", {})
-    if total != 97 or derived.get("total") != total or derived.get("initial") != 95 or derived.get("restart") != 2:
-        errors.append("native evidence count must derive to 95 initial plus 2 restart frames")
+    if total != 94 or derived.get("total") != total or derived.get("initial") != 92 or derived.get("restart") != 2:
+        errors.append("native evidence count must derive to 92 initial plus 2 restart frames")
     explicit = [
         capture_id
         for family in families if isinstance(family, Mapping)
@@ -119,30 +130,30 @@ def _validate_capture_plan(errors: List[str], capture: Mapping[str, Any]) -> Non
         (item for item in references if item.get("id") == "USER-OWNED-SETTINGS-CONTACT-SHEETS-1.8.3"),
         {},
     )
-    if user_owned.get("must_not_be_staged") is not True:
+    if user_owned.get("must_not_receive_new_staging") is not True:
         errors.append("the user-owned 1.8.3 contact-sheet directory lacks the no-stage guard")
 
 
 def validate(root: Path = ROOT) -> List[str]:
     del root
     errors: List[str] = []
-    manifest = _read("calendar_surface_manifest_1_8_5.json")
-    matrix = _read("visual_regression_matrix_1_8_5.json")
-    registry = _read("ui-surface-registry_1_8_5.json")
-    capture = _read("capture_evidence_manifest_1_8_5.json")
+    manifest = _read("calendar_surface_manifest_1_8_6.json")
+    matrix = _read("visual_regression_matrix_1_8_6.json")
+    registry = _read("ui-surface-registry_1_8_6.json")
+    capture = _read("capture_evidence_manifest_1_8_6.json")
     addon_manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
     config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
 
     if addon_manifest.get("human_version") != RELEASE:
-        errors.append("add-on manifest must target release 1.8.5")
+        errors.append("add-on manifest must target release 1.8.6")
     if config.get("schema_version") != 8:
         errors.append("configuration schema must remain 8")
     if manifest.get("release") != RELEASE or manifest.get("schema_version") != 8:
-        errors.append("surface authority must describe release 1.8.5 / schema 8")
+        errors.append("surface authority must describe release 1.8.6 / schema 8")
     if manifest.get("contract") != "canonical-settings-and-production-dashboard-final-ui-2026-08-24":
         errors.append("surface authority has the wrong governing contract")
     if matrix.get("release") != RELEASE or capture.get("release") != RELEASE or registry.get("release") != RELEASE:
-        errors.append("all current QA contracts must match release 1.8.5")
+        errors.append("all current QA contracts must match release 1.8.6")
 
     surfaces = manifest.get("canonical_surfaces", [])
     ids = [surface.get("id") for surface in surfaces if isinstance(surface, Mapping)]
@@ -162,16 +173,16 @@ def validate(root: Path = ROOT) -> List[str]:
     _validate_capture_plan(errors, capture)
 
     _require_markers(errors, "settings.py", (
-        "self.resize(1200, 800)",
         "self.setMinimumSize(1040, 700)",
+        "self.resize(1200, 800)",
+        "self.setMinimumSize(min(1040, width), min(700, height))",
+        "self.resize(width, height)",
+        "super().__init__(mw)",
         "self.settings_shell.setMaximumWidth(1240)",
         "self.nav.setFixedWidth(152)",
-        'self.preview_wrap.setObjectName("PreviewDock")',
-        "def _settle_window_to_screen(self) -> None:",
-        "def _update_preview_canvas_height(self) -> None:",
+        "def _connect_change_signals(self) -> None:",
+        "def _settings_changed(self, *_args: object) -> None:",
         "value = max(0, target_y - 2)",
-        '[("Section", "context"), ("Full dashboard", "full")]',
-        '[("Fit", "fit"), ("100%", "actual")]',
         'self.revert_button = QPushButton("Revert changes")',
         'self.save_error.setObjectName("InlineSaveError")',
         "class EventRowWidget(QWidget)",
@@ -192,6 +203,8 @@ def validate(root: Path = ROOT) -> List[str]:
         "presets_by_theme",
     ))
     _require_markers(errors, "controller.py", (
+        "dialog = SettingsDialog(self, page_name, date_value, event_value)",
+        "dialog.exec()",
         "def _persist_settings_transaction(",
         "previous_config = deepcopy(",
         "_restore_optional_bytes(ROTATION_STATE_PATH, previous_rotation)",
@@ -207,6 +220,7 @@ def validate(root: Path = ROOT) -> List[str]:
         "show_due_forecast",
         'config.get("visibility", {}).get("events", True)',
         "--hdo-verse-size",
+        "100 - int(stats.retention.percent)",
     ))
     _require_markers(errors, "web/dashboard.css", (
         "width: min(1120px, calc(100% - 40px))",
@@ -224,9 +238,40 @@ def validate(root: Path = ROOT) -> List[str]:
         "var clearance = footerHeight + 24",
         "new global.ResizeObserver(update)",
         "rows: 6",
+        "100 - Number(recent.retention.percent)",
+    ))
+    _require_markers(errors, "analytics.py", (
+        "def _scheduler_day_index_expression(",
+        "def _history_period_aggregate(",
+        "def _retention_eligible_condition(",
+        "REVLOG_RESCHEDULED = 5",
+        "due = original_due if original_deck else current_due",
+        "queue IN (-2, -3)",
+    ))
+    _require_markers(errors, "models.py", (
+        "queue total must equal new + learning + review",
     ))
 
     settings_source = _source("settings.py")
+    for retired in (
+        "HomeScreenDashboard/settingsWindowSize", "def _settle_window_to_screen",
+        "Qt.WindowType.Tool", "self.winId()", "setTransientParent",
+        "_attach_transient_parent", "Qt.WindowModality.NonModal", "objc_msgSend",
+        "_attach_macos_settings_window", "_detach_macos_settings_window",
+        "self.move(", "SETTINGS_WINDOW_MODALITY", "setWindowModality",
+        "AnkiWebView", "aqt.webview", "stdHtml", "focusChanged",
+        "PreviewDock", "_schedule_preview", "_render_preview", "_open_full_preview",
+    ):
+        if retired in settings_source:
+            errors.append("retired Settings window behavior remains: {}".format(retired))
+    controller_source = _source("controller.py")
+    for retired in (
+        "self.settings_dialog", "SETTINGS_WINDOW_MODALITY", "setWindowModality",
+        "dialog.open()", "dialog.show()", "dialog.finished.connect(",
+        "def _settings_dialog_finished", "dialog.raise_()", "dialog.activateWindow()",
+    ):
+        if retired in controller_source:
+            errors.append("retired top-level Settings lifecycle remains: {}".format(retired))
     for retired in (
         "SettingsLayoutMetrics", "settings_content_mode", "section_selector",
         "section_tabs", "compact_toolbar", 'setText("Discard changes"',
@@ -246,7 +291,7 @@ def validate(root: Path = ROOT) -> List[str]:
     for version, dated in (
         ("1.8.0", "2026-08-23"), ("1.8.1", "2026-08-23"),
         ("1.8.2", "2026-08-23"), ("1.8.3", "2026-08-23"),
-        ("1.8.4", "2026-08-24"),
+        ("1.8.4", "2026-08-24"), ("1.8.5", "2026-08-24"),
     ):
         if not (ROOT / "qa" / "release-evidence-{}-{}".format(version, dated)).is_dir():
             errors.append("retained {} release evidence is missing".format(version))
@@ -254,18 +299,18 @@ def validate(root: Path = ROOT) -> List[str]:
     protected = "home_dashboard_overhaul/qa/settings-menu-contact-sheets-1.8.3-2026-08-23-2222"
     if (REPO / ".git").exists():
         try:
-            tracked = subprocess.run(
-                ["git", "ls-files", "--", protected],
+            protected_changes = subprocess.run(
+                ["git", "status", "--short", "--untracked-files=no", "--", protected],
                 cwd=REPO,
                 check=True,
                 capture_output=True,
                 text=True,
             ).stdout.strip()
         except (OSError, subprocess.CalledProcessError) as exc:
-            errors.append("could not verify protected contact-sheet tracking state: {}".format(exc))
+            errors.append("could not verify protected contact-sheet immutability: {}".format(exc))
         else:
-            if tracked:
-                errors.append("user-owned 1.8.3 contact sheets must remain untracked")
+            if protected_changes:
+                errors.append("frozen 1.8.3 contact sheets contain tracked or staged changes")
 
     expected_unrun = {
         "voiceover_review", "windows_validation", "linux_validation",
@@ -284,7 +329,7 @@ def main() -> int:
         for error in errors:
             print("ERROR: {}".format(error))
         return 1
-    print("Canonical UI contract: PASS (1.8.5 schema 8, 97 derived native frames, no restart waiver)")
+    print("Canonical UI contract: PASS (1.8.6 schema 8, 94 derived native frames, no restart waiver)")
     return 0
 
 

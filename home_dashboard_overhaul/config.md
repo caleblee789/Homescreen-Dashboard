@@ -62,25 +62,61 @@ legend groups and event summaries are conditional on their feature settings.
 Date selection, tooltip, exact Browser routing, event edit/add, and Most Missed
 behavior retain their existing semantics.
 
-## Settings and preview
+## Statistics calculations
 
-The Settings window defaults to 1200×800, enforces 1040×700 when the available
-screen permits, and restores `HomeScreenDashboard/settingsWindowSize` only
-after clamping it to the screen's available geometry. It uses one compact
-header, 152 px rail, active-page scroller, optional shared right Preview dock,
-and final-row footer. A physically smaller screen keeps the same rail and page
-and places the same Preview dock in a layout-managed overlay.
+Today is the exact scheduler period `[next rollover − 86,400 seconds, next
+rollover)`. Cards studied counts rated answer events in that period after the
+configured analytics scope; Time spent sums their recorded review time; Pace
+is seconds per answer. New cards studied counts distinct qualifying
+introductions, with `new_cards.include_rescheduled` controlling whether a
+reset/reintroduced card may count again.
 
-Preview is open by default for Dashboard, Events, and Bible verse each session,
-is omitted on About, and is never persisted. `Section | Full dashboard` and
-`Fit | 100%` use the production renderer. Fit scales a top-aligned wrapper;
-100% owns Preview's secondary vertical scrollbar. Settings colors derive only
-from Anki's light/dark appearance; dashboard themes affect swatches and preview
-content.
+The scope is collection-wide minus configured excluded decks and every
+descendant. Both current deck IDs and filtered-deck original IDs are checked.
+Suspending or burying a card removes it from current actionable workload, and
+suspension also removes it from future forecasts. Neither state retroactively
+erases rated historical answers, matching Anki.
 
-Collection-backed preview figures use the most recent saved Home snapshot.
-Staged display, event, heatmap, and Bible changes update Preview immediately
-but write nothing until Save. Revert restores the complete saved baseline.
+New, Learning, and Reviews remaining come from Anki's limited due tree. Each
+included top-level head is capped independently after scoped raw candidates are
+classified by scheduler queue: queue `0` is New, queues `1`, `3`, and `4` are
+Learning, and queue `2` is Review regardless of card type. Suspended `-1` and
+buried `-2`/`-3` queues are excluded. The selected deck is not consulted, and
+Total is always the exact sum of the three categories. Cards buried reports
+only scoped cards currently in queues `-2` or `-3` that are New or currently
+due/overdue. Future Learning and Review cards and transient queue-hidden
+siblings are excluded.
+
+Last 7 Days spans the seven fixed scheduler periods ending at the next
+rollover. All Time spans the complete configured analytics scope. Retention
+matches Anki 26.8.1 true-retention eligibility: `ease > 0`, excluding
+`type = 3 AND factor = 0`, and requiring `type = 1` or a prior interval of at
+least one day. Again fails and Hard, Good, and Easy pass. Raw pass and eligible
+counts are aggregated before Retention is rounded half-up to the existing whole
+percentage once; visible Again is `100 − Retention`. Avg cards/day divides
+answer events by active scheduler days, and streaks count consecutive active
+scheduler days.
+
+Calendar history and selected-day details use the same rollover-relative
+records. Forecasting follows Anki's non-new, non-suspended future-due logic,
+uses filtered-deck original due dates, includes future buried cards, and
+excludes buried backlog/work due in the active scheduler day.
+
+## Settings
+
+The Settings window is a normal `QDialog(mw)` opened synchronously through
+`exec()` with default window flags, matching conventional Anki add-on settings
+windows. It never assigns opening coordinates and contains no `AnkiWebView` or
+other embedded WebEngine content. The resizable window targets 1200×800;
+smaller screens receive a clamped initial size with a 32 px safety margin, and
+the opening size is not persisted. It uses one compact header, 152 px rail,
+active-page scroller, and final-row footer.
+
+Settings colors derive only from Anki's light/dark appearance; dashboard themes
+affect swatches and production rendering. Staged display, event, heatmap, and
+Bible changes update the draft synchronously but write nothing until Save.
+Sidebar changes only select a native stacked page. Revert restores the complete
+saved baseline.
 Saving validates all staged state, prepares both config and manual-verse
 writes, replaces atomically where supported, and rolls back best-effort on a
 partial failure before reporting a specific inline error.

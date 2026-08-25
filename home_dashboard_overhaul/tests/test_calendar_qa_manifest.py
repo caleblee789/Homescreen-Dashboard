@@ -14,21 +14,21 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         qa = ROOT / "qa"
         cls.manifest = json.loads(
-            (qa / "calendar_surface_manifest_1_8_5.json").read_text(encoding="utf-8")
+            (qa / "calendar_surface_manifest_1_8_6.json").read_text(encoding="utf-8")
         )
         cls.matrix = json.loads(
-            (qa / "visual_regression_matrix_1_8_5.json").read_text(encoding="utf-8")
+            (qa / "visual_regression_matrix_1_8_6.json").read_text(encoding="utf-8")
         )
         cls.capture = json.loads(
-            (qa / "capture_evidence_manifest_1_8_5.json").read_text(encoding="utf-8")
+            (qa / "capture_evidence_manifest_1_8_6.json").read_text(encoding="utf-8")
         )
         cls.registry = json.loads(
-            (qa / "ui-surface-registry_1_8_5.json").read_text(encoding="utf-8")
+            (qa / "ui-surface-registry_1_8_6.json").read_text(encoding="utf-8")
         )
 
-    def test_manifest_is_the_authoritative_1_8_5_schema_eight_contract(self) -> None:
+    def test_manifest_is_the_authoritative_1_8_6_schema_eight_contract(self) -> None:
         self.assertEqual(self.manifest["schema_version"], 8)
-        self.assertEqual(self.manifest["release"], "1.8.5")
+        self.assertEqual(self.manifest["release"], "1.8.6")
         self.assertEqual(
             self.manifest["contract"],
             "canonical-settings-and-production-dashboard-final-ui-2026-08-24",
@@ -42,7 +42,9 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(settings["minimum_normal_window"], [1040, 700])
         self.assertEqual(settings["maximum_inner_width"], 1240)
         self.assertEqual(settings["rail_width"], 152)
-        self.assertFalse(settings["preview_persisted"])
+        self.assertEqual(settings["embedded_web_content"], "none")
+        self.assertEqual(settings["window_lifecycle"], "parented-standard-dialog-exec")
+        self.assertEqual(settings["page_switching"], "native-stacked-widget-only-no-render-timer")
         dashboard = self.manifest["dashboard_architecture"]
         self.assertEqual(dashboard["maximum_width"], 1120)
         self.assertEqual(dashboard["month_cells"], 42)
@@ -62,7 +64,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertTrue(self.registry["exact_once"])
         self.assertEqual(
             self.registry["authority"],
-            "qa/calendar_surface_manifest_1_8_5.json",
+            "qa/calendar_surface_manifest_1_8_6.json",
         )
 
     def test_palette_matrix_covers_every_theme_id_in_both_modes(self) -> None:
@@ -99,9 +101,9 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         derived = self.capture["derived_native_frame_count"]
         self.assertEqual(sum(family["count"] for family in families), derived["total"])
         self.assertEqual(derived, {
-            "initial": 95,
+            "initial": 92,
             "restart": 2,
-            "total": 97,
+            "total": 94,
             "derivation": "sum(capture_families.count)",
         })
         self.assertEqual(
@@ -110,7 +112,8 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
                 "production-palettes": 32,
                 "production-core": 16,
                 "settings-pages": 24,
-                "settings-contract": 23,
+                "settings-contract": 16,
+                "statistics-accuracy": 4,
                 "restart": 2,
             },
         )
@@ -132,18 +135,31 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
             if item["id"] == "settings-contract"
         )
         required = {
-            "SET-DOCK-SHOWN", "SET-DOCK-HIDDEN",
-            "SET-PREVIEW-SECTION-FIT", "SET-PREVIEW-SECTION-100",
-            "SET-PREVIEW-FULL-FIT", "SET-PREVIEW-FULL-100",
-            "SET-OVERLAY-SUBMIN",
             "SET-EVENTS-EMPTY", "SET-EVENTS-POPULATED", "SET-EVENTS-SELECTED",
             "SET-EVENTS-SEARCHED", "SET-EVENTS-ARCHIVED",
             "SET-BIBLE-SHORT", "SET-BIBLE-LONG", "SET-BIBLE-CUSTOM",
             "SET-ABOUT-BOTTOM", "SET-DIRTY", "SET-REVERT",
             "SET-SAVE-SUCCESS", "SET-SAVE-ERROR", "SET-LEGACY-ROUTE",
-            "SET-WINDOW-RESTORE", "SET-WINDOW-CLAMP",
+            "SET-WINDOW-STANDARD", "SET-WINDOW-CLAMP",
         }
         self.assertEqual(set(family["capture_ids"]), required)
+
+    def test_statistics_accuracy_family_covers_every_value_shell(self) -> None:
+        family = next(
+            item for item in self.capture["capture_families"]
+            if item["id"] == "statistics-accuracy"
+        )
+        expected = {
+            "PROD-STATS-WIDE-MONTH",
+            "PROD-STATS-WIDE-YEAR",
+            "PROD-STATS-INTERMEDIATE",
+            "PROD-STATS-NARROW",
+        }
+        self.assertEqual(set(family["capture_ids"]), expected)
+        self.assertEqual(
+            {case["id"] for case in self.matrix["statistics_accuracy_cases"]},
+            expected,
+        )
 
     def test_production_core_includes_geometry_semantics_backgrounds_and_clearance(self) -> None:
         family = next(
@@ -169,8 +185,8 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
             user_owned["path"],
             "qa/settings-menu-contact-sheets-1.8.3-2026-08-23-2222",
         )
-        self.assertTrue(user_owned["must_not_be_staged"])
-        for version in ("1.8.0", "1.8.1", "1.8.2", "1.8.3", "1.8.4"):
+        self.assertTrue(user_owned["must_not_receive_new_staging"])
+        for version in ("1.8.0", "1.8.1", "1.8.2", "1.8.3", "1.8.4", "1.8.5"):
             self.assertTrue(any(version in item["id"] for item in references))
 
     def test_acceptance_boundaries_and_isolation_are_explicit(self) -> None:
@@ -182,6 +198,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(set(self.matrix["deferred_unrun"]), expected_unrun)
         self.assertEqual(len(self.capture["isolation_gates"]), 4)
         self.assertIn("controlled-restart", self.capture["required_automated_gates"])
+        self.assertIn("native-statistics-parity", self.capture["required_automated_gates"])
         criteria = self.manifest["acceptance_criteria"]
         self.assertEqual(len({item["id"] for item in criteria}), len(criteria))
         self.assertTrue(all(item["tags"] and item["requirement"].strip() for item in criteria))

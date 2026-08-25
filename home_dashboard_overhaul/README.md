@@ -1,21 +1,47 @@
-# Home Screen Dashboard 1.8.5
+# Home Screen Dashboard 1.8.6
 
 Home Screen Dashboard is a calendar-first Deck Browser dashboard for Anki
 Desktop 26.8. It combines study history, due work, local events, stable study
 metrics, and a rotating Bible verse without patching Anki's private Deck
 Browser or statistics classes.
 
-## What changed in 1.8.5
+## What changed in 1.8.6
+
+- Every study-derived value is computed from one scheduler-authoritative
+  snapshot. Today uses `[next rollover − 86,400 seconds, next rollover)`, and
+  calendar/streak history uses matching rollover-relative day indexes instead
+  of civil-midnight arithmetic.
+- Last 7 Days and All Time Retention mirror Anki 26.8.1 native eligible-review
+  retention. Eligible rows have `ease > 0`, exclude filtered cram rows with
+  `type = 3` and `factor = 0`, and are review-kind or have a prior interval of
+  at least one day. Again fails and Hard/Good/Easy pass. The visible integer
+  Retention is rounded half-up once and Again is displayed as
+  `100 − Retention`; later suspension or burial does not erase past answers.
+- Today’s Progress is collection-wide minus excluded deck descendants. It
+  applies each included top-level head's native due-tree limits independently,
+  and the selected deck cannot change the result. Queue 0 is New, queues 1/3/4
+  are Learning, and queue 2 is Review regardless of card type; queues -1/-2/-3
+  are not remaining. `Total remaining` is enforced as the category sum.
+- Today’s Session counts rated answer events and elapsed review time in the
+  active scheduler period, distinct qualifying new introductions, and cards
+  presently in scoped explicit buried queues -2/-3 that are New or currently
+  due/overdue. Future Learning and Review cards and transient queue-hidden
+  siblings are excluded. Pace remains seconds per answer and ETA keeps the
+  existing empirical policy with a whole-minute ceiling.
+- Calendar forecasting matches Anki's non-new, non-suspended future-due logic,
+  including filtered-deck original due dates and future buried cards while
+  excluding buried work due in the active day. Tooltips and selected-day
+  details consume the same canonical history records as the metric cards.
+- Initial HTML, live refresh, Month/Year 2×2, intermediate, narrow, and restart
+  states are checked for identical metric values. Schema
+  8, all existing labels/order/JSON/DOM keys, and bridge commands are unchanged.
 
 - Settings has one native Qt widget tree at every size: a compact global
-  header, fixed 152 px text rail, one page scroller, one shared optional
-  Preview dock, and a true final-row footer. On a physically smaller screen,
-  the same dock becomes a layout-managed overlay.
+  header, fixed 152 px text rail, one page scroller, and a true final-row
+  footer.
 - Dashboard, Events, Bible verse, and About use compact shared rows and
-  content-sized controls. Preview starts open each Dashboard, Events, and
-  Bible session, is omitted on About, and is not persisted.
-- Preview uses the production renderer for Section/Full dashboard and
-  Fit/100%, reflects all staged state, and writes nothing until Save.
+  content-sized controls. All controls are native Qt and staged state writes
+  nothing until Save.
 - Month is always 42 cells. Year always uses one responsive 53-week tree that
   stays inside the dashboard without horizontal scrolling at 480 px and above;
   only the heatmap may scroll below that boundary. Calendar legend and
@@ -31,17 +57,20 @@ Browser or statistics classes.
 - Saving prepares both config and manual-verse writes, replaces atomically
   where supported, and rolls back best-effort if only one succeeds. Errors are
   specific and inline, and the dialog remains open.
-- `New remaining` continues to use Anki's scheduler-authoritative due tree with
-  scoped deck exclusions. Total remaining, ETA, and completion consume that
-  same value.
+- New, Learning, and Reviews remaining use Anki's scheduler-authoritative due
+  tree with scoped deck exclusions. Independent top-level head limits are
+  summed without selected-deck reconciliation, so changing the selected deck
+  cannot change the collection-wide result. Total remaining, ETA, and
+  completion consume those same values.
 
 ## Dashboard
 
 Month and Year share one persistent controller-owned view. Today's Progress
 contains New, Learning, Reviews, and Total remaining. Today's Session contains
 Cards studied, New cards studied, Cards buried, Time spent, Pace, and ETA. Last
-7 Days and All Time retain their existing scheduler-grounded analytics. The
-configured Bible verse is rendered at its exact font, size, and color.
+7 Days and All Time use Anki-native eligible retention over their exact
+scheduler periods. The configured Bible verse is rendered at its exact font,
+size, and color.
 
 The compact calendar footer retains date selection, tooltip, Browser routing,
 event edit/add, and Most Missed behavior. Due and event legend/summary groups
@@ -54,9 +83,12 @@ until **Save changes**. **Revert changes** returns every staged field to the
 saved baseline. The baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
-appearance. Dashboard themes affect only swatches and production-rendered
-preview content. Dashboard window size is a non-schema Qt preference restored
-only after clamping to the current available screen.
+appearance. Dashboard themes affect only swatches and production rendering.
+Settings opens as a normal parented, resizable `QDialog` through `exec()` with
+default window flags, matching conventional Anki add-on settings windows. It
+assigns no screen coordinates, contains no embedded WebEngine content, targets
+1200×800, and clamps its initial size for smaller screens without restoring a
+saved size.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source
@@ -64,7 +96,7 @@ work remains deferred and is not packaged.
 
 ## Install
 
-Install `home-dashboard-overhaul-1.8.5.ankiaddon` through **Tools → Add-ons →
+Install `home-dashboard-overhaul-1.8.6.ankiaddon` through **Tools → Add-ons →
 Install from file**, restart Anki, and disable any legacy source add-ons named
 by the activation card. The manifest is pinned to Anki Desktop 26.8.
 
@@ -82,9 +114,9 @@ python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 The builder creates one 24-file allowlisted archive, checks its version and
 safe paths, and verifies every packaged byte against source. That exact archive
 is installed into one fresh sync-disabled Anki 26.8 profile for an initial pass
-and a controlled restart. Native acceptance follows the current contract: 97
+and a controlled restart. Native acceptance follows the current contract: 94
 captures spanning production, Settings, and restart states, with validated
-contact-sheet coverage.
+contact-sheet coverage and direct Anki Graphs/Scheduler parity.
 
 VoiceOver, Windows, Linux, forced colors, DPR 1, and OS-level display-scaling
 acceptance remain deferred and unclaimed unless separately run.

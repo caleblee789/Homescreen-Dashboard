@@ -305,7 +305,7 @@ class SettingsUtilityTests(unittest.TestCase):
     def test_default_settings_size_is_1200_by_800(self) -> None:
         self.assertEqual(clamp_window_size(None, (1440, 900)), (1200, 800))
 
-    def test_restored_settings_size_is_clamped_to_minimum_and_screen(self) -> None:
+    def test_requested_settings_size_is_clamped_to_minimum_and_screen(self) -> None:
         self.assertEqual(clamp_window_size((700, 500), (1440, 900)), (1040, 700))
         self.assertEqual(clamp_window_size((4000, 3000), (1440, 900)), (1408, 868))
 

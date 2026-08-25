@@ -2,6 +2,47 @@
 
 ## Unreleased
 
+## 1.8.6 — 2026-08-24
+
+- Audited every study-derived value shown in Today’s Progress, Today’s
+  Session, Last 7 Days, All Time, calendar tooltips, and selected-day details.
+  Today and historical buckets now use Anki’s fixed 86,400-second periods
+  relative to the next scheduler rollover, including exact lower and upper
+  boundary handling.
+- Corrected Last 7 Days and All Time Retention to mirror Anki 26.8.1 native
+  true-retention eligibility: `ease > 0`, excluding filtered cram entries with
+  `type = 3` and `factor = 0`, and requiring review-kind or a prior interval of
+  at least one day. Again fails; Hard, Good, and Easy pass. The visible whole
+  percentage is rounded half-up once and Again is rendered as its exact
+  complement. Current suspension or burial does not erase historical answers.
+- Corrected Today’s Progress remaining counts to use Anki’s limited due tree
+  across independently limited top-level heads with dashboard deck exclusions.
+  Queue 0 is New, queues 1/3/4 are Learning, and queue 2 is Review regardless
+  of card type; queues -1/-2/-3 are excluded. The selected deck cannot change
+  the collection-wide result, and `Total remaining` is the category sum.
+- Corrected Today’s Session to count rated answers and elapsed review time in
+  the active scheduler period, distinct qualifying new introductions, and
+  scoped explicit buried queues -2/-3 only when cards are New or currently
+  due/overdue. Future Learning and Review cards and transient hidden siblings
+  are excluded. Pace remains seconds per answer and ETA retains the existing
+  empirical-pace policy with a whole-minute ceiling.
+- Corrected calendar due forecasting to Anki’s non-new, non-suspended
+  future-due behavior, including filtered-deck original due dates and future
+  buried cards while excluding buried backlog/work due in the active day.
+  Calendar history and detail actions now consume the same canonical records
+  as the metric cards.
+- Changed Settings to the conventional add-on window contract used by Progress
+  Bar: a normal parented, resizable `QDialog` opened synchronously through
+  `exec()` with default window flags and no explicit positioning. Removed every
+  Settings preview, embedded WebEngine instance, preview timer, global focus
+  hook, and secondary preview dialog so opening Settings and switching pages
+  remain native Qt operations.
+- Preserved schema 8, every JSON/DOM metric key, bridge command, label, order,
+  whole-percent presentation, and 2×2 and responsive layouts. Added a 94-frame
+  exact-package evidence contract with
+  native Graphs/Scheduler comparisons, responsive snapshot parity, a hard
+  restart, and explicit unrun platform/accessibility boundaries.
+
 ## 1.8.5 — 2026-08-24
 
 - Replaced the three Settings compositions with one native Qt shell: compact

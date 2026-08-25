@@ -50,13 +50,13 @@ DEFERRED_SOURCE_FILES = frozenset({
 })
 DEFERRED_SOURCE_PREFIXES = ("_vendor/",)
 RELEASE_CONTRACT_FILES = (
-    "qa/calendar_surface_manifest_1_8_5.json",
-    "qa/visual_regression_matrix_1_8_5.json",
-    "qa/ui-surface-registry_1_8_5.json",
-    "qa/capture_evidence_manifest_1_8_5.json",
-    "qa/runtime_probe_release_1_8_5_manifest.json",
-    "qa/runtime_probe_release_1_8_5.py",
-    "qa/assemble_release_evidence_1_8_5.py",
+    "qa/calendar_surface_manifest_1_8_6.json",
+    "qa/visual_regression_matrix_1_8_6.json",
+    "qa/ui-surface-registry_1_8_6.json",
+    "qa/capture_evidence_manifest_1_8_6.json",
+    "qa/runtime_probe_release_1_8_6_manifest.json",
+    "qa/runtime_probe_release_1_8_6.py",
+    "qa/assemble_release_evidence_1_8_6.py",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 FIXED_TIMESTAMP = (2026, 8, 24, 0, 0, 0)
@@ -269,6 +269,18 @@ def _validate_visual_matrix(matrix: dict) -> None:
         settings_count = 0
     if settings_count != 24 or matrix.get("settings_page_case_count") != 24:
         raise ValueError("Settings visual matrix must derive 24 page-width-font cases")
+    statistics_cases = matrix.get("statistics_accuracy_cases", [])
+    if (
+        not isinstance(statistics_cases, list)
+        or len(statistics_cases) != 4
+        or {entry.get("id") for entry in statistics_cases} != {
+            "PROD-STATS-WIDE-MONTH",
+            "PROD-STATS-WIDE-YEAR",
+            "PROD-STATS-INTERMEDIATE",
+            "PROD-STATS-NARROW",
+        }
+    ):
+        raise ValueError("statistics visual matrix must cover every responsive production shell")
 
 
 def validate_sources() -> dict:
@@ -288,14 +300,14 @@ def validate_sources() -> dict:
     manifest = _json("manifest.json")
     config = _json("config.json")
     verse_data = _json("default_verses.json")
-    surface_contract = _json("qa/calendar_surface_manifest_1_8_5.json")
-    visual_matrix = _json("qa/visual_regression_matrix_1_8_5.json")
-    capture_contract = _json("qa/capture_evidence_manifest_1_8_5.json")
+    surface_contract = _json("qa/calendar_surface_manifest_1_8_6.json")
+    visual_matrix = _json("qa/visual_regression_matrix_1_8_6.json")
+    capture_contract = _json("qa/capture_evidence_manifest_1_8_6.json")
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.5":
-        raise ValueError("release artifact must use semantic version 1.8.5")
+    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.6":
+        raise ValueError("release artifact must use semantic version 1.8.6")
     if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260800):
         raise ValueError("release must be pinned to Anki 26.8")
     if config.get("schema_version") != 8:
@@ -325,8 +337,11 @@ def validate_sources() -> dict:
     required = {
         "analytics.py": (
             "due_load_reference", "math.ceil(len(forecast_counts) * .90)",
-            "queue IN (-2, -3)", "type IN (1, 3)", "due < 1000000000",
+            "queue IN (-2, -3)", "type IN (1, 3)",
+            "due = original_due if original_deck else current_due",
             "deck_due_tree", "_limited_new_for_deck_node", "GROUP BY did",
+            "def _retention_eligible_condition", "def _history_period_aggregate",
+            "def _scheduler_day_index_expression", "REVLOG_RESCHEDULED = 5",
         ),
         "config_schema.py": (
             "SCHEMA_VERSION = 8", "presets_by_theme", "retention_target",
@@ -341,6 +356,8 @@ def validate_sources() -> dict:
             "def _open_browser_target", "browser_will_search", "context.ids = ids",
             'command == "diagnostics"', 'self.open_settings("about_support")',
             "def _persist_settings_transaction", "_restore_optional_bytes",
+            "dialog = SettingsDialog(self, page_name, date_value, event_value)",
+            "dialog.exec()",
         ),
         "insights.py": (
             "ORDER BY again_count DESC, total_answers DESC, r.cid ASC",
@@ -357,11 +374,12 @@ def validate_sources() -> dict:
             "today_session", "data-hdo-has-bible",
         ),
         "settings.py": (
-            "self.resize(1200, 800)", "self.setMinimumSize(1040, 700)",
+            "self.setMinimumSize(1040, 700)", "self.resize(1200, 800)",
+            "self.setMinimumSize(min(1040, width), min(700, height))",
+            "self.resize(width, height)", "super().__init__(mw)",
             "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
-            'self.preview_wrap.setObjectName("PreviewDock")',
-            '[("Section", "context"), ("Full dashboard", "full")]',
-            '[("Fit", "fit"), ("100%", "actual")]',
+            "def _connect_change_signals(self) -> None:",
+            "def _settings_changed(self, *_args: object) -> None:",
             'SettingsCard("Study calculations")', 'SettingsCard("Calendar display")',
             'SettingsCard("Calendar range")', 'SettingsCard("Data and reset"',
             "class EventRowWidget", "class VerseRowWidget", "def _attach_event_menu",
@@ -403,6 +421,31 @@ def validate_sources() -> dict:
         absent = [marker for marker in markers if marker not in sources[relative]]
         if absent:
             raise ValueError("{} is missing corrected release contracts: {}".format(relative, ", ".join(absent)))
+
+    for retired in (
+        "Qt.WindowType.Tool", "self.winId()", "setTransientParent",
+        "_attach_transient_parent", "Qt.WindowModality.NonModal", "objc_msgSend",
+        "_attach_macos_settings_window", "_detach_macos_settings_window",
+        "self.move(",
+    ):
+        if retired in sources["settings.py"]:
+            raise ValueError("retired macOS Settings panel behavior remains: {}".format(retired))
+
+    for retired in (
+        "self.settings_dialog", "SETTINGS_WINDOW_MODALITY",
+        "setWindowModality", "dialog.open()", "dialog.show()",
+        "dialog.finished.connect(", "def _settings_dialog_finished",
+        "dialog.raise_()", "dialog.activateWindow()",
+    ):
+        if retired in sources["controller.py"]:
+            raise ValueError("retired top-level Settings lifecycle remains: {}".format(retired))
+
+    for retired in (
+        "AnkiWebView", "aqt.webview", "stdHtml", "focusChanged",
+        "PreviewDock", "_schedule_preview", "_render_preview", "_open_full_preview",
+    ):
+        if retired in sources["settings.py"]:
+            raise ValueError("retired Settings preview behavior remains: {}".format(retired))
 
     dashboard_surface_source = sources["renderer.py"] + sources["web/dashboard.js"] + sources["web/dashboard.css"]
     for forbidden in (
@@ -449,13 +492,14 @@ def validate_sources() -> dict:
         "production-palettes": 32,
         "production-core": 16,
         "settings-pages": 24,
-        "settings-contract": 23,
+        "settings-contract": 16,
+        "statistics-accuracy": 4,
         "restart": 2,
     }:
         raise ValueError("capture families do not match the implemented UI contract")
     derived = capture_contract.get("derived_native_frame_count", {})
-    if sum(counts.values()) != 97 or derived.get("total") != 97:
-        raise ValueError("capture plan must derive exactly 97 native frames")
+    if sum(counts.values()) != 94 or derived.get("total") != 94:
+        raise ValueError("capture plan must derive exactly 94 native frames")
 
     verses = verse_data.get("quote")
     if (

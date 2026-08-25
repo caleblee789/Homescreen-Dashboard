@@ -31,7 +31,9 @@ from .models import (
 )
 
 
+SECONDS_PER_DAY = 86_400
 REVLOG_MANUAL_RESCHEDULE = 4
+REVLOG_RESCHEDULED = 5
 
 
 def scheduling_today(day_cutoff: int) -> date:
@@ -46,10 +48,8 @@ def scheduling_today(day_cutoff: int) -> date:
 
 
 def pace_lower_bound(day_cutoff: int, days: int) -> int:
-    """Return a wall-clock scheduling cutoff that remains correct across DST."""
-    local_cutoff = datetime.fromtimestamp(int(day_cutoff))
-    local_start = local_cutoff - timedelta(days=max(1, int(days)))
-    return int(local_start.timestamp())
+    """Return the start of Anki's fixed-length rollover-relative period."""
+    return int(day_cutoff) - max(1, int(days)) * SECONDS_PER_DAY
 
 
 def history_start_date(config: Mapping[str, Any], today: date, visible: bool) -> date | None:
@@ -70,7 +70,10 @@ def calculate_long_term(rows: Iterable[Sequence[object]], today: date) -> LongTe
     counts: Dict[date, int] = {}
     total_answers = 0
     total_again = 0
+    retention_passed = 0
+    retention_failed = 0
     rate_data_available = False
+    exact_retention_available = False
     for row in rows:
         if len(row) < 2:
             continue
@@ -83,7 +86,12 @@ def calculate_long_term(rows: Iterable[Sequence[object]], today: date) -> LongTe
         if count:
             counts[parsed] = counts.get(parsed, 0) + count
             total_answers += count
-        if len(row) >= 3:
+        if len(row) >= 6:
+            rate_data_available = True
+            exact_retention_available = True
+            retention_passed += max(0, int(row[4] or 0))
+            retention_failed += max(0, int(row[5] or 0))
+        elif len(row) >= 3:
             rate_data_available = True
             again = max(0, int(row[2] or 0))
             total_again += min(count, again)
@@ -107,16 +115,25 @@ def calculate_long_term(rows: Iterable[Sequence[object]], today: date) -> LongTe
             current_streak += 1
             cursor -= timedelta(days=1)
     span = max(1, (today - active_dates[0]).days + 1)
-    return LongTermStats(
-        average_reviews_per_active_day=round(sum(counts.values()) / len(counts)),
-        active_days_percent=round(100 * len(counts) / span),
-        longest_streak=longest,
-        current_streak=current_streak,
-        lifetime_retention=(
+    if exact_retention_available:
+        retention = RateMetric.from_counts(
+            retention_passed,
+            retention_passed + retention_failed,
+        )
+    else:
+        retention = (
             RateMetric.from_counts(total_answers - total_again, total_answers)
             if rate_data_available
             else RateMetric()
-        ),
+        )
+    return LongTermStats(
+        average_reviews_per_active_day=(
+            2 * sum(counts.values()) + len(counts)
+        ) // (2 * len(counts)),
+        active_days_percent=round(100 * len(counts) / span),
+        longest_streak=longest,
+        current_streak=current_streak,
+        lifetime_retention=retention,
         lifetime_cards_studied=total_answers,
     )
 
@@ -131,6 +148,9 @@ def calculate_last_seven_days(
     answers = 0
     new_cards = 0
     again = 0
+    retention_passed = 0
+    retention_failed = 0
+    exact_retention_available = False
     for row in rows:
         if len(row) < 3:
             continue
@@ -149,11 +169,29 @@ def calculate_last_seven_days(
                 new_cards += max(0, int(row[3] or 0))
             except (TypeError, ValueError, OverflowError):
                 pass
+        if len(row) >= 6:
+            exact_retention_available = True
+            try:
+                retention_passed += max(0, int(row[4] or 0))
+                retention_failed += max(0, int(row[5] or 0))
+            except (TypeError, ValueError, OverflowError):
+                pass
+    retention_denominator = retention_passed + retention_failed
+    retention = (
+        RateMetric.from_counts(retention_passed, retention_denominator)
+        if exact_retention_available
+        else RateMetric.from_counts(answers - again, answers)
+    )
+    again_rate = (
+        RateMetric.from_counts(retention_failed, retention_denominator)
+        if exact_retention_available
+        else RateMetric.from_counts(again, answers)
+    )
     return LastSevenDaysStats(
         cards_studied=answers,
         new_cards_studied=new_cards,
-        retention=RateMetric.from_counts(answers - again, answers),
-        again_rate=RateMetric.from_counts(again, answers),
+        retention=retention,
+        again_rate=again_rate,
     )
 
 
@@ -171,9 +209,27 @@ def _safe_all(db: Any, sql: str, *args: object) -> List[Tuple[Any, ...]]:
     return [tuple(row) for row in (db.all(sql, *args) or [])]
 
 
-def _rollover_seconds(day_cutoff: int) -> int:
-    cutoff = datetime.fromtimestamp(int(day_cutoff)).astimezone()
-    return cutoff.hour * 3600 + cutoff.minute * 60 + cutoff.second
+def _scheduler_day_bounds_ms(col: Any, study_date: date) -> Tuple[int, int]:
+    """Return Anki's exact 86,400-second bounds for one scheduler-day label."""
+    cutoff = int(col.sched.day_cutoff)
+    current = scheduling_today(cutoff)
+    offset = (study_date - current).days
+    upper = cutoff + offset * SECONDS_PER_DAY
+    return (upper - SECONDS_PER_DAY) * 1000, upper * 1000
+
+
+def _scheduler_day_index_expression(alias: str = "r") -> str:
+    """Return the scheduler-day offset for records strictly before rollover.
+
+    Counting whole elapsed periods back from ``cutoff - 1`` keeps the lower
+    bound of the active ``[cutoff - 86_400, cutoff)`` period in day zero.
+    This also avoids SQLite's toward-zero division assigning exact negative
+    boundaries to the preceding day.
+    """
+    return "-CAST((? - 1 - ({0}.id / 1000)) / {1} AS INTEGER)".format(
+        alias,
+        SECONDS_PER_DAY,
+    )
 
 
 def _excluded_deck_ids(col: Any, configured: Sequence[int]) -> Set[int]:
@@ -232,29 +288,33 @@ def _consistency_history_query(
 ) -> List[Tuple[str, int]]:
     """Count scoped valid answers by scheduler date for Consistency."""
     resolved = scope or FilterScope()
-    rollover = _rollover_seconds(int(col.sched.day_cutoff))
-    day_expr = "date(r.id / 1000, 'unixepoch', 'localtime', '-{} seconds')".format(
-        rollover
-    )
+    cutoff = int(col.sched.day_cutoff)
+    scheduling_date = scheduling_today(cutoff)
+    day_expr = _scheduler_day_index_expression()
     conditions, args = _history_filter_conditions(resolved)
     lower = _scope_history_lower_bound(col, resolved)
     if lower is not None:
         conditions.append("r.id >= ?")
         args.append(lower)
+    conditions.append("r.id < ?")
+    args.append(cutoff * 1000)
     rows = _safe_all(
         col.db,
-        "SELECT {day}, count(*) FROM revlog r {join} "
-        "WHERE {where} GROUP BY {day} ORDER BY {day}".format(
+        "SELECT {day} AS day_index, count(*) FROM revlog r {join} "
+        "WHERE {where} GROUP BY day_index ORDER BY day_index".format(
             day=day_expr,
             join="JOIN cards c ON c.id = r.cid" if _history_join(resolved) else "",
             where=" AND ".join(conditions),
         ),
+        cutoff,
         *args,
     )
     return [
-        (str(row[0]), max(0, int(row[1] or 0)))
-        for row in rows
-        if len(row) >= 2 and row[0]
+        (
+            (scheduling_date + timedelta(days=int(row[0] or 0))).isoformat(),
+            max(0, int(row[1] or 0)),
+        )
+        for row in rows if len(row) >= 2
     ]
 
 
@@ -302,8 +362,8 @@ def _history_filter_conditions(
     conditions = ["{}.ease > 0".format(alias)]
     args: List[object] = []
     if scope.exclude_manual_reschedules:
-        conditions.append("{}.type != ?".format(alias))
-        args.append(REVLOG_MANUAL_RESCHEDULE)
+        conditions.append("{}.type NOT IN (?, ?)".format(alias))
+        args.extend((REVLOG_MANUAL_RESCHEDULE, REVLOG_RESCHEDULED))
     deck_condition, deck_args = _deck_scope_condition(scope, "c")
     if deck_condition:
         conditions.append(deck_condition)
@@ -318,8 +378,7 @@ def _scope_history_lower_bound(col: Any, scope: FilterScope) -> Optional[int]:
         start = date.fromisoformat(scope.ignore_before)
     except ValueError:
         return None
-    rollover_time = datetime.fromtimestamp(int(col.sched.day_cutoff)).astimezone().timetz()
-    return int(datetime.combine(start, rollover_time).timestamp() * 1000)
+    return _scheduler_day_bounds_ms(col, start)[0]
 
 
 def _history_conditions_for_day(
@@ -327,10 +386,10 @@ def _history_conditions_for_day(
     scope: FilterScope,
     study_date: date,
 ) -> Tuple[List[str], List[object]]:
-    rollover = _rollover_seconds(int(col.sched.day_cutoff))
-    day_expression = "date(r.id / 1000, 'unixepoch', 'localtime', '-{} seconds')".format(rollover)
-    conditions = ["{} = ?".format(day_expression)]
-    args: List[object] = [study_date.isoformat()]
+    cutoff = int(col.sched.day_cutoff)
+    offset = (study_date - scheduling_today(cutoff)).days
+    conditions = ["{} = ?".format(_scheduler_day_index_expression()), "r.id < ?"]
+    args: List[object] = [cutoff, offset, cutoff * 1000]
     filtered, filter_args = _history_filter_conditions(scope)
     conditions.extend(filtered)
     args.extend(filter_args)
@@ -338,14 +397,26 @@ def _history_conditions_for_day(
 
 
 def _new_card_condition(alias: str, include_rescheduled: bool) -> str:
-    condition = "{0}.type IN (0, 3) AND {0}.lastIvl = 0".format(alias)
+    condition = (
+        "{0}.type IN (0, 3) AND {0}.lastIvl = 0 AND "
+        "NOT ({0}.type = 3 AND {0}.factor = 0)"
+    ).format(alias)
     if not include_rescheduled:
         condition += (
             " AND NOT EXISTS (SELECT 1 FROM revlog prior "
             "WHERE prior.cid = {alias}.cid AND prior.id < {alias}.id "
-            "AND prior.ease > 0 AND prior.type != 4)"
+            "AND prior.ease > 0 AND prior.type NOT IN (4, 5) "
+            "AND NOT (prior.type = 3 AND prior.factor = 0))"
         ).format(alias=alias)
     return condition
+
+
+def _retention_eligible_condition(alias: str = "r") -> str:
+    """Mirror Anki 26.8.1's native true-retention eligibility predicate."""
+    return (
+        "{0}.ease > 0 AND NOT ({0}.type = 3 AND {0}.factor = 0) AND "
+        "({0}.type = 1 OR {0}.lastIvl <= -86400 OR {0}.lastIvl >= 1)"
+    ).format(alias)
 
 
 def _history_facts_query(
@@ -354,45 +425,50 @@ def _history_facts_query(
     today: date,
     visible: bool,
     scope: Optional[FilterScope] = None,
-) -> List[Tuple[str, int, int, int, Tuple[int, ...]]]:
+) -> List[Tuple[str, int, int, int, int, int, Tuple[int, ...]]]:
     resolved = scope or resolve_filter_scope(col, config)
     conditions, args = _history_filter_conditions(resolved)
     start = history_start_date(config, today, visible)
     if start:
-        rollover_time = datetime.fromtimestamp(int(col.sched.day_cutoff)).astimezone().timetz()
-        start_dt = datetime.combine(start, rollover_time)
         conditions.append("r.id >= ?")
-        args.append(int(start_dt.timestamp() * 1000))
-    rollover = _rollover_seconds(int(col.sched.day_cutoff))
-    day_expr = "date(r.id / 1000, 'unixepoch', 'localtime', '-{} seconds')".format(rollover)
+        args.append(_scheduler_day_bounds_ms(col, start)[0])
+    cutoff = int(col.sched.day_cutoff)
+    conditions.append("r.id < ?")
+    args.append(cutoff * 1000)
+    day_expr = _scheduler_day_index_expression()
     new_card_condition = _new_card_condition(
         "r",
         resolved.include_rescheduled_new_cards,
     )
     sql = (
-        "SELECT {day}, count(*), "
+        "SELECT {day} AS day_index, count(*), "
         "count(DISTINCT CASE WHEN {new_cards} THEN r.cid END), "
         "coalesce(sum(CASE WHEN r.ease = 1 THEN 1 ELSE 0 END), 0), "
+        "coalesce(sum(CASE WHEN {retention} AND r.ease != 1 THEN 1 ELSE 0 END), 0), "
+        "coalesce(sum(CASE WHEN {retention} AND r.ease = 1 THEN 1 ELSE 0 END), 0), "
         "group_concat(DISTINCT CASE WHEN EXISTS "
         "(SELECT 1 FROM cards existing WHERE existing.id = r.cid) THEN r.cid END) "
-        "FROM revlog r {join} {where} GROUP BY {day} ORDER BY {day}"
+        "FROM revlog r {join} {where} GROUP BY day_index ORDER BY day_index"
     ).format(
         day=day_expr,
         new_cards=new_card_condition,
+        retention=_retention_eligible_condition(),
         join="JOIN cards c ON c.id = r.cid" if _history_join(resolved) else "",
         where="WHERE " + " AND ".join(conditions) if conditions else "",
     )
-    output: List[Tuple[str, int, int, int, Tuple[int, ...]]] = []
-    for row in _safe_all(col.db, sql, *args):
-        if not row or not row[0]:
+    output: List[Tuple[str, int, int, int, int, int, Tuple[int, ...]]] = []
+    for row in _safe_all(col.db, sql, cutoff, *args):
+        if not row:
             continue
-        raw_ids = str(row[4] or "").split(",") if len(row) > 4 else []
+        raw_ids = str(row[6] or "").split(",") if len(row) > 6 else []
         card_ids = tuple(sorted({int(value) for value in raw_ids if value.isdigit() and int(value) > 0}))
         output.append((
-            str(row[0]),
+            (today + timedelta(days=int(row[0] or 0))).isoformat(),
             max(0, int(row[1] or 0)) if len(row) > 1 else 0,
             max(0, int(row[2] or 0)) if len(row) > 2 else 0,
             max(0, int(row[3] or 0)) if len(row) > 3 else 0,
+            max(0, int(row[4] or 0)) if len(row) > 4 else 0,
+            max(0, int(row[5] or 0)) if len(row) > 5 else 0,
             card_ids,
         ))
     return output
@@ -407,7 +483,7 @@ def _history_query(
     """Backward-compatible projection of the canonical history query."""
     return [
         (iso_date, completed, new_cards)
-        for iso_date, completed, new_cards, _again_count, _card_ids in _history_facts_query(
+        for iso_date, completed, new_cards, _again_count, _passed, _failed, _card_ids in _history_facts_query(
             col,
             config,
             today,
@@ -447,48 +523,101 @@ def _history_day_counts(
     )
 
 
-def _due_conditions(
+def _history_period_aggregate(
+    col: Any,
     scope: FilterScope,
-    due_operator: str,
-) -> Tuple[List[str], List[object]]:
-    if due_operator not in {"=", "<="}:
-        raise ValueError("unsupported due operator")
-    conditions = [
-        "queue IN (2, 3)",
-        "type IN (2, 3)",
-        "due {} ?".format(due_operator),
-    ]
+    days: int,
+) -> Tuple[int, int, int, int, int]:
+    """Aggregate one exact rollover-relative period without date-bucket loss."""
+    cutoff = int(col.sched.day_cutoff)
+    lower = pace_lower_bound(cutoff, days) * 1000
+    scoped_lower = _scope_history_lower_bound(col, scope)
+    if scoped_lower is not None:
+        lower = max(lower, scoped_lower)
+    conditions, args = _history_filter_conditions(scope)
+    conditions.extend(("r.id >= ?", "r.id < ?"))
+    args.extend((lower, cutoff * 1000))
+    new_card_condition = _new_card_condition(
+        "r",
+        scope.include_rescheduled_new_cards,
+    )
+    retention_condition = _retention_eligible_condition()
+    row = _safe_first(
+        col.db,
+        "SELECT count(*), "
+        "count(DISTINCT CASE WHEN {new_cards} THEN r.cid END), "
+        "coalesce(sum(CASE WHEN r.ease = 1 THEN 1 ELSE 0 END), 0), "
+        "coalesce(sum(CASE WHEN {retention} AND r.ease != 1 THEN 1 ELSE 0 END), 0), "
+        "coalesce(sum(CASE WHEN {retention} AND r.ease = 1 THEN 1 ELSE 0 END), 0) "
+        "FROM revlog r {join} WHERE {where}".format(
+            new_cards=new_card_condition,
+            retention=retention_condition,
+            join="JOIN cards c ON c.id = r.cid" if _history_join(scope) else "",
+            where=" AND ".join(conditions),
+        ),
+        *args,
+    )
+    return tuple(max(0, int(value or 0)) for value in row[:5])  # type: ignore[return-value]
+
+
+def _truncating_division(numerator: int, denominator: int) -> int:
+    """Return integer division truncated toward zero, matching Rust and SQLite."""
+    if denominator <= 0:
+        raise ValueError("denominator must be positive")
+    return numerator // denominator if numerator >= 0 else -((-numerator) // denominator)
+
+
+def _future_due_records(
+    col: Any,
+    scope: FilterScope,
+    max_offset: Optional[int] = None,
+) -> Dict[int, Tuple[int, Tuple[int, ...]]]:
+    """Mirror Anki 26.8.1's non-new, non-suspended future-due graph."""
+    conditions = ["type != 0", "queue != -1"]
     args: List[object] = []
     deck_condition, deck_args = _deck_scope_condition(scope)
     if deck_condition:
         conditions.append(deck_condition)
         args.extend(deck_args)
-    return conditions, args
-
-
-def _intraday_relearning_due_details(
-    col: Any,
-    scope: FilterScope,
-) -> Tuple[int, Tuple[int, ...]]:
-    """Return active intraday relearning work belonging to the current day."""
-    conditions = ["queue = 1", "type = 3", "due < ?"]
-    args: List[object] = [int(col.sched.day_cutoff)]
-    deck_condition, deck_args = _deck_scope_condition(scope)
-    if deck_condition:
-        conditions.append(deck_condition)
-        args.extend(deck_args)
-    row = _safe_first(
+    rows = _safe_all(
         col.db,
-        "SELECT count(*), group_concat(id) FROM cards WHERE {}".format(
+        "SELECT id, type, queue, due, odue, odid FROM cards WHERE {}".format(
             " AND ".join(conditions)
         ),
         *args,
     )
-    raw_ids = str(row[1] or "").split(",") if len(row) > 1 else []
-    card_ids = tuple(
-        sorted({int(value) for value in raw_ids if value.isdigit() and int(value) > 0})
-    )
-    return max(0, int(row[0] or 0)), card_ids
+    scheduler_today = int(getattr(col.sched, "today", 0))
+    cutoff = int(col.sched.day_cutoff)
+    output: Dict[int, Tuple[int, Tuple[int, ...]]] = {}
+    for row in rows:
+        if len(row) < 6:
+            raise RuntimeError("future-due query returned an invalid row")
+        try:
+            card_id = int(row[0])
+            queue = int(row[2])
+            current_due = int(row[3])
+            original_due = int(row[4] or 0)
+            original_deck = int(row[5] or 0)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise RuntimeError("future-due query returned invalid values") from exc
+        due = original_due if original_deck else current_due
+        if due > 1_000_000_000:
+            due_day = _truncating_division(due - cutoff, SECONDS_PER_DAY)
+        else:
+            due_day = due - scheduler_today
+        # Anki's graph includes future buried cards, but hides buried backlog
+        # and work due in the active scheduler day.
+        if due_day <= 0 and queue in (-2, -3):
+            continue
+        offset = max(0, due_day)
+        if max_offset is not None and offset > max(0, int(max_offset)):
+            continue
+        previous_count, previous_ids = output.get(offset, (0, ()))
+        output[offset] = (
+            previous_count + 1,
+            tuple(sorted(set(previous_ids).union((card_id,)))),
+        )
+    return output
 
 
 def _scheduled_due_details_for_day(
@@ -496,23 +625,8 @@ def _scheduled_due_details_for_day(
     scope: FilterScope,
     offset: int,
 ) -> Tuple[int, Tuple[int, ...]]:
-    scheduler_today = int(getattr(col.sched, "today", 0))
-    operator = "<=" if offset == 0 else "="
-    conditions, args = _due_conditions(scope, operator)
-    args.insert(0, scheduler_today + max(0, int(offset)))
-    row = _safe_first(
-        col.db,
-        "SELECT count(*), group_concat(id) FROM cards WHERE {}".format(" AND ".join(conditions)),
-        *args,
-    )
-    raw_ids = str(row[1] or "").split(",") if len(row) > 1 else []
-    card_ids = tuple(sorted({int(value) for value in raw_ids if value.isdigit() and int(value) > 0}))
-    count = max(0, int(row[0] or 0))
-    if offset == 0:
-        intraday_count, intraday_ids = _intraday_relearning_due_details(col, scope)
-        count += intraday_count
-        card_ids = tuple(sorted(set(card_ids).union(intraday_ids)))
-    return count, card_ids
+    resolved_offset = max(0, int(offset))
+    return _future_due_records(col, scope, resolved_offset).get(resolved_offset, (0, ()))
 
 
 def _scheduled_due_for_day(col: Any, scope: FilterScope, offset: int) -> int:
@@ -529,46 +643,14 @@ def _forecast_facts_query(
     heatmap = config["heatmap"]
     if not heatmap.get("show_due_forecast", True) or int(heatmap.get("forecast_days", 0)) <= 0:
         return {}
-    scheduler_today = int(getattr(col.sched, "today", 0))
-    last_due = scheduler_today + int(heatmap["forecast_days"]) - 1
     resolved = scope or resolve_filter_scope(col, config)
-    conditions, args = _due_conditions(resolved, "<=")
-    args.insert(0, last_due)
-    rows = _safe_all(
-        col.db,
-        "SELECT due, count(*), group_concat(id) FROM cards WHERE {} GROUP BY due ORDER BY due".format(
-            " AND ".join(conditions)
-        ),
-        *args,
-    )
+    forecast_days = int(heatmap["forecast_days"])
     output: Dict[str, Tuple[int, Tuple[int, ...]]] = {}
-    for row in rows:
-        if len(row) < 2:
-            continue
-        raw_due, raw_count = row[0], row[1]
-        try:
-            due = max(scheduler_today, int(raw_due))
-            offset = due - scheduler_today
-        except (TypeError, ValueError, OverflowError):
-            continue
-        if offset >= int(heatmap["forecast_days"]):
+    for offset, record in _future_due_records(col, resolved, forecast_days - 1).items():
+        if offset >= forecast_days:
             continue
         day = (today + timedelta(days=offset)).isoformat()
-        previous_count, previous_ids = output.get(day, (0, ()))
-        raw_ids = str(row[2] or "").split(",") if len(row) > 2 else []
-        card_ids = tuple(int(value) for value in raw_ids if value.isdigit() and int(value) > 0)
-        output[day] = (
-            previous_count + max(0, int(raw_count or 0)),
-            tuple(sorted(set(previous_ids).union(card_ids))),
-        )
-    intraday_count, intraday_ids = _intraday_relearning_due_details(col, resolved)
-    if intraday_count:
-        current = today.isoformat()
-        previous_count, previous_ids = output.get(current, (0, ()))
-        output[current] = (
-            previous_count + intraday_count,
-            tuple(sorted(set(previous_ids).union(intraday_ids))),
-        )
+        output[day] = record
     return output
 
 
@@ -594,6 +676,8 @@ def _pace(
     conditions, args = _history_filter_conditions(resolved)
     conditions.append("r.id >= ?")
     args.append(lower)
+    conditions.append("r.id < ?")
+    args.append(cutoff * 1000)
     row = _safe_first(
         col.db,
         "SELECT count(*), coalesce(sum(r.time), 0) FROM revlog r {join} WHERE {where}".format(
@@ -619,6 +703,8 @@ def _lifetime_paces(
     if scoped_lower is not None:
         conditions.append("r.id >= ?")
         args.append(scoped_lower)
+    conditions.append("r.id < ?")
+    args.append(int(col.sched.day_cutoff) * 1000)
     new_condition = _new_card_condition("r", include_rescheduled)
     row = _safe_first(
         col.db,
@@ -656,6 +742,8 @@ def _today_new_cards_studied(
     conditions, args = _history_filter_conditions(resolved)
     conditions.append("r.id >= ?")
     args.append(lower)
+    conditions.append("r.id < ?")
+    args.append(cutoff * 1000)
     row = _safe_first(
         col.db,
         "SELECT count(DISTINCT CASE WHEN {new} THEN r.cid END) "
@@ -680,22 +768,20 @@ def _today(
     resolved = scope or resolve_filter_scope(col, config)
     queried_answers, today_seconds, _ = _pace(col, 1, resolved)
     include_rescheduled = resolved.include_rescheduled_new_cards
-    if day_facts is None:
-        today_answers = queried_answers
-        today_new_cards = _today_new_cards_studied(
-            col,
-            include_rescheduled,
-            resolved,
-        )
-    else:
+    if day_facts is not None:
         if not day_facts.reviews_completed.is_available:
             raise RuntimeError("current-day completed answers are unavailable")
         if not day_facts.new_cards_studied.is_available:
             raise RuntimeError("current-day new-card count is unavailable")
-        # Calendar, Today, Progress and Settings all consume these canonical
-        # current-day counts.  The pace query contributes elapsed time only.
-        today_answers = int(day_facts.reviews_completed.value)
-        today_new_cards = int(day_facts.new_cards_studied.value)
+    # Today uses Anki's exact [next rollover - 86,400, next rollover) period.
+    # The calendar retains Anki's own day-index bucketing, whose exact boundary
+    # convention is intentionally kept separate from this native period total.
+    today_answers = queried_answers
+    today_new_cards = _today_new_cards_studied(
+        col,
+        include_rescheduled,
+        resolved,
+    )
     try:
         lifetime_pace, new_pace = _lifetime_paces(
             col,
@@ -723,33 +809,25 @@ def _queue(
     col: Any,
     estimate_pace: float | None,
     new_pace: float | None,
-    scheduled_review: Optional[int] = None,
     scope: Optional[FilterScope] = None,
 ) -> QueueStats:
     """Return one scoped workload for Today’s Progress.
 
-    New is collected per deck and capped recursively by Anki's full due tree,
-    so each top-level deck contributes its own remaining daily allowance while
-    parent and child limits are each applied once. Learning is active original
-    learning work due before the next rollover, including interday learning due
-    by the current scheduler day. Relearning is deliberately excluded from
-    Learning because it belongs to the canonical review/relearning value
-    supplied by ``DayFacts``. Preview/repeat cards in queue 4 are excluded from
-    every category. Learning and review are not reduced by deck daily limits.
-    """
-    if scheduled_review is None:
-        raise RuntimeError("scheduled review demand is unavailable")
-    try:
-        review = int(scheduled_review)
-    except (TypeError, ValueError, OverflowError) as exc:
-        raise RuntimeError("scheduled review demand is unavailable") from exc
-    if review < 0:
-        raise RuntimeError("scheduled review demand is unavailable")
+    Candidate cards come from active queue types only, so already buried and
+    suspended cards are excluded. Each category is capped recursively by
+    Anki's full due tree, preserving collection-wide top-level deck allowances,
+    parent/daily limits, and dashboard deck exclusions. The selected deck must
+    not change this collection-wide result.
 
+    Categories follow Anki's scheduler queues rather than card types: queue 0
+    is New, queues 1/3/4 are Learning, and queue 2 is Review. The due tree is
+    the authority for learn-ahead and remaining scheduler capacity.
+    """
     resolved = scope or FilterScope()
     conditions = [
-        "((queue = 0 AND type = 0) OR "
-        "(type = 1 AND ((queue = 1 AND due < ?) OR (queue = 3 AND due <= ?))))"
+        "(queue = 0 OR "
+        "(queue IN (1, 4) AND due < ?) OR "
+        "(queue IN (2, 3) AND due <= ?))"
     ]
     args: List[object] = [
         int(col.sched.day_cutoff),
@@ -763,31 +841,50 @@ def _queue(
         col.db,
         "SELECT "
         "did, "
-        "coalesce(sum(CASE WHEN queue = 0 AND type = 0 THEN 1 ELSE 0 END), 0), "
-        "coalesce(sum(CASE WHEN type = 1 AND "
-        "((queue = 1 AND due < ?) OR (queue = 3 AND due <= ?)) "
+        "coalesce(sum(CASE WHEN queue = 0 THEN 1 ELSE 0 END), 0), "
+        "coalesce(sum(CASE WHEN "
+        "((queue IN (1, 4) AND due < ?) OR (queue = 3 AND due <= ?)) "
+        "THEN 1 ELSE 0 END), 0), "
+        "coalesce(sum(CASE WHEN queue = 2 AND due <= ? "
         "THEN 1 ELSE 0 END), 0) "
         "FROM cards WHERE {} GROUP BY did".format(" AND ".join(conditions)),
         int(col.sched.day_cutoff),
         int(getattr(col.sched, "today", 0)),
+        int(getattr(col.sched, "today", 0)),
         *args,
     )
     raw_new_by_deck: Dict[int, int] = {}
-    learning = 0
+    raw_learning_by_deck: Dict[int, int] = {}
+    raw_review_by_deck: Dict[int, int] = {}
     for row in rows:
-        if len(row) != 3:
+        if len(row) != 4:
             raise RuntimeError("remaining-work query returned an invalid row")
         try:
             deck_id = int(row[0])
             raw_new = max(0, int(row[1] or 0))
-            learning += max(0, int(row[2] or 0))
+            raw_learning = max(0, int(row[2] or 0))
+            raw_review = max(0, int(row[3] or 0))
         except (TypeError, ValueError, OverflowError) as exc:
             raise RuntimeError("remaining-work query returned invalid values") from exc
         if deck_id <= 0:
             raise RuntimeError("remaining-work query returned an invalid deck")
         if raw_new:
             raw_new_by_deck[deck_id] = raw_new_by_deck.get(deck_id, 0) + raw_new
-    new = _scheduler_limited_new_remaining(col, raw_new_by_deck, resolved)
+        if raw_learning:
+            raw_learning_by_deck[deck_id] = (
+                raw_learning_by_deck.get(deck_id, 0) + raw_learning
+            )
+        if raw_review:
+            raw_review_by_deck[deck_id] = (
+                raw_review_by_deck.get(deck_id, 0) + raw_review
+            )
+    new, learning, review = _scheduler_limited_remaining_counts(
+        col,
+        raw_new_by_deck,
+        raw_learning_by_deck,
+        raw_review_by_deck,
+        resolved,
+    )
     total = new + learning + review
     estimate: int | None = None
     if total == 0:
@@ -799,21 +896,6 @@ def _queue(
     return QueueStats(new, learning, review, total, estimate)
 
 
-def _deck_tree_node(node: Any, deck_id: int) -> Any | None:
-    """Return one deck node from an Anki due tree without assuming its root."""
-
-    try:
-        if int(getattr(node, "deck_id", 0) or 0) == deck_id:
-            return node
-    except (TypeError, ValueError, OverflowError):
-        pass
-    for child in getattr(node, "children", ()) or ():
-        match = _deck_tree_node(child, deck_id)
-        if match is not None:
-            return match
-    return None
-
-
 def _limited_new_for_deck_node(
     node: Any,
     raw_new_by_deck: Mapping[int, int],
@@ -822,9 +904,27 @@ def _limited_new_for_deck_node(
 ) -> int:
     """Apply one node's remaining limit after recursively limiting children."""
 
+    return _limited_count_for_deck_node(
+        node,
+        raw_new_by_deck,
+        excluded_deck_ids,
+        seen_deck_ids,
+        "new_count",
+    )
+
+
+def _limited_count_for_deck_node(
+    node: Any,
+    raw_by_deck: Mapping[int, int],
+    excluded_deck_ids: Set[int],
+    seen_deck_ids: Set[int],
+    count_attribute: str,
+) -> int:
+    """Apply one collection-wide scheduler limit recursively."""
+
     try:
         deck_id = int(getattr(node, "deck_id"))
-        limit = int(getattr(node, "new_count"))
+        limit = int(getattr(node, count_attribute))
         children = getattr(node, "children")
     except (AttributeError, TypeError, ValueError, OverflowError) as exc:
         raise RuntimeError("Anki returned an invalid due-tree node") from exc
@@ -833,23 +933,26 @@ def _limited_new_for_deck_node(
     seen_deck_ids.add(deck_id)
     if deck_id in excluded_deck_ids:
         return 0
-    available = max(0, int(raw_new_by_deck.get(deck_id, 0)))
+    available = max(0, int(raw_by_deck.get(deck_id, 0)))
     for child in children:
-        available += _limited_new_for_deck_node(
+        available += _limited_count_for_deck_node(
             child,
-            raw_new_by_deck,
+            raw_by_deck,
             excluded_deck_ids,
             seen_deck_ids,
+            count_attribute,
         )
     return min(available, limit)
 
 
-def _scheduler_limited_new_remaining(
+def _scheduler_limited_remaining_counts(
     col: Any,
     raw_new_by_deck: Mapping[int, int],
+    raw_learning_by_deck: Mapping[int, int],
+    raw_review_by_deck: Mapping[int, int],
     scope: FilterScope,
-) -> int:
-    """Sum independently limited top-level deck counts from Anki's due tree."""
+) -> Tuple[int, int, int]:
+    """Return selection-invariant collection-wide scheduler counts."""
 
     deck_due_tree = getattr(getattr(col, "sched", None), "deck_due_tree", None)
     if not callable(deck_due_tree):
@@ -861,90 +964,71 @@ def _scheduler_limited_new_remaining(
         raise RuntimeError("Anki's due tree is unavailable") from exc
     if children is None:
         raise RuntimeError("Anki returned an invalid due tree")
-    seen_deck_ids: Set[int] = set()
+
     excluded_deck_ids = set(scope.excluded_deck_ids)
-    limited = sum(
-        _limited_new_for_deck_node(
-            child,
-            raw_new_by_deck,
-            excluded_deck_ids,
-            seen_deck_ids,
+    specifications = (
+        (raw_new_by_deck, "new_count"),
+        (raw_learning_by_deck, "learn_count"),
+        (raw_review_by_deck, "review_count"),
+    )
+    totals: List[int] = []
+    for raw_by_deck, count_attribute in specifications:
+        seen_deck_ids: Set[int] = set()
+        total = sum(
+            _limited_count_for_deck_node(
+                child,
+                raw_by_deck,
+                excluded_deck_ids,
+                seen_deck_ids,
+                count_attribute,
+            )
+            for child in children
         )
-        for child in children
-    )
-    missing = {deck_id for deck_id, count in raw_new_by_deck.items() if count > 0} - seen_deck_ids
-    if missing:
-        raise RuntimeError("Anki's due tree omitted active new-card decks")
-    return limited
+        missing = {
+            deck_id for deck_id, count in raw_by_deck.items() if count > 0
+        } - seen_deck_ids
+        if missing:
+            raise RuntimeError("Anki's due tree omitted active card decks")
+        totals.append(total)
+    return totals[0], totals[1], totals[2]
 
 
-def _scheduler_hidden_buried(
+def _scheduler_limited_new_remaining(
     col: Any,
+    raw_new_by_deck: Mapping[int, int],
     scope: FilterScope,
-) -> BuriedStats:
-    """Return due siblings omitted from Anki's authoritative reviewer queue.
+) -> int:
+    """Sum independently limited top-level deck counts from Anki's due tree."""
 
-    Anki's due tree is populated before the queue builder applies sibling
-    burying, while ``QueuedCards`` is the source of the native reviewer
-    counter.  Progressbar reconciles those two snapshots and adds each positive
-    category difference to cards already in queues -2/-3.  Deck exclusions are
-    a dashboard-only filter that Anki's queue builder cannot express, so the
-    reconciliation deliberately falls back to SQL-only counts when exclusions
-    are active.
-    """
-
-    if scope.excluded_deck_ids:
-        return BuriedStats()
-
-    sched = getattr(col, "sched", None)
-    decks = getattr(col, "decks", None)
-    get_queued_cards = getattr(sched, "get_queued_cards", None)
-    deck_due_tree = getattr(sched, "deck_due_tree", None)
-    if not callable(get_queued_cards) or not callable(deck_due_tree):
-        return BuriedStats()
-
-    get_current_id = getattr(decks, "get_current_id", None)
-    if not callable(get_current_id):
-        get_current_id = getattr(decks, "selected", None)
-    if not callable(get_current_id):
-        return BuriedStats()
-
-    try:
-        deck_id = int(get_current_id())
-        try:
-            node = deck_due_tree(deck_id)
-        except TypeError:
-            node = _deck_tree_node(deck_due_tree(), deck_id)
-        if node is None:
-            return BuriedStats()
-        try:
-            queued = get_queued_cards(fetch_limit=0)
-        except TypeError:
-            queued = get_queued_cards()
-        tree_new = max(0, int(getattr(node, "new_count", 0) or 0))
-        tree_learning = max(0, int(getattr(node, "learn_count", 0) or 0))
-        tree_review = max(0, int(getattr(node, "review_count", 0) or 0))
-        queue_new = max(0, int(getattr(queued, "new_count", 0) or 0))
-        queue_learning = max(0, int(getattr(queued, "learning_count", 0) or 0))
-        queue_review = max(0, int(getattr(queued, "review_count", 0) or 0))
-    except Exception:
-        # The scheduler reconciliation is an optional precision layer.  A
-        # backend or compatibility failure must not hide the authoritative SQL
-        # count of cards already in queues -2/-3.
-        return BuriedStats()
-
-    return BuriedStats(
-        max(0, tree_new - queue_new),
-        max(0, tree_learning - queue_learning),
-        max(0, tree_review - queue_review),
-    )
+    return _scheduler_limited_remaining_counts(
+        col,
+        raw_new_by_deck,
+        {},
+        {},
+        scope,
+    )[0]
 
 
 def _buried(col: Any, scope: Optional[FilterScope] = None) -> BuriedStats:
-    """Return Progressbar-equivalent buried and scheduler-hidden due counts."""
+    """Return explicitly buried cards that would otherwise be eligible today.
+
+    New cards have no scheduler-day due date, so every explicitly buried New
+    card is eligible. Learning/relearning cards may store either a scheduler
+    day or an intraday timestamp; Review cards store a scheduler day. Future
+    Learning/Review cards and transient siblings not yet in queues -2/-3 are
+    deliberately excluded.
+    """
     resolved = scope or FilterScope()
-    conditions = ["queue IN (-2, -3)"]
-    args: List[object] = []
+    scheduler_today = int(getattr(col.sched, "today", 0))
+    day_cutoff = int(getattr(col.sched, "day_cutoff", 0))
+    conditions = [
+        "queue IN (-2, -3)",
+        "(type = 0 OR "
+        "(type IN (1, 3) AND ((due < 1000000000 AND due <= ?) OR "
+        "(due >= 1000000000 AND due < ?))) OR "
+        "(type = 2 AND due <= ?))",
+    ]
+    args: List[object] = [scheduler_today, day_cutoff, scheduler_today]
     deck_condition, deck_args = _deck_scope_condition(resolved)
     if deck_condition:
         conditions.append(deck_condition)
@@ -953,25 +1037,15 @@ def _buried(col: Any, scope: Optional[FilterScope] = None) -> BuriedStats:
         col.db,
         "SELECT "
         "coalesce(sum(CASE WHEN type = 0 THEN 1 ELSE 0 END), 0), "
-        "coalesce(sum(CASE WHEN type IN (1, 3) AND due <= "
-        "CASE WHEN due < 1000000000 THEN ? ELSE ? END THEN 1 ELSE 0 END), 0), "
-        "coalesce(sum(CASE WHEN type = 2 AND due <= ? THEN 1 ELSE 0 END), 0) "
+        "coalesce(sum(CASE WHEN type IN (1, 3) THEN 1 ELSE 0 END), 0), "
+        "coalesce(sum(CASE WHEN type = 2 THEN 1 ELSE 0 END), 0) "
         "FROM cards WHERE {}".format(" AND ".join(conditions)),
-        int(getattr(col.sched, "today", 0)),
-        int(col.sched.day_cutoff),
-        int(getattr(col.sched, "today", 0)),
         *args,
     )
-    already_buried = BuriedStats(
+    return BuriedStats(
         max(0, int(row[0] or 0)) if row else 0,
         max(0, int(row[1] or 0)) if len(row) > 1 else 0,
         max(0, int(row[2] or 0)) if len(row) > 2 else 0,
-    )
-    scheduler_hidden = _scheduler_hidden_buried(col, resolved)
-    return BuriedStats(
-        already_buried.new + scheduler_hidden.new,
-        already_buried.learning + scheduler_hidden.learning,
-        already_buried.review + scheduler_hidden.review,
     )
 
 
@@ -1169,11 +1243,38 @@ def collect_dashboard_facts(
     try:
         history_rows = _history_facts_query(col, config, scheduling_date, False, scope)
         rate_rows = [
-            (day, count, again, new_cards)
-            for day, count, new_cards, again, _ids in history_rows
+            (day, count, again, new_cards, retention_passed, retention_failed)
+            for (
+                day,
+                count,
+                new_cards,
+                again,
+                retention_passed,
+                retention_failed,
+                _ids,
+            ) in history_rows
         ]
+        (
+            recent_answers,
+            recent_new_cards,
+            _recent_all_answer_again,
+            recent_retention_passed,
+            recent_retention_failed,
+        ) = _history_period_aggregate(col, scope, 7)
+        recent_retention_total = recent_retention_passed + recent_retention_failed
         last_seven_days: ValueState[LastSevenDaysStats] = ValueState.available(
-            calculate_last_seven_days(rate_rows, scheduling_date)
+            LastSevenDaysStats(
+                cards_studied=recent_answers,
+                new_cards_studied=recent_new_cards,
+                retention=RateMetric.from_counts(
+                    recent_retention_passed,
+                    recent_retention_total,
+                ),
+                again_rate=RateMetric.from_counts(
+                    recent_retention_failed,
+                    recent_retention_total,
+                ),
+            )
         )
         long_term: ValueState[LongTermStats] = ValueState.available(
             calculate_long_term(
@@ -1184,7 +1285,15 @@ def collect_dashboard_facts(
         visible_start = history_start_date(config, scheduling_date, True)
         if visible_start is None:
             covered_history_dates: List[date] = []
-            for day, _count, _new_cards, _again_count, _card_ids in history_rows:
+            for (
+                day,
+                _count,
+                _new_cards,
+                _again_count,
+                _retention_passed,
+                _retention_failed,
+                _card_ids,
+            ) in history_rows:
                 try:
                     parsed = date.fromisoformat(day)
                 except (TypeError, ValueError):
@@ -1200,7 +1309,15 @@ def collect_dashboard_facts(
         )
         visible_history = {
             day: (count, new_cards, again_count, card_ids)
-            for day, count, new_cards, again_count, card_ids in history_rows
+            for (
+                day,
+                count,
+                new_cards,
+                again_count,
+                _retention_passed,
+                _retention_failed,
+                card_ids,
+            ) in history_rows
             if coverage.contains(day)
         }
         history_coverage: ValueState[DateCoverage] = ValueState.available(coverage)
@@ -1309,15 +1426,11 @@ def collect_dashboard_facts(
         estimate_pace = new_pace = None
 
     try:
-        current_due = days[scheduling_date.isoformat()].reviews_due
-        if not current_due.is_available:
-            raise RuntimeError("current scheduled review demand is unavailable")
         queue: ValueState[QueueStats] = ValueState.available(
             _queue(
                 col,
                 estimate_pace,
                 new_pace,
-                int(current_due.value),
                 scope,
             )
         )

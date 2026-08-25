@@ -280,6 +280,7 @@ assert(js.includes("root.dataset.hdoLastUpdatedAt"));
 assert(js.includes("global.ResizeObserver"));
 assert(js.includes('state === "no_cards_scheduled"'));
 assert(js.includes("presentation && presentation.progress"));
+assert(js.includes("100 - Number(recent.retention.percent)"));
 assert(js.includes("tooltipPlacement(targetRect, rect, bounds, margin, offset)"));
 
 console.log("calendar model tests passed");

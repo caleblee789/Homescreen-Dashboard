@@ -1,0 +1,229 @@
+{
+  "schema_version": 3,
+  "release": "1.8.6",
+  "status": "required-before-release",
+  "authority": "qa/calendar_surface_manifest_1_8_6.json",
+  "visual_matrix": "qa/visual_regression_matrix_1_8_6.json",
+  "reference_inputs": [
+    {
+      "id": "USER-NATIVE-WIDE-2026-08-23-1710X1107",
+      "kind": "native-deck-browser-screenshot",
+      "physical_pixels": [3420, 2214],
+      "device_pixel_ratio": 2,
+      "logical_pixels": [1710, 1107],
+      "sha256": "a53963d27305bfe531fdd56ebc675ccf25b8be58276636b4a8c4a7380e701c57",
+      "role": "geometry-calibration-only",
+      "may_count_as_acceptance_evidence": false,
+      "must_not_be_overwritten": true
+    },
+    {
+      "id": "USER-OWNED-SETTINGS-CONTACT-SHEETS-1.8.3",
+      "kind": "historical-user-owned-contact-sheet-set",
+      "path": "qa/settings-menu-contact-sheets-1.8.3-2026-08-23-2222",
+      "role": "comparison-only",
+      "may_count_as_acceptance_evidence": false,
+      "must_not_be_overwritten": true,
+      "must_not_receive_new_staging": true
+    },
+    {
+      "id": "RETAINED-1.8.0-EVIDENCE",
+      "kind": "historical-release-evidence-set",
+      "path": "qa/release-evidence-1.8.0-2026-08-23",
+      "role": "immutable-release-history",
+      "may_count_as_acceptance_evidence": false,
+      "must_not_be_overwritten": true
+    },
+    {
+      "id": "RETAINED-1.8.1-EVIDENCE",
+      "kind": "historical-release-evidence-set",
+      "path": "qa/release-evidence-1.8.1-2026-08-23",
+      "role": "immutable-release-history",
+      "may_count_as_acceptance_evidence": false,
+      "must_not_be_overwritten": true
+    },
+    {
+      "id": "RETAINED-1.8.2-EVIDENCE",
+      "kind": "historical-release-evidence-set",
+      "path": "qa/release-evidence-1.8.2-2026-08-23",
+      "role": "immutable-release-history",
+      "may_count_as_acceptance_evidence": false,
+      "must_not_be_overwritten": true
+    },
+    {
+      "id": "RETAINED-1.8.3-EVIDENCE",
+      "kind": "historical-release-evidence-set",
+      "path": "qa/release-evidence-1.8.3-2026-08-23",
+      "role": "immutable-release-history",
+      "may_count_as_acceptance_evidence": false,
+      "must_not_be_overwritten": true
+    },
+    {
+      "id": "RETAINED-1.8.4-EVIDENCE",
+      "kind": "historical-release-evidence-set",
+      "path": "qa/release-evidence-1.8.4-2026-08-24",
+      "role": "immutable-release-history",
+      "may_count_as_acceptance_evidence": false,
+      "must_not_be_overwritten": true
+    },
+    {
+      "id": "RETAINED-1.8.5-EVIDENCE",
+      "kind": "historical-release-evidence-set",
+      "path": "qa/release-evidence-1.8.5-2026-08-24",
+      "role": "immutable-release-history",
+      "may_count_as_acceptance_evidence": false,
+      "must_not_be_overwritten": true
+    }
+  ],
+  "capture_families": [
+    {
+      "id": "production-palettes",
+      "count": 32,
+      "source": "qa/visual_regression_matrix_1_8_6.json#palette_cases",
+      "requirements": ["all-16-saved-palette-ids", "light-and-dark", "production-month-tree"]
+    },
+    {
+      "id": "production-core",
+      "count": 16,
+      "capture_ids": [
+        "PROD-MONTH-STABLE",
+        "PROD-YEAR-STABLE",
+        "PROD-MARKERS-COMBINED",
+        "PROD-MARKERS-COMPLETION",
+        "PROD-MARKERS-DUE",
+        "PROD-MARKERS-TODAY",
+        "PROD-MARKERS-EVENT",
+        "PROD-LEGEND-NO-DUE",
+        "PROD-LEGEND-NO-EVENT",
+        "PROD-BG-WHITE",
+        "PROD-BG-BLACK",
+        "PROD-BG-PURPLE",
+        "PROD-BG-IMAGE",
+        "PROD-SECTIONS-BELOW",
+        "PROD-BOTTOM-CLEARANCE",
+        "PROD-VERSE-EXACT"
+      ]
+    },
+    {
+      "id": "settings-pages",
+      "count": 24,
+      "id_pattern": "SET-PAGE-{DASHBOARD|EVENTS|BIBLE|ABOUT}-{1040|1200|FULL}-{100|150}",
+      "requirements": ["one-unambiguous-active-rail-row", "same-page-tree", "main-page-scroller", "footer-final-row-fully-onscreen", "native-qt-controls-only"]
+    },
+    {
+      "id": "settings-contract",
+      "count": 16,
+      "capture_ids": [
+        "SET-EVENTS-EMPTY",
+        "SET-EVENTS-POPULATED",
+        "SET-EVENTS-SELECTED",
+        "SET-EVENTS-SEARCHED",
+        "SET-EVENTS-ARCHIVED",
+        "SET-BIBLE-SHORT",
+        "SET-BIBLE-LONG",
+        "SET-BIBLE-CUSTOM",
+        "SET-ABOUT-BOTTOM",
+        "SET-DIRTY",
+        "SET-REVERT",
+        "SET-SAVE-SUCCESS",
+        "SET-SAVE-ERROR",
+        "SET-LEGACY-ROUTE",
+        "SET-WINDOW-STANDARD",
+        "SET-WINDOW-CLAMP"
+      ],
+      "requirements": ["clean-legacy-card-anchor", "matched-about-lead-cards", "resizable-decorated-window-clamped", "parented-standard-dialog-exec-lifecycle", "set-window-standard-captures-anki-with-dialog", "no-settings-webview-or-preview"]
+    },
+    {
+      "id": "statistics-accuracy",
+      "count": 4,
+      "capture_ids": [
+        "PROD-STATS-WIDE-MONTH",
+        "PROD-STATS-WIDE-YEAR",
+        "PROD-STATS-INTERMEDIATE",
+        "PROD-STATS-NARROW"
+      ],
+      "requirements": [
+        "native-graphs-and-scheduler-parity",
+        "86-percent-retention-and-14-percent-again",
+        "one-snapshot-across-responsive-shells",
+        "initial-live-refresh-responsive-and-restart-parity"
+      ]
+    },
+    {
+      "id": "restart",
+      "count": 2,
+      "capture_ids": [
+        "PROD-RESTART-PERSISTENCE",
+        "SET-RESTART-PERSISTENCE"
+      ],
+      "requirements": ["no-waiver", "repeat-all-four-isolation-gates"]
+    }
+  ],
+  "derived_native_frame_count": {
+    "initial": 92,
+    "restart": 2,
+    "total": 94,
+    "derivation": "sum(capture_families.count)"
+  },
+  "runtime_smoke_requirements": {
+    "active_head_deck": "A",
+    "raw_new_cards_per_head_minimum": 40,
+    "remaining_limits": {"A": 3, "B": 7},
+    "expected_unexcluded_new_remaining": 10,
+    "expected_excluding_b_new_remaining": 3,
+    "restart_expected_new_remaining": 10
+  },
+  "isolation_gates": [
+    "process-instance-key-and-normal-pid-exclusion",
+    "window-title-profile-identity",
+    "collection-and-addon-files-inside-disposable-run-root",
+    "sync-auth-absent"
+  ],
+  "contact_sheet_output": {
+    "overview_count": 1,
+    "detail_groups": [
+      "production-palettes-sapphire",
+      "production-palettes-graphite",
+      "production-palettes-emerald",
+      "production-palettes-high-contrast",
+      "production-month-year-markers",
+      "production-legends-backgrounds-clearance",
+      "settings-dashboard-widths",
+      "settings-events-widths",
+      "settings-bible-widths",
+      "settings-about-widths",
+      "settings-font-150",
+      "settings-events-states",
+      "settings-bible-states",
+      "settings-save-workflow",
+      "settings-window-route",
+      "statistics-accuracy",
+      "restart-persistence",
+      "package-and-isolation-reports"
+    ],
+    "detail_sheet_count": 18,
+    "native_scale": "100-percent-capture-pixels"
+  },
+  "required_automated_gates": [
+    "python-suite",
+    "javascript-calendar-suite",
+    "python-compilation",
+    "manifest-and-assets",
+    "git-diff-check",
+    "source-archive-byte-parity",
+    "archive-safe-paths",
+    "secret-audit",
+    "link-audit",
+    "color-and-contrast-audit",
+    "exact-package-isolated-anki",
+    "native-statistics-parity",
+    "controlled-restart"
+  ],
+  "deferred_unrun": [
+    "voiceover_review",
+    "windows_validation",
+    "linux_validation",
+    "forced_colors_review",
+    "device_pixel_ratio_1",
+    "os_display_scaling"
+  ]
+}
