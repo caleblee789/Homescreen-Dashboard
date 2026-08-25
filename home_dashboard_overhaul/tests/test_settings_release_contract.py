@@ -41,9 +41,20 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )
         cls.config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
         cls.manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
+        cls.settings_window_contract = json.loads(
+            (ROOT / "qa" / "settings_window_contract_1_8_7.json").read_text(
+                encoding="utf-8"
+            )
+        )
 
     def test_release_metadata_and_schema_eight_are_current(self) -> None:
-        self.assertEqual(self.manifest["human_version"], "1.8.6")
+        self.assertEqual(self.manifest["human_version"], "1.8.7")
+        self.assertEqual(self.settings_window_contract["release"], "1.8.7")
+        self.assertEqual(self.settings_window_contract["schema_version"], 8)
+        self.assertEqual(
+            self.settings_window_contract["pages"],
+            ["dashboard", "events", "bible_verse", "about_support"],
+        )
         self.assertEqual(self.config["schema_version"], 8)
         self.assertEqual(self.config["appearance"]["opacity"], 96)
         self.assertEqual(self.config["appearance"]["blur"], 12)
@@ -98,10 +109,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
 
     def test_settings_use_one_canonical_native_shell(self) -> None:
         for marker in (
-            "self.setMinimumSize(min(1040, width), min(700, height))",
-            "self.resize(width, height)",
-            "self.setMinimumSize(1040, 700)",
-            "self.resize(1200, 800)",
+            "self.setMinimumSize(680, 560)",
+            "self.resize(680, 620)",
             "self.settings_shell.setMaximumWidth(1240)",
             "self.settings_shell.setSizePolicy(",
             "self._update_settings_shell_margins()",
@@ -117,6 +126,12 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'self._add_page("about_support", page)',
         ):
             self.assertIn(marker, self.settings)
+        for retired_geometry in (
+            "self.setMinimumSize(min(1040, width), min(700, height))",
+            "self.setMinimumSize(1040, 700)",
+            "self.resize(1200, 800)",
+        ):
+            self.assertNotIn(retired_geometry, self.settings)
         self.assertNotIn("setFixedSize(width, height)", self.settings)
         self.assertNotIn("setFixedSize(1200, 800)", self.settings)
         shell_source = self.settings.split("dialog_layout = QHBoxLayout(self)", 1)[1].split(
@@ -137,17 +152,18 @@ class SettingsReleaseContractTests(unittest.TestCase):
 
     def test_window_uses_parented_standard_dialog_exec_contract(self) -> None:
         for marker in (
-            "super().__init__(mw)",
-            "width, height = clamp_window_size(",
-            "self.setMinimumSize(min(1040, width), min(700, height))",
-            "self.resize(width, height)",
-            "QTimer.singleShot(0, self._settle_initial_scroll_top)",
+            "parent: QWidget",
+            "super().__init__(parent)",
+            "self.setMinimumSize(680, 560)",
+            "self.resize(680, 620)",
+            "self._settle_initial_scroll_top()",
+            "self.nav.setFocus(Qt.FocusReason.OtherFocusReason)",
         ):
             self.assertIn(marker, self.settings)
         opener = self.controller.split("    def open_settings(", 1)[1].split(
-            "    def save_config", 1
+            "    def request_settings_open", 1
         )[0]
-        self.assertIn("dialog = SettingsDialog(self, page_name, date_value, event_value)", opener)
+        self.assertIn("dialog = SettingsDialog(mw, self, page_name, date_value, event_value)", opener)
         self.assertIn("dialog.exec()", opener)
         for forbidden_opening_marker in (
             "settings_dialog",
@@ -161,10 +177,20 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "dialog.activateWindow()",
         ):
             self.assertNotIn(forbidden_opening_marker, opener)
-        self.assertNotIn("available.center() - self.rect().center()", self.settings)
-        self.assertNotIn("self.move(", self.settings)
-        self.assertNotIn("settingsWindowSize", self.settings)
-        self.assertNotIn("def _settle_window_to_screen", self.settings)
+        dialog_source = self.settings.split("class SettingsDialog(QDialog):", 1)[1].split(
+            "def install_settings_menu", 1
+        )[0]
+        for forbidden_geometry in (
+            "availableGeometry",
+            "QApplication.primaryScreen",
+            "clamp_window_size",
+            "self.screen()",
+            "self.move(",
+            "settingsWindowSize",
+            "def _settle_window_to_screen",
+            "def showEvent",
+        ):
+            self.assertNotIn(forbidden_geometry, dialog_source)
         for retired_window_marker in (
             "Qt.WindowType.Tool",
             "Qt.WindowModality.NonModal",
@@ -176,9 +202,25 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "self.winId()",
         ):
             self.assertNotIn(retired_window_marker, self.settings)
-        self.assertIn("default: Tuple[int, int] = (1200, 800)", self.model)
-        self.assertIn("minimum: Tuple[int, int] = (1040, 700)", self.model)
         self.assertNotIn("settingsWindowSize", json.dumps(self.config))
+        self.assertEqual(self.settings_window_contract["minimum_size"], [680, 560])
+        self.assertEqual(self.settings_window_contract["initial_size"], [680, 620])
+        self.assertTrue(self.settings_window_contract["resizable_upward"])
+        self.assertIn("scroll.setWidgetResizable(True)", dialog_source)
+        self.assertIn(
+            "scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
+            dialog_source,
+        )
+
+    def test_bridge_settings_open_is_deferred_without_retaining_a_dialog(self) -> None:
+        bridge_source = self.controller.split("    def request_settings_open(", 1)[1].split(
+            "    def save_config", 1
+        )[0]
+        self.assertIn("QTimer.singleShot(0, self._open_pending_settings)", bridge_source)
+        self.assertIn("self._pending_settings_request", bridge_source)
+        self.assertIn("self._settings_open_pending", bridge_source)
+        self.assertNotIn("SettingsDialog", bridge_source)
+        self.assertNotIn("settings_dialog", bridge_source)
 
     def test_native_probe_window_overrides_remain_outside_product_code(self) -> None:
         self.assertNotIn("SETTINGS_SIZE_KEY", self.settings)

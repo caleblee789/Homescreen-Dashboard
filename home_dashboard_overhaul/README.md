@@ -1,11 +1,21 @@
-# Home Screen Dashboard 1.8.6
+# Home Screen Dashboard 1.8.7
 
 Home Screen Dashboard is a calendar-first Deck Browser dashboard for Anki
 Desktop 26.8. It combines study history, due work, local events, stable study
 metrics, and a rotating Bible verse without patching Anki's private Deck
 Browser or statistics classes.
 
-## What changed in 1.8.6
+## What changed in 1.8.7
+
+- Settings now matches Progress Bar's complete native window contract. Anki's
+  main window is passed explicitly to a default-flag `QDialog`; the dialog has
+  a 680×560 minimum, opens at 680×620, and remains resizable upward.
+- Removed top-level screen/available-geometry sizing and the custom Settings
+  `showEvent` focus timers. Deck Browser bridge requests are deferred by one
+  event-loop turn before the local modal `exec()` begins, while menu opening
+  remains direct.
+- The corrected 1.8.6 statistics, schema 8, configuration keys, bridge
+  commands, and all four Settings pages remain unchanged.
 
 - Every study-derived value is computed from one scheduler-authoritative
   snapshot. Today uses `[next rollover − 86,400 seconds, next rollover)`, and
@@ -86,9 +96,10 @@ The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only swatches and production rendering.
 Settings opens as a normal parented, resizable `QDialog` through `exec()` with
 default window flags, matching conventional Anki add-on settings windows. It
-assigns no screen coordinates, contains no embedded WebEngine content, targets
-1200×800, and clamps its initial size for smaller screens without restoring a
-saved size.
+assigns no screen coordinates, performs no screen-geometry query, and contains
+no embedded WebEngine content. Like Progress Bar, it has a 680×560 minimum and
+opens at 680×620 without restoring a saved size; every page remains vertically
+scrollable and the user may enlarge the window.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source
@@ -96,7 +107,7 @@ work remains deferred and is not packaged.
 
 ## Install
 
-Install `home-dashboard-overhaul-1.8.6.ankiaddon` through **Tools → Add-ons →
+Install `home-dashboard-overhaul-1.8.7.ankiaddon` through **Tools → Add-ons →
 Install from file**, restart Anki, and disable any legacy source add-ons named
 by the activation card. The manifest is pinned to Anki Desktop 26.8.
 
@@ -105,18 +116,15 @@ by the activation card. The manifest is pinned to Anki Desktop 26.8.
 From the repository root, use Python 3.10 or newer:
 
 ```sh
-python3 -m unittest discover -s home_dashboard_overhaul/tests -p 'test_*.py' -v
-node home_dashboard_overhaul/tests/calendar_model_test.js
-python3 home_dashboard_overhaul/qa/validate_revised_ui_contract.py
+python3 -m unittest home_dashboard_overhaul.tests.test_controller_insights home_dashboard_overhaul.tests.test_settings_release_contract -v
+python3 home_dashboard_overhaul/qa/validate_settings_window_contract_1_8_7.py
 python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
 The builder creates one 24-file allowlisted archive, checks its version and
-safe paths, and verifies every packaged byte against source. That exact archive
-is installed into one fresh sync-disabled Anki 26.8 profile for an initial pass
-and a controlled restart. Native acceptance follows the current contract: 94
-captures spanning production, Settings, and restart states, with validated
-contact-sheet coverage and direct Anki Graphs/Scheduler parity.
+safe paths, validates the focused 1.8.7 Settings contract, and verifies every
+packaged byte against source. The full 1.8.6 statistics and 94-frame native
+evidence remain frozen rather than being regenerated for this candidate.
 
 VoiceOver, Windows, Linux, forced colors, DPR 1, and OS-level display-scaling
 acceptance remain deferred and unclaimed unless separately run.

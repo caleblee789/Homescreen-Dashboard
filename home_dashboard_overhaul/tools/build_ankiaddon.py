@@ -50,6 +50,8 @@ DEFERRED_SOURCE_FILES = frozenset({
 })
 DEFERRED_SOURCE_PREFIXES = ("_vendor/",)
 RELEASE_CONTRACT_FILES = (
+    "qa/settings_window_contract_1_8_7.json",
+    "qa/validate_settings_window_contract_1_8_7.py",
     "qa/calendar_surface_manifest_1_8_6.json",
     "qa/visual_regression_matrix_1_8_6.json",
     "qa/ui-surface-registry_1_8_6.json",
@@ -59,7 +61,7 @@ RELEASE_CONTRACT_FILES = (
     "qa/assemble_release_evidence_1_8_6.py",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
-FIXED_TIMESTAMP = (2026, 8, 24, 0, 0, 0)
+FIXED_TIMESTAMP = (2026, 8, 25, 0, 0, 0)
 
 
 def _json(relative: str) -> dict:
@@ -303,11 +305,12 @@ def validate_sources() -> dict:
     surface_contract = _json("qa/calendar_surface_manifest_1_8_6.json")
     visual_matrix = _json("qa/visual_regression_matrix_1_8_6.json")
     capture_contract = _json("qa/capture_evidence_manifest_1_8_6.json")
+    settings_window_contract = _json("qa/settings_window_contract_1_8_7.json")
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.6":
-        raise ValueError("release artifact must use semantic version 1.8.6")
+    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.7":
+        raise ValueError("release artifact must use semantic version 1.8.7")
     if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260800):
         raise ValueError("release must be pinned to Anki 26.8")
     if config.get("schema_version") != 8:
@@ -354,10 +357,10 @@ def validate_sources() -> dict:
         "controller.py": (
             'page == "calendar_data"', 'page == "events"', "selected_event_id",
             "def _open_browser_target", "browser_will_search", "context.ids = ids",
-            'command == "diagnostics"', 'self.open_settings("about_support")',
+            'command == "diagnostics"', 'self.request_settings_open("about_support")',
             "def _persist_settings_transaction", "_restore_optional_bytes",
-            "dialog = SettingsDialog(self, page_name, date_value, event_value)",
-            "dialog.exec()",
+            "dialog = SettingsDialog(mw, self, page_name, date_value, event_value)",
+            "dialog.exec()", "QTimer.singleShot(0, self._open_pending_settings)",
         ),
         "insights.py": (
             "ORDER BY again_count DESC, total_answers DESC, r.cid ASC",
@@ -374,9 +377,8 @@ def validate_sources() -> dict:
             "today_session", "data-hdo-has-bible",
         ),
         "settings.py": (
-            "self.setMinimumSize(1040, 700)", "self.resize(1200, 800)",
-            "self.setMinimumSize(min(1040, width), min(700, height))",
-            "self.resize(width, height)", "super().__init__(mw)",
+            "self.setMinimumSize(680, 560)", "self.resize(680, 620)",
+            "parent: QWidget", "super().__init__(parent)",
             "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
             "def _connect_change_signals(self) -> None:",
             "def _settings_changed(self, *_args: object) -> None:",
@@ -421,6 +423,17 @@ def validate_sources() -> dict:
         absent = [marker for marker in markers if marker not in sources[relative]]
         if absent:
             raise ValueError("{} is missing corrected release contracts: {}".format(relative, ", ".join(absent)))
+
+    dialog_source = sources["settings.py"].split("class SettingsDialog(QDialog):", 1)[1].split(
+        "def install_settings_menu", 1
+    )[0]
+    for forbidden in (
+        "availableGeometry", "QApplication.primaryScreen", "clamp_window_size",
+        "self.screen()", "self.move(", "setWindowModality", "setModal(",
+        "def showEvent", "AnkiWebView", "QWebEngine",
+    ):
+        if forbidden in dialog_source:
+            raise ValueError("Settings window retains forbidden marker: {}".format(forbidden))
 
     for retired in (
         "Qt.WindowType.Tool", "self.winId()", "setTransientParent",
@@ -473,10 +486,18 @@ def validate_sources() -> dict:
         or any(not item.get("tags") or not str(item.get("requirement", "")).strip() for item in criteria)
     ):
         raise ValueError("corrected surface contract must encode unique tagged acceptance criteria")
-    if any(contract.get("release") != version for contract in (
+    if any(contract.get("release") != "1.8.6" for contract in (
         surface_contract, visual_matrix, capture_contract
     )):
-        raise ValueError("release contracts must match the manifest version")
+        raise ValueError("frozen 1.8.6 release contracts were modified")
+    if settings_window_contract.get("release") != version:
+        raise ValueError("focused Settings contract must match the manifest version")
+    if (
+        settings_window_contract.get("minimum_size") != [680, 560]
+        or settings_window_contract.get("initial_size") != [680, 620]
+        or settings_window_contract.get("resizable_upward") is not True
+    ):
+        raise ValueError("focused Settings contract does not match Progress Bar geometry")
     if capture_contract.get("runtime_smoke_requirements") != {
         "active_head_deck": "A",
         "raw_new_cards_per_head_minimum": 40,

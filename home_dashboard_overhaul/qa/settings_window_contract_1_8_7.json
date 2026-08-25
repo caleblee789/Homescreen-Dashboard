@@ -1,0 +1,29 @@
+{
+  "release": "1.8.7",
+  "schema_version": 8,
+  "reference_addon": "Progress Bar",
+  "window_type": "QDialog",
+  "parent": "Anki main window passed explicitly",
+  "window_flags": "Qt defaults",
+  "lifecycle": "local synchronous exec",
+  "minimum_size": [680, 560],
+  "initial_size": [680, 620],
+  "resizable_upward": true,
+  "screen_geometry_queries": false,
+  "saved_geometry": false,
+  "custom_show_event": false,
+  "native_menu_dispatch": "direct",
+  "web_bridge_dispatch": "deferred one event-loop turn and coalesced",
+  "retained_dialog_object": false,
+  "embedded_web_content": false,
+  "pages": ["dashboard", "events", "bible_verse", "about_support"],
+  "rail_width": 152,
+  "page_content": "vertical native scroll areas",
+  "manual_acceptance_required": [
+    "open from the Caleb M. menu in native macOS full-screen",
+    "switch all four sidebar pages without changing Spaces",
+    "switch Events Active and Archived tabs without changing Spaces",
+    "save close and reopen without changing Spaces",
+    "repeat after a hard Anki restart"
+  ]
+}

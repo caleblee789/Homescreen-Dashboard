@@ -134,6 +134,19 @@ class FakeQueryOp:
             self.failure_callback(error or RuntimeError("failure"))
 
 
+class FakeQTimer:
+    pending = []
+
+    @classmethod
+    def singleShot(cls, delay, callback) -> None:
+        cls.pending.append((delay, callback))
+
+    @classmethod
+    def run_next(cls) -> None:
+        _delay, callback = cls.pending.pop(0)
+        callback()
+
+
 class FakeSettingsDialog:
     instances = []
 
@@ -183,7 +196,7 @@ class ControllerCapabilityTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         names = (
-            "aqt", "aqt.deckbrowser", "aqt.operations", "aqt.theme",
+            "aqt", "aqt.deckbrowser", "aqt.operations", "aqt.qt", "aqt.theme",
             "home_dashboard_overhaul.controller",
         )
         cls.saved_modules = {name: sys.modules.get(name) for name in names}
@@ -211,12 +224,15 @@ class ControllerCapabilityTests(unittest.TestCase):
         deckbrowser.DeckBrowser = FakeDeckBrowser
         operations = ModuleType("aqt.operations")
         operations.QueryOp = FakeQueryOp
+        qt = ModuleType("aqt.qt")
+        qt.QTimer = FakeQTimer
         theme = ModuleType("aqt.theme")
         theme.theme_manager = SimpleNamespace(night_mode=False)
         sys.modules.update({
             "aqt": aqt,
             "aqt.deckbrowser": deckbrowser,
             "aqt.operations": operations,
+            "aqt.qt": qt,
             "aqt.theme": theme,
         })
         cls.aqt = aqt
@@ -233,6 +249,7 @@ class ControllerCapabilityTests(unittest.TestCase):
 
     def setUp(self) -> None:
         FakeQueryOp.pending.clear()
+        FakeQTimer.pending.clear()
         self.aqt.mw.addonManager.config = {}
         self.aqt.mw.addonManager.writes.clear()
         self.aqt.mw.state = "deckBrowser"
@@ -269,9 +286,15 @@ class ControllerCapabilityTests(unittest.TestCase):
             "payload": {"page": "events", "date": "2026-08-28", "event_id": "exam-42"},
         })
         self.controller.on_bridge_message((False, None), calendar, context)
+        self.assertEqual(calls, [])
+        self.assertEqual(len(FakeQTimer.pending), 1)
+        FakeQTimer.run_next()
         self.controller.on_bridge_message((False, None), event, context)
+        self.assertEqual(calls, [("calendar_data", "", "")])
+        self.assertEqual(len(FakeQTimer.pending), 1)
+        FakeQTimer.run_next()
         self.assertEqual(calls, [
-            ("calendar_data",),
+            ("calendar_data", "", ""),
             ("events", "2026-08-28", "exam-42"),
         ])
 
@@ -282,8 +305,24 @@ class ControllerCapabilityTests(unittest.TestCase):
         diagnostics = "hdo:" + json.dumps({"command": "diagnostics", "payload": {}})
 
         self.controller.on_bridge_message((False, None), diagnostics, context)
+        self.assertEqual(calls, [])
+        self.assertEqual(len(FakeQTimer.pending), 1)
+        FakeQTimer.run_next()
+        self.assertEqual(calls, [("about_support", "", "")])
 
-        self.assertEqual(calls, [("about_support",)])
+    def test_bridge_settings_requests_are_deferred_and_coalesced(self) -> None:
+        calls = []
+        self.controller.open_settings = lambda *args: calls.append(args)
+
+        self.controller.request_settings_open("dashboard")
+        self.controller.request_settings_open("events", "2026-08-28", "exam-42")
+
+        self.assertEqual(calls, [])
+        self.assertEqual(len(FakeQTimer.pending), 1)
+        FakeQTimer.run_next()
+        self.assertEqual(calls, [("events", "2026-08-28", "exam-42")])
+        self.assertFalse(self.controller._settings_open_pending)
+        self.assertIsNone(self.controller._pending_settings_request)
 
     def test_settings_uses_local_synchronous_dialog_lifecycle(self) -> None:
         FakeSettingsDialog.instances.clear()
@@ -296,7 +335,7 @@ class ControllerCapabilityTests(unittest.TestCase):
 
             self.assertEqual(
                 dialog.args,
-                (self.controller, "calendar_data", "2026-08-28", "exam-42"),
+                (self.aqt.mw, self.controller, "calendar_data", "2026-08-28", "exam-42"),
             )
             self.assertEqual(dialog.open_count, 0)
             self.assertEqual(dialog.exec_count, 1)

@@ -1,11 +1,20 @@
 # Home Screen Dashboard
 
-Home Screen Dashboard 1.8.6 is a calendar-first Deck Browser dashboard for
+Home Screen Dashboard 1.8.7 is a calendar-first Deck Browser dashboard for
 Anki Desktop 26.8. It combines study history, due work, local events, stable
 metrics, and a rotating Bible verse without patching Anki's private Deck
 Browser or statistics classes.
 
-## 1.8.6 highlights
+## 1.8.7 highlights
+
+- Settings now matches Progress Bar's complete compact-window contract: Anki's
+  main window is passed explicitly to a default-flag `QDialog`, the dialog has
+  a 680×560 minimum and opens at 680×620, and it remains resizable upward.
+  Screen-derived sizing and the custom top-level show hook are gone.
+- Deck Browser bridge requests leave the WebEngine callback before entering
+  `exec()`; native menu opening remains direct. No Settings window is retained.
+- Schema 8, all Settings fields, dashboard rendering, and the corrected 1.8.6
+  statistics calculations remain unchanged.
 
 - Every study-derived value now uses one collection-wide analytics scope.
   Today and historical facts use exact rollover-relative periods; New,
@@ -50,13 +59,13 @@ Browser or statistics classes.
 
 ## Install
 
-The local 1.8.6 candidate is built as
-`home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.6.ankiaddon` for
-installation through **Tools → Add-ons → Install from file**. Its SHA-256 is
-`095bada7a6daf7cb9687feee81fb5918cacca1b51cfc62959c431fce120da724`.
-The byte-identical archive is retained in the completed versioned native
-release evidence. Disable any legacy source add-ons named by the activation
-card.
+The local 1.8.7 candidate is built as
+`home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon` for
+installation through **Tools → Add-ons → Install from file**. Its checksum is
+written alongside the archive: SHA-256
+`68ddb6abcd5d8547bc5ac6c995e2bce5e40e4c591630790d6acc672d3c23b4f4`.
+This candidate remains local until the native macOS full-screen Space check
+passes. Disable any legacy source add-ons named by the activation card.
 
 The manifest supports Anki Desktop 26.8 (`min_point_version` and
 `max_point_version` 260800).
@@ -66,19 +75,19 @@ The manifest supports Anki Desktop 26.8 (`min_point_version` and
 Use Python 3.10 or newer:
 
 ```sh
-python3 -m unittest discover -s home_dashboard_overhaul/tests -p 'test_*.py' -v
-node home_dashboard_overhaul/tests/calendar_model_test.js
-python3 home_dashboard_overhaul/qa/validate_revised_ui_contract.py
+python3 -m unittest home_dashboard_overhaul.tests.test_controller_insights home_dashboard_overhaul.tests.test_settings_release_contract -v
+python3 home_dashboard_overhaul/qa/validate_settings_window_contract_1_8_7.py
 python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
 The builder creates one 24-member allowlisted archive and verifies its version,
-safe paths, and source/archive byte parity. Release validation installs that
-exact archive in a fresh sync-disabled disposable Anki profile, proves four
-isolation gates before interaction and after one controlled restart, and
-captures the 94 states derived from the current implementation contract.
+safe paths, focused Settings contract, and source/archive byte parity. The
+full 1.8.6 statistics and 94-frame evidence campaign is not rerun for this
+compact-window candidate.
 
-The current machine-readable release authorities are:
+The current focused window authority is
+[settings_window_contract_1_8_7.json](home_dashboard_overhaul/qa/settings_window_contract_1_8_7.json).
+The frozen 1.8.6 release authorities remain:
 
 - [calendar_surface_manifest_1_8_6.json](home_dashboard_overhaul/qa/calendar_surface_manifest_1_8_6.json)
 - [ui-surface-registry_1_8_6.json](home_dashboard_overhaul/qa/ui-surface-registry_1_8_6.json)
@@ -97,7 +106,7 @@ The [1.8.3 Settings contact-sheet baseline](home_dashboard_overhaul/qa/settings-
 is preserved separately as historical design evidence with 21 raw captures and
 six presentation sheets.
 
-The 1.8.0 through 1.8.5 packages and evidence remain immutable historical
+The 1.8.0 through 1.8.6 packages and evidence remain immutable historical
 comparison material. VoiceOver, Windows, Linux, forced-colors, DPR 1, and true
 OS display-scaling acceptance remain deferred and unclaimed unless run.
 
@@ -108,7 +117,7 @@ OS display-scaling acceptance remain deferred and unclaimed unless run.
 - `home_dashboard_overhaul/qa/`: machine-readable contracts, QA tools, and
   versioned release evidence
 - `deferred/calendar_sources_vnext/`: intentionally deferred external-calendar
-  source excluded from 1.8.6
+  source excluded from 1.8.7
 
 ## License and notices
 

@@ -18,6 +18,7 @@ import aqt
 from aqt import gui_hooks, mw
 from aqt.deckbrowser import DeckBrowser
 from aqt.operations import QueryOp
+from aqt.qt import QTimer
 from aqt.theme import theme_manager
 
 from .analytics import collect_snapshot, scheduling_today
@@ -131,6 +132,8 @@ class DashboardController:
         self.refresh_error = False
         self.last_updated_at = ""
         self.year_scroll_left: Optional[float] = None
+        self._pending_settings_request: Optional[Tuple[str, str, str]] = None
+        self._settings_open_pending = False
 
     def start(self) -> None:
         mw.addonManager.setWebExports(self.package, r"web/.*\.(css|js)")
@@ -832,13 +835,13 @@ class DashboardController:
             selected_date = payload.get("date")
             event_id = payload.get("event_id")
             if page is None:
-                self.open_settings()
+                self.request_settings_open()
             elif page == "calendar_data":
-                self.open_settings("calendar_data")
+                self.request_settings_open("calendar_data")
             elif page == "events":
                 date_value = str(selected_date) if self._valid_bridge_date(selected_date) else ""
                 event_value = str(event_id)[:80] if isinstance(event_id, (str, int)) else ""
-                self.open_settings("events", date_value, event_value)
+                self.request_settings_open("events", date_value, event_value)
         elif command == "date_insight" and isinstance(payload, Mapping):
             selected = self._parse_bridge_date(payload.get("date"))
             request_id = payload.get("request_id")
@@ -874,7 +877,7 @@ class DashboardController:
             self.refresh_error = False
             self._schedule_refresh("user_retry", delay_ms=0)
         elif command == "diagnostics" and isinstance(payload, Mapping):
-            self.open_settings("about_support")
+            self.request_settings_open("about_support")
         elif command == "calendar_selection_changed" and isinstance(payload, Mapping):
             self.set_calendar_selection(
                 payload.get("date"),
@@ -1185,8 +1188,32 @@ class DashboardController:
         page_name = page if isinstance(page, str) else ""
         date_value = selected_date if self._valid_bridge_date(selected_date) else ""
         event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
-        dialog = SettingsDialog(self, page_name, date_value, event_value)
+        dialog = SettingsDialog(mw, self, page_name, date_value, event_value)
         dialog.exec()
+
+    def request_settings_open(
+        self,
+        page: object = None,
+        selected_date: object = None,
+        selected_event_id: object = None,
+    ) -> None:
+        """Leave the WebEngine bridge callback before entering a modal dialog."""
+
+        page_name = page if isinstance(page, str) else ""
+        date_value = selected_date if self._valid_bridge_date(selected_date) else ""
+        event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
+        self._pending_settings_request = (page_name, date_value, event_value)
+        if self._settings_open_pending:
+            return
+        self._settings_open_pending = True
+        QTimer.singleShot(0, self._open_pending_settings)
+
+    def _open_pending_settings(self) -> None:
+        request = self._pending_settings_request
+        self._pending_settings_request = None
+        self._settings_open_pending = False
+        if request is not None:
+            self.open_settings(*request)
 
     def save_config(self, config: Mapping[str, Any], preferred_verse: object = None) -> None:
         normalized = normalize_config(config)

@@ -71,7 +71,6 @@ from .config_schema import normalize_config
 from .settings_model import (
     SECTION_LABELS,
     SettingsDraft,
-    clamp_window_size,
     font_family_value,
     history_range_choice,
     history_range_values,
@@ -1616,15 +1615,16 @@ class EventEditDialog(SettingsEditorDialog):
 class SettingsDialog(QDialog):
     def __init__(
         self,
+        parent: QWidget,
         controller: Any,
         initial_page: str = "",
         selected_event_date: str = "",
         selected_event_id: str = "",
     ) -> None:
-        # Match Anki's conventional add-on Settings lifecycle: an ordinary
-        # parented QDialog with default window flags, opened synchronously by
-        # the controller. Qt owns placement and native-window behavior.
-        super().__init__(mw)
+        # Match Progress Bar's complete native window contract: the caller
+        # passes Anki's main window directly, Qt uses default dialog flags, and
+        # no screen-derived geometry or platform-specific attachment is used.
+        super().__init__(parent)
         self.controller = controller
         self.draft = SettingsDraft(controller.config)
         self.staged = deepcopy(self.draft.values)
@@ -1653,7 +1653,6 @@ class SettingsDialog(QDialog):
         self.selected_event_id = selected_event_id
         self.current_section = "dashboard"
         self._requested_dashboard_anchor = ""
-        self._initial_scroll_settled = False
         self._building = True
         self._allow_close = False
         self._saving = False
@@ -1665,20 +1664,8 @@ class SettingsDialog(QDialog):
         ] = {}
         self.setObjectName("HomeDashboardSettings")
         self.setWindowTitle("Home Screen Dashboard settings")
-        parent = self.parentWidget()
-        screen = parent.screen() if parent is not None else None
-        screen = screen or self.screen() or QApplication.primaryScreen()
-        if screen is not None:
-            available = screen.availableGeometry()
-            width, height = clamp_window_size(
-                None,
-                (available.width(), available.height()),
-            )
-            self.setMinimumSize(min(1040, width), min(700, height))
-            self.resize(width, height)
-        else:
-            self.setMinimumSize(1040, 700)
-            self.resize(1200, 800)
+        self.setMinimumSize(680, 560)
+        self.resize(680, 620)
         self._hdo_theme_tokens = _theme_tokens(self.staged, self.controller.is_dark())
         self.setStyleSheet(_settings_style(self.staged, self.controller.is_dark()))
         dialog_layout = QHBoxLayout(self)
@@ -1828,6 +1815,9 @@ class SettingsDialog(QDialog):
         self._sync_draft()
         _apply_control_targets(self)
         self._apply_canonical_layout()
+        if not self._requested_dashboard_anchor:
+            self._settle_initial_scroll_top()
+        self.nav.setFocus(Qt.FocusReason.OtherFocusReason)
         _install_palette_watcher(self, self._current_stylesheet)
 
     def resizeEvent(self, event: Any) -> None:
@@ -1838,21 +1828,6 @@ class SettingsDialog(QDialog):
             QTimer.singleShot(0, self._reflow_heatmap_grid)
         if hasattr(self, "appearance_grid"):
             QTimer.singleShot(0, self._reflow_compact_grids)
-
-    def showEvent(self, event: Any) -> None:
-        super().showEvent(event)
-        if self._initial_scroll_settled:
-            return
-        self._initial_scroll_settled = True
-        # A focusable card heading can become Qt's provisional focus target
-        # while the native dialog is being shown. QScrollArea then scrolls the
-        # page header out of view to reveal that heading. Keep initial focus in
-        # the rail and explicitly settle a normal route at the top. Legacy
-        # dashboard anchors retain their separately scheduled destination.
-        self.nav.setFocus(Qt.FocusReason.OtherFocusReason)
-        if not self._requested_dashboard_anchor:
-            QTimer.singleShot(0, self._settle_initial_scroll_top)
-            QTimer.singleShot(80, self._settle_initial_scroll_top)
 
     def _settle_initial_scroll_top(self) -> None:
         scroll = self.stack.currentWidget() if hasattr(self, "stack") else None
