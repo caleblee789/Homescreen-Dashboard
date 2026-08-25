@@ -361,7 +361,10 @@ def validate_sources() -> dict:
             "def _persist_settings_transaction", "_restore_optional_bytes",
             'getattr(getattr(mw, "form", None), "centralwidget", None)',
             "workspace = SettingsWorkspace(", "self._settings_workspace = workspace",
-            "workspace.attach()", "QTimer.singleShot(0, self._open_pending_settings)",
+            "workspace.attach()", "def request_settings_open_from_menu",
+            "def settings_menu_about_to_hide",
+            "QTimer.singleShot(0, lambda: self._open_pending_settings(token))",
+            "QTimer.singleShot(50, lambda: self._open_pending_settings(token))",
         ),
         "insights.py": (
             "ORDER BY again_count DESC, total_answers DESC, r.cid ASC",
@@ -382,10 +385,22 @@ def validate_sources() -> dict:
             "class SettingsPromptPage(QWidget):", "super().__init__(host)",
             "PREFERRED_WIDTH = 680", "PREFERRED_HEIGHT = 620",
             "COMPACT_MIN_HEIGHT = 560", "HOST_MARGIN = 12",
+            "FOCUS_RETRY_DELAY_MS = 16", "FOCUS_RETRY_LIMIT = 2",
             "self.host_layout.insertWidget(self.insert_index, self, 1)",
             "self.host_layout.removeWidget(self)",
+            "self.setFocusProxy(self.panel.nav)",
+            "QApplication.activeWindow() is not mw",
+            "self.isWindow()", "self.window() is not mw",
+            "self.setFocus(Qt.FocusReason.OtherFocusReason)",
+            "application.installEventFilter(self)",
+            "QEvent.Type.ShortcutOverride",
+            "event.matches(QKeySequence.StandardKey.Close)",
+            "self._saved_callback = saved_callback",
+            "self._saved_callback()",
+            "def _settings_saved", "def _rehide_after_save",
             "self._content_stack.setCurrentWidget(prompt)",
-            "action.triggered.connect(controller.request_settings_open)",
+            "connect(controller.settings_menu_about_to_hide)",
+            "action.triggered.connect(controller.request_settings_open_from_menu)",
             "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
             "def _connect_change_signals(self) -> None:",
             "def _settings_changed(self, *_args: object) -> None:",
@@ -446,7 +461,7 @@ def validate_sources() -> dict:
             raise ValueError("Settings panel retains forbidden marker: {}".format(forbidden))
 
     for forbidden in (
-        "raise_()", "setFocus(", "installEventFilter(self)", "setGeometry(",
+        "raise_()", "setGeometry(",
         "setWindowFlags", "activateWindow()",
     ):
         if forbidden in workspace_source:
@@ -524,6 +539,10 @@ def validate_sources() -> dict:
         or settings_window_contract.get("host_margin") != 12
         or settings_window_contract.get("native_window") is not False
         or settings_window_contract.get("top_level_fallback") is not False
+        or settings_window_contract.get("focus_handoff") != "insert show focus then hide backing"
+        or settings_window_contract.get("close_handoff") != "show backing restore focus then remove workspace"
+        or settings_window_contract.get("focus_retries") != 2
+        or settings_window_contract.get("focus_retry_delay_ms") != 16
     ):
         raise ValueError("focused Settings contract does not require the in-Anki workspace")
     if capture_contract.get("runtime_smoke_requirements") != {

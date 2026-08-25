@@ -134,6 +134,8 @@ class DashboardController:
         self.year_scroll_left: Optional[float] = None
         self._pending_settings_request: Optional[Tuple[str, str, str]] = None
         self._settings_open_pending = False
+        self._settings_menu_waiting_for_hide = False
+        self._settings_request_token = 0
         self._settings_workspace: Optional[Any] = None
 
     def start(self) -> None:
@@ -219,6 +221,8 @@ class DashboardController:
     def on_profile_close(self, *_args: object) -> None:
         self._pending_settings_request = None
         self._settings_open_pending = False
+        self._settings_menu_waiting_for_hide = False
+        self._settings_request_token += 1
         workspace = self._settings_workspace
         if workspace is not None:
             try:
@@ -1253,21 +1257,58 @@ class DashboardController:
         selected_date: object = None,
         selected_event_id: object = None,
     ) -> None:
-        """Leave the current callback before attaching the central workspace."""
+        """Leave a WebEngine callback before attaching the central workspace."""
 
         page_name = page if isinstance(page, str) else ""
         date_value = selected_date if self._valid_bridge_date(selected_date) else ""
         event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
         self._pending_settings_request = (page_name, date_value, event_value)
-        if self._settings_open_pending:
+        if self._settings_open_pending and not self._settings_menu_waiting_for_hide:
             return
+        self._settings_request_token += 1
+        token = self._settings_request_token
         self._settings_open_pending = True
-        QTimer.singleShot(0, self._open_pending_settings)
+        self._settings_menu_waiting_for_hide = False
+        QTimer.singleShot(0, lambda: self._open_pending_settings(token))
 
-    def _open_pending_settings(self) -> None:
+    def request_settings_open_from_menu(
+        self,
+        page: object = None,
+        selected_date: object = None,
+        selected_event_id: object = None,
+        *_args: object,
+    ) -> None:
+        """Wait for the native menu to dismiss before changing central focus."""
+
+        page_name = page if isinstance(page, str) else ""
+        date_value = selected_date if self._valid_bridge_date(selected_date) else ""
+        event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
+        self._pending_settings_request = (page_name, date_value, event_value)
+        if self._settings_open_pending and self._settings_menu_waiting_for_hide:
+            return
+        self._settings_request_token += 1
+        token = self._settings_request_token
+        self._settings_open_pending = True
+        self._settings_menu_waiting_for_hide = True
+        QTimer.singleShot(50, lambda: self._open_pending_settings(token))
+
+    def settings_menu_about_to_hide(self) -> None:
+        """Queue the pending native-menu request after ``QMenu.aboutToHide``."""
+
+        if not self._settings_open_pending or not self._settings_menu_waiting_for_hide:
+            return
+        self._settings_menu_waiting_for_hide = False
+        token = self._settings_request_token
+        QTimer.singleShot(0, lambda: self._open_pending_settings(token))
+
+    def _open_pending_settings(self, token: int) -> None:
+        if token != self._settings_request_token or not self._settings_open_pending:
+            return
         request = self._pending_settings_request
         self._pending_settings_request = None
         self._settings_open_pending = False
+        self._settings_menu_waiting_for_hide = False
+        self._settings_request_token += 1
         if request is not None:
             self.open_settings(*request)
 

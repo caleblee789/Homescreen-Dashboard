@@ -13,6 +13,18 @@
 - Reused one controller-owned workspace for deferred, coalesced menu and bridge
   requests. Primary Save-conflict and dirty-close prompts are stacked layout
   pages; profile shutdown force-cleans the workspace without prompting.
+- Replaced the native menu's unspecified zero-timer handoff with the Caleb
+  menu's `aboutToHide` lifecycle, one queued turn, and a guarded 50 ms fallback.
+  Deck Browser bridge requests remain separately deferred and coalesced.
+- Made workspace attachment atomic: insert and show the child, verify it belongs
+  to Anki and owns focus, then hide the backing views. Focus retries twice at
+  16 ms; failure removes Settings and leaves Anki unchanged. Closing reverses
+  the order by restoring backing views and focus before workspace removal.
+- Keeps the backing views hidden when a successful Save refreshes the Deck
+  Browser, so Save remains inside the same focused workspace until Close.
+- Scoped Save, Escape, and Close shortcuts to the workspace's widget tree and
+  intercepts Cmd-W only while focus is inside Settings, avoiding Anki's global
+  Close handler. Sidebar and Events-tab navigation create no host lifecycle.
 - Preserved schema 8, Settings pages and staged-save behavior, dashboard and
   statistics calculations, bridge commands, and the frozen 1.8.6 evidence.
   Full-screen macOS Space behavior remains a manual acceptance gate before any

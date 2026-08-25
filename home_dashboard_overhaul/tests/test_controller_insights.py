@@ -143,7 +143,8 @@ class FakeQTimer:
 
     @classmethod
     def run_next(cls) -> None:
-        _delay, callback = cls.pending.pop(0)
+        index = min(range(len(cls.pending)), key=lambda item: (cls.pending[item][0], item))
+        _delay, callback = cls.pending.pop(index)
         callback()
 
 
@@ -323,6 +324,54 @@ class ControllerCapabilityTests(unittest.TestCase):
         self.assertFalse(self.controller._settings_open_pending)
         self.assertIsNone(self.controller._pending_settings_request)
 
+    def test_native_menu_waits_for_dismissal_then_uses_one_queued_turn(self) -> None:
+        calls = []
+        self.controller.open_settings = lambda *args: calls.append(args)
+
+        self.controller.request_settings_open_from_menu("dashboard")
+
+        self.assertEqual(calls, [])
+        self.assertTrue(self.controller._settings_menu_waiting_for_hide)
+        self.assertEqual([delay for delay, _callback in FakeQTimer.pending], [50])
+
+        self.controller.settings_menu_about_to_hide()
+
+        self.assertFalse(self.controller._settings_menu_waiting_for_hide)
+        self.assertEqual(sorted(delay for delay, _callback in FakeQTimer.pending), [0, 50])
+        FakeQTimer.run_next()
+        self.assertEqual(calls, [("dashboard", "", "")])
+
+        FakeQTimer.run_next()
+        self.assertEqual(calls, [("dashboard", "", "")])
+
+    def test_native_menu_fallback_opens_when_hide_signal_is_unavailable(self) -> None:
+        calls = []
+        self.controller.open_settings = lambda *args: calls.append(args)
+
+        self.controller.request_settings_open_from_menu("events", "2026-08-28", "exam-42")
+
+        self.assertEqual(calls, [])
+        FakeQTimer.run_next()
+        self.assertEqual(calls, [("events", "2026-08-28", "exam-42")])
+        self.assertFalse(self.controller._settings_open_pending)
+        self.assertFalse(self.controller._settings_menu_waiting_for_hide)
+
+    def test_repeated_native_menu_requests_coalesce_to_latest_route(self) -> None:
+        calls = []
+        self.controller.open_settings = lambda *args: calls.append(args)
+
+        self.controller.request_settings_open_from_menu("dashboard")
+        self.controller.request_settings_open_from_menu(
+            "events", "2026-08-28", "exam-42"
+        )
+
+        self.assertEqual(len(FakeQTimer.pending), 1)
+        self.controller.settings_menu_about_to_hide()
+        FakeQTimer.run_next()
+        self.assertEqual(calls, [("events", "2026-08-28", "exam-42")])
+        FakeQTimer.run_next()
+        self.assertEqual(calls, [("events", "2026-08-28", "exam-42")])
+
     def test_settings_reuses_one_central_workspace(self) -> None:
         FakeSettingsWorkspace.instances.clear()
         settings = ModuleType("home_dashboard_overhaul.settings")
@@ -362,8 +411,8 @@ class ControllerCapabilityTests(unittest.TestCase):
         with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
             self.controller.open_settings("dashboard")
             workspace = FakeSettingsWorkspace.instances[-1]
-            self.controller._pending_settings_request = ("events", "", "")
-            self.controller._settings_open_pending = True
+            self.controller.request_settings_open_from_menu("events")
+            pending_token = self.controller._settings_request_token
 
             self.controller.on_profile_close()
 
@@ -371,6 +420,11 @@ class ControllerCapabilityTests(unittest.TestCase):
             self.assertIsNone(self.controller._settings_workspace)
             self.assertIsNone(self.controller._pending_settings_request)
             self.assertFalse(self.controller._settings_open_pending)
+            self.assertFalse(self.controller._settings_menu_waiting_for_hide)
+            self.assertGreater(self.controller._settings_request_token, pending_token)
+
+            FakeQTimer.run_next()
+            self.assertEqual(len(FakeSettingsWorkspace.instances), 1)
 
     def test_year_scroll_position_survives_a_controller_rerender(self) -> None:
         message = "hdo:" + json.dumps({

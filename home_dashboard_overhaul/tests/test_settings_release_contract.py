@@ -211,11 +211,54 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "setWindowFlags",
             "activateWindow()",
             "raise_()",
-            "setFocus(",
-            "installEventFilter(self)",
             "setGeometry(",
         ):
             self.assertNotIn(forbidden_primary_window_marker, workspace_source)
+        for focus_handoff_marker in (
+            "FOCUS_RETRY_DELAY_MS = 16",
+            "FOCUS_RETRY_LIMIT = 2",
+            "self.setFocusProxy(self.panel.nav)",
+            "QApplication.activeWindow() is not mw",
+            "self.isWindow()",
+            "self.window() is not mw",
+            "self.setFocus(Qt.FocusReason.OtherFocusReason)",
+            "QTimer.singleShot(0, lambda: self._verify_attach_focus(token, 0))",
+            "application.installEventFilter(self)",
+            "application.removeEventFilter(self)",
+            "QEvent.Type.ShortcutOverride",
+            "event.matches(QKeySequence.StandardKey.Close)",
+        ):
+            self.assertIn(focus_handoff_marker, workspace_source)
+        self.assertIn("self._saved_callback = saved_callback", panel_source)
+        self.assertIn("self._saved_callback()", panel_source)
+        self.assertIn("def _settings_saved", workspace_source)
+        self.assertIn("def _rehide_after_save", workspace_source)
+        begin_attach = workspace_source.split("    def _begin_attach", 1)[1].split(
+            "    def _verify_attach_focus", 1
+        )[0]
+        self.assertLess(
+            begin_attach.index("self.host_layout.insertWidget"),
+            begin_attach.index("self.show()"),
+        )
+        self.assertLess(begin_attach.index("self.show()"), begin_attach.index("self.isWindow()"))
+        self.assertLess(
+            begin_attach.index("self.isWindow()"),
+            begin_attach.index("self.setFocus(Qt.FocusReason.OtherFocusReason)"),
+        )
+        verify_attach = workspace_source.split("    def _verify_attach_focus", 1)[1].split(
+            "    def _hide_backing_widgets", 1
+        )[0]
+        self.assertLess(verify_attach.index("self._owns_widget(focus)"), verify_attach.index("self._hide_backing_widgets()"))
+        close_source = workspace_source.split("    def close_panel", 1)[1].split(
+            "    def _finish_close_focus", 1
+        )[0]
+        self.assertLess(close_source.index("self._restore_backing_widgets()"), close_source.index("target.setFocus"))
+        self.assertLess(close_source.index("target.setFocus"), close_source.index("QTimer.singleShot(0"))
+        self.assertNotIn("self.host_layout.removeWidget(self)", close_source)
+        fail_source = workspace_source.split("    def _fail_closed", 1)[1].split(
+            "    def _dispose", 1
+        )[0]
+        self.assertLess(fail_source.index("self._restore_backing_widgets()"), fail_source.index("self._dispose()"))
         self.assertNotIn("class SettingsDialog(QDialog):", self.settings)
         for retired_window_marker in (
             "Qt.WindowType.Tool",
@@ -238,6 +281,16 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
             panel_source,
         )
+        for shortcut_owner in ("self.escape_action", "self.save_shortcut", "self.close_shortcut", "self.escape_shortcut"):
+            shortcut_source = self.settings.split(shortcut_owner, 1)[1].split("self.addAction", 1)[0]
+            self.assertIn("Qt.ShortcutContext.WidgetWithChildrenShortcut", shortcut_source)
+
+        navigation_source = self.settings.split("    def _nav_changed", 1)[1].split(
+            "    def _schedule_dashboard_anchor", 1
+        )[0]
+        self.assertIn("self.stack.setCurrentIndex", navigation_source)
+        for lifecycle_marker in ("attach(", "hide()", "show()", "setFocus(", "window()"):
+            self.assertNotIn(lifecycle_marker, navigation_source)
 
     def test_primary_save_and_close_prompts_are_embedded_children(self) -> None:
         self.assertIn("class SettingsPromptPage(QWidget):", self.settings)
@@ -254,18 +307,29 @@ class SettingsReleaseContractTests(unittest.TestCase):
 
     def test_all_settings_opening_is_deferred_and_controller_retains_one_workspace(self) -> None:
         bridge_source = self.controller.split("    def request_settings_open(", 1)[1].split(
-            "    def save_config", 1
+            "    def request_settings_open_from_menu", 1
         )[0]
-        self.assertIn("QTimer.singleShot(0, self._open_pending_settings)", bridge_source)
+        menu_controller_source = self.controller.split(
+            "    def request_settings_open_from_menu", 1
+        )[1].split("    def save_config", 1)[0]
+        self.assertIn("QTimer.singleShot(0, lambda: self._open_pending_settings(token))", bridge_source)
         self.assertIn("self._pending_settings_request", bridge_source)
         self.assertIn("self._settings_open_pending", bridge_source)
+        self.assertIn("QTimer.singleShot(50, lambda: self._open_pending_settings(token))", menu_controller_source)
+        self.assertIn("def settings_menu_about_to_hide", menu_controller_source)
+        self.assertIn("QTimer.singleShot(0, lambda: self._open_pending_settings(token))", menu_controller_source)
+        self.assertIn("token != self._settings_request_token", menu_controller_source)
         self.assertNotIn("SettingsDialog", bridge_source)
         self.assertNotIn("settings_dialog", bridge_source)
         self.assertIn("self._settings_workspace: Optional[Any] = None", self.controller)
         self.assertIn("workspace.open_page(page_name, date_value, event_value)", self.controller)
         self.assertIn("workspace.force_close()", self.controller)
         menu_source = self.settings.split("def install_settings_menu", 1)[1]
-        self.assertIn("action.triggered.connect(controller.request_settings_open)", menu_source)
+        self.assertIn("_connect_settings_menu_handoff(submenu, controller)", menu_source)
+        self.assertIn("_connect_settings_menu_action(action, controller)", menu_source)
+        self.assertIn("signal.disconnect(previous.settings_menu_about_to_hide)", self.settings)
+        self.assertIn("connect(controller.settings_menu_about_to_hide)", self.settings)
+        self.assertIn("action.triggered.connect(controller.request_settings_open_from_menu)", self.settings)
 
     def test_native_probe_window_overrides_remain_outside_product_code(self) -> None:
         self.assertNotIn("SETTINGS_SIZE_KEY", self.settings)

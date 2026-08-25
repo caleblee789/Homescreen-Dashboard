@@ -11,8 +11,13 @@ Browser or statistics classes.
   existing central layout. It prefers 680×620, adapts within 12-pixel host
   margins, and cannot become a separate macOS window or Space.
 - The controller reuses one workspace while it is open. Menu and Deck Browser
-  requests are deferred and coalesced, while primary Save and dirty-close
+  requests are coalesced. Native-menu opening waits for the Caleb menu to hide
+  before its queued focus handoff, while Deck Browser bridge opening remains
+  deferred until its callback returns. Primary Save and dirty-close
   confirmations use stacked layout pages instead of floating layers.
+- Anki's current views stay visible until the child workspace owns focus. A
+  failed focus handoff removes Settings without changing Anki; closing restores
+  the backing views and their prior valid focus before removing the workspace.
 - The corrected 1.8.6 statistics, schema 8, configuration keys, bridge
   commands, and all four Settings pages remain unchanged.
 
@@ -94,11 +99,14 @@ saved baseline. The baseline updates only after a completely successful save.
 The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only swatches and production rendering.
 Settings temporarily replaces the dashboard's slot in Anki's persistent
-central layout with a centered 680×620 workspace, then restores the prior
-central widgets when it closes. It creates no native Settings window, floating
-overlay, manual z-order, screen coordinates, screen-geometry query, or embedded
-WebEngine content. On smaller Anki windows it shrinks within 12-pixel margins;
-every page remains vertically scrollable.
+central layout with a centered 680×620 workspace. It verifies that the child
+workspace owns focus before hiding the prior central widgets, and restores
+those widgets and a prior valid focus target before removing Settings. It
+creates no native Settings window, floating overlay, manual z-order, screen
+coordinates, screen-geometry query, or embedded WebEngine content. On smaller
+Anki windows it shrinks within 12-pixel margins; every page remains vertically
+scrollable. Sidebar and Events-tab navigation only changes widgets inside the
+existing stack.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source
