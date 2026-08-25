@@ -63,6 +63,8 @@
   ],
   "settings_quality_assertions": [
     "decorated-window-and-footer-fully-onscreen",
+    "attached-window-modal-sheet-in-anki-full-screen-space",
+    "preview-webview-created-after-sheet-visible",
     "single-unambiguous-active-rail-row",
     "content-aware-compact-preview-fit-canvas",
     "legacy-calendar-card-clean-top-alignment",

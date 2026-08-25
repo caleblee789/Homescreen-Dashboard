@@ -114,6 +114,7 @@ ACTION_TEXT = "Home Screen Dashboard settings"
 PROJECT_URL = "https://github.com/caleblee789/Homescreen-Dashboard"
 ISSUES_URL = "https://github.com/caleblee789/Homescreen-Dashboard/issues"
 PACKAGE_ROOT = Path(__file__).resolve().parent
+SETTINGS_WINDOW_MODALITY = Qt.WindowModality.WindowModal
 
 
 def _web_asset_url(package: str, filename: str) -> str:
@@ -1601,9 +1602,8 @@ class SettingsDialog(QDialog):
         selected_event_date: str = "",
         selected_event_id: str = "",
     ) -> None:
-        # Match PronounceIt's working macOS/full-screen behavior: this remains
-        # an ordinary QDialog parented to Anki. The controller opens it with
-        # exec(), so Qt owns modality, native parenting, and Space placement.
+        # Keep Settings as an ordinary QDialog parented to Anki. The controller
+        # opens it window-modally so Qt owns the native sheet and Space.
         super().__init__(mw)
         self.controller = controller
         self.draft = SettingsDraft(controller.config)
@@ -1660,12 +1660,12 @@ class SettingsDialog(QDialog):
                 (available.width(), available.height()),
             )
             self.setFixedSize(width, height)
-            self.move(available.center() - self.rect().center())
             self._preview_overlay_mode = width < 1040
         else:
             self.setFixedSize(1200, 800)
         self._hdo_theme_tokens = _theme_tokens(self.staged, self.controller.is_dark())
         self._preview_content_size = QSize()
+        self.preview: Optional[AnkiWebView] = None
         self.setStyleSheet(_settings_style(self.staged, self.controller.is_dark()))
         dialog_layout = QHBoxLayout(self)
         dialog_layout.setContentsMargins(0, 0, 0, 0)
@@ -1741,9 +1741,9 @@ class SettingsDialog(QDialog):
         self.preview_wrap.setMinimumWidth(288)
         self.preview_wrap.setMaximumWidth(320)
         self.preview_wrap.setFixedWidth(304)
-        preview_layout = QVBoxLayout(self.preview_wrap)
-        preview_layout.setContentsMargins(12, 12, 12, 12)
-        preview_layout.setSpacing(8)
+        self.preview_layout = QVBoxLayout(self.preview_wrap)
+        self.preview_layout.setContentsMargins(12, 12, 12, 12)
+        self.preview_layout.setSpacing(8)
         preview_header = QHBoxLayout()
         self.preview_label = QLabel("Preview")
         self.preview_label.setObjectName("CardTitle")
@@ -1754,7 +1754,7 @@ class SettingsDialog(QDialog):
         self.preview_sample_badge.setVisible(self.controller.snapshot is None)
         preview_header.addWidget(self.preview_sample_badge)
         preview_header.addStretch()
-        preview_layout.addLayout(preview_header)
+        self.preview_layout.addLayout(preview_header)
         self.preview_scope = SegmentedControl(
             [("Section", "context"), ("Full dashboard", "full")],
             "context",
@@ -1762,7 +1762,7 @@ class SettingsDialog(QDialog):
         )
         self.preview_scope.set_option_width(112)
         self.preview_scope.connect_changed(self._set_preview_scope_mode)
-        preview_layout.addWidget(self.preview_scope)
+        self.preview_layout.addWidget(self.preview_scope)
         preview_actions = QHBoxLayout()
         self.preview_scale = SegmentedControl(
             [("Fit", "fit"), ("100%", "actual")],
@@ -1783,19 +1783,19 @@ class SettingsDialog(QDialog):
         )
         preview_actions.addWidget(self.preview_full_button)
         preview_actions.addStretch()
-        preview_layout.addLayout(preview_actions)
+        self.preview_layout.addLayout(preview_actions)
         self.preview_empty_label = QLabel("Select a verse to preview")
         self.preview_empty_label.setObjectName("EmptyState")
         self.preview_empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.preview_empty_label.setMinimumHeight(120)
         self.preview_empty_label.hide()
-        preview_layout.addWidget(self.preview_empty_label)
-        self.preview = AnkiWebView(self.preview_wrap, title="Home Screen Dashboard preview")
-        self.preview.setAccessibleName("Home Screen Dashboard contextual preview")
-        self.preview.setAccessibleDescription("A production-rendered preview of the current settings section.")
-        self.preview.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.preview.setFixedHeight(180)
-        preview_layout.addWidget(self.preview, 1)
+        self.preview_layout.addWidget(self.preview_empty_label)
+        self.preview_placeholder = QLabel("Loading preview...")
+        self.preview_placeholder.setObjectName("PreviewPlaceholder")
+        self.preview_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.preview_placeholder.setAccessibleName("Loading dashboard preview")
+        self.preview_placeholder.setFixedHeight(180)
+        self.preview_layout.addWidget(self.preview_placeholder, 1)
         self.body_grid.addWidget(
             self.preview_wrap,
             0,
@@ -1896,7 +1896,6 @@ class SettingsDialog(QDialog):
         self._sync_draft()
         _apply_control_targets(self)
         self._apply_canonical_layout()
-        self._render_preview()
         _install_palette_watcher(self, self._current_stylesheet, self._schedule_preview)
 
     def resizeEvent(self, event: Any) -> None:
@@ -1907,11 +1906,15 @@ class SettingsDialog(QDialog):
             QTimer.singleShot(0, self._reflow_heatmap_grid)
         if hasattr(self, "appearance_grid"):
             QTimer.singleShot(0, self._reflow_compact_grids)
-        if hasattr(self, "preview"):
+        if self.preview is not None:
             QTimer.singleShot(0, self._update_preview_canvas_height)
 
     def showEvent(self, event: Any) -> None:
         super().showEvent(event)
+        if self.preview is None:
+            # Let Qt establish the native window-modal sheet before WebEngine
+            # creates any native resources of its own.
+            QTimer.singleShot(0, self._initialize_preview)
         if self._initial_scroll_settled:
             return
         self._initial_scroll_settled = True
@@ -1924,6 +1927,28 @@ class SettingsDialog(QDialog):
         if not self._requested_dashboard_anchor:
             QTimer.singleShot(0, self._settle_initial_scroll_top)
             QTimer.singleShot(80, self._settle_initial_scroll_top)
+
+    def _initialize_preview(self) -> None:
+        """Create the shared WebView only after the Settings sheet is visible."""
+
+        if self.preview is not None or not self.isVisible():
+            return
+        preview = AnkiWebView(
+            self.preview_wrap,
+            title="Home Screen Dashboard preview",
+        )
+        preview.setAccessibleName("Home Screen Dashboard contextual preview")
+        preview.setAccessibleDescription(
+            "A production-rendered preview of the current settings section."
+        )
+        preview.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        preview.setFixedHeight(180)
+        self.preview_layout.removeWidget(self.preview_placeholder)
+        self.preview_placeholder.hide()
+        self.preview_placeholder.deleteLater()
+        self.preview_layout.addWidget(preview, 1)
+        self.preview = preview
+        self._render_preview()
 
     def _settle_initial_scroll_top(self) -> None:
         scroll = self.stack.currentWidget() if hasattr(self, "stack") else None
@@ -4145,7 +4170,12 @@ class SettingsDialog(QDialog):
         return config
 
     def _render_preview(self) -> None:
-        if self.current_section == "about_support" or not self.preview_wrap.isVisible():
+        preview = self.preview
+        if (
+            preview is None
+            or self.current_section == "about_support"
+            or not self.preview_wrap.isVisible()
+        ):
             return
         self._sync_draft()
         config = self._contextual_preview_config()
@@ -4167,7 +4197,7 @@ class SettingsDialog(QDialog):
         selected_quote = self._selected_quote_index()
         bible_missing = self.current_section == "bible_verse" and selected_quote is None
         self.preview_empty_label.setVisible(bible_missing)
-        self.preview.setVisible(not bible_missing)
+        preview.setVisible(not bible_missing)
         if bible_missing:
             return
         if self.current_section == "bible_verse":
@@ -4183,7 +4213,7 @@ class SettingsDialog(QDialog):
             self.current_section == "dashboard" and self.controller.snapshot is None
         )
         package = mw.addonManager.addonFromModule(__name__)
-        self.preview.stdHtml(
+        preview.stdHtml(
             render_dashboard(
                 snapshot,
                 config,
@@ -4358,17 +4388,19 @@ class SettingsDialog(QDialog):
         )
 
     def _fit_inline_preview(self) -> None:
-        if not self.preview_wrap.isVisible():
+        preview = self.preview
+        if preview is None or not self.preview_wrap.isVisible():
             return
         try:
-            self.preview.eval(self._inline_preview_script())
+            preview.eval(self._inline_preview_script())
         except Exception:
             return
 
     def _update_preview_canvas_height(self) -> None:
         """Size the dock to its rendered content instead of a dead full-height panel."""
 
-        if not hasattr(self, "preview") or not self.preview_wrap.isVisible():
+        preview = self.preview
+        if preview is None or not self.preview_wrap.isVisible():
             return
         rendered_height = max(0, self._preview_content_size.height())
         if self._preview_fit_mode == "actual":
@@ -4381,18 +4413,19 @@ class SettingsDialog(QDialog):
         body_height = max(0, self.body_shell.height())
         chrome_height = max(
             0,
-            self.preview_wrap.sizeHint().height() - self.preview.height(),
+            self.preview_wrap.sizeHint().height() - preview.height(),
         )
         available = max(140, body_height - chrome_height)
         target = max(140, min(preferred, available))
-        if self.preview.height() == target:
+        if preview.height() == target:
             return
-        self.preview.setFixedHeight(target)
+        preview.setFixedHeight(target)
         self.preview_wrap.updateGeometry()
         QTimer.singleShot(0, self._fit_inline_preview)
 
     def _measure_preview_content(self) -> None:
-        if not self.preview_wrap.isVisible():
+        preview = self.preview
+        if preview is None or not self.preview_wrap.isVisible():
             return
         script = self._inline_preview_script()
 
@@ -4412,7 +4445,7 @@ class SettingsDialog(QDialog):
             self.preview_wrap.updateGeometry()
 
         try:
-            self.preview.evalWithCallback(script, measured)
+            preview.evalWithCallback(script, measured)
         except Exception:
             return
 
@@ -5043,8 +5076,10 @@ class SettingsDialog(QDialog):
             event.ignore()
 
     def done(self, result: int) -> None:
+        preview = self.preview
         try:
-            self.preview.cleanup()
+            if preview is not None:
+                preview.cleanup()
         except Exception:
             pass
         super().done(result)

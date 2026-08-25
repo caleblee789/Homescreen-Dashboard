@@ -119,26 +119,32 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired, self.settings)
 
-    def test_window_matches_pronounceit_parented_modal_exec_contract(self) -> None:
+    def test_window_uses_parented_window_modal_sheet_contract(self) -> None:
         for marker in (
             "super().__init__(mw)",
             "width, height = clamp_window_size(",
             "self.setFixedSize(width, height)",
-            "available.center() - self.rect().center()",
+            "SETTINGS_WINDOW_MODALITY = Qt.WindowModality.WindowModal",
             "QTimer.singleShot(0, self._settle_initial_scroll_top)",
         ):
             self.assertIn(marker, self.settings)
         self.assertIn("if self.settings_dialog is not None:", self.controller)
-        self.assertIn("self.settings_dialog.exec()", self.controller)
-        self.assertIn("finally:\n            self.settings_dialog = None", self.controller)
+        self.assertIn("dialog.setWindowModality(SETTINGS_WINDOW_MODALITY)", self.controller)
+        self.assertIn("dialog.finished.connect(", self.controller)
+        self.assertIn("dialog.open()", self.controller)
+        self.assertIn("if self.settings_dialog is dialog:", self.controller)
+        self.assertIn("dialog.deleteLater()", self.controller)
         for retired_opening_marker in (
             "self.settings_dialog.show()",
-            "self.settings_dialog.open()",
+            "self.settings_dialog.exec()",
+            "dialog.exec()",
+            "dialog.show()",
             "self.settings_dialog.raise_()",
             "self.settings_dialog.activateWindow()",
-            "self.settings_dialog.finished.connect",
         ):
             self.assertNotIn(retired_opening_marker, self.controller)
+        self.assertNotIn("available.center() - self.rect().center()", self.settings)
+        self.assertNotIn("self.move(", self.settings)
         self.assertNotIn("settingsWindowSize", self.settings)
         self.assertNotIn("def _settle_window_to_screen", self.settings)
         for retired_window_marker in (
@@ -178,8 +184,16 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "rendered_height = max(0, self._preview_content_size.height())",
             "preferred = max(150, min(320, rendered_height + 8))",
             "self.preview_wrap.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Maximum)",
+            "self.preview: Optional[AnkiWebView] = None",
+            'self.preview_placeholder = QLabel("Loading preview...")',
+            "QTimer.singleShot(0, self._initialize_preview)",
+            "def _initialize_preview(self) -> None:",
         ):
             self.assertIn(marker, self.settings)
+        constructor = self.settings.split("class SettingsDialog(QDialog):", 1)[1].split(
+            "    def resizeEvent", 1
+        )[0]
+        self.assertNotIn("AnkiWebView(", constructor)
         self.assertNotIn("sample_snapshot", self.settings)
 
     def test_preview_visibility_is_session_only_and_about_omits_it(self) -> None:
@@ -187,7 +201,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "self._preview_visible = True",
             'if section_id != "about_support"',
             'self.current_section in {"dashboard", "events", "bible_verse"}',
-            'if self.current_section == "about_support"',
+            'or self.current_section == "about_support"',
         ):
             self.assertIn(marker, self.settings)
         self.assertNotIn("previewVisibility", self.settings)

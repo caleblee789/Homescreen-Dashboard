@@ -204,8 +204,11 @@ def validate(root: Path = ROOT) -> List[str]:
         "presets_by_theme",
     ))
     _require_markers(errors, "controller.py", (
-        "self.settings_dialog.exec()",
-        "finally:\n            self.settings_dialog = None",
+        "dialog.setWindowModality(SETTINGS_WINDOW_MODALITY)",
+        "dialog.finished.connect(",
+        "dialog.open()",
+        "def _settings_dialog_finished",
+        "if self.settings_dialog is dialog:",
         "def _persist_settings_transaction(",
         "previous_config = deepcopy(",
         "_restore_optional_bytes(ROTATION_STATE_PATH, previous_rotation)",
@@ -254,14 +257,29 @@ def validate(root: Path = ROOT) -> List[str]:
     ))
 
     settings_source = _source("settings.py")
+    _require_markers(errors, "settings.py", (
+        "SETTINGS_WINDOW_MODALITY = Qt.WindowModality.WindowModal",
+        "self.preview: Optional[AnkiWebView] = None",
+        "QTimer.singleShot(0, self._initialize_preview)",
+        "def _initialize_preview(self) -> None:",
+    ))
     for retired in (
         "HomeScreenDashboard/settingsWindowSize", "def _settle_window_to_screen",
         "Qt.WindowType.Tool", "self.winId()", "setTransientParent",
         "_attach_transient_parent", "Qt.WindowModality.NonModal", "objc_msgSend",
         "_attach_macos_settings_window", "_detach_macos_settings_window",
+        "self.move(",
     ):
         if retired in settings_source:
             errors.append("retired Settings window behavior remains: {}".format(retired))
+    controller_source = _source("controller.py")
+    for retired in (
+        "self.settings_dialog.exec()", "self.settings_dialog.show()",
+        "dialog.exec()", "dialog.show()",
+        "self.settings_dialog.raise_()", "self.settings_dialog.activateWindow()",
+    ):
+        if retired in controller_source:
+            errors.append("retired top-level Settings lifecycle remains: {}".format(retired))
     for retired in (
         "SettingsLayoutMetrics", "settings_content_mode", "section_selector",
         "section_tabs", "compact_toolbar", 'setText("Discard changes"',

@@ -123,7 +123,7 @@ class FakeDB:
                     card_ids = row[4] if len(row) > 4 else None
                 output.append((day_index, count, new_cards, again, passed, failed, card_ids))
             return output
-        if "GROUP BY did" in sql and "queue = 0 AND type = 0" in sql:
+        if "GROUP BY did" in sql and "queue = 0" in sql:
             self.remaining_sql = sql
             if self.remaining and isinstance(self.remaining[0], (tuple, list)):
                 return list(self.remaining)
@@ -219,7 +219,7 @@ class LongTermTests(unittest.TestCase):
             ("2026-08-11", 5),
             ("2026-08-12", 15),
         ], date(2026, 8, 13))
-        self.assertEqual(stats.average_reviews_per_active_day, 12)
+        self.assertEqual(stats.average_reviews_per_active_day, 13)
         self.assertEqual(stats.active_days_percent, 67)
         self.assertEqual(stats.longest_streak, 2)
         self.assertEqual(stats.current_streak, 2)
@@ -604,7 +604,7 @@ class SnapshotTests(unittest.TestCase):
         self.assertIsNone(unknown.facts.queue.value.estimated_duration_seconds)
 
     def test_eta_rounds_up_to_a_whole_minute(self) -> None:
-        queue = _queue(FakeCollection(remaining=(1, 0, 0)), 10.0, 61.0, 0)
+        queue = _queue(FakeCollection(remaining=(1, 0, 0)), 10.0, 61.0)
         self.assertEqual(queue.estimated_duration_seconds, 120)
 
     def test_new_remaining_obeys_ankis_scheduler_daily_limit(self) -> None:
@@ -624,7 +624,7 @@ class SnapshotTests(unittest.TestCase):
         col = FakeCollection(remaining=[(1, 40, 1, 3), (2, 40, 1, 2)])
         col.sched = MultiDeckScheduler()
 
-        queue = _queue(col, 10.0, 20.0, 5)
+        queue = _queue(col, 10.0, 20.0)
 
         self.assertEqual((queue.new, queue.learning, queue.review), (10, 2, 5))
         self.assertEqual(queue.total, 17)
@@ -648,12 +648,11 @@ class SnapshotTests(unittest.TestCase):
         ])
         col.sched = Scheduler(due_tree_root(head_a, head_b))
 
-        all_decks = _queue(col, 10.0, 10.0, 0)
+        all_decks = _queue(col, 10.0, 10.0)
         without_child = _queue(
             col,
             10.0,
             10.0,
-            0,
             FilterScope(excluded_deck_ids=(11,)),
         )
 
@@ -667,11 +666,11 @@ class SnapshotTests(unittest.TestCase):
             DueTree(new=0, deck_id=2),
         ))
 
-        queue = _queue(col, 10.0, 10.0, 0)
+        queue = _queue(col, 10.0, 10.0)
 
         self.assertEqual((queue.new, queue.total), (2, 2))
 
-    def test_remaining_uses_ankis_built_queue_for_the_selected_subtree(self) -> None:
+    def test_remaining_is_collection_wide_and_selection_invariant(self) -> None:
         class QueueAwareScheduler:
             today = Scheduler.today
             day_cutoff = Scheduler.day_cutoff
@@ -686,33 +685,36 @@ class SnapshotTests(unittest.TestCase):
                 return self.due_tree
 
             def get_queued_cards(self, *, fetch_limit):
-                self.fetch_limit = fetch_limit
-                return SimpleNamespace(
-                    new_count=4,
-                    learning_count=3,
-                    review_count=6,
-                )
+                raise AssertionError("selected-deck queue must not alter collection totals")
 
         col = FakeCollection(remaining=[
             (1, 7, 5, 9),
             (2, 2, 1, 3),
         ])
         col.sched = QueueAwareScheduler()
-        col.decks = SimpleNamespace(get_current_id=lambda: 1)
+        selected = {"deck_id": 1}
+        col.decks = SimpleNamespace(get_current_id=lambda: selected["deck_id"])
 
-        all_decks = _queue(col, 10.0, 10.0, 12)
+        first_selection = _queue(col, 10.0, 10.0)
+        selected["deck_id"] = 2
+        second_selection = _queue(col, 10.0, 10.0)
         without_second_deck = _queue(
             col,
             10.0,
             10.0,
-            9,
             FilterScope(excluded_deck_ids=(2,)),
         )
 
         self.assertEqual(
-            (all_decks.new, all_decks.learning, all_decks.review, all_decks.total),
-            (6, 4, 9, 19),
+            (
+                first_selection.new,
+                first_selection.learning,
+                first_selection.review,
+                first_selection.total,
+            ),
+            (9, 6, 12, 27),
         )
+        self.assertEqual(second_selection, first_selection)
         self.assertEqual(
             (
                 without_second_deck.new,
@@ -720,9 +722,8 @@ class SnapshotTests(unittest.TestCase):
                 without_second_deck.review,
                 without_second_deck.total,
             ),
-            (4, 3, 6, 13),
+            (7, 5, 9, 21),
         )
-        self.assertEqual(col.sched.fetch_limit, 0)
 
     def test_due_tree_failure_makes_progress_unavailable_without_raw_fallback(self) -> None:
         class BrokenDueTreeScheduler:
@@ -1125,10 +1126,10 @@ class CanonicalFactsTests(unittest.TestCase):
             AvailabilityReason.QUERY_FAILED,
         )
 
-    def test_scheduled_due_failure_makes_progress_unavailable_without_fallback(self) -> None:
+    def test_forecast_failure_does_not_hide_scheduler_progress(self) -> None:
         class ForecastFailureDB(FakeDB):
             def all(self, sql, *args):
-                if "FROM cards" in sql:
+                if "SELECT id, type, queue, due, odue, odid FROM cards" in sql:
                     raise RuntimeError("scheduled demand unavailable")
                 return super().all(sql, *args)
 
@@ -1145,8 +1146,14 @@ class CanonicalFactsTests(unittest.TestCase):
             ValueStatus.UNAVAILABLE,
         )
         self.assertEqual(
-            (facts.queue.status, facts.queue.reason, facts.queue.value),
-            (ValueStatus.UNAVAILABLE, AvailabilityReason.QUERY_FAILED, None),
+            (
+                facts.queue.status,
+                facts.queue.value.new,
+                facts.queue.value.learning,
+                facts.queue.value.review,
+                facts.queue.value.total,
+            ),
+            (ValueStatus.AVAILABLE, 3, 2, 1, 6),
         )
 
     def test_incomplete_scheduler_tree_makes_remaining_counts_unavailable(self) -> None:
@@ -1293,7 +1300,7 @@ class CanonicalFactsTests(unittest.TestCase):
                 (4, 99, -2, 500, 3, 2, 500),
                 (5, 99, 0, 100, 0, 1, 100),
                 (6, 99, 1, col.sched.day_cutoff - 1, 1, 1, col.sched.day_cutoff - 1),
-                (7, 99, 2, 500, 2, 1, 500),
+                (7, 99, 2, 500, 0, 1, 500),
                 (8, 99, -2, 500, 3, 1, 500),
                 (9, 99, 4, col.sched.day_cutoff - 1, 1, 1, col.sched.day_cutoff - 1),
                 (10, 99, 4, col.sched.day_cutoff - 1, 3, 1, col.sched.day_cutoff - 1),
@@ -1325,7 +1332,7 @@ class CanonicalFactsTests(unittest.TestCase):
         self.assertEqual(current.browse_target.card_ids, (7,))
         self.assertEqual(facts.today.value.answers, 1)
         self.assertEqual(facts.today.value.seconds, 3.0)
-        self.assertEqual(current.reviews_due.value, 5)
+        self.assertEqual(current.reviews_due.value, 4)
         self.assertEqual(future.reviews_due.value, 1)
         self.assertEqual(future.browse_target.card_ids, (13,))
         self.assertNotIn(12, future.browse_target.card_ids)
@@ -1336,7 +1343,7 @@ class CanonicalFactsTests(unittest.TestCase):
                 facts.queue.value.review,
                 facts.queue.value.total,
             ),
-            (1, 2, 1, 4),
+            (1, 4, 1, 6),
         )
         self.assertEqual(
             facts.queue.value.total,
@@ -1431,7 +1438,7 @@ class HistoricalTimingAndBuriedTests(unittest.TestCase):
         self.assertAlmostEqual(included_new, 70.0 / 3.0)
         self.assertAlmostEqual(excluded_new, 10.0)
 
-    def test_buried_counts_both_queue_kinds_with_disjoint_card_type_categories(self) -> None:
+    def test_buried_counts_only_new_or_due_cards_in_both_explicit_queue_kinds(self) -> None:
         col = SQLiteCollection()
         rows = [
             (1, 1, -2, 0, 0),
@@ -1450,30 +1457,18 @@ class HistoricalTimingAndBuriedTests(unittest.TestCase):
             rows,
         )
         stats = _buried(col)
-        self.assertEqual((stats.new, stats.learning, stats.review), (2, 4, 2))
+        self.assertEqual((stats.new, stats.learning, stats.review), (2, 2, 1))
 
-    def test_buried_adds_due_tree_cards_hidden_from_ankis_active_queue(self) -> None:
+    def test_buried_does_not_infer_transient_queue_hidden_cards(self) -> None:
         class QueueAwareScheduler:
             today = 500
             day_cutoff = int(datetime(2026, 8, 14, 4).timestamp())
 
             def deck_due_tree(self, deck_id):
-                self.requested_deck_id = deck_id
-                return SimpleNamespace(
-                    deck_id=deck_id,
-                    new_count=7,
-                    learn_count=5,
-                    review_count=9,
-                    children=(),
-                )
+                raise AssertionError("buried totals must not inspect the due tree")
 
             def get_queued_cards(self, *, fetch_limit):
-                self.fetch_limit = fetch_limit
-                return SimpleNamespace(
-                    new_count=4,
-                    learning_count=3,
-                    review_count=6,
-                )
+                raise AssertionError("buried totals must not inspect the built queue")
 
         col = SQLiteCollection()
         col.sched = QueueAwareScheduler()
@@ -1489,9 +1484,7 @@ class HistoricalTimingAndBuriedTests(unittest.TestCase):
 
         stats = _buried(col)
 
-        self.assertEqual((stats.new, stats.learning, stats.review), (4, 1, 4))
-        self.assertEqual(col.sched.requested_deck_id, 1)
-        self.assertEqual(col.sched.fetch_limit, 0)
+        self.assertEqual((stats.new, stats.learning, stats.review), (1, 1, 1))
 
     def test_buried_uses_sql_only_when_dashboard_deck_exclusions_are_active(self) -> None:
         class QueueAwareScheduler:

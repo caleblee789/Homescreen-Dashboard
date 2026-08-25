@@ -127,7 +127,9 @@ def calculate_long_term(rows: Iterable[Sequence[object]], today: date) -> LongTe
             else RateMetric()
         )
     return LongTermStats(
-        average_reviews_per_active_day=round(sum(counts.values()) / len(counts)),
+        average_reviews_per_active_day=(
+            2 * sum(counts.values()) + len(counts)
+        ) // (2 * len(counts)),
         active_days_percent=round(100 * len(counts) / span),
         longest_streak=longest,
         current_streak=current_streak,
@@ -807,41 +809,28 @@ def _queue(
     col: Any,
     estimate_pace: float | None,
     new_pace: float | None,
-    scheduled_review: Optional[int] = None,
     scope: Optional[FilterScope] = None,
 ) -> QueueStats:
     """Return one scoped workload for Today’s Progress.
 
     Candidate cards come from active queue types only, so already buried and
-    suspended cards are excluded.  Each category is then capped recursively by
-    Anki's full due tree, preserving collection-wide top-level deck allowances
-    and dashboard deck exclusions.  When Anki can provide the selected deck's
-    built ``QueuedCards`` snapshot, it replaces that subtree's pre-bury counts
-    so siblings hidden by the queue builder are not reported as remaining.
+    suspended cards are excluded. Each category is capped recursively by
+    Anki's full due tree, preserving collection-wide top-level deck allowances,
+    parent/daily limits, and dashboard deck exclusions. The selected deck must
+    not change this collection-wide result.
 
-    The categories intentionally match Anki's native counter: Learning includes
-    both original learning and relearning cards in intraday/interday learning
-    queues, while Reviews contains true review-queue cards only. Preview/repeat
-    cards in queue 4 are excluded from every category.
+    Categories follow Anki's scheduler queues rather than card types: queue 0
+    is New, queues 1/3/4 are Learning, and queue 2 is Review. The due tree is
+    the authority for learn-ahead and remaining scheduler capacity.
     """
-    if scheduled_review is None:
-        raise RuntimeError("scheduled review demand is unavailable")
-    try:
-        scheduled_review_demand = int(scheduled_review)
-    except (TypeError, ValueError, OverflowError) as exc:
-        raise RuntimeError("scheduled review demand is unavailable") from exc
-    if scheduled_review_demand < 0:
-        raise RuntimeError("scheduled review demand is unavailable")
-
     resolved = scope or FilterScope()
     conditions = [
-        "((queue = 0 AND type = 0) OR "
-        "(type IN (1, 3) AND ((queue = 1 AND due < ?) OR (queue = 3 AND due <= ?))) OR "
-        "(queue = 2 AND type = 2 AND due <= ?))"
+        "(queue = 0 OR "
+        "(queue IN (1, 4) AND due < ?) OR "
+        "(queue IN (2, 3) AND due <= ?))"
     ]
     args: List[object] = [
         int(col.sched.day_cutoff),
-        int(getattr(col.sched, "today", 0)),
         int(getattr(col.sched, "today", 0)),
     ]
     deck_condition, deck_args = _deck_scope_condition(resolved)
@@ -852,11 +841,11 @@ def _queue(
         col.db,
         "SELECT "
         "did, "
-        "coalesce(sum(CASE WHEN queue = 0 AND type = 0 THEN 1 ELSE 0 END), 0), "
-        "coalesce(sum(CASE WHEN type IN (1, 3) AND "
-        "((queue = 1 AND due < ?) OR (queue = 3 AND due <= ?)) "
+        "coalesce(sum(CASE WHEN queue = 0 THEN 1 ELSE 0 END), 0), "
+        "coalesce(sum(CASE WHEN "
+        "((queue IN (1, 4) AND due < ?) OR (queue = 3 AND due <= ?)) "
         "THEN 1 ELSE 0 END), 0), "
-        "coalesce(sum(CASE WHEN queue = 2 AND type = 2 AND due <= ? "
+        "coalesce(sum(CASE WHEN queue = 2 AND due <= ? "
         "THEN 1 ELSE 0 END), 0) "
         "FROM cards WHERE {} GROUP BY did".format(" AND ".join(conditions)),
         int(col.sched.day_cutoff),
@@ -907,21 +896,6 @@ def _queue(
     return QueueStats(new, learning, review, total, estimate)
 
 
-def _deck_tree_node(node: Any, deck_id: int) -> Any | None:
-    """Return one deck node from an Anki due tree without assuming its root."""
-
-    try:
-        if int(getattr(node, "deck_id", 0) or 0) == deck_id:
-            return node
-    except (TypeError, ValueError, OverflowError):
-        pass
-    for child in getattr(node, "children", ()) or ():
-        match = _deck_tree_node(child, deck_id)
-        if match is not None:
-            return match
-    return None
-
-
 def _limited_new_for_deck_node(
     node: Any,
     raw_new_by_deck: Mapping[int, int],
@@ -939,30 +913,14 @@ def _limited_new_for_deck_node(
     )
 
 
-def _mark_deck_tree_seen(node: Any, seen_deck_ids: Set[int]) -> None:
-    """Validate and mark one due-tree subtree without counting it."""
-
-    try:
-        deck_id = int(getattr(node, "deck_id"))
-        children = getattr(node, "children")
-    except (AttributeError, TypeError, ValueError, OverflowError) as exc:
-        raise RuntimeError("Anki returned an invalid due-tree node") from exc
-    if deck_id <= 0 or children is None or deck_id in seen_deck_ids:
-        raise RuntimeError("Anki returned an invalid due-tree node")
-    seen_deck_ids.add(deck_id)
-    for child in children:
-        _mark_deck_tree_seen(child, seen_deck_ids)
-
-
 def _limited_count_for_deck_node(
     node: Any,
     raw_by_deck: Mapping[int, int],
     excluded_deck_ids: Set[int],
     seen_deck_ids: Set[int],
     count_attribute: str,
-    queue_override: Optional[Tuple[int, int]] = None,
 ) -> int:
-    """Apply one scheduler count recursively, with an optional built-queue override."""
+    """Apply one collection-wide scheduler limit recursively."""
 
     try:
         deck_id = int(getattr(node, "deck_id"))
@@ -972,9 +930,6 @@ def _limited_count_for_deck_node(
         raise RuntimeError("Anki returned an invalid due-tree node") from exc
     if deck_id <= 0 or limit < 0 or children is None or deck_id in seen_deck_ids:
         raise RuntimeError("Anki returned an invalid due-tree node")
-    if queue_override is not None and deck_id == queue_override[0]:
-        _mark_deck_tree_seen(node, seen_deck_ids)
-        return max(0, int(queue_override[1]))
     seen_deck_ids.add(deck_id)
     if deck_id in excluded_deck_ids:
         return 0
@@ -986,51 +941,8 @@ def _limited_count_for_deck_node(
             excluded_deck_ids,
             seen_deck_ids,
             count_attribute,
-            queue_override,
         )
     return min(available, limit)
-
-
-def _deck_tree_ids(node: Any) -> Set[int]:
-    seen: Set[int] = set()
-    _mark_deck_tree_seen(node, seen)
-    return seen
-
-
-def _current_queue_snapshot(
-    col: Any,
-    root: Any,
-    scope: FilterScope,
-) -> Optional[Tuple[int, Tuple[int, int, int]]]:
-    """Return the selected subtree's native new/learning/review queue counts."""
-
-    sched = getattr(col, "sched", None)
-    decks = getattr(col, "decks", None)
-    get_queued_cards = getattr(sched, "get_queued_cards", None)
-    get_current_id = getattr(decks, "get_current_id", None)
-    if not callable(get_current_id):
-        get_current_id = getattr(decks, "selected", None)
-    if not callable(get_queued_cards) or not callable(get_current_id):
-        return None
-    try:
-        deck_id = int(get_current_id())
-        node = _deck_tree_node(root, deck_id)
-        if node is None or set(scope.excluded_deck_ids).intersection(_deck_tree_ids(node)):
-            return None
-        try:
-            queued = get_queued_cards(fetch_limit=0)
-        except TypeError:
-            queued = get_queued_cards()
-        counts = (
-            max(0, int(getattr(queued, "new_count"))),
-            max(0, int(getattr(queued, "learning_count"))),
-            max(0, int(getattr(queued, "review_count"))),
-        )
-    except (AttributeError, TypeError, ValueError, OverflowError):
-        return None
-    except Exception:
-        return None
-    return deck_id, counts
 
 
 def _scheduler_limited_remaining_counts(
@@ -1040,7 +952,7 @@ def _scheduler_limited_remaining_counts(
     raw_review_by_deck: Mapping[int, int],
     scope: FilterScope,
 ) -> Tuple[int, int, int]:
-    """Return collection-wide scheduler counts with selected-queue reconciliation."""
+    """Return selection-invariant collection-wide scheduler counts."""
 
     deck_due_tree = getattr(getattr(col, "sched", None), "deck_due_tree", None)
     if not callable(deck_due_tree):
@@ -1053,19 +965,15 @@ def _scheduler_limited_remaining_counts(
     if children is None:
         raise RuntimeError("Anki returned an invalid due tree")
 
-    snapshot = _current_queue_snapshot(col, root, scope)
     excluded_deck_ids = set(scope.excluded_deck_ids)
     specifications = (
-        (raw_new_by_deck, "new_count", 0),
-        (raw_learning_by_deck, "learn_count", 1),
-        (raw_review_by_deck, "review_count", 2),
+        (raw_new_by_deck, "new_count"),
+        (raw_learning_by_deck, "learn_count"),
+        (raw_review_by_deck, "review_count"),
     )
     totals: List[int] = []
-    for raw_by_deck, count_attribute, queue_index in specifications:
+    for raw_by_deck, count_attribute in specifications:
         seen_deck_ids: Set[int] = set()
-        queue_override = (
-            (snapshot[0], snapshot[1][queue_index]) if snapshot is not None else None
-        )
         total = sum(
             _limited_count_for_deck_node(
                 child,
@@ -1073,7 +981,6 @@ def _scheduler_limited_remaining_counts(
                 excluded_deck_ids,
                 seen_deck_ids,
                 count_attribute,
-                queue_override,
             )
             for child in children
         )
@@ -1102,72 +1009,26 @@ def _scheduler_limited_new_remaining(
     )[0]
 
 
-def _scheduler_hidden_buried(
-    col: Any,
-    scope: FilterScope,
-) -> BuriedStats:
-    """Return due siblings omitted from Anki's authoritative reviewer queue.
-
-    Anki's due tree is populated before the queue builder applies sibling
-    burying, while ``QueuedCards`` is the source of the native reviewer
-    counter. Positive New and Review differences can therefore identify hidden
-    siblings. Learning is deliberately excluded: its difference can be an
-    intraday card outside the current learn-ahead window, not a buried card.
-    Deck exclusions are a dashboard-only filter that Anki's queue builder
-    cannot express, so reconciliation falls back to SQL-only counts when they
-    are active.
-    """
-
-    if scope.excluded_deck_ids:
-        return BuriedStats()
-
-    sched = getattr(col, "sched", None)
-    decks = getattr(col, "decks", None)
-    get_queued_cards = getattr(sched, "get_queued_cards", None)
-    deck_due_tree = getattr(sched, "deck_due_tree", None)
-    if not callable(get_queued_cards) or not callable(deck_due_tree):
-        return BuriedStats()
-
-    get_current_id = getattr(decks, "get_current_id", None)
-    if not callable(get_current_id):
-        get_current_id = getattr(decks, "selected", None)
-    if not callable(get_current_id):
-        return BuriedStats()
-
-    try:
-        deck_id = int(get_current_id())
-        try:
-            node = deck_due_tree(deck_id)
-        except TypeError:
-            node = _deck_tree_node(deck_due_tree(), deck_id)
-        if node is None:
-            return BuriedStats()
-        try:
-            queued = get_queued_cards(fetch_limit=0)
-        except TypeError:
-            queued = get_queued_cards()
-        tree_new = max(0, int(getattr(node, "new_count", 0) or 0))
-        tree_review = max(0, int(getattr(node, "review_count", 0) or 0))
-        queue_new = max(0, int(getattr(queued, "new_count", 0) or 0))
-        queue_review = max(0, int(getattr(queued, "review_count", 0) or 0))
-    except Exception:
-        # The scheduler reconciliation is an optional precision layer.  A
-        # backend or compatibility failure must not hide the authoritative SQL
-        # count of cards already in queues -2/-3.
-        return BuriedStats()
-
-    return BuriedStats(
-        max(0, tree_new - queue_new),
-        0,
-        max(0, tree_review - queue_review),
-    )
-
-
 def _buried(col: Any, scope: Optional[FilterScope] = None) -> BuriedStats:
-    """Return cards buried now plus scheduler-hidden New/Review siblings."""
+    """Return explicitly buried cards that would otherwise be eligible today.
+
+    New cards have no scheduler-day due date, so every explicitly buried New
+    card is eligible. Learning/relearning cards may store either a scheduler
+    day or an intraday timestamp; Review cards store a scheduler day. Future
+    Learning/Review cards and transient siblings not yet in queues -2/-3 are
+    deliberately excluded.
+    """
     resolved = scope or FilterScope()
-    conditions = ["queue IN (-2, -3)"]
-    args: List[object] = []
+    scheduler_today = int(getattr(col.sched, "today", 0))
+    day_cutoff = int(getattr(col.sched, "day_cutoff", 0))
+    conditions = [
+        "queue IN (-2, -3)",
+        "(type = 0 OR "
+        "(type IN (1, 3) AND ((due < 1000000000 AND due <= ?) OR "
+        "(due >= 1000000000 AND due < ?))) OR "
+        "(type = 2 AND due <= ?))",
+    ]
+    args: List[object] = [scheduler_today, day_cutoff, scheduler_today]
     deck_condition, deck_args = _deck_scope_condition(resolved)
     if deck_condition:
         conditions.append(deck_condition)
@@ -1181,16 +1042,10 @@ def _buried(col: Any, scope: Optional[FilterScope] = None) -> BuriedStats:
         "FROM cards WHERE {}".format(" AND ".join(conditions)),
         *args,
     )
-    already_buried = BuriedStats(
+    return BuriedStats(
         max(0, int(row[0] or 0)) if row else 0,
         max(0, int(row[1] or 0)) if len(row) > 1 else 0,
         max(0, int(row[2] or 0)) if len(row) > 2 else 0,
-    )
-    scheduler_hidden = _scheduler_hidden_buried(col, resolved)
-    return BuriedStats(
-        already_buried.new + scheduler_hidden.new,
-        already_buried.learning + scheduler_hidden.learning,
-        already_buried.review + scheduler_hidden.review,
     )
 
 
@@ -1571,15 +1426,11 @@ def collect_dashboard_facts(
         estimate_pace = new_pace = None
 
     try:
-        current_due = days[scheduling_date.isoformat()].reviews_due
-        if not current_due.is_available:
-            raise RuntimeError("current scheduled review demand is unavailable")
         queue: ValueState[QueueStats] = ValueState.available(
             _queue(
                 col,
                 estimate_pace,
                 new_pace,
-                int(current_due.value),
                 scope,
             )
         )

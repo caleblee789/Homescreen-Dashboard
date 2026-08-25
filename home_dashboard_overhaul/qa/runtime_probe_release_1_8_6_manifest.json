@@ -6,6 +6,6 @@
   "conflicts": [],
   "candidate_package": "home_dashboard_overhaul",
   "stages": ["initial", "restart"],
-  "components": ["production-dashboard", "canonical-settings", "native-statistics-parity"],
+  "components": ["production-dashboard", "canonical-settings", "window-modal-settings-sheet", "native-statistics-parity"],
   "expected_capture_count": 102
 }

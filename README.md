@@ -7,22 +7,28 @@ Browser or statistics classes.
 
 ## 1.8.6 highlights
 
-- Every study-derived value now uses one scheduler-authoritative snapshot.
+- Every study-derived value now uses one collection-wide analytics scope.
   Today and historical facts use exact rollover-relative periods; New,
-  Learning, Review, and Total remaining are reconciled with Anki's due tree
-  and built reviewer queue; and calendar due forecasting matches Anki's
-  non-new, non-suspended future-due rules.
+  Learning, Review, and Total remaining use each included top-level head's
+  limited due tree without depending on the selected deck; and calendar due
+  forecasting matches Anki's non-new, non-suspended future-due rules.
 - Last 7 Days and All Time Retention now match Anki 26.8.1 native eligible
   retention instead of all-answer success. The visible Retention is rounded
   half-up once and Again is its exact complement, so the 80% all-answer
   regression correctly displays 86% Retention and 14% Again.
+- Remaining categories follow scheduler queues rather than card types: queue 0
+  is New, queues 1/3/4 are Learning, and queue 2 is Review. Suspended and
+  explicitly buried queues are excluded; Cards buried reports only scoped
+  queues -2/-3 that are New or currently due/overdue. Future Learning and
+  Review cards and transient queue-hidden siblings are excluded.
 - Initial HTML, live refresh, wide Month and Year 2×2 layouts, intermediate and
   narrow shells, Settings Preview, and hard restart are contractually checked
   against identical values from the same collection snapshot.
-- Settings remains one fixed, parented native Qt composition. It now matches
-  Pronounce It's working lifecycle—a normal `QDialog(mw)` opened with
-  `exec()`—so Qt/macOS manages modality and the active full-screen Space;
-  geometry is not saved.
+- Settings remains one fixed, parented native Qt composition. It now opens as
+  a Qt window-modal sheet with `open()`, never assigns screen coordinates, and
+  creates its Preview WebView only after the sheet is visible. This lets
+  Qt/macOS keep Settings attached to Anki's active full-screen Space; geometry
+  is not saved.
 
 - Settings uses one native Qt composition at every size: a compact header,
   152 px text rail, one active page scroller, one shared optional Preview dock,
@@ -46,7 +52,7 @@ Browser or statistics classes.
 The local 1.8.6 candidate is built as
 `home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.6.ankiaddon` for
 installation through **Tools → Add-ons → Install from file**. Its SHA-256 is
-`a545508801750dedbb20904fb21413f52767ea310debc6dfadabe62e8e44d1f6`.
+`483d289fb336e2920c8952275dba99c120538ba0a31e4b6350393fa48d268e2c`.
 It will be copied into versioned native release evidence only after the
 remaining runtime gate is completed. Disable any legacy source add-ons named
 by the activation card.

@@ -424,7 +424,10 @@ def _prepare_native_statistics_fixture() -> None:
     base._require((week.again_rate.numerator, week.again_rate.denominator) == (153, 1_100), "dashboard week Again counts mismatch")
     base._require((all_time.lifetime_cards_studied, all_time.lifetime_retention.percent) == (1_184, 86), "dashboard all-time totals mismatch")
     base._require(queue.total == queue.new + queue.learning + queue.review, "dashboard QueueStats invariant failed")
-    base._require(buried.new + buried.learning + buried.review == 2, "dashboard explicit buried count mismatch")
+    base._require(
+        buried.new + buried.learning + buried.review == 1,
+        "dashboard due-or-new explicit buried count mismatch",
+    )
     native_tree = _due_tree_totals(mw.col.sched.deck_due_tree())
     base._require(
         (queue.new, queue.learning, queue.review)
@@ -885,26 +888,47 @@ def _prepare_settings_case(case: Mapping[str, Any]) -> SettingsDialog:
         base._controller.snapshot = _statistics_snapshot
     else:
         base._controller.snapshot = representative_preview_snapshot(base.REFERENCE_DATE)
-    dialog = SettingsDialog(base._controller, initial_page=str(case.get("page", "dashboard")))
+    through_controller = special == "window-fixed"
+    if through_controller:
+        base._require(
+            base._controller.settings_dialog is None,
+            "controller already retains a Settings dialog",
+        )
+        base._controller.open_settings(str(case.get("page", "dashboard")))
+        dialog = base._controller.settings_dialog
+        base._require(
+            isinstance(dialog, SettingsDialog),
+            "controller did not retain the real Settings dialog",
+        )
+        dialog.setProperty("hdoOpenedThroughController", True)
+    else:
+        dialog = SettingsDialog(
+            base._controller,
+            initial_page=str(case.get("page", "dashboard")),
+        )
+        dialog.setProperty("hdoOpenedThroughController", False)
     target_width = case.get("width", 1200)
     available = _settings_screen(dialog).availableGeometry()
     width = available.width() - 32 if target_width == "full" else int(target_width)
     height = available.height() - 32 if target_width == "full" else min(800, available.height() - 32)
-    if special != "window-clamp":
+    if special not in {"window-clamp", "window-fixed"}:
         dialog.setFixedSize(
             min(max(1, width), max(1, available.width() - 32)),
             min(max(1, height), max(1, available.height() - 32)),
         )
         dialog.move(available.center() - dialog.rect().center())
-    # Keep the native Settings window above its parent while the compositor is
-    # sampled. This affects only the disposable evidence helper, not product
-    # window behavior.
-    dialog.setModal(True)
-    dialog.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
-    dialog.show()
+    if not through_controller:
+        # Keep direct fixture windows above their parent while the compositor
+        # is sampled. SET-WINDOW-FIXED intentionally uses only product code.
+        dialog.setModal(True)
+        dialog.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+        dialog.show()
     QApplication.processEvents()
     settled_available = _settings_screen(dialog).availableGeometry()
-    if special != "window-clamp" and settled_available != available:
+    if (
+        special not in {"window-clamp", "window-fixed"}
+        and settled_available != available
+    ):
         settled_width = settled_available.width() - 32 if target_width == "full" else int(target_width)
         settled_height = (
             settled_available.height() - 32
@@ -972,8 +996,9 @@ def _prepare_settings_case(case: Mapping[str, Any]) -> SettingsDialog:
                 dialog._save()
     elif special == "legacy-route":
         dialog.open_page("calendar")
-    dialog.raise_()
-    dialog.activateWindow()
+    if not through_controller:
+        dialog.raise_()
+        dialog.activateWindow()
     QApplication.processEvents()
     return dialog
 
@@ -990,6 +1015,7 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
     frame = dialog.frameGeometry()
     calendar_viewport_y = -1
     calendar_anchor = getattr(dialog, "dashboard_anchors", {}).get("calendar")
+    preview = dialog.preview
     if isinstance(current, QScrollArea) and calendar_anchor is not None:
         calendar_viewport_y = calendar_anchor.mapTo(current.viewport(), QPoint(0, 0)).y()
     return {
@@ -1009,6 +1035,9 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         "fixed_size": dialog.minimumSize() == dialog.maximumSize(),
         "parented_to_anki": dialog.parentWidget() is mw,
         "modal_capture_lifecycle": dialog.isModal(),
+        "window_modal": dialog.windowModality() == Qt.WindowModality.WindowModal,
+        "opened_through_controller": bool(dialog.property("hdoOpenedThroughController")),
+        "controller_retains_dialog": base._controller.settings_dialog is dialog,
         "font_percent": int(case.get("font_percent", 100)),
         "application_font_point_size": QApplication.font().pointSizeF(),
         "nav_width": dialog.nav.width(),
@@ -1019,7 +1048,8 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         "preview_identity_stable": dialog.property("hdoOverlayPreviewIdentityStable") is not False,
         "preview_scope": dialog.preview_scope.value("context"),
         "preview_scale": dialog.preview_scale.value("fit"),
-        "preview_canvas_height": dialog.preview.height(),
+        "preview_initialized_after_show": preview is not None,
+        "preview_canvas_height": preview.height() if preview is not None else 0,
         "preview_dock_height": dialog.preview_wrap.height(),
         "preview_rendered_height": dialog._preview_content_size.height(),
         "body_height": dialog.body_shell.height(),
@@ -1116,6 +1146,19 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
         )
     if special == "window-fixed":
         base._require(bool(state.get("fixed_size")), "Settings window is not fixed-size")
+        base._require(bool(state.get("window_modal")), "Settings is not window-modal")
+        base._require(
+            bool(state.get("opened_through_controller")),
+            "Settings did not use the real controller lifecycle",
+        )
+        base._require(
+            bool(state.get("controller_retains_dialog")),
+            "controller released Settings before it finished",
+        )
+        base._require(
+            bool(state.get("preview_initialized_after_show")),
+            "Settings preview was not initialized after the sheet opened",
+        )
     if special == "window-clamp":
         size = state.get("window_size", [0, 0])
         available = state.get("available_size", [0, 0])
@@ -1123,22 +1166,39 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     if special in {"stats-preview", "restart-persistence"}:
         base._require(state.get("statistics_parity") == "passed", "Settings preview statistics parity did not pass")
     base._require(bool(state.get("parented_to_anki")), "Settings is not parented to Anki")
-    base._require(bool(state.get("modal_capture_lifecycle")), "Settings capture does not mirror modal exec ownership")
+    base._require(
+        bool(state.get("modal_capture_lifecycle")),
+        "Settings capture does not preserve modal ownership",
+    )
 
 
 def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     QApplication.processEvents()
     screen = _settings_screen(dialog)
-    origin = dialog.mapToGlobal(QPoint(0, 0))
     screen_geometry = screen.geometry()
-    pixmap = screen.grabWindow(
-        0,
-        origin.x() - screen_geometry.x(),
-        origin.y() - screen_geometry.y(),
-        dialog.width(),
-        dialog.height(),
-    )
-    method = "QScreen.grabWindow-screen-client-crop"
+    capture_parent_with_sheet = str(case.get("special", "")) == "window-fixed"
+    if capture_parent_with_sheet:
+        frame = mw.frameGeometry()
+        expected_width, expected_height = frame.width(), frame.height()
+        pixmap = screen.grabWindow(
+            0,
+            frame.x() - screen_geometry.x(),
+            frame.y() - screen_geometry.y(),
+            expected_width,
+            expected_height,
+        )
+        method = "QScreen.grabWindow-anki-with-window-modal-settings"
+    else:
+        origin = dialog.mapToGlobal(QPoint(0, 0))
+        expected_width, expected_height = dialog.width(), dialog.height()
+        pixmap = screen.grabWindow(
+            0,
+            origin.x() - screen_geometry.x(),
+            origin.y() - screen_geometry.y(),
+            expected_width,
+            expected_height,
+        )
+        method = "QScreen.grabWindow-screen-client-crop"
 
     def logical_size(value: Any) -> tuple[float, float]:
         ratio = max(1.0, float(value.devicePixelRatio()))
@@ -1146,11 +1206,11 @@ def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Ma
 
     logical_width, logical_height = (0.0, 0.0) if pixmap.isNull() else logical_size(pixmap)
     color_count = 0 if pixmap.isNull() else base._sample_color_count(pixmap)
-    if (
+    if not capture_parent_with_sheet and (
         pixmap.isNull()
         or color_count < 3
-        or abs(logical_width - dialog.width()) > 4
-        or abs(logical_height - dialog.height()) > 4
+        or abs(logical_width - expected_width) > 4
+        or abs(logical_height - expected_height) > 4
     ):
         fallback = dialog.grab()
         fallback_colors = 0 if fallback.isNull() else base._sample_color_count(fallback)
@@ -1164,15 +1224,15 @@ def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Ma
     dpr = max(1.0, float(pixmap.devicePixelRatio()))
     logical_width, logical_height = logical_size(pixmap)
     base._require(
-        abs(logical_width - dialog.width()) <= 4,
-        "native Settings capture width does not match the dialog: {} px at DPR {} != {} logical px on {} ({})".format(
-            pixmap.width(), dpr, dialog.width(), screen.name(), method
+        abs(logical_width - expected_width) <= 4,
+        "native Settings capture width is incorrect: {} px at DPR {} != {} logical px on {} ({})".format(
+            pixmap.width(), dpr, expected_width, screen.name(), method
         ),
     )
     base._require(
-        abs(logical_height - dialog.height()) <= 4,
-        "native Settings capture height does not match the dialog: {} px at DPR {} != {} logical px on {} ({})".format(
-            pixmap.height(), dpr, dialog.height(), screen.name(), method
+        abs(logical_height - expected_height) <= 4,
+        "native Settings capture height is incorrect: {} px at DPR {} != {} logical px on {} ({})".format(
+            pixmap.height(), dpr, expected_height, screen.name(), method
         ),
     )
     CAPTURE_ROOT.mkdir(parents=True, exist_ok=True)
@@ -1186,7 +1246,13 @@ def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Ma
         "font_percent": case.get("font_percent", 100),
         "capture_method": method,
         "sampled_color_count": color_count,
-        "logical_frame": {"width": dialog.width(), "height": dialog.height()},
+        "logical_frame": {"width": expected_width, "height": expected_height},
+        "dialog_logical_frame": {"width": dialog.width(), "height": dialog.height()},
+        "capture_scope": (
+            "anki-window-with-attached-settings-sheet"
+            if capture_parent_with_sheet
+            else "settings-dialog"
+        ),
         "physical_pixels": [pixmap.width(), pixmap.height()],
         "device_pixel_ratio": pixmap.devicePixelRatio(),
         "parent_window_title": str(mw.windowTitle()),
@@ -1200,9 +1266,18 @@ def _close_settings_dialog() -> None:
     global _settings_dialog
     if _settings_dialog is None:
         return
-    _settings_dialog._allow_close = True
-    _settings_dialog.close()
-    _settings_dialog.deleteLater()
+    dialog = _settings_dialog
+    controller_owned = base._controller.settings_dialog is dialog
+    dialog._allow_close = True
+    dialog.close()
+    if not controller_owned:
+        dialog.deleteLater()
+    QApplication.processEvents()
+    if controller_owned:
+        base._require(
+            base._controller.settings_dialog is None,
+            "controller did not release the finished Settings dialog",
+        )
     _settings_dialog = None
 
 
@@ -1230,6 +1305,8 @@ def _inspect_settings_case(case: Mapping[str, Any], attempt: int = 0) -> None:
         special = str(case.get("special", ""))
         if special in {"stats-preview", "restart-persistence"}:
             dialog = _settings_dialog
+            preview = dialog.preview
+            base._require(preview is not None, "Settings preview WebView is not initialized")
 
             def inspected(value: object) -> None:
                 global _canonical_statistics_metrics
@@ -1266,7 +1343,7 @@ def _inspect_settings_case(case: Mapping[str, Any], attempt: int = 0) -> None:
                     base._write_report()
                     base._error(str(case.get("id", "settings-preview-inspect")), exc)
 
-            dialog.preview.evalWithCallback(METRIC_REPORT_SCRIPT, inspected)
+            preview.evalWithCallback(METRIC_REPORT_SCRIPT, inspected)
             return
         _validate_settings_state(case, state)
         _capture_settings(_settings_dialog, case, state)
@@ -1303,7 +1380,8 @@ def _start_settings() -> None:
             "case_count": len(_settings_cases),
             "case_ids": [case["id"] for case in _settings_cases],
             "widget_tree": "one-native-qt-tree",
-            "preview_instance_policy": "one-shared-instance",
+            "preview_instance_policy": "one-shared-instance-created-after-sheet-visible",
+            "window_fixed_capture": "real-controller-window-modal-sheet-with-parent",
         }
         base._write_report()
         QTimer.singleShot(120, _next_settings_case)
@@ -1326,7 +1404,7 @@ def _persist_restart_state() -> None:
         "theme": "Graphite",
         "palette": "Plum",
         "events_sort": "name",
-        "settings_window_policy": "fixed-and-recomputed-from-current-screen",
+        "settings_window_policy": "fixed-clamped-qt-placed-window-modal-open",
         "preview_visibility_persisted": False,
     }
 

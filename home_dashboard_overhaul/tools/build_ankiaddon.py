@@ -357,7 +357,9 @@ def validate_sources() -> dict:
             "def _open_browser_target", "browser_will_search", "context.ids = ids",
             'command == "diagnostics"', 'self.open_settings("about_support")',
             "def _persist_settings_transaction", "_restore_optional_bytes",
-            "self.settings_dialog.exec()", "finally:\n            self.settings_dialog = None",
+            "dialog.setWindowModality(SETTINGS_WINDOW_MODALITY)",
+            "dialog.finished.connect(", "dialog.open()",
+            "def _settings_dialog_finished", "if self.settings_dialog is dialog:",
         ),
         "insights.py": (
             "ORDER BY again_count DESC, total_answers DESC, r.cid ASC",
@@ -375,7 +377,10 @@ def validate_sources() -> dict:
         ),
         "settings.py": (
             "self.setFixedSize(1200, 800)", "self.setFixedSize(width, height)",
-            "super().__init__(mw)",
+            "super().__init__(mw)", "SETTINGS_WINDOW_MODALITY = Qt.WindowModality.WindowModal",
+            "self.preview: Optional[AnkiWebView] = None",
+            "QTimer.singleShot(0, self._initialize_preview)",
+            "def _initialize_preview(self) -> None:",
             "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
             'self.preview_wrap.setObjectName("PreviewDock")',
             '[("Section", "context"), ("Full dashboard", "full")]',
@@ -426,9 +431,18 @@ def validate_sources() -> dict:
         "Qt.WindowType.Tool", "self.winId()", "setTransientParent",
         "_attach_transient_parent", "Qt.WindowModality.NonModal", "objc_msgSend",
         "_attach_macos_settings_window", "_detach_macos_settings_window",
+        "self.move(",
     ):
         if retired in sources["settings.py"]:
             raise ValueError("retired macOS Settings panel behavior remains: {}".format(retired))
+
+    for retired in (
+        "self.settings_dialog.exec()", "self.settings_dialog.show()",
+        "dialog.exec()", "dialog.show()",
+        "self.settings_dialog.raise_()", "self.settings_dialog.activateWindow()",
+    ):
+        if retired in sources["controller.py"]:
+            raise ValueError("retired top-level Settings lifecycle remains: {}".format(retired))
 
     dashboard_surface_source = sources["renderer.py"] + sources["web/dashboard.js"] + sources["web/dashboard.css"]
     for forbidden in (

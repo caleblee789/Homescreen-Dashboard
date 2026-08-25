@@ -134,6 +134,18 @@ class FakeQueryOp:
             self.failure_callback(error or RuntimeError("failure"))
 
 
+class FakeSignal:
+    def __init__(self) -> None:
+        self.callbacks = []
+
+    def connect(self, callback) -> None:
+        self.callbacks.append(callback)
+
+    def emit(self, result: int) -> None:
+        for callback in tuple(self.callbacks):
+            callback(result)
+
+
 class FakeSettingsDialog:
     instances = []
 
@@ -142,7 +154,11 @@ class FakeSettingsDialog:
         self.visible = False
         self.show_count = 0
         self.exec_count = 0
-        self.retained_during_exec = False
+        self.open_count = 0
+        self.retained_during_open = False
+        self.window_modality = None
+        self.finished = FakeSignal()
+        self.delete_later_count = 0
         self.opened_pages = []
         self.raised = 0
         self.activated = 0
@@ -158,9 +174,23 @@ class FakeSettingsDialog:
     def exec(self) -> int:
         self.exec_count += 1
         self.visible = True
-        self.retained_during_exec = self.args[0].settings_dialog is self
         self.visible = False
         return 0
+
+    def setWindowModality(self, modality) -> None:
+        self.window_modality = modality
+
+    def open(self) -> None:
+        self.open_count += 1
+        self.visible = True
+        self.retained_during_open = self.args[0].settings_dialog is self
+
+    def finish(self) -> None:
+        self.visible = False
+        self.finished.emit(0)
+
+    def deleteLater(self) -> None:
+        self.delete_later_count += 1
 
     def open_page(self, *args) -> None:
         self.opened_pages.append(args)
@@ -278,9 +308,11 @@ class ControllerCapabilityTests(unittest.TestCase):
 
         self.assertEqual(calls, [("about_support",)])
 
-    def test_settings_match_pronounceit_parented_modal_exec_lifecycle(self) -> None:
+    def test_settings_uses_retained_window_modal_open_lifecycle(self) -> None:
         FakeSettingsDialog.instances.clear()
         settings = ModuleType("home_dashboard_overhaul.settings")
+        window_modal = object()
+        settings.SETTINGS_WINDOW_MODALITY = window_modal
         settings.SettingsDialog = FakeSettingsDialog
 
         with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
@@ -291,12 +323,28 @@ class ControllerCapabilityTests(unittest.TestCase):
                 dialog.args,
                 (self.controller, "calendar_data", "2026-08-28", "exam-42"),
             )
-            self.assertEqual(dialog.exec_count, 1)
+            self.assertEqual(dialog.open_count, 1)
+            self.assertEqual(dialog.exec_count, 0)
             self.assertEqual(dialog.show_count, 0)
-            self.assertTrue(dialog.retained_during_exec)
-            self.assertFalse(dialog.visible)
+            self.assertIs(dialog.window_modality, window_modal)
+            self.assertTrue(dialog.retained_during_open)
+            self.assertTrue(dialog.visible)
             self.assertEqual(dialog.raised, 0)
             self.assertEqual(dialog.activated, 0)
+            self.assertIs(self.controller.settings_dialog, dialog)
+
+            self.controller.open_settings("events")
+            self.assertEqual(len(FakeSettingsDialog.instances), 1)
+
+            dialog.finish()
+            self.assertIsNone(self.controller.settings_dialog)
+            self.assertEqual(dialog.delete_later_count, 1)
+
+            self.controller.open_settings("events")
+            replacement = FakeSettingsDialog.instances[-1]
+            self.controller._settings_dialog_finished(dialog)
+            self.assertIs(self.controller.settings_dialog, replacement)
+            replacement.finish()
         self.assertIsNone(self.controller.settings_dialog)
 
     def test_year_scroll_position_survives_a_controller_rerender(self) -> None:

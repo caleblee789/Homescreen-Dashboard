@@ -10,30 +10,33 @@
   relative to the next scheduler rollover, including exact lower and upper
   boundary handling.
 - Corrected Last 7 Days and All Time Retention to mirror Anki 26.8.1 native
-  true-retention eligibility: rated scheduling-affecting review entries, or
-  learning/relearning entries whose prior interval is at least one day. Again
-  fails; Hard, Good, and Easy pass. The visible whole percentage is rounded
-  half-up once and Again is rendered as its exact complement. A locked
-  regression distinguishes 80% all-answer success from 86% native Retention.
+  true-retention eligibility: `ease > 0`, excluding filtered cram entries with
+  `type = 3` and `factor = 0`, and requiring review-kind or a prior interval of
+  at least one day. Again fails; Hard, Good, and Easy pass. The visible whole
+  percentage is rounded half-up once and Again is rendered as its exact
+  complement. Current suspension or burial does not erase historical answers.
 - Corrected Today’s Progress remaining counts to use Anki’s limited due tree
-  with the selected reviewer queue and dashboard deck exclusions. New,
-  Learning, and Review remain disjoint, `Total remaining` is enforced as their
-  sum, and future intraday learning outside learn-ahead is no longer mistaken
-  for buried work.
+  across independently limited top-level heads with dashboard deck exclusions.
+  Queue 0 is New, queues 1/3/4 are Learning, and queue 2 is Review regardless
+  of card type; queues -1/-2/-3 are excluded. The selected deck cannot change
+  the collection-wide result, and `Total remaining` is the category sum.
 - Corrected Today’s Session to count rated answers and elapsed review time in
   the active scheduler period, distinct qualifying new introductions, and
-  explicit current buried queues. Pace remains seconds per answer and ETA
-  retains the existing empirical-pace policy with a whole-minute ceiling.
+  scoped explicit buried queues -2/-3 only when cards are New or currently
+  due/overdue. Future Learning and Review cards and transient hidden siblings
+  are excluded. Pace remains seconds per answer and ETA retains the existing
+  empirical-pace policy with a whole-minute ceiling.
 - Corrected calendar due forecasting to Anki’s non-new, non-suspended
   future-due behavior, including filtered-deck original due dates and future
   buried cards while excluding buried backlog/work due in the active day.
   Calendar history and detail actions now consume the same canonical records
   as the metric cards.
-- Changed Settings to match Pronounce It’s proven window lifecycle: one normal
-  `QDialog(mw)` opened through `exec()`, allowing Qt/macOS to manage modality,
-  native parenting, and the active full-screen Space without a custom
-  Objective-C child-window bridge. The fixed 1200×800 default, screen clamping,
-  and no-saved-geometry policy remain intact.
+- Changed Settings to a parented Qt window-modal sheet opened asynchronously
+  through `open()`. Removed explicit screen positioning and deferred Preview
+  WebView creation until after the sheet is visible, allowing Qt/macOS to keep
+  the dialog attached to Anki's active full-screen Space without native-window
+  hacks. The fixed 1200×800 default, screen clamping, and no-saved-geometry
+  policy remain intact.
 - Preserved schema 8, every JSON/DOM metric key, bridge command, label, order,
   whole-percent presentation, 2×2 and responsive layouts, and the production
   Settings preview. Added a 102-frame exact-package evidence contract with

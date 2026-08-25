@@ -71,19 +71,31 @@ is seconds per answer. New cards studied counts distinct qualifying
 introductions, with `new_cards.include_rescheduled` controlling whether a
 reset/reintroduced card may count again.
 
-New, Learning, and Reviews remaining come from Anki's limited due tree and are
-reconciled with its built reviewer queue. Dashboard deck exclusions remain in
-force, and Total is always the exact sum of the three categories. Explicit
-queues `-2` and `-3` are authoritative for cards currently buried. Only
-queue-hidden New and Review siblings are inferred; a Learning difference can
-be future intraday work outside learn-ahead and is not classified as buried.
+The scope is collection-wide minus configured excluded decks and every
+descendant. Both current deck IDs and filtered-deck original IDs are checked.
+Suspending or burying a card removes it from current actionable workload, and
+suspension also removes it from future forecasts. Neither state retroactively
+erases rated historical answers, matching Anki.
+
+New, Learning, and Reviews remaining come from Anki's limited due tree. Each
+included top-level head is capped independently after scoped raw candidates are
+classified by scheduler queue: queue `0` is New, queues `1`, `3`, and `4` are
+Learning, and queue `2` is Review regardless of card type. Suspended `-1` and
+buried `-2`/`-3` queues are excluded. The selected deck is not consulted, and
+Total is always the exact sum of the three categories. Cards buried reports
+only scoped cards currently in queues `-2` or `-3` that are New or currently
+due/overdue. Future Learning and Review cards and transient queue-hidden
+siblings are excluded.
 
 Last 7 Days spans the seven fixed scheduler periods ending at the next
 rollover. All Time spans the complete configured analytics scope. Retention
-matches Anki 26.8.1 true-retention eligibility: a rated scheduling-affecting
-entry qualifies when it is review-kind or its prior interval is at least one
-day. Again fails and Hard, Good, and Easy pass. Retention is rounded half-up to
-the existing whole percentage once, and visible Again is `100 − Retention`.
+matches Anki 26.8.1 true-retention eligibility: `ease > 0`, excluding
+`type = 3 AND factor = 0`, and requiring `type = 1` or a prior interval of at
+least one day. Again fails and Hard, Good, and Easy pass. Raw pass and eligible
+counts are aggregated before Retention is rounded half-up to the existing whole
+percentage once; visible Again is `100 − Retention`. Avg cards/day divides
+answer events by active scheduler days, and streaks count consecutive active
+scheduler days.
 
 Calendar history and selected-day details use the same rollover-relative
 records. Forecasting follows Anki's non-new, non-suspended future-due logic,
@@ -92,14 +104,16 @@ excludes buried backlog/work due in the active scheduler day.
 
 ## Settings and preview
 
-The Settings window is an ordinary `QDialog(mw)` opened through `exec()`,
-matching Pronounce It's working parented modal lifecycle so Qt/macOS manages
-the native parent and active full-screen Space. It uses a fixed 1200×800 size;
-smaller screens receive a clamped fixed size with a 32 px safety margin, and
-the opening size is not persisted. It uses one compact header, 152 px rail,
-active-page scroller, optional shared right Preview dock, and final-row footer.
-A physically smaller screen keeps the same rail and page and places the same
-Preview dock in a layout-managed overlay.
+The Settings window is a `QDialog(mw)` opened as a Qt window-modal sheet through
+`open()`, so Qt/macOS manages the native parent and active full-screen Space.
+It never assigns opening coordinates. Preview reserves its normal dock space
+with a lightweight placeholder, then creates the shared WebView only after the
+sheet is visible. The window uses a fixed 1200×800 size; smaller screens receive
+a clamped fixed size with a 32 px safety margin, and the opening size is not
+persisted. It uses one compact header, 152 px rail, active-page scroller,
+optional shared right Preview dock, and final-row footer. A physically smaller
+screen keeps the same rail and page and places the same Preview dock in a
+layout-managed overlay.
 
 Preview is open by default for Dashboard, Events, and Bible verse each session,
 is omitted on About, and is never persisted. `Section | Full dashboard` and

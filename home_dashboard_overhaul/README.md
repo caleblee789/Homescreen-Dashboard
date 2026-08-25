@@ -12,18 +12,22 @@ Browser or statistics classes.
   calendar/streak history uses matching rollover-relative day indexes instead
   of civil-midnight arithmetic.
 - Last 7 Days and All Time Retention mirror Anki 26.8.1 native eligible-review
-  retention. Review-kind answers qualify, as do learning/relearning answers
-  whose prior interval is at least one day; Again fails and Hard/Good/Easy
-  pass. The visible integer Retention is rounded half-up once and Again is
-  displayed as `100 − Retention`.
-- Today’s Progress uses Anki's limited due tree plus its built reviewer queue
-  and dashboard deck exclusions. New, Learning, and Review are disjoint,
-  `Total remaining` is enforced as their sum, and a future intraday learning
-  card outside learn-ahead is never inferred to be buried.
+  retention. Eligible rows have `ease > 0`, exclude filtered cram rows with
+  `type = 3` and `factor = 0`, and are review-kind or have a prior interval of
+  at least one day. Again fails and Hard/Good/Easy pass. The visible integer
+  Retention is rounded half-up once and Again is displayed as
+  `100 − Retention`; later suspension or burial does not erase past answers.
+- Today’s Progress is collection-wide minus excluded deck descendants. It
+  applies each included top-level head's native due-tree limits independently,
+  and the selected deck cannot change the result. Queue 0 is New, queues 1/3/4
+  are Learning, and queue 2 is Review regardless of card type; queues -1/-2/-3
+  are not remaining. `Total remaining` is enforced as the category sum.
 - Today’s Session counts rated answer events and elapsed review time in the
   active scheduler period, distinct qualifying new introductions, and cards
-  presently in explicit buried queues. Pace remains seconds per answer and
-  ETA keeps the existing empirical policy with a whole-minute ceiling.
+  presently in scoped explicit buried queues -2/-3 that are New or currently
+  due/overdue. Future Learning and Review cards and transient queue-hidden
+  siblings are excluded. Pace remains seconds per answer and ETA keeps the
+  existing empirical policy with a whole-minute ceiling.
 - Calendar forecasting matches Anki's non-new, non-suspended future-due logic,
   including filtered-deck original due dates and future buried cards while
   excluding buried work due in the active day. Tooltips and selected-day
@@ -57,10 +61,10 @@ Browser or statistics classes.
   where supported, and rolls back best-effort if only one succeeds. Errors are
   specific and inline, and the dialog remains open.
 - New, Learning, and Reviews remaining use Anki's scheduler-authoritative due
-  tree with scoped deck exclusions, then reconcile the selected subtree with
-  Anki's built queue so buried/hidden siblings are not actionable. Learning
-  includes both learning and relearning, matching Anki's native counter. Total
-  remaining, ETA, and completion consume those same reconciled values.
+  tree with scoped deck exclusions. Independent top-level head limits are
+  summed without selected-deck reconciliation, so changing the selected deck
+  cannot change the collection-wide result. Total remaining, ETA, and
+  completion consume those same values.
 
 ## Dashboard
 
@@ -83,10 +87,11 @@ saved baseline. The baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only swatches and production-rendered
-preview content. Settings opens as an ordinary `QDialog(mw)` through `exec()`,
-matching Pronounce It's working parented modal lifecycle so Qt/macOS owns the
-native parent and active full-screen Space. It uses a fixed 1200×800 size,
-clamped for smaller screens instead of restoring a saved size.
+preview content. Settings opens as a parented Qt window-modal sheet through
+`open()`. It assigns no screen coordinates, and creates the Preview WebView
+only after the sheet is visible, so Qt/macOS owns the native parent and active
+full-screen Space. It uses a fixed 1200×800 size, clamped for smaller screens
+instead of restoring a saved size.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source
