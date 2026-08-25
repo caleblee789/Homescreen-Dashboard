@@ -226,106 +226,106 @@ def _settings_style(
         focus_offset=str(FOCUS_RING_OFFSET_PX),
     )
     return """
-QDialog#HomeDashboardSettings {{ background: {window}; color: {text}; }}
-QDialog#HomeDashboardSettings QLabel,
-QDialog#HomeDashboardSettings QCheckBox {{ color: {text}; }}
-QDialog#HomeDashboardSettings QListWidget#SettingsNav {{ background: transparent; border: 0; color: {text}; padding: 0; font-weight: 600; }}
-QDialog#HomeDashboardSettings QListWidget#SettingsNav::item {{ border: 0; border-left: 2px solid transparent; border-radius: 6px; color: {secondary}; margin: 2px 0; min-height: 34px; padding: 0 10px; }}
-QDialog#HomeDashboardSettings QListWidget#SettingsNav::item:hover:!selected {{ color: {text}; }}
-QDialog#HomeDashboardSettings QListWidget#SettingsNav::item:selected {{ background: {alternate}; border-left-color: {highlight}; color: {text}; font-weight: 650; }}
-QDialog#HomeDashboardSettings QListWidget#SettingsNav::item:focus {{ border: {focus_ring}px solid {focus}; }}
-QDialog#HomeDashboardSettings QScrollArea {{ background: transparent; border: 0; }}
-QDialog#HomeDashboardSettings QWidget#SettingsPage {{ background: transparent; border: 0; }}
-QDialog#HomeDashboardSettings QWidget#SettingsCard {{ background: {base}; border: 1px solid {border}; border-radius: 8px; }}
-QDialog#HomeDashboardSettings QWidget#SettingsHeader {{ background: {window}; border: 0; }}
-QDialog#HomeDashboardSettings QLabel#GlobalTitle {{ font-size: 20px; font-weight: 700; color: {text}; }}
-QDialog#HomeDashboardSettings QLabel#PageTitle {{ font-size: 18px; font-weight: 650; color: {text}; }}
-QDialog#HomeDashboardSettings QLabel#CardTitle {{ font-size: 15px; font-weight: 650; color: {text}; }}
-QDialog#HomeDashboardSettings QLabel#SectionTitle {{ color: {text}; font-size: 14px; font-weight: 650; padding-top: 10px; }}
-QDialog#HomeDashboardSettings QLabel#PageHelp,
-QDialog#HomeDashboardSettings QLabel#FieldHelp {{ color: {muted}; }}
-QDialog#HomeDashboardSettings QWidget#SettingsRow {{ background: transparent; border: 0; }}
-QDialog#HomeDashboardSettings QWidget#AboutDefinitionList {{ background: transparent; border: 0; }}
-QDialog#HomeDashboardSettings QFrame#AboutDivider {{ color: {border}; }}
-QDialog#HomeDashboardSettings QWidget#ActionBar {{ background: {base}; border-top: 1px solid {border}; border-radius: 0; }}
-QDialog#HomeDashboardSettings QWidget#UndoToast {{ background: {alternate}; border: 1px solid {highlight}; border-radius: 8px; }}
-QDialog#HomeDashboardSettings QWidget#ContextualActionGroup {{ background: transparent; border: 0; }}
-QDialog#HomeDashboardSettings QLabel#DirtyBadge {{ background: {alternate}; border: 1px solid {border}; border-radius: 9px; color: {muted}; font-size: 12px; font-weight: 700; padding: 3px 7px; }}
-QDialog#HomeDashboardSettings QLabel#DirtyBadge[state="dirty"] {{ color: {warning}; }}
-QDialog#HomeDashboardSettings QLabel#DirtyBadge[state="saved"] {{ color: {success}; }}
-QDialog#HomeDashboardSettings QLabel#DirtyBadge[state="error"] {{ color: {danger}; }}
-QDialog#HomeDashboardSettings QLabel#InlineSaveError {{ color: {danger}; }}
-QDialog#HomeDashboardSettings QLabel#DataBadge {{ background: {alternate}; border-radius: 8px; color: {text}; font-weight: 650; padding: 3px 7px; }}
-QDialog#HomeDashboardSettings QPushButton#HeatmapPresetCard {{ background: {base}; border: 1px solid {border}; border-radius: 9px; margin: 0; min-height: 64px; padding: 7px 9px; text-align: left; }}
-QDialog#HomeDashboardSettings QPushButton#HeatmapPresetCard[active="true"] {{ background: {alternate}; border: 2px solid {highlight}; color: {text}; }}
-QDialog#HomeDashboardSettings QWidget#SegmentedControl {{ background: {window}; border: 1px solid {border}; border-radius: 7px; }}
-QDialog#HomeDashboardSettings QPushButton#SegmentButton {{ background: transparent; border: 0; border-radius: 5px; margin: 2px; min-height: 30px; padding: 0 12px; }}
-QDialog#HomeDashboardSettings QPushButton#SegmentButton:checked {{ background: {highlight}; border: 0; color: {highlight_text}; font-weight: 650; }}
-QDialog#HomeDashboardSettings QPushButton#SegmentButton:focus {{ border: 2px solid {focus}; margin: 0; }}
-QDialog#HomeDashboardSettings QPushButton#SettingsSwitch {{ background: transparent; border: 0; margin: 0; min-height: 20px; min-width: 34px; max-height: 20px; max-width: 34px; padding: 0; }}
-QDialog#HomeDashboardSettings QPushButton#LinkButton {{ background: transparent; border: 0; color: {highlight}; min-height: 30px; padding: 0 4px; }}
-QDialog#HomeDashboardSettings QLineEdit,
-QDialog#HomeDashboardSettings QComboBox,
-QDialog#HomeDashboardSettings QSpinBox,
-QDialog#HomeDashboardSettings QDoubleSpinBox,
-QDialog#HomeDashboardSettings QDateEdit {{
+QWidget#HomeDashboardSettings {{ background: {window}; border: 1px solid {border}; border-radius: 10px; color: {text}; }}
+QWidget#HomeDashboardSettings QLabel,
+QWidget#HomeDashboardSettings QCheckBox {{ color: {text}; }}
+QWidget#HomeDashboardSettings QListWidget#SettingsNav {{ background: transparent; border: 0; color: {text}; padding: 0; font-weight: 600; }}
+QWidget#HomeDashboardSettings QListWidget#SettingsNav::item {{ border: 0; border-left: 2px solid transparent; border-radius: 6px; color: {secondary}; margin: 2px 0; min-height: 34px; padding: 0 10px; }}
+QWidget#HomeDashboardSettings QListWidget#SettingsNav::item:hover:!selected {{ color: {text}; }}
+QWidget#HomeDashboardSettings QListWidget#SettingsNav::item:selected {{ background: {alternate}; border-left-color: {highlight}; color: {text}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QListWidget#SettingsNav::item:focus {{ border: {focus_ring}px solid {focus}; }}
+QWidget#HomeDashboardSettings QScrollArea {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QWidget#SettingsPage {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QWidget#SettingsCard {{ background: {base}; border: 1px solid {border}; border-radius: 8px; }}
+QWidget#HomeDashboardSettings QWidget#SettingsHeader {{ background: {window}; border: 0; }}
+QWidget#HomeDashboardSettings QLabel#GlobalTitle {{ font-size: 20px; font-weight: 700; color: {text}; }}
+QWidget#HomeDashboardSettings QLabel#PageTitle {{ font-size: 18px; font-weight: 650; color: {text}; }}
+QWidget#HomeDashboardSettings QLabel#CardTitle {{ font-size: 15px; font-weight: 650; color: {text}; }}
+QWidget#HomeDashboardSettings QLabel#SectionTitle {{ color: {text}; font-size: 14px; font-weight: 650; padding-top: 10px; }}
+QWidget#HomeDashboardSettings QLabel#PageHelp,
+QWidget#HomeDashboardSettings QLabel#FieldHelp {{ color: {muted}; }}
+QWidget#HomeDashboardSettings QWidget#SettingsRow {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QWidget#AboutDefinitionList {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QFrame#AboutDivider {{ color: {border}; }}
+QWidget#HomeDashboardSettings QWidget#ActionBar {{ background: {base}; border-top: 1px solid {border}; border-radius: 0; }}
+QWidget#HomeDashboardSettings QWidget#UndoToast {{ background: {alternate}; border: 1px solid {highlight}; border-radius: 8px; }}
+QWidget#HomeDashboardSettings QWidget#ContextualActionGroup {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QLabel#DirtyBadge {{ background: {alternate}; border: 1px solid {border}; border-radius: 9px; color: {muted}; font-size: 12px; font-weight: 700; padding: 3px 7px; }}
+QWidget#HomeDashboardSettings QLabel#DirtyBadge[state="dirty"] {{ color: {warning}; }}
+QWidget#HomeDashboardSettings QLabel#DirtyBadge[state="saved"] {{ color: {success}; }}
+QWidget#HomeDashboardSettings QLabel#DirtyBadge[state="error"] {{ color: {danger}; }}
+QWidget#HomeDashboardSettings QLabel#InlineSaveError {{ color: {danger}; }}
+QWidget#HomeDashboardSettings QLabel#DataBadge {{ background: {alternate}; border-radius: 8px; color: {text}; font-weight: 650; padding: 3px 7px; }}
+QWidget#HomeDashboardSettings QPushButton#HeatmapPresetCard {{ background: {base}; border: 1px solid {border}; border-radius: 9px; margin: 0; min-height: 64px; padding: 7px 9px; text-align: left; }}
+QWidget#HomeDashboardSettings QPushButton#HeatmapPresetCard[active="true"] {{ background: {alternate}; border: 2px solid {highlight}; color: {text}; }}
+QWidget#HomeDashboardSettings QWidget#SegmentedControl {{ background: {window}; border: 1px solid {border}; border-radius: 7px; }}
+QWidget#HomeDashboardSettings QPushButton#SegmentButton {{ background: transparent; border: 0; border-radius: 5px; margin: 2px; min-height: 30px; padding: 0 12px; }}
+QWidget#HomeDashboardSettings QPushButton#SegmentButton:checked {{ background: {highlight}; border: 0; color: {highlight_text}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QPushButton#SegmentButton:focus {{ border: 2px solid {focus}; margin: 0; }}
+QWidget#HomeDashboardSettings QPushButton#SettingsSwitch {{ background: transparent; border: 0; margin: 0; min-height: 20px; min-width: 34px; max-height: 20px; max-width: 34px; padding: 0; }}
+QWidget#HomeDashboardSettings QPushButton#LinkButton {{ background: transparent; border: 0; color: {highlight}; min-height: 30px; padding: 0 4px; }}
+QWidget#HomeDashboardSettings QLineEdit,
+QWidget#HomeDashboardSettings QComboBox,
+QWidget#HomeDashboardSettings QSpinBox,
+QWidget#HomeDashboardSettings QDoubleSpinBox,
+QWidget#HomeDashboardSettings QDateEdit {{
   background: {base}; border: 1px solid {border}; border-radius: 7px; color: {text}; min-height: {visual_chrome}px; margin: {focus_offset}px 0; padding: 0 7px;
 }}
-QDialog#HomeDashboardSettings QPlainTextEdit,
-QDialog#HomeDashboardSettings QListWidget#ManagerList,
-QDialog#HomeDashboardSettings QTreeWidget#ManagerTree {{
+QWidget#HomeDashboardSettings QPlainTextEdit,
+QWidget#HomeDashboardSettings QListWidget#ManagerList,
+QWidget#HomeDashboardSettings QTreeWidget#ManagerTree {{
   background: {base}; border: 1px solid {border}; border-radius: 7px; color: {text}; padding: 3px;
 }}
-QDialog#HomeDashboardSettings QLineEdit:focus,
-QDialog#HomeDashboardSettings QComboBox:focus,
-QDialog#HomeDashboardSettings QSpinBox:focus,
-QDialog#HomeDashboardSettings QDoubleSpinBox:focus,
-QDialog#HomeDashboardSettings QDateEdit:focus,
-QDialog#HomeDashboardSettings QPlainTextEdit:focus,
-QDialog#HomeDashboardSettings QListWidget#ManagerList:focus,
-QDialog#HomeDashboardSettings QTreeWidget#ManagerTree:focus {{ border: {focus_ring}px solid {focus}; }}
-QDialog#HomeDashboardSettings QComboBox QAbstractItemView,
-QDialog#HomeDashboardSettings QTreeWidget#ManagerTree::item {{ background: {base}; border-bottom: 1px solid {alternate}; color: {text}; padding: 4px 5px; }}
-QDialog#HomeDashboardSettings QTreeWidget#ManagerTree QHeaderView::section {{ background: {alternate}; border: 0; border-bottom: 1px solid {border}; color: {text}; font-weight: 700; padding: 4px 6px; }}
-QDialog#HomeDashboardSettings QComboBox QAbstractItemView {{ selection-background-color: {highlight}; selection-color: {highlight_text}; }}
-QDialog#HomeDashboardSettings QComboBox::drop-down {{ border: 0; width: 24px; }}
-QDialog#HomeDashboardSettings QComboBox::down-arrow {{ image: none; height: 0; width: 0; }}
-QDialog#HomeDashboardSettings QSpinBox::up-button,
-QDialog#HomeDashboardSettings QSpinBox::down-button {{ width: 30px; }}
-QDialog#HomeDashboardSettings QTreeWidget#ManagerTree::item:selected {{ background: {highlight}; color: {highlight_text}; }}
-QDialog#HomeDashboardSettings QWidget#EventRow {{ background: {base}; border: 1px solid {border}; border-radius: 7px; }}
-QDialog#HomeDashboardSettings QWidget#EventRow[selected="true"] {{ background: {alternate}; border: 1px solid {highlight}; }}
-QDialog#HomeDashboardSettings QLabel#EventRowTitle {{ color: {text}; font-weight: 650; }}
-QDialog#HomeDashboardSettings QLabel#EventRowMeta {{ color: {secondary}; }}
-QDialog#HomeDashboardSettings QPushButton#EventOverflowButton {{ background: transparent; border: 0; min-height: 32px; max-height: 32px; min-width: 32px; max-width: 32px; padding: 0; }}
-QDialog#HomeDashboardSettings QWidget#VerseRow {{ background: {base}; border: 1px solid {border}; border-radius: 7px; }}
-QDialog#HomeDashboardSettings QWidget#VerseRow[selected="true"] {{ background: {alternate}; border: 1px solid {highlight}; }}
-QDialog#HomeDashboardSettings QLabel#VerseRowReference {{ color: {text}; font-weight: 650; }}
-QDialog#HomeDashboardSettings QLabel#VerseRowExcerpt {{ color: {secondary}; }}
-QDialog#HomeDashboardSettings QPushButton#VerseOverflowButton {{ background: transparent; border: 0; min-height: 32px; max-height: 32px; min-width: 32px; max-width: 32px; padding: 0; }}
-QDialog#HomeDashboardSettings QCheckBox {{ min-height: {visual_chrome}px; margin: {focus_offset}px 0; }}
-QDialog#HomeDashboardSettings QCheckBox:focus {{ border: {focus_ring}px solid {focus}; border-radius: 6px; }}
-QDialog#HomeDashboardSettings QSlider:focus {{ border: {focus_ring}px solid {focus}; border-radius: 6px; }}
-QDialog#HomeDashboardSettings QSlider::groove:horizontal {{ background: {alternate}; border: 1px solid {border}; border-radius: 3px; height: 5px; }}
-QDialog#HomeDashboardSettings QSlider::handle:horizontal {{ background: {highlight}; border: 2px solid {base}; border-radius: 8px; height: 14px; margin: -6px 0; width: 14px; }}
-QDialog#HomeDashboardSettings QPushButton {{ background: {button}; border: 1px solid {border}; border-radius: 7px; color: {button_text}; min-height: 32px; margin: {focus_offset}px 0; padding: 0 12px; font-weight: 600; }}
-QDialog#HomeDashboardSettings QPushButton:hover {{ border-color: {highlight}; background: {hover}; }}
-QDialog#HomeDashboardSettings QPushButton:focus {{ border: {focus_ring}px solid {focus}; }}
-QDialog#HomeDashboardSettings QPushButton#PrimaryButton {{ background: {highlight}; border-color: {highlight}; color: {highlight_text}; font-weight: 750; }}
-QDialog#HomeDashboardSettings QPushButton#PrimaryButton:disabled {{ background: {alternate}; border-color: {border}; color: {disabled}; }}
-QDialog#HomeDashboardSettings QPushButton#DangerButton {{ background: {danger_bg}; border-color: {danger}; color: {danger}; font-weight: 650; }}
-QDialog#HomeDashboardSettings QPushButton#DangerButton:disabled {{ background: {alternate}; border-color: {border}; color: {disabled}; }}
-QDialog#HomeDashboardSettings QWidget#EmptyState {{ background: transparent; border: 0; }}
-QDialog#HomeDashboardSettings QLabel#EmptyStateTitle {{ color: {text}; font-size: 17px; font-weight: 750; }}
-QDialog#HomeDashboardSettings QLabel#EmptyStateCopy {{ color: {muted}; }}
-QDialog#HomeDashboardSettings QLabel#EmptyState {{ background: {alternate}; border: 1px solid {border}; border-radius: 7px; color: {text}; padding: 8px 10px; }}
-QDialog#HomeDashboardSettings QLabel#SelectedVerseCard {{ background: {base}; border: 1px solid {border}; border-radius: 9px; color: {text}; padding: 11px 12px; }}
-QDialog#HomeDashboardSettings QPushButton#DisclosureButton {{ background: transparent; border: 0; border-top: 1px solid {border}; border-radius: 0; color: {text}; font-weight: 650; min-height: 38px; padding: 0 2px; text-align: left; }}
-QDialog#HomeDashboardSettings QTabWidget#EventTabs::pane {{ border: 0; border-top: 1px solid {border}; background: transparent; top: -1px; }}
-QDialog#HomeDashboardSettings QTabWidget#EventTabs QTabBar::tab {{ background: transparent; border: 0; border-bottom: 2px solid transparent; color: {secondary}; min-height: 30px; padding: 0 12px; }}
-QDialog#HomeDashboardSettings QTabWidget#EventTabs QTabBar::tab:selected {{ background: {alternate}; border-bottom-color: {highlight}; color: {text}; font-weight: 650; }}
-QDialog#HomeDashboardSettings QWidget:disabled,
-QDialog#HomeDashboardSettings QPushButton:disabled {{ background: {alternate}; color: {disabled}; border-color: {border}; }}
+QWidget#HomeDashboardSettings QLineEdit:focus,
+QWidget#HomeDashboardSettings QComboBox:focus,
+QWidget#HomeDashboardSettings QSpinBox:focus,
+QWidget#HomeDashboardSettings QDoubleSpinBox:focus,
+QWidget#HomeDashboardSettings QDateEdit:focus,
+QWidget#HomeDashboardSettings QPlainTextEdit:focus,
+QWidget#HomeDashboardSettings QListWidget#ManagerList:focus,
+QWidget#HomeDashboardSettings QTreeWidget#ManagerTree:focus {{ border: {focus_ring}px solid {focus}; }}
+QWidget#HomeDashboardSettings QComboBox QAbstractItemView,
+QWidget#HomeDashboardSettings QTreeWidget#ManagerTree::item {{ background: {base}; border-bottom: 1px solid {alternate}; color: {text}; padding: 4px 5px; }}
+QWidget#HomeDashboardSettings QTreeWidget#ManagerTree QHeaderView::section {{ background: {alternate}; border: 0; border-bottom: 1px solid {border}; color: {text}; font-weight: 700; padding: 4px 6px; }}
+QWidget#HomeDashboardSettings QComboBox QAbstractItemView {{ selection-background-color: {highlight}; selection-color: {highlight_text}; }}
+QWidget#HomeDashboardSettings QComboBox::drop-down {{ border: 0; width: 24px; }}
+QWidget#HomeDashboardSettings QComboBox::down-arrow {{ image: none; height: 0; width: 0; }}
+QWidget#HomeDashboardSettings QSpinBox::up-button,
+QWidget#HomeDashboardSettings QSpinBox::down-button {{ width: 30px; }}
+QWidget#HomeDashboardSettings QTreeWidget#ManagerTree::item:selected {{ background: {highlight}; color: {highlight_text}; }}
+QWidget#HomeDashboardSettings QWidget#EventRow {{ background: {base}; border: 1px solid {border}; border-radius: 7px; }}
+QWidget#HomeDashboardSettings QWidget#EventRow[selected="true"] {{ background: {alternate}; border: 1px solid {highlight}; }}
+QWidget#HomeDashboardSettings QLabel#EventRowTitle {{ color: {text}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QLabel#EventRowMeta {{ color: {secondary}; }}
+QWidget#HomeDashboardSettings QPushButton#EventOverflowButton {{ background: transparent; border: 0; min-height: 32px; max-height: 32px; min-width: 32px; max-width: 32px; padding: 0; }}
+QWidget#HomeDashboardSettings QWidget#VerseRow {{ background: {base}; border: 1px solid {border}; border-radius: 7px; }}
+QWidget#HomeDashboardSettings QWidget#VerseRow[selected="true"] {{ background: {alternate}; border: 1px solid {highlight}; }}
+QWidget#HomeDashboardSettings QLabel#VerseRowReference {{ color: {text}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QLabel#VerseRowExcerpt {{ color: {secondary}; }}
+QWidget#HomeDashboardSettings QPushButton#VerseOverflowButton {{ background: transparent; border: 0; min-height: 32px; max-height: 32px; min-width: 32px; max-width: 32px; padding: 0; }}
+QWidget#HomeDashboardSettings QCheckBox {{ min-height: {visual_chrome}px; margin: {focus_offset}px 0; }}
+QWidget#HomeDashboardSettings QCheckBox:focus {{ border: {focus_ring}px solid {focus}; border-radius: 6px; }}
+QWidget#HomeDashboardSettings QSlider:focus {{ border: {focus_ring}px solid {focus}; border-radius: 6px; }}
+QWidget#HomeDashboardSettings QSlider::groove:horizontal {{ background: {alternate}; border: 1px solid {border}; border-radius: 3px; height: 5px; }}
+QWidget#HomeDashboardSettings QSlider::handle:horizontal {{ background: {highlight}; border: 2px solid {base}; border-radius: 8px; height: 14px; margin: -6px 0; width: 14px; }}
+QWidget#HomeDashboardSettings QPushButton {{ background: {button}; border: 1px solid {border}; border-radius: 7px; color: {button_text}; min-height: 32px; margin: {focus_offset}px 0; padding: 0 12px; font-weight: 600; }}
+QWidget#HomeDashboardSettings QPushButton:hover {{ border-color: {highlight}; background: {hover}; }}
+QWidget#HomeDashboardSettings QPushButton:focus {{ border: {focus_ring}px solid {focus}; }}
+QWidget#HomeDashboardSettings QPushButton#PrimaryButton {{ background: {highlight}; border-color: {highlight}; color: {highlight_text}; font-weight: 750; }}
+QWidget#HomeDashboardSettings QPushButton#PrimaryButton:disabled {{ background: {alternate}; border-color: {border}; color: {disabled}; }}
+QWidget#HomeDashboardSettings QPushButton#DangerButton {{ background: {danger_bg}; border-color: {danger}; color: {danger}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QPushButton#DangerButton:disabled {{ background: {alternate}; border-color: {border}; color: {disabled}; }}
+QWidget#HomeDashboardSettings QWidget#EmptyState {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QLabel#EmptyStateTitle {{ color: {text}; font-size: 17px; font-weight: 750; }}
+QWidget#HomeDashboardSettings QLabel#EmptyStateCopy {{ color: {muted}; }}
+QWidget#HomeDashboardSettings QLabel#EmptyState {{ background: {alternate}; border: 1px solid {border}; border-radius: 7px; color: {text}; padding: 8px 10px; }}
+QWidget#HomeDashboardSettings QLabel#SelectedVerseCard {{ background: {base}; border: 1px solid {border}; border-radius: 9px; color: {text}; padding: 11px 12px; }}
+QWidget#HomeDashboardSettings QPushButton#DisclosureButton {{ background: transparent; border: 0; border-top: 1px solid {border}; border-radius: 0; color: {text}; font-weight: 650; min-height: 38px; padding: 0 2px; text-align: left; }}
+QWidget#HomeDashboardSettings QTabWidget#EventTabs::pane {{ border: 0; border-top: 1px solid {border}; background: transparent; top: -1px; }}
+QWidget#HomeDashboardSettings QTabWidget#EventTabs QTabBar::tab {{ background: transparent; border: 0; border-bottom: 2px solid transparent; color: {secondary}; min-height: 30px; padding: 0 12px; }}
+QWidget#HomeDashboardSettings QTabWidget#EventTabs QTabBar::tab:selected {{ background: {alternate}; border-bottom-color: {highlight}; color: {text}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QWidget:disabled,
+QWidget#HomeDashboardSettings QPushButton:disabled {{ background: {alternate}; color: {disabled}; border-color: {border}; }}
 """.format(**values)
 
 
@@ -1612,20 +1612,120 @@ class EventEditDialog(SettingsEditorDialog):
         return self.name.text().strip(), self.date.date().toString("yyyy-MM-dd")
 
 
-class SettingsDialog(QDialog):
+class SettingsPromptOverlay(QWidget):
+    """Contained confirmation layer that never creates a native window."""
+
+    def __init__(
+        self,
+        parent: QWidget,
+        title: str,
+        message: str,
+        actions: List[tuple[str, str, Callable[[], None]]],
+        dismiss: Callable[[], None],
+    ) -> None:
+        super().__init__(parent)
+        self.setObjectName("SettingsPromptOverlay")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self._dismiss_callback = dismiss
+        tokens = _palette_tokens()
+        self.setStyleSheet(
+            """
+QWidget#SettingsPromptOverlay {{ background: rgba(0, 0, 0, 118); }}
+QFrame#SettingsPromptCard {{ background: {window}; border: 1px solid {border}; border-radius: 10px; }}
+QLabel#SettingsPromptTitle {{ color: {text}; font-size: 17px; font-weight: 750; }}
+QLabel#SettingsPromptMessage {{ color: {secondary}; }}
+QPushButton {{ background: {button}; border: 1px solid {border}; border-radius: 7px; color: {button_text}; min-height: 32px; padding: 0 12px; font-weight: 600; }}
+QPushButton#PrimaryButton {{ background: {highlight}; border-color: {highlight}; color: {highlight_text}; font-weight: 750; }}
+QPushButton#DangerButton {{ background: {danger_bg}; border-color: {danger}; color: {danger}; font-weight: 650; }}
+""".format(**tokens)
+        )
+        layout = QGridLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        card = QFrame(self)
+        card.setObjectName("SettingsPromptCard")
+        card.setMaximumWidth(520)
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(20, 18, 20, 18)
+        card_layout.setSpacing(12)
+        heading = QLabel(title)
+        heading.setObjectName("SettingsPromptTitle")
+        heading.setWordWrap(True)
+        copy = QLabel(message)
+        copy.setObjectName("SettingsPromptMessage")
+        copy.setTextFormat(Qt.TextFormat.PlainText)
+        copy.setWordWrap(True)
+        card_layout.addWidget(heading)
+        card_layout.addWidget(copy)
+        buttons = QHBoxLayout()
+        buttons.setContentsMargins(0, 4, 0, 0)
+        buttons.setSpacing(8)
+        buttons.addStretch(1)
+        focus_button: Optional[QPushButton] = None
+        for label, role, callback in actions:
+            button = QPushButton(label)
+            if role == "primary":
+                button.setObjectName("PrimaryButton")
+            elif role == "danger":
+                button.setObjectName("DangerButton")
+            button.clicked.connect(
+                lambda _checked=False, selected=callback: self._choose(selected)
+            )
+            buttons.addWidget(button)
+            if focus_button is None or role == "primary":
+                focus_button = button
+        card_layout.addLayout(buttons)
+        layout.addWidget(card, 0, 0, Qt.AlignmentFlag.AlignCenter)
+        self._focus_button = focus_button
+        self.escape_action = QAction("Dismiss confirmation", self)
+        self.escape_action.setShortcut(QKeySequence("Esc"))
+        self.escape_action.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.escape_action.triggered.connect(self.dismiss)
+        self.addAction(self.escape_action)
+
+    def present(self) -> None:
+        parent = self.parentWidget()
+        if parent is not None:
+            self.setGeometry(parent.rect())
+        self.show()
+        self.raise_()
+        if self._focus_button is not None:
+            self._focus_button.setFocus(Qt.FocusReason.OtherFocusReason)
+
+    def dismiss(self) -> None:
+        self._finish(self._dismiss_callback)
+
+    def dismiss_without_callback(self) -> None:
+        self._finish(None)
+
+    def _choose(self, callback: Callable[[], None]) -> None:
+        self._finish(callback)
+
+    def _finish(self, callback: Optional[Callable[[], None]]) -> None:
+        parent = self.parentWidget()
+        if parent is not None and getattr(parent, "_active_prompt", None) is self:
+            parent._active_prompt = None
+            escape_shortcut = getattr(parent, "escape_shortcut", None)
+            if escape_shortcut is not None:
+                escape_shortcut.setEnabled(not bool(getattr(parent, "_saving", False)))
+        self.hide()
+        self.deleteLater()
+        if callback is not None:
+            callback()
+
+
+class SettingsPanel(QWidget):
     def __init__(
         self,
         parent: QWidget,
         controller: Any,
+        close_callback: Callable[[], None],
         initial_page: str = "",
         selected_event_date: str = "",
         selected_event_id: str = "",
     ) -> None:
-        # Match Progress Bar's complete native window contract: the caller
-        # passes Anki's main window directly, Qt uses default dialog flags, and
-        # no screen-derived geometry or platform-specific attachment is used.
         super().__init__(parent)
         self.controller = controller
+        self._close_callback = close_callback
         self.draft = SettingsDraft(controller.config)
         self.staged = deepcopy(self.draft.values)
         self._heatmap_preset_preferences = deepcopy(
@@ -1654,8 +1754,8 @@ class SettingsDialog(QDialog):
         self.current_section = "dashboard"
         self._requested_dashboard_anchor = ""
         self._building = True
-        self._allow_close = False
         self._saving = False
+        self._active_prompt: Optional[SettingsPromptOverlay] = None
         self._last_save_error = ""
         self._reset_undo_values: Optional[Dict[str, Any]] = None
         self._undo_event_status_id = ""
@@ -1663,9 +1763,7 @@ class SettingsDialog(QDialog):
             QScrollArea, tuple[int, int, int, int]
         ] = {}
         self.setObjectName("HomeDashboardSettings")
-        self.setWindowTitle("Home Screen Dashboard settings")
-        self.setMinimumSize(680, 560)
-        self.resize(680, 620)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self._hdo_theme_tokens = _theme_tokens(self.staged, self.controller.is_dark())
         self.setStyleSheet(_settings_style(self.staged, self.controller.is_dark()))
         dialog_layout = QHBoxLayout(self)
@@ -1771,7 +1869,7 @@ class SettingsDialog(QDialog):
             self.close_button.setText("Close")
             _set_accessibility(self.close_button, "Close", "Close Settings when clean, or discard staged changes after confirmation.")
         self.buttons.accepted.connect(self._save)
-        self.buttons.rejected.connect(self.reject)
+        self.buttons.rejected.connect(self.request_close)
 
         self.undo_toast = QWidget()
         self.undo_toast.setObjectName("UndoToast")
@@ -1806,6 +1904,16 @@ class SettingsDialog(QDialog):
         self.save_shortcut.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         self.save_shortcut.triggered.connect(self._save)
         self.addAction(self.save_shortcut)
+        self.close_shortcut = QAction("Close Settings", self)
+        self.close_shortcut.setShortcut(QKeySequence.StandardKey.Close)
+        self.close_shortcut.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.close_shortcut.triggered.connect(self.request_close)
+        self.addAction(self.close_shortcut)
+        self.escape_shortcut = QAction("Close Settings", self)
+        self.escape_shortcut.setShortcut(QKeySequence("Esc"))
+        self.escape_shortcut.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.escape_shortcut.triggered.connect(self.request_close)
+        self.addAction(self.escape_shortcut)
 
         self._connect_change_signals()
         self._refresh_event_lists()
@@ -1822,6 +1930,9 @@ class SettingsDialog(QDialog):
 
     def resizeEvent(self, event: Any) -> None:
         super().resizeEvent(event)
+        if self._active_prompt is not None:
+            self._active_prompt.setGeometry(self.rect())
+            self._active_prompt.raise_()
         if hasattr(self, "_dialog_layout"):
             self._update_settings_shell_margins()
         if hasattr(self, "heatmap_preset_grid"):
@@ -4393,6 +4504,8 @@ class SettingsDialog(QDialog):
         if self.close_button is not None:
             self.close_button.setEnabled(False)
         self.save_shortcut.setEnabled(False)
+        self.close_shortcut.setEnabled(False)
+        self.escape_shortcut.setEnabled(False)
         original_baseline = deepcopy(self.draft.baseline)
         original_values = deepcopy(self.draft.values)
         latest = self._latest_stored_config()
@@ -4401,62 +4514,70 @@ class SettingsDialog(QDialog):
             names = "\n".join("• {}".format(conflict.label) for conflict in conflicts[:6])
             if len(conflicts) > 6:
                 names += "\n• …and {} more".format(len(conflicts) - 6)
-            message = QMessageBox(self)
-            message.setIcon(QMessageBox.Icon.Warning)
-            message.setWindowTitle("Settings changed elsewhere")
-            message.setText("Some settings changed here and outside this editor.")
-            message.setInformativeText(
-                "Choose which value to use for these conflicts:\n\n{}\n\nUntouched external changes were merged automatically.".format(
-                    names
-                )
+            preferred_verse = self.pending_manual_quote
+            self._show_prompt(
+                "Settings changed elsewhere",
+                "Some settings changed here and outside this editor. Choose which value to use for these conflicts:\n\n{}\n\nUntouched external changes were merged automatically.".format(names),
+                [
+                    (
+                        "Reload latest",
+                        "secondary",
+                        lambda: self._reload_after_conflict(latest),
+                    ),
+                    (
+                        "Keep my staged value",
+                        "primary",
+                        lambda: self._commit_save(preferred_verse),
+                    ),
+                    (
+                        "Cancel",
+                        "secondary",
+                        lambda: self._cancel_conflict(original_baseline, original_values),
+                    ),
+                ],
+                lambda: self._cancel_conflict(original_baseline, original_values),
             )
-            reload_button = message.addButton("Reload latest", QMessageBox.ButtonRole.ResetRole)
-            keep_button = message.addButton(
-                "Keep my staged value", QMessageBox.ButtonRole.AcceptRole
-            )
-            message.addButton(QMessageBox.StandardButton.Cancel)
-            message.exec()
-            clicked = message.clickedButton()
-            if clicked is reload_button:
-                self.draft.replace_all(latest)
-                self.staged = deepcopy(self.draft.values)
-                self.quotes = list(self.staged["bible"]["quotes"])
-                self._apply_config_to_widgets(self.staged)
-                self._update_dependencies()
-                self._update_dirty_state()
-                self._apply_theme()
-                self._saving = False
-                if self.close_button is not None:
-                    self.close_button.setEnabled(True)
-                self.save_shortcut.setEnabled(True)
-                self._update_dirty_state()
-                return
-            if clicked is not keep_button:
-                self.draft.baseline = original_baseline
-                self.draft.values = original_values
-                self.staged = deepcopy(original_values)
-                self._saving = False
-                if self.close_button is not None:
-                    self.close_button.setEnabled(True)
-                self.save_shortcut.setEnabled(True)
-                self._update_dirty_state()
-                return
-        preferred_verse = self.pending_manual_quote
+            return
+        self._commit_save(self.pending_manual_quote)
+
+    def _reload_after_conflict(self, latest: Mapping[str, Any]) -> None:
+        self.draft.replace_all(latest)
+        self.staged = deepcopy(self.draft.values)
+        self.quotes = list(self.staged["bible"]["quotes"])
+        self._apply_config_to_widgets(self.staged)
+        self._update_dependencies()
+        self._apply_theme()
+        self._finish_saving()
+
+    def _cancel_conflict(
+        self,
+        original_baseline: Mapping[str, Any],
+        original_values: Mapping[str, Any],
+    ) -> None:
+        self.draft.baseline = deepcopy(dict(original_baseline))
+        self.draft.values = deepcopy(dict(original_values))
+        self.staged = deepcopy(self.draft.values)
+        self._finish_saving()
+
+    def _finish_saving(self) -> None:
+        self._saving = False
+        if self.close_button is not None:
+            self.close_button.setEnabled(True)
+        self.save_shortcut.setEnabled(True)
+        self.close_shortcut.setEnabled(True)
+        self.escape_shortcut.setEnabled(True)
+        self._update_dirty_state()
+
+    def _commit_save(self, preferred_verse: Optional[str]) -> None:
         try:
             self.controller.save_config(
                 self.draft.values,
                 preferred_verse=preferred_verse,
             )
         except Exception as exc:
-            self._saving = False
-            if self.close_button is not None:
-                self.close_button.setEnabled(True)
             detail = str(exc).strip() or "The configuration could not be written."
             self._last_save_error = "Could not save changes: {}".format(detail)
-            if self.save_button is not None:
-                self.save_button.setEnabled(True)
-            self.save_shortcut.setEnabled(True)
-            self._update_dirty_state()
+            self._finish_saving()
             return
         if preferred_verse is not None:
             self._saved_current_quote = preferred_verse
@@ -4468,54 +4589,207 @@ class SettingsDialog(QDialog):
         self._staged_new_event_ids.clear()
         self._staged_edited_event_ids.clear()
         self._staged_archived_event_ids.clear()
-        self._saving = False
         self._refresh_event_lists()
         self._refresh_quote_list()
-        if self.close_button is not None:
-            self.close_button.setEnabled(True)
-        self._update_dirty_state()
+        self._finish_saving()
         self._set_status("saved", "✓ Saved")
         self.saved_status_timer.start()
 
-    def _confirm_discard(self) -> bool:
-        if self._saving:
-            return False
+    def _has_unsaved_changes(self) -> bool:
         self._sync_draft()
-        if (
-            not self.draft.dirty
-            and (
-                self.pending_manual_quote is None
-                or self.pending_manual_quote == self._saved_current_quote
+        return bool(
+            self.draft.dirty
+            or (
+                self.pending_manual_quote is not None
+                and self.pending_manual_quote != self._saved_current_quote
             )
-            and not self._font_color_invalid
-        ):
-            return True
-        message = QMessageBox(self)
-        message.setIcon(QMessageBox.Icon.Warning)
-        message.setWindowTitle("Discard unsaved changes?")
-        message.setText("Your changes have not been saved.")
-        keep_button = message.addButton("Keep editing", QMessageBox.ButtonRole.RejectRole)
-        discard_button = message.addButton("Discard", QMessageBox.ButtonRole.DestructiveRole)
-        message.setDefaultButton(keep_button)
-        message.exec()
-        return message.clickedButton() is discard_button
+            or self._font_color_invalid
+        )
 
-    def reject(self) -> None:
-        if self._saving:
+    def _show_prompt(
+        self,
+        title: str,
+        message: str,
+        actions: List[tuple[str, str, Callable[[], None]]],
+        dismiss: Callable[[], None],
+    ) -> None:
+        if self._active_prompt is not None:
             return
-        if self._allow_close or self._confirm_discard():
-            self._allow_close = True
-            super().reject()
+        self.escape_shortcut.setEnabled(False)
+        self._active_prompt = SettingsPromptOverlay(
+            self,
+            title,
+            message,
+            actions,
+            dismiss,
+        )
+        self._active_prompt.present()
 
-    def closeEvent(self, event: Any) -> None:
-        if self._saving:
-            event.ignore()
+    def request_close(self) -> None:
+        if self._saving or self._active_prompt is not None:
             return
-        if self._allow_close or self._confirm_discard():
-            self._allow_close = True
-            super().closeEvent(event)
-        else:
-            event.ignore()
+        if not self._has_unsaved_changes():
+            self._close_callback()
+            return
+        self._show_prompt(
+            "Discard unsaved changes?",
+            "Your changes have not been saved.",
+            [
+                ("Keep editing", "primary", lambda: None),
+                ("Discard", "danger", self._close_callback),
+            ],
+            lambda: None,
+        )
+
+    def force_close(self) -> None:
+        if self._active_prompt is not None:
+            self._active_prompt.dismiss_without_callback()
+            self._active_prompt = None
+        self._saving = False
+        self._close_callback()
+
+
+class SettingsOverlay(QWidget):
+    """Full-host child overlay; it cannot own a macOS window or Space."""
+
+    PREFERRED_WIDTH = 680
+    PREFERRED_HEIGHT = 620
+    COMPACT_MIN_HEIGHT = 560
+    HOST_MARGIN = 12
+
+    def __init__(
+        self,
+        host: QWidget,
+        controller: Any,
+        initial_page: str = "",
+        selected_event_date: str = "",
+        selected_event_id: str = "",
+        on_closed: Optional[Callable[["SettingsOverlay"], None]] = None,
+    ) -> None:
+        super().__init__(host)
+        self.host = host
+        self._on_closed = on_closed
+        self._closed = False
+        self._previous_focus = QApplication.focusWidget()
+        self.setObjectName("HomeDashboardSettingsOverlay")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setStyleSheet(
+            "QWidget#HomeDashboardSettingsOverlay { background: rgba(0, 0, 0, 118); }"
+        )
+        self.panel = SettingsPanel(
+            self,
+            controller,
+            self.close_panel,
+            initial_page,
+            selected_event_date,
+            selected_event_id,
+        )
+        self.panel.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        host.installEventFilter(self)
+        self._sync_to_host()
+
+    def present(self) -> None:
+        if self._closed:
+            return
+        self._sync_to_host()
+        self.show()
+        self.raise_()
+        self.panel.show()
+        self.panel.raise_()
+        self.panel.nav.setFocus(Qt.FocusReason.OtherFocusReason)
+
+    def open_page(
+        self,
+        page: str = "",
+        selected_event_date: str = "",
+        selected_event_id: str = "",
+    ) -> None:
+        if self._closed:
+            return
+        self.panel.open_page(page, selected_event_date, selected_event_id)
+        self.present()
+
+    def eventFilter(self, watched: object, event: Any) -> bool:
+        if watched is self.host and event.type() in {
+            getattr(QEvent.Type, "Resize", None),
+            getattr(QEvent.Type, "Show", None),
+            getattr(QEvent.Type, "LayoutRequest", None),
+        }:
+            self._sync_to_host()
+            QTimer.singleShot(0, self._raise_after_host_change)
+        return False
+
+    def resizeEvent(self, event: Any) -> None:
+        super().resizeEvent(event)
+        self._place_panel()
+
+    def _sync_to_host(self) -> None:
+        if self._closed:
+            return
+        self.setGeometry(self.host.rect())
+        self._place_panel()
+
+    def _place_panel(self) -> None:
+        available_width = max(1, self.width() - (2 * self.HOST_MARGIN))
+        available_height = max(1, self.height() - (2 * self.HOST_MARGIN))
+        width = min(self.PREFERRED_WIDTH, available_width)
+        preferred_height = (
+            self.PREFERRED_HEIGHT
+            if available_height >= self.PREFERRED_HEIGHT
+            else max(1, min(self.COMPACT_MIN_HEIGHT, available_height))
+        )
+        height = min(preferred_height, available_height)
+        self.panel.setGeometry(
+            max(0, (self.width() - width) // 2),
+            max(0, (self.height() - height) // 2),
+            width,
+            height,
+        )
+
+    def _raise_after_host_change(self) -> None:
+        if self._closed or not self.isVisible():
+            return
+        self.raise_()
+        self.panel.raise_()
+
+    def close_panel(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        previous_focus = self._previous_focus
+        try:
+            self.host.removeEventFilter(self)
+        except RuntimeError:
+            pass
+        self.hide()
+        if self._on_closed is not None:
+            self._on_closed(self)
+        self.deleteLater()
+
+        def restore_focus() -> None:
+            try:
+                if (
+                    previous_focus is not None
+                    and previous_focus.isVisible()
+                    and previous_focus.isEnabled()
+                ):
+                    previous_focus.setFocus(Qt.FocusReason.OtherFocusReason)
+                    return
+            except RuntimeError:
+                pass
+            fallback = getattr(mw, "web", None)
+            setter = getattr(fallback, "setFocus", None)
+            if callable(setter):
+                setter(Qt.FocusReason.OtherFocusReason)
+
+        QTimer.singleShot(0, restore_focus)
+
+    def force_close(self) -> None:
+        if self._closed:
+            return
+        self.panel.force_close()
+
 
 def _object_name(menu: Any) -> str:
     getter = getattr(menu, "objectName", None)

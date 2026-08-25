@@ -359,8 +359,9 @@ def validate_sources() -> dict:
             "def _open_browser_target", "browser_will_search", "context.ids = ids",
             'command == "diagnostics"', 'self.request_settings_open("about_support")',
             "def _persist_settings_transaction", "_restore_optional_bytes",
-            "dialog = SettingsDialog(mw, self, page_name, date_value, event_value)",
-            "dialog.exec()", "QTimer.singleShot(0, self._open_pending_settings)",
+            'getattr(getattr(mw, "form", None), "centralwidget", None)',
+            "overlay = SettingsOverlay(", "self._settings_overlay = overlay",
+            "overlay.present()", "QTimer.singleShot(0, self._open_pending_settings)",
         ),
         "insights.py": (
             "ORDER BY again_count DESC, total_answers DESC, r.cid ASC",
@@ -377,8 +378,10 @@ def validate_sources() -> dict:
             "today_session", "data-hdo-has-bible",
         ),
         "settings.py": (
-            "self.setMinimumSize(680, 560)", "self.resize(680, 620)",
-            "parent: QWidget", "super().__init__(parent)",
+            "class SettingsPanel(QWidget):", "class SettingsOverlay(QWidget):",
+            "class SettingsPromptOverlay(QWidget):", "super().__init__(host)",
+            "PREFERRED_WIDTH = 680", "PREFERRED_HEIGHT = 620",
+            "COMPACT_MIN_HEIGHT = 560", "HOST_MARGIN = 12",
             "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
             "def _connect_change_signals(self) -> None:",
             "def _settings_changed(self, *_args: object) -> None:",
@@ -424,16 +427,27 @@ def validate_sources() -> dict:
         if absent:
             raise ValueError("{} is missing corrected release contracts: {}".format(relative, ", ".join(absent)))
 
-    dialog_source = sources["settings.py"].split("class SettingsDialog(QDialog):", 1)[1].split(
-        "def install_settings_menu", 1
+    panel_source = sources["settings.py"].split("class SettingsPanel(QWidget):", 1)[1].split(
+        "class SettingsOverlay(QWidget):", 1
+    )[0]
+    overlay_source = sources["settings.py"].split("class SettingsOverlay(QWidget):", 1)[1].split(
+        "def _object_name", 1
     )[0]
     for forbidden in (
         "availableGeometry", "QApplication.primaryScreen", "clamp_window_size",
         "self.screen()", "self.move(", "setWindowModality", "setModal(",
         "def showEvent", "AnkiWebView", "QWebEngine",
     ):
-        if forbidden in dialog_source:
-            raise ValueError("Settings window retains forbidden marker: {}".format(forbidden))
+        if forbidden in panel_source + overlay_source:
+            raise ValueError("Settings panel retains forbidden marker: {}".format(forbidden))
+
+    if "class SettingsDialog(QDialog):" in sources["settings.py"]:
+        raise ValueError("primary Settings still creates a native dialog")
+    save_tail = sources["settings.py"].split("    def _save(self) -> None:", 1)[1].split(
+        "class SettingsOverlay(QWidget):", 1
+    )[0]
+    if "message = QMessageBox(self)" in save_tail or "message.exec()" in save_tail:
+        raise ValueError("primary Settings prompts must remain embedded children")
 
     for retired in (
         "Qt.WindowType.Tool", "self.winId()", "setTransientParent",
@@ -446,6 +460,7 @@ def validate_sources() -> dict:
 
     for retired in (
         "self.settings_dialog", "SETTINGS_WINDOW_MODALITY",
+        "SettingsDialog", "dialog.exec()",
         "setWindowModality", "dialog.open()", "dialog.show()",
         "dialog.finished.connect(", "def _settings_dialog_finished",
         "dialog.raise_()", "dialog.activateWindow()",
@@ -493,11 +508,13 @@ def validate_sources() -> dict:
     if settings_window_contract.get("release") != version:
         raise ValueError("focused Settings contract must match the manifest version")
     if (
-        settings_window_contract.get("minimum_size") != [680, 560]
-        or settings_window_contract.get("initial_size") != [680, 620]
-        or settings_window_contract.get("resizable_upward") is not True
+        settings_window_contract.get("preferred_size") != [680, 620]
+        or settings_window_contract.get("compact_min_height") != 560
+        or settings_window_contract.get("host_margin") != 12
+        or settings_window_contract.get("native_window") is not False
+        or settings_window_contract.get("top_level_fallback") is not False
     ):
-        raise ValueError("focused Settings contract does not match Progress Bar geometry")
+        raise ValueError("focused Settings contract does not require the in-Anki child panel")
     if capture_contract.get("runtime_smoke_requirements") != {
         "active_head_deck": "A",
         "raw_new_cards_per_head_minimum": 40,

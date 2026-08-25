@@ -7,13 +7,12 @@ Browser or statistics classes.
 
 ## What changed in 1.8.7
 
-- Settings now matches Progress Bar's complete native window contract. Anki's
-  main window is passed explicitly to a default-flag `QDialog`; the dialog has
-  a 680×560 minimum, opens at 680×620, and remains resizable upward.
-- Removed top-level screen/available-geometry sizing and the custom Settings
-  `showEvent` focus timers. Deck Browser bridge requests are deferred by one
-  event-loop turn before the local modal `exec()` begins, while menu opening
-  remains direct.
+- Settings now opens as a compact centered child panel inside Anki's existing
+  central widget. It prefers 680×620, adapts within 12-pixel host margins, and
+  cannot become a separate macOS window or Space.
+- The controller reuses one panel while it is open. Deck Browser bridge
+  requests remain deferred and coalesced, while primary Save and dirty-close
+  confirmations are embedded child layers instead of new windows.
 - The corrected 1.8.6 statistics, schema 8, configuration keys, bridge
   commands, and all four Settings pages remain unchanged.
 
@@ -94,12 +93,11 @@ saved baseline. The baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only swatches and production rendering.
-Settings opens as a normal parented, resizable `QDialog` through `exec()` with
-default window flags, matching conventional Anki add-on settings windows. It
+Settings opens as a child of Anki's persistent central widget, with a dimmed
+backdrop and centered 680×620 panel. It creates no native Settings window,
 assigns no screen coordinates, performs no screen-geometry query, and contains
-no embedded WebEngine content. Like Progress Bar, it has a 680×560 minimum and
-opens at 680×620 without restoring a saved size; every page remains vertically
-scrollable and the user may enlarge the window.
+no embedded WebEngine content. On smaller Anki windows it shrinks within
+12-pixel margins; every page remains vertically scrollable.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source

@@ -134,6 +134,7 @@ class DashboardController:
         self.year_scroll_left: Optional[float] = None
         self._pending_settings_request: Optional[Tuple[str, str, str]] = None
         self._settings_open_pending = False
+        self._settings_overlay: Optional[Any] = None
 
     def start(self) -> None:
         mw.addonManager.setWebExports(self.package, r"web/.*\.(css|js)")
@@ -216,6 +217,15 @@ class DashboardController:
         )
 
     def on_profile_close(self, *_args: object) -> None:
+        self._pending_settings_request = None
+        self._settings_open_pending = False
+        overlay = self._settings_overlay
+        if overlay is not None:
+            try:
+                overlay.force_close()
+            except RuntimeError:
+                pass
+        self._settings_overlay = None
         self.profile_generation += 1
         self.snapshot = None
         self.cache_key = None
@@ -1183,13 +1193,44 @@ class DashboardController:
         selected_event_id: object = None,
         *_args: object,
     ) -> None:
-        from .settings import SettingsDialog
+        from .settings import SettingsOverlay
 
         page_name = page if isinstance(page, str) else ""
         date_value = selected_date if self._valid_bridge_date(selected_date) else ""
         event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
-        dialog = SettingsDialog(mw, self, page_name, date_value, event_value)
-        dialog.exec()
+        overlay = self._settings_overlay
+        if overlay is not None:
+            try:
+                overlay.open_page(page_name, date_value, event_value)
+                return
+            except RuntimeError:
+                self._settings_overlay = None
+
+        host = getattr(getattr(mw, "form", None), "centralwidget", None)
+        central_widget = getattr(mw, "centralWidget", None)
+        resolved_central = central_widget() if callable(central_widget) else None
+        if host is None or (resolved_central is not None and resolved_central is not host):
+            status_bar = getattr(mw, "statusBar", None)
+            status = status_bar() if callable(status_bar) else None
+            show_message = getattr(status, "showMessage", None)
+            if callable(show_message):
+                show_message("Home Screen Dashboard Settings could not attach to Anki.", 5000)
+            return
+
+        def overlay_closed(closed_overlay: Any) -> None:
+            if self._settings_overlay is closed_overlay:
+                self._settings_overlay = None
+
+        overlay = SettingsOverlay(
+            host,
+            self,
+            page_name,
+            date_value,
+            event_value,
+            overlay_closed,
+        )
+        self._settings_overlay = overlay
+        overlay.present()
 
     def request_settings_open(
         self,
@@ -1197,7 +1238,7 @@ class DashboardController:
         selected_date: object = None,
         selected_event_id: object = None,
     ) -> None:
-        """Leave the WebEngine bridge callback before entering a modal dialog."""
+        """Leave the WebEngine bridge callback before showing the child panel."""
 
         page_name = page if isinstance(page, str) else ""
         date_value = selected_date if self._valid_bridge_date(selected_date) else ""

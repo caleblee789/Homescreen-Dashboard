@@ -4,15 +4,15 @@
 
 ## 1.8.7 — 2026-08-25
 
-- Matched Progress Bar's complete Settings window contract: Anki's main window
-  is now passed explicitly to a default-flag `QDialog`, the window has a
-  680×560 minimum and opens at 680×620, and it remains resizable upward.
-- Removed all top-level screen/available-geometry sizing and the custom
-  `showEvent` focus timers so macOS receives the same compact native dialog
-  shape as the working Progress Bar add-on.
-- Deferred Settings requests arriving through the Deck Browser bridge by one
-  event-loop turn with a coalescing guard. Native menu opening remains a direct
-  local `exec()` call and no dialog object is retained.
+- Replaced the primary Settings `QDialog` with a centered child panel hosted by
+  Anki's persistent central widget, eliminating the separate native window
+  that macOS could assign to another Space.
+- Preserved the compact 680×620 presentation, 152-pixel rail, page scrolling,
+  fixed footer, staged changes, and direct menu workflow. Smaller Anki windows
+  receive a responsive panel within 12-pixel host margins.
+- Reused one controller-owned panel for menu and deferred bridge requests.
+  Primary Save-conflict and dirty-close prompts now remain inside the panel;
+  profile shutdown force-cleans the panel without prompting.
 - Preserved schema 8, Settings pages and staged-save behavior, dashboard and
   statistics calculations, bridge commands, and the frozen 1.8.6 evidence.
   Full-screen macOS Space behavior remains a manual acceptance gate before any

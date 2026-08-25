@@ -7,12 +7,12 @@ Browser or statistics classes.
 
 ## 1.8.7 highlights
 
-- Settings now matches Progress Bar's complete compact-window contract: Anki's
-  main window is passed explicitly to a default-flag `QDialog`, the dialog has
-  a 680×560 minimum and opens at 680×620, and it remains resizable upward.
-  Screen-derived sizing and the custom top-level show hook are gone.
-- Deck Browser bridge requests leave the WebEngine callback before entering
-  `exec()`; native menu opening remains direct. No Settings window is retained.
+- Settings now opens as a compact 680×620 panel inside Anki's existing central
+  widget. It retains the familiar centered Settings workflow but cannot become
+  a separate macOS window or move Anki to another Space.
+- One child panel is retained while open so repeated menu or bridge requests
+  reroute the current draft. Bridge requests remain deferred and coalesced;
+  Save and dirty-close confirmations are contained inside the panel.
 - Schema 8, all Settings fields, dashboard rendering, and the corrected 1.8.6
   statistics calculations remain unchanged.
 
@@ -33,11 +33,10 @@ Browser or statistics classes.
 - Initial HTML, live refresh, wide Month and Year 2×2 layouts, intermediate and
   narrow shells, and hard restart are contractually checked
   against identical values from the same collection snapshot.
-- Settings now matches the conventional add-on window used by Progress Bar: a
-  parented, resizable `QDialog` opened synchronously with `exec()` and default
-  window flags. It never assigns screen coordinates and contains no WebEngine
-  or preview surface, so opening Settings and switching pages remain native Qt
-  operations rather than macOS window-modal sheet transitions.
+- Settings keeps the compact visual workflow used by conventional add-on
+  settings while rendering as a non-window child of Anki. It never calls a
+  modal event loop, assigns screen coordinates, replaces Anki's central
+  widget, or contains a WebEngine preview surface.
 
 - Settings uses one native Qt composition at every size: a compact header,
   152 px text rail, one active page scroller, and a stable final-row footer.
@@ -63,7 +62,7 @@ The local 1.8.7 candidate is built as
 `home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon` for
 installation through **Tools → Add-ons → Install from file**. Its checksum is
 written alongside the archive: SHA-256
-`68ddb6abcd5d8547bc5ac6c995e2bce5e40e4c591630790d6acc672d3c23b4f4`.
+`0792e96dbc68c56ed3b50f5ef27341fd270a065aeaaa239f6070a1fc9c25243f`.
 This candidate remains local until the native macOS full-screen Space check
 passes. Disable any legacy source add-ons named by the activation card.
 

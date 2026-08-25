@@ -147,49 +147,26 @@ class FakeQTimer:
         callback()
 
 
-class FakeSettingsDialog:
+class FakeSettingsOverlay:
     instances = []
 
     def __init__(self, *args) -> None:
         self.args = args
-        self.visible = False
-        self.show_count = 0
-        self.exec_count = 0
-        self.open_count = 0
-        self.window_modality = None
+        self.closed_callback = args[-1]
+        self.present_count = 0
+        self.force_close_count = 0
         self.opened_pages = []
-        self.raised = 0
-        self.activated = 0
         self.__class__.instances.append(self)
 
-    def isVisible(self):
-        return self.visible
-
-    def show(self) -> None:
-        self.show_count += 1
-        self.visible = True
-
-    def exec(self) -> int:
-        self.exec_count += 1
-        self.visible = True
-        self.visible = False
-        return 0
-
-    def setWindowModality(self, modality) -> None:
-        self.window_modality = modality
-
-    def open(self) -> None:
-        self.open_count += 1
-        self.visible = True
+    def present(self) -> None:
+        self.present_count += 1
 
     def open_page(self, *args) -> None:
         self.opened_pages.append(args)
 
-    def raise_(self) -> None:
-        self.raised += 1
-
-    def activateWindow(self) -> None:
-        self.activated += 1
+    def force_close(self) -> None:
+        self.force_close_count += 1
+        self.closed_callback(self)
 
 
 class ControllerCapabilityTests(unittest.TestCase):
@@ -220,6 +197,8 @@ class ControllerCapabilityTests(unittest.TestCase):
             addonManager=FakeAddonManager(),
             col=SimpleNamespace(sched=SimpleNamespace(today=500, day_cutoff=cutoff), mod=1),
         )
+        aqt.mw.form = SimpleNamespace(centralwidget=object())
+        aqt.mw.centralWidget = lambda: aqt.mw.form.centralwidget
         deckbrowser = ModuleType("aqt.deckbrowser")
         deckbrowser.DeckBrowser = FakeDeckBrowser
         operations = ModuleType("aqt.operations")
@@ -324,31 +303,52 @@ class ControllerCapabilityTests(unittest.TestCase):
         self.assertFalse(self.controller._settings_open_pending)
         self.assertIsNone(self.controller._pending_settings_request)
 
-    def test_settings_uses_local_synchronous_dialog_lifecycle(self) -> None:
-        FakeSettingsDialog.instances.clear()
+    def test_settings_reuses_one_central_widget_overlay(self) -> None:
+        FakeSettingsOverlay.instances.clear()
         settings = ModuleType("home_dashboard_overhaul.settings")
-        settings.SettingsDialog = FakeSettingsDialog
+        settings.SettingsOverlay = FakeSettingsOverlay
 
         with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
             self.controller.open_settings("calendar_data", "2026-08-28", "exam-42")
-            dialog = FakeSettingsDialog.instances[-1]
+            overlay = FakeSettingsOverlay.instances[-1]
 
             self.assertEqual(
-                dialog.args,
-                (self.aqt.mw, self.controller, "calendar_data", "2026-08-28", "exam-42"),
+                overlay.args[:-1],
+                (
+                    self.aqt.mw.form.centralwidget,
+                    self.controller,
+                    "calendar_data",
+                    "2026-08-28",
+                    "exam-42",
+                ),
             )
-            self.assertEqual(dialog.open_count, 0)
-            self.assertEqual(dialog.exec_count, 1)
-            self.assertEqual(dialog.show_count, 0)
-            self.assertIsNone(dialog.window_modality)
-            self.assertFalse(dialog.visible)
-            self.assertEqual(dialog.raised, 0)
-            self.assertEqual(dialog.activated, 0)
-            self.assertFalse(hasattr(self.controller, "settings_dialog"))
+            self.assertEqual(overlay.present_count, 1)
+            self.assertIs(self.controller._settings_overlay, overlay)
 
             self.controller.open_settings("events")
-            self.assertEqual(len(FakeSettingsDialog.instances), 2)
-            self.assertEqual(FakeSettingsDialog.instances[-1].exec_count, 1)
+            self.assertEqual(len(FakeSettingsOverlay.instances), 1)
+            self.assertEqual(overlay.opened_pages, [("events", "", "")])
+
+            overlay.force_close()
+            self.assertIsNone(self.controller._settings_overlay)
+
+    def test_profile_close_force_closes_settings_overlay_and_pending_request(self) -> None:
+        FakeSettingsOverlay.instances.clear()
+        settings = ModuleType("home_dashboard_overhaul.settings")
+        settings.SettingsOverlay = FakeSettingsOverlay
+
+        with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
+            self.controller.open_settings("dashboard")
+            overlay = FakeSettingsOverlay.instances[-1]
+            self.controller._pending_settings_request = ("events", "", "")
+            self.controller._settings_open_pending = True
+
+            self.controller.on_profile_close()
+
+            self.assertEqual(overlay.force_close_count, 1)
+            self.assertIsNone(self.controller._settings_overlay)
+            self.assertIsNone(self.controller._pending_settings_request)
+            self.assertFalse(self.controller._settings_open_pending)
 
     def test_year_scroll_position_survives_a_controller_rerender(self) -> None:
         message = "hdo:" + json.dumps({
