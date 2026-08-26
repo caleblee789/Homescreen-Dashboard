@@ -2,25 +2,21 @@
 **/*.py[cod]
 .DS_Store
 .pytest_cache/
+/build/
+/dist/
 home_dashboard_overhaul/dist/
 qa-runs/
 
 # Disposable Anki launch records contain machine-local paths and ephemeral keys.
 **/QA_IDENTITY.json
 
-# Retain superseded live-run evidence locally. The sanitized 1.5.3 release set
-# below is the only QA corpus intended for repository publication.
+# Disposable live-run and capture staging stays local. The newest complete
+# release evidence set is retained explicitly under home_dashboard_overhaul/qa/.
 docs/acceptance_report*.md
 docs/settings_menu_audit.md
 home_dashboard_overhaul/qa/calendar-polish-before-comparison-*/
 home_dashboard_overhaul/qa/evidence/
 home_dashboard_overhaul/qa/live-ui-*/
-!home_dashboard_overhaul/qa/live-ui-acceptance-1.5.3-release-2026-08-15/
-!home_dashboard_overhaul/qa/live-ui-acceptance-1.5.3-release-2026-08-15/**
-# Keep Finder metadata ignored after the evidence-directory exception above.
 **/.DS_Store
 home_dashboard_overhaul/qa/CALENDAR_UI_AUDIT_1.5.1.md
 home_dashboard_overhaul/qa/CALENDAR_POLISH_BEFORE_AFTER.md
-
-# Keep the generated 1.8.6 presentation sheets as local release evidence.
-home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-24/contact-sheets/

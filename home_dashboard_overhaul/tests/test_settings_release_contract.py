@@ -35,7 +35,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             (
                 ROOT
                 / "qa"
-                / "release-evidence-1.8.6-2026-08-24"
+                / "release-evidence-1.8.6-2026-08-25"
                 / "capture-evidence-manifest.json"
             ).read_text(encoding="utf-8")
         )
@@ -229,20 +229,28 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertIn("resizable window policy", self.evidence_assembler)
         self.assertNotIn("fixed window policy", self.evidence_assembler)
         self.assertIn('"details": contact_sheets["detail_sheet_count"]', self.evidence_assembler)
+        self.assertIn(
+            '"capture_details": contact_sheets["capture_detail_sheet_count"]',
+            self.evidence_assembler,
+        )
+        self.assertIn(
+            '"reports": contact_sheets["report_sheet_count"]',
+            self.evidence_assembler,
+        )
         self.assertIn('"total": len(contact_sheets["sheets"])', self.evidence_assembler)
 
-    def test_generated_1_8_6_contact_sheets_remain_local_only(self) -> None:
-        ignored_directory = (
+    def test_generated_1_8_6_contact_sheets_are_retained_with_current_evidence(self) -> None:
+        current_directory = (
             "home_dashboard_overhaul/qa/"
-            "release-evidence-1.8.6-2026-08-24/contact-sheets/"
+            "release-evidence-1.8.6-2026-08-25/contact-sheets/"
         )
-        self.assertIn(ignored_directory, self.repository_ignore)
+        self.assertNotIn(current_directory, self.repository_ignore)
         self.assertEqual(
             self.release_evidence_manifest["contact_sheets"]["repository_tracking"],
-            "local-only",
+            "current-only",
         )
-        self.assertIn('"repository_tracking": "local-only"', self.evidence_assembler)
-        self.assertIn("retained as local-only release evidence", self.evidence_assembler)
+        self.assertIn('"repository_tracking": "current-only"', self.evidence_assembler)
+        self.assertIn("retained with this current evidence set", self.evidence_assembler)
 
     def test_settings_is_native_only_and_contains_no_preview_path(self) -> None:
         self.assertNotIn("preview", self.settings.casefold())
@@ -282,6 +290,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "dialog.setModal(True)",
             "Qt.WindowType.WindowStaysOnTopHint",
             'method = "QScreen.grabWindow-screen-client-crop"',
+            'method = "QWidget.grab-composited-anki-with-standard-settings-dialog-fallback"',
         ):
             source = self.release_probe if marker.startswith(("dialog.", "Qt.", "method")) else self.settings
             self.assertIn(marker, source)

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import date, timedelta
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -21,6 +20,8 @@ from aqt import gui_hooks, mw
 from aqt.qt import (
     QApplication,
     QFont,
+    QPainter,
+    QPixmap,
     QPoint,
     QScrollArea,
     Qt,
@@ -32,15 +33,32 @@ from home_dashboard_overhaul.config_schema import normalize_config
 from home_dashboard_overhaul.models import DashboardSnapshot, VerseContent
 from home_dashboard_overhaul.settings import SettingsDialog
 
+from . import _capture_plan as capture_plan
 from . import _probe_base as base
 
 
-RELEASE = "1.8.6"
-OUTPUT_ROOT = base.RUN_ROOT / "hdo-release-evidence-1.8.6"
+CAPTURE_PLAN = capture_plan.load_capture_plan()
+PROFILE_REQUEST = capture_plan.load_profile_request(Path(__file__), plan=CAPTURE_PLAN)
+CAPTURE_PROFILE = str(PROFILE_REQUEST.get("id", "full"))
+LEGACY_CAPTURE_SCOPE = os.environ.get("HDO_RELEASE_CAPTURE_SCOPE", "full").strip().casefold()
+if CAPTURE_PROFILE == "full" and LEGACY_CAPTURE_SCOPE == "settings":
+    CAPTURE_PROFILE = "settings"
+REQUESTED_CAPTURE_IDS = (
+    tuple(str(value) for value in PROFILE_REQUEST["include_ids"])
+    if PROFILE_REQUEST.get("include_ids") is not None
+    else None
+)
+PROFILE_SPEC = CAPTURE_PLAN.profile(CAPTURE_PROFILE)
+PROFILE_COUNTS = CAPTURE_PLAN.counts(
+    CAPTURE_PROFILE,
+    include_ids=REQUESTED_CAPTURE_IDS,
+)
+
+RELEASE = CAPTURE_PLAN.release
+OUTPUT_ROOT = base.RUN_ROOT / str(PROFILE_SPEC["output_directory"])
 CAPTURE_ROOT = OUTPUT_ROOT / "captures"
 REPORT_PATH = OUTPUT_ROOT / "runtime-report-{}.json".format(base.STAGE)
-CAPTURE_SCOPE = os.environ.get("HDO_RELEASE_CAPTURE_SCOPE", "full").strip().casefold()
-STATISTICS_DECK = "HDO 1.8.6 Native Statistics"
+STATISTICS_DECK = "HDO {} Native Statistics".format(RELEASE)
 STATISTICS_ANSWER_COUNT = 1_184
 STATISTICS_ELIGIBLE_PASS = 947
 STATISTICS_ELIGIBLE_FAIL = 153
@@ -70,18 +88,21 @@ STATISTIC_METRIC_KEYS = (
 
 ENABLED = (
     str(base.RUN_ROOT).startswith("/private/tmp/anki-release-qa.")
-    and base.EXPECTED_PROFILE.startswith("Codex QA HDO 1.8.6 ")
+    and base.EXPECTED_PROFILE.startswith("Codex QA HDO {} ".format(RELEASE))
     and len(base.EXPECTED_SHA256) == 64
     and len(base.EXPECTED_INSTANCE_KEY) >= 24
     and base.STAGE in {"initial", "restart"}
-    and CAPTURE_SCOPE in {"full", "settings"}
+    and CAPTURE_PROFILE in CAPTURE_PLAN.profile_ids
+    and LEGACY_CAPTURE_SCOPE in {"full", "settings"}
+    and PROFILE_COUNTS[base.STAGE] > 0
 )
 
 base.RELEASE = RELEASE
-base.QA_HEAD_A = "HDO 1.8.6 QA Head A"
-base.QA_HEAD_B = "HDO 1.8.6 QA Head B"
-base.QA_CONFIG_A = "HDO 1.8.6 QA Limit 3"
-base.QA_CONFIG_B = "HDO 1.8.6 QA Limit 7"
+base.REFERENCE_DATE = CAPTURE_PLAN.reference_date
+base.QA_HEAD_A = "HDO {} QA Head A".format(RELEASE)
+base.QA_HEAD_B = "HDO {} QA Head B".format(RELEASE)
+base.QA_CONFIG_A = "HDO {} QA Limit 3".format(RELEASE)
+base.QA_CONFIG_B = "HDO {} QA Limit 7".format(RELEASE)
 base.RESTART_PRE_FIXTURE_EXPECTED_NEW = None
 base.RESTART_MULTI_DECK_EXPECTED_TOTAL = 12
 base.OUTPUT_ROOT = OUTPUT_ROOT
@@ -94,6 +115,21 @@ base.REPORT = {
     "stage": base.STAGE,
     "status": "running",
     "authority": "native-exact-package-production-and-canonical-settings",
+    "capture_plan": {
+        "schema_version": CAPTURE_PLAN.schema_version,
+        "sha256": CAPTURE_PLAN.sha256,
+        "profile": CAPTURE_PROFILE,
+        "profile_counts": PROFILE_COUNTS,
+        "selected_capture_ids": (
+            list(REQUESTED_CAPTURE_IDS) if REQUESTED_CAPTURE_IDS is not None else None
+        ),
+    },
+    "capture_profile": {
+        "id": CAPTURE_PROFILE,
+        "description": str(PROFILE_SPEC.get("description", "")),
+        "full_screen": bool(PROFILE_SPEC.get("full_screen")),
+        "resolved_counts": PROFILE_COUNTS,
+    },
     "errors": [],
     "captures": {},
     "scale_policy": {
@@ -105,57 +141,6 @@ base.REPORT = {
 }
 
 
-PALETTES = {
-    "Sapphire Glass": ("SG", ("Sapphire", "Amethyst", "Glacier", "Sea Glass")),
-    "Graphite": ("GR", ("Slate", "Steel", "Plum", "Mint")),
-    "Emerald": ("EM", ("Emerald", "Jade", "Moss", "Lagoon")),
-    "High Contrast": ("HC", ("Cyan", "Gold", "Magenta", "Monochrome")),
-}
-
-PRODUCTION_CORE_IDS = (
-    "PROD-MONTH-STABLE",
-    "PROD-YEAR-STABLE",
-    "PROD-MARKERS-COMBINED",
-    "PROD-MARKERS-COMPLETION",
-    "PROD-MARKERS-DUE",
-    "PROD-MARKERS-TODAY",
-    "PROD-MARKERS-EVENT",
-    "PROD-LEGEND-NO-DUE",
-    "PROD-LEGEND-NO-EVENT",
-    "PROD-BG-WHITE",
-    "PROD-BG-BLACK",
-    "PROD-BG-PURPLE",
-    "PROD-BG-IMAGE",
-    "PROD-SECTIONS-BELOW",
-    "PROD-BOTTOM-CLEARANCE",
-    "PROD-VERSE-EXACT",
-)
-
-SETTINGS_CONTRACT_IDS = (
-    "SET-EVENTS-EMPTY",
-    "SET-EVENTS-POPULATED",
-    "SET-EVENTS-SELECTED",
-    "SET-EVENTS-SEARCHED",
-    "SET-EVENTS-ARCHIVED",
-    "SET-BIBLE-SHORT",
-    "SET-BIBLE-LONG",
-    "SET-BIBLE-CUSTOM",
-    "SET-ABOUT-BOTTOM",
-    "SET-DIRTY",
-    "SET-REVERT",
-    "SET-SAVE-SUCCESS",
-    "SET-SAVE-ERROR",
-    "SET-LEGACY-ROUTE",
-    "SET-WINDOW-STANDARD",
-    "SET-WINDOW-CLAMP",
-)
-
-STATISTICS_CAPTURE_IDS = (
-    "PROD-STATS-WIDE-MONTH",
-    "PROD-STATS-WIDE-YEAR",
-    "PROD-STATS-INTERMEDIATE",
-    "PROD-STATS-NARROW",
-)
 _statistics_snapshot: DashboardSnapshot | None = None
 _canonical_statistics_metrics: dict[str, str] | None = None
 
@@ -192,53 +177,57 @@ def _production_case(
 
 def _build_production_cases() -> list[dict[str, Any]]:
     cases: list[dict[str, Any]] = []
-    for theme, (prefix, palettes) in PALETTES.items():
-        for palette in palettes:
-            palette_id = palette.upper().replace(" ", "-")
-            for mode, mode_id in (("light", "L"), ("dark", "D")):
-                cases.append(_production_case(
-                    "PROD-PAL-{}-{}-{}".format(prefix, palette_id, mode_id),
-                    theme=theme,
-                    palette=palette,
-                    mode=mode,
-                    tags=("palette", "production_month_tree"),
-                ))
-    cases.extend((
-        _production_case("PROD-MONTH-STABLE", tags=("stable_width_switching", "month_42_cells")),
-        _production_case("PROD-YEAR-STABLE", view="year", tags=("stable_width_switching", "year_53_weeks")),
-        _production_case("PROD-MARKERS-COMBINED", fixture="combined-today", special="markers-combined", tags=("completion", "selected", "today", "due", "event")),
-        _production_case("PROD-MARKERS-COMPLETION", fixture="combined-today", special="markers-completion", tags=("completion",)),
-        _production_case("PROD-MARKERS-DUE", fixture="next-event-future", selected="2026-08-29", special="markers-due", tags=("due",)),
-        _production_case("PROD-MARKERS-TODAY", fixture="combined-today", special="markers-today", tags=("today",)),
-        _production_case("PROD-MARKERS-EVENT", fixture="selected-event", selected="2026-08-27", special="markers-event", tags=("event",)),
-        _production_case("PROD-LEGEND-NO-DUE", special="no-due", tags=("conditional_legend",)),
-        _production_case("PROD-LEGEND-NO-EVENT", special="no-event", tags=("conditional_legend", "conditional_summary")),
-        _production_case("PROD-BG-WHITE", mode="light", special="host-white", tags=("host_background",)),
-        _production_case("PROD-BG-BLACK", special="host-black", tags=("host_background",)),
-        _production_case("PROD-BG-PURPLE", special="host-purple", tags=("host_background",)),
-        _production_case("PROD-BG-IMAGE", special="host-image", tags=("host_background",)),
-        _production_case("PROD-SECTIONS-BELOW", layout="intermediate", container_width=720, special="sections-below", tags=("sections_below_calendar",)),
-        _production_case("PROD-BOTTOM-CLEARANCE", layout="intermediate", container_width=720, special="scroll-bottom", tags=("measured_bottom_clearance",)),
-        _production_case("PROD-VERSE-EXACT", mode="light", special="verse-exact", tags=("exact_verse_font_size_color",)),
-        _production_case("PROD-STATS-WIDE-MONTH", fixture="native-statistics", special="statistics-accuracy", tags=("statistics_accuracy", "wide_2x2", "month")),
-        _production_case("PROD-STATS-WIDE-YEAR", view="year", fixture="native-statistics", special="statistics-accuracy", tags=("statistics_accuracy", "wide_2x2", "year")),
-        _production_case("PROD-STATS-INTERMEDIATE", fixture="native-statistics", layout="intermediate", container_width=720, special="statistics-accuracy", tags=("statistics_accuracy", "intermediate")),
-        _production_case("PROD-STATS-NARROW", fixture="native-statistics", layout="narrow", container_width=390, special="statistics-accuracy", tags=("statistics_accuracy", "narrow_stacked")),
-    ))
+    for planned in CAPTURE_PLAN.cases(
+        CAPTURE_PROFILE,
+        stage="initial",
+        component="production",
+        include_ids=REQUESTED_CAPTURE_IDS,
+    ):
+        case = _production_case(
+            str(planned["id"]),
+            theme=str(planned.get("theme", "Graphite")),
+            palette=str(planned.get("palette", "Plum")),
+            mode=str(planned.get("mode", "dark")),
+            view=str(planned.get("view", "month")),
+            fixture=str(planned.get("fixture", "populated")),
+            selected=str(planned.get("selected", base.REFERENCE_DATE)),
+            special=str(planned.get("special", "")),
+            layout=str(planned.get("layout", "wide")),
+            container_width=planned.get("container_width"),
+            tags=tuple(str(value) for value in planned.get("tags", ())),
+        )
+        case["week_start"] = int(planned.get("week_start", 0))
+        case["capture_family"] = str(planned["family"])
+        case["sheet_group"] = str(planned["sheet_group"])
+        cases.append(case)
     return cases
 
 
 def _restart_case(_observed_view: str = "year") -> dict[str, Any]:
-    return _production_case(
-        "PROD-RESTART-PERSISTENCE",
-        theme="Graphite",
-        palette="Plum",
-        mode="dark",
-        view="year",
-        fixture="native-statistics",
-        special="restart",
-        tags=("restart", "no_waiver", "production_persistence", "statistics_accuracy"),
+    planned_cases = CAPTURE_PLAN.cases(
+        CAPTURE_PROFILE,
+        stage="restart",
+        component="production",
+        include_ids=REQUESTED_CAPTURE_IDS,
     )
+    base._require(len(planned_cases) == 1, "production restart plan must contain one frame")
+    planned = planned_cases[0]
+    case = _production_case(
+        str(planned["id"]),
+        theme=str(planned.get("theme", "Graphite")),
+        palette=str(planned.get("palette", "Plum")),
+        mode=str(planned.get("mode", "dark")),
+        view=str(planned.get("view", "year")),
+        fixture=str(planned.get("fixture", "native-statistics")),
+        selected=str(planned.get("selected", base.REFERENCE_DATE)),
+        special=str(planned.get("special", "restart")),
+        layout=str(planned.get("layout", "wide")),
+        container_width=planned.get("container_width"),
+        tags=tuple(str(value) for value in planned.get("tags", ())),
+    )
+    case["capture_family"] = str(planned["family"])
+    case["sheet_group"] = str(planned["sheet_group"])
+    return case
 
 
 _base_config_for = base._config_for
@@ -247,7 +236,7 @@ _base_config_for = base._config_for
 def _config_for(case: Mapping[str, Any]) -> dict[str, Any]:
     config = _base_config_for(case)
     theme = str(case.get("theme", "Graphite"))
-    palette = str(case.get("palette", PALETTES[theme][1][0]))
+    palette = str(case.get("palette", "Plum"))
     config["heatmap"]["presets_by_theme"][theme] = palette
     special = str(case.get("special", ""))
     if special in {"no-due", "markers-completion", "markers-today", "markers-event"}:
@@ -319,7 +308,7 @@ def _prepare_native_statistics_fixture() -> None:
             note = mw.col.new_note(notetype)
             base._require(len(note.fields) >= 2, "native statistics note type needs two fields")
             note.fields[0] = "HDO native statistics card {:02d}".format(index + 1)
-            note.fields[1] = "Home Dashboard 1.8.6 exact-package statistics QA"
+            note.fields[1] = "Home Dashboard {} exact-package statistics QA".format(RELEASE)
             requests.append(base.AddNoteRequest(note=note, deck_id=deck_id))
         mw.col.add_notes(requests)
         card_ids = [int(value) for value in mw.col.db.list(
@@ -750,54 +739,28 @@ _settings_started = False
 
 
 def _settings_page_cases() -> list[dict[str, Any]]:
-    result: list[dict[str, Any]] = []
-    pages = (
-        ("DASHBOARD", "dashboard"),
-        ("EVENTS", "events"),
-        ("BIBLE", "bible_verse"),
-        ("ABOUT", "about_support"),
-    )
-    for page_id, page in pages:
-        for width_id, width in (("1040", 1040), ("1200", 1200), ("FULL", "full")):
-            for font_percent in (100, 150):
-                result.append({
-                    "id": "SET-PAGE-{}-{}-{}".format(page_id, width_id, font_percent),
-                    "page": page,
-                    "width": width,
-                    "font_percent": font_percent,
-                    "special": "page-axis",
-                })
-    return result
+    return [
+        case
+        for case in CAPTURE_PLAN.cases(
+            CAPTURE_PROFILE,
+            stage="initial",
+            component="settings",
+            include_ids=REQUESTED_CAPTURE_IDS,
+        )
+        if case["family"] == "settings-pages"
+    ]
 
 
 def _settings_contract_cases() -> list[dict[str, Any]]:
-    page_by_id = {
-        "SET-EVENTS-EMPTY": "events",
-        "SET-EVENTS-POPULATED": "events",
-        "SET-EVENTS-SELECTED": "events",
-        "SET-EVENTS-SEARCHED": "events",
-        "SET-EVENTS-ARCHIVED": "events",
-        "SET-BIBLE-SHORT": "bible_verse",
-        "SET-BIBLE-LONG": "bible_verse",
-        "SET-BIBLE-CUSTOM": "bible_verse",
-        "SET-ABOUT-BOTTOM": "about_support",
-        "SET-DIRTY": "dashboard",
-        "SET-REVERT": "dashboard",
-        "SET-SAVE-SUCCESS": "dashboard",
-        "SET-SAVE-ERROR": "dashboard",
-        "SET-LEGACY-ROUTE": "calendar",
-        "SET-WINDOW-STANDARD": "dashboard",
-        "SET-WINDOW-CLAMP": "dashboard",
-    }
     return [
-        {
-            "id": case_id,
-            "page": page_by_id[case_id],
-            "width": 1200,
-            "font_percent": 100,
-            "special": case_id.removeprefix("SET-").casefold(),
-        }
-        for case_id in SETTINGS_CONTRACT_IDS
+        case
+        for case in CAPTURE_PLAN.cases(
+            CAPTURE_PROFILE,
+            stage="initial",
+            component="settings",
+            include_ids=REQUESTED_CAPTURE_IDS,
+        )
+        if case["family"] == "settings-contract"
     ]
 
 
@@ -1144,13 +1107,65 @@ def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Ma
         )
         method = "QScreen.grabWindow-screen-client-crop"
 
+    def composite_standard_context() -> Any:
+        """Retain the modal context when macOS cannot sample another Space."""
+
+        parent = mw.grab()
+        settings = dialog.grab()
+        base._require(not parent.isNull(), "native Anki fallback capture is null")
+        base._require(not settings.isNull(), "native Settings fallback capture is null")
+        dpr = max(
+            1.0,
+            float(parent.devicePixelRatio()),
+            float(settings.devicePixelRatio()),
+        )
+        composite = QPixmap(
+            max(1, round(expected_width * dpr)),
+            max(1, round(expected_height * dpr)),
+        )
+        composite.setDevicePixelRatio(dpr)
+        composite.fill(Qt.GlobalColor.transparent)
+        frame_origin = frame.topLeft()
+        parent_origin = mw.mapToGlobal(QPoint(0, 0)) - frame_origin
+        settings_origin = dialog.mapToGlobal(QPoint(0, 0)) - frame_origin
+        settings_width = settings.width() / max(1.0, float(settings.devicePixelRatio()))
+        settings_height = settings.height() / max(1.0, float(settings.devicePixelRatio()))
+        visible_width = (
+            min(expected_width, settings_origin.x() + settings_width)
+            - max(0, settings_origin.x())
+        )
+        visible_height = (
+            min(expected_height, settings_origin.y() + settings_height)
+            - max(0, settings_origin.y())
+        )
+        base._require(
+            visible_width > 0 and visible_height > 0,
+            "standard Settings fallback does not intersect the Anki window",
+        )
+        painter = QPainter(composite)
+        try:
+            painter.drawPixmap(parent_origin, parent)
+            painter.drawPixmap(settings_origin, settings)
+        finally:
+            painter.end()
+        return composite
+
     def logical_size(value: Any) -> tuple[float, float]:
         ratio = max(1.0, float(value.devicePixelRatio()))
         return value.width() / ratio, value.height() / ratio
 
     logical_width, logical_height = (0.0, 0.0) if pixmap.isNull() else logical_size(pixmap)
     color_count = 0 if pixmap.isNull() else base._sample_color_count(pixmap)
-    if not capture_parent_with_dialog and (
+    if capture_parent_with_dialog and (
+        pixmap.isNull()
+        or color_count < 3
+        or abs(logical_width - expected_width) > 4
+        or abs(logical_height - expected_height) > 4
+    ):
+        pixmap = composite_standard_context()
+        color_count = base._sample_color_count(pixmap)
+        method = "QWidget.grab-composited-anki-with-standard-settings-dialog-fallback"
+    elif not capture_parent_with_dialog and (
         pixmap.isNull()
         or color_count < 3
         or abs(logical_width - expected_width) > 4
@@ -1260,15 +1275,23 @@ def _start_settings() -> None:
         _settings_index = 0
         if base.STAGE == "initial":
             _settings_cases = _settings_page_cases() + _settings_contract_cases()
-            base._require(len(_settings_cases) == 40, "Settings matrix must contain 40 initial frames")
         else:
-            _settings_cases = [{
-                "id": "SET-RESTART-PERSISTENCE",
-                "page": "dashboard",
-                "width": 1160,
-                "font_percent": 100,
-                "special": "restart-persistence",
-            }]
+            _settings_cases = CAPTURE_PLAN.cases(
+                CAPTURE_PROFILE,
+                stage="restart",
+                component="settings",
+                include_ids=REQUESTED_CAPTURE_IDS,
+            )
+        expected_count = len(CAPTURE_PLAN.ids(
+            CAPTURE_PROFILE,
+            stage=base.STAGE,
+            component="settings",
+            include_ids=REQUESTED_CAPTURE_IDS,
+        ))
+        base._require(
+            len(_settings_cases) == expected_count,
+            "Settings matrix differs from the resolved capture plan",
+        )
         base.REPORT["settings_matrix"] = {
             "case_count": len(_settings_cases),
             "case_ids": [case["id"] for case in _settings_cases],
@@ -1277,6 +1300,9 @@ def _start_settings() -> None:
             "window_standard_capture": "parented-resizable-application-modal-dialog-with-parent",
         }
         base._write_report()
+        if not _settings_cases:
+            _complete_stage()
+            return
         QTimer.singleShot(120, _next_settings_case)
     except Exception as exc:
         base._error("settings-matrix", exc)
@@ -1311,27 +1337,31 @@ def _complete_stage() -> None:
         comparison = base.REPORT.get("native_statistics_comparison", {})
         base._require(comparison.get("status") == "passed", "native statistics comparison did not pass")
         capture_ids = set(base.REPORT.get("captures", {}))
-        if base.STAGE == "initial" and CAPTURE_SCOPE == "full":
-            expected = {case["id"] for case in _build_production_cases()}
-            expected.update(case["id"] for case in _settings_page_cases())
-            expected.update(SETTINGS_CONTRACT_IDS)
-            base._require(len(expected) == 92, "initial contract does not derive 92 distinct frames")
-            base._require(capture_ids == expected, "initial native evidence matrix is incomplete")
+        expected = set(CAPTURE_PLAN.ids(
+            CAPTURE_PROFILE,
+            stage=base.STAGE,
+            include_ids=REQUESTED_CAPTURE_IDS,
+        ))
+        base._require(
+            capture_ids == expected,
+            "{} {} native evidence matrix differs from the resolved capture plan".format(
+                CAPTURE_PROFILE, base.STAGE
+            ),
+        )
+        expected_statistics = set(CAPTURE_PLAN.tagged_ids(
+            "statistics_accuracy",
+            CAPTURE_PROFILE,
+            stage=base.STAGE,
+        ))
+        if REQUESTED_CAPTURE_IDS is not None:
+            expected_statistics.intersection_update(REQUESTED_CAPTURE_IDS)
+        if expected_statistics:
             base._require(
-                set(base.REPORT.get("statistics_responsive_parity", {})) == set(STATISTICS_CAPTURE_IDS),
+                set(base.REPORT.get("statistics_responsive_parity", {})) == expected_statistics,
                 "production statistics responsive parity is incomplete",
             )
+        if base.STAGE == "initial":
             _persist_restart_state()
-        elif base.STAGE == "restart" and CAPTURE_SCOPE == "full":
-            base._require(capture_ids == {"PROD-RESTART-PERSISTENCE", "SET-RESTART-PERSISTENCE"}, "restart evidence matrix is incomplete")
-        elif base.STAGE == "initial":
-            expected = {case["id"] for case in _settings_page_cases()}
-            expected.update(SETTINGS_CONTRACT_IDS)
-            base._require(len(expected) == 40, "Settings-only contract does not derive 40 distinct frames")
-            base._require(capture_ids == expected, "Settings-only initial evidence matrix is incomplete")
-            _persist_restart_state()
-        else:
-            base._require(capture_ids == {"SET-RESTART-PERSISTENCE"}, "Settings-only restart evidence is incomplete")
 
         if base.STAGE == "restart":
             config = normalize_config(mw.addonManager.getConfig(base._controller.package))
@@ -1344,6 +1374,13 @@ def _complete_stage() -> None:
                 "settings_window_policy": "resizable-and-recomputed-from-current-screen",
                 "settings_state": "clean",
             }
+        base.REPORT["capture_plan"]["resolved_stage_capture_ids"] = list(
+            CAPTURE_PLAN.ids(
+                CAPTURE_PROFILE,
+                stage=base.STAGE,
+                include_ids=REQUESTED_CAPTURE_IDS,
+            )
+        )
         base.REPORT["status"] = "passed"
         base._write_report()
         QTimer.singleShot(450, QApplication.instance().quit)
@@ -1361,11 +1398,18 @@ def _finish_production_stage() -> None:
 def _start_case_matrix() -> None:
     try:
         _prepare_native_statistics_fixture()
-        if CAPTURE_SCOPE == "settings":
-            base.REPORT["capture_scope"] = "settings-only"
+        planned_production = CAPTURE_PLAN.cases(
+            CAPTURE_PROFILE,
+            stage=base.STAGE,
+            component="production",
+            include_ids=REQUESTED_CAPTURE_IDS,
+        )
+        if not planned_production:
+            base.REPORT["capture_scope"] = "{}-no-production-frames".format(CAPTURE_PROFILE)
             base.REPORT["production_matrix"] = {
                 "case_count": 0,
-                "capture_policy": "reuse previously accepted dashboard captures",
+                "case_ids": [],
+                "capture_policy": "omitted by the resolved capture profile",
                 "runtime_smoke": "exact-package scheduler and production DOM smoke still required",
             }
             base._write_report()
@@ -1379,13 +1423,18 @@ def _start_case_matrix() -> None:
             base._cases = [_restart_case("year")]
         else:
             base._cases = _build_production_cases()
-            base._require(len(base._cases) == 52, "production matrix must contain 52 initial frames")
+        base._require(
+            len(base._cases) == len(planned_production),
+            "production matrix differs from the resolved capture plan",
+        )
         base._case_index = 0
         base.REPORT["production_matrix"] = {
             "case_count": len(base._cases),
             "case_ids": [case["id"] for case in base._cases],
             "host": "actual isolated Anki main Deck Browser",
             "renderer": "exact installed production controller and renderer",
+            "capture_profile": CAPTURE_PROFILE,
+            "capture_plan_sha256": CAPTURE_PLAN.sha256,
         }
         base._write_report()
         QTimer.singleShot(200, base._next_case)

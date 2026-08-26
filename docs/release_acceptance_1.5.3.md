@@ -1,6 +1,11 @@
 # Home Dashboard - Overhaul 1.5.3 release acceptance
 
-Status: **ACCEPTED — automated release candidate**
+Status: **HISTORICAL RECORD — automated release candidate**
+
+The raw 1.5.3 capture bundle and packaged artifact were removed from the
+current tree on 2026-08-25 after newer complete evidence superseded them. The
+checksums and results below are retained for traceability, not current release
+acceptance.
 
 Version 1.5.3 is the sole accepted release candidate. It replaces the rejected
 1.5.2 package, whose exact-package Insights run exposed a first-load webview
@@ -10,8 +15,8 @@ is not represented as complete.
 
 ## Frozen artifact
 
-- Archive: [`home-dashboard-overhaul-1.5.3.ankiaddon`](../home_dashboard_overhaul/qa/live-ui-acceptance-1.5.3-release-2026-08-15/home-dashboard-overhaul-1.5.3.ankiaddon)
-- Checksum sidecar: [`home-dashboard-overhaul-1.5.3.ankiaddon.sha256`](../home_dashboard_overhaul/qa/live-ui-acceptance-1.5.3-release-2026-08-15/home-dashboard-overhaul-1.5.3.ankiaddon.sha256)
+- Archive: `home-dashboard-overhaul-1.5.3.ankiaddon` (no longer retained in the current tree)
+- Checksum sidecar: `home-dashboard-overhaul-1.5.3.ankiaddon.sha256` (no longer retained in the current tree)
 - SHA-256: `68705bc06dabd277130600f14db0c8dc907dc3b39177778a784aaaa275d01dee`
 - Archive size: 126,322 bytes
 - Contents: 23 allowlisted files; configuration schema 3; package version 1.5.3
@@ -45,11 +50,13 @@ unchanged before and after the full run.
 | Settings | 20 initial + 1 restart | Passed | Every page, desktop and minimum sizes, event and verse editors, accessibility geometry, dependencies, conflicts, staged changes, and persistence |
 | Insights | 11 initial + 1 restart | Passed | Current/past/future and empty states, exact copy/actions, responsive and scaled layouts, DOM/backend agreement, reloads, and restart |
 
-The canonical evidence bundle contains all 61 raw captures, 20 overview/detail
-contact sheets, the exact archive and sidecar, and three sanitized reports:
+The superseded evidence bundle contained all 61 raw captures, 20
+overview/detail contact sheets, the exact archive and sidecar, and three
+sanitized reports. Those files are no longer retained in the current tree;
+their recorded identifiers were:
 
-- [`live-ui-acceptance-1.5.3-release-2026-08-15/`](../home_dashboard_overhaul/qa/live-ui-acceptance-1.5.3-release-2026-08-15/)
-- Machine-readable index: [`release-evidence.json`](../home_dashboard_overhaul/qa/live-ui-acceptance-1.5.3-release-2026-08-15/release-evidence.json), SHA-256 `8a9b45c96ac64f3fe80344a97d424bb54785c4c8b9109ed87e997aa25f66a297`
+- Bundle: `live-ui-acceptance-1.5.3-release-2026-08-15/`
+- Machine-readable index: `release-evidence.json`, SHA-256 `8a9b45c96ac64f3fe80344a97d424bb54785c4c8b9109ed87e997aa25f66a297`
 - Calendar report SHA-256: `e09a995fac90f5037247bbeafd7f7df491d668392249fb760ed1b8238e4ba822`
 - Settings report SHA-256: `759899992e0ee4b7d32d148b3a53274aeb8e58086b64fbd4df0f100027dc4775`
 - Insights report SHA-256: `039a95c2508f7d5cda1d009671a9184fa120b935c466cf7e7bc100d07fdb05dd`
@@ -72,11 +79,10 @@ contract, package parity, restart state, and identity results.
   run; automated semantics, keyboard, focus, sizing, contrast, and containment
   checks passed.
 
-The archive is accepted for distribution. Repository publication is a separate
-operational boundary and does not change this artifact acceptance. The
-publishable tree intentionally excludes raw disposable-launch identities and
-superseded machine-local QA records; the sanitized canonical bundle above is the
-retained release evidence.
+At the time of this record, the archive was accepted for distribution.
+Repository publication was a separate operational boundary. The current tree
+retains only the newest complete 1.8.6 evidence set; this 1.5.3 bundle remains
+available through Git history.
 
 The rejected 1.5.2 record remains available for traceability in
 [`release_acceptance_1.5.2.md`](release_acceptance_1.5.2.md).

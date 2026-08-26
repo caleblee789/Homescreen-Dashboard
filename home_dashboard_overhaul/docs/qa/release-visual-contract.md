@@ -2,7 +2,7 @@
 
 Status: Home Screen Dashboard 1.8.6 canonical UI release contract.
 
-## Authority and retained history
+## Authority and retained evidence
 
 The current machine-readable authorities are:
 
@@ -11,9 +11,10 @@ The current machine-readable authorities are:
 - `qa/visual_regression_matrix_1_8_6.json`
 - `qa/capture_evidence_manifest_1_8_6.json`
 
-The supplied 3420×2214 screenshot and complete 1.8.0 through 1.8.5 packages,
-reports, captures, and contact sheets are immutable calibration history. They
-must not be overwritten or represented as new 1.8.6 evidence.
+The repository retains only the newest complete capture set at
+`qa/release-evidence-1.8.6-2026-08-25`. Older capture directories were removed
+after the replacement passed; they remain traceable in Git history and must not
+be represented as current 1.8.6 evidence.
 
 ## Production composition
 
