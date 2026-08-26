@@ -37,11 +37,17 @@ Browser or statistics classes.
   narrow shells, and hard restart are contractually checked
   against identical values from the same collection snapshot.
 - Settings keeps the compact visual workflow used by conventional add-on
-  settings in a normal parented dialog. Immediately before opening, it centers
-  once over Anki and clamps the complete dialog to Anki's assigned screen; it
-  does not save or reapply coordinates, set window flags, hide Anki's backing
-  views, force focus, or contain a WebEngine preview surface. Sidebar and
-  Events-tab changes only swap child widgets in the existing stack.
+  settings in a normal parented dialog. It does not query a screen or call
+  `move()` before opening; Qt therefore retains its parent-aware `QDialog`
+  placement instead of treating Settings as an explicitly positioned desktop
+  window. It also does not save coordinates, set window flags, hide Anki's
+  backing views, force focus, or contain a WebEngine preview surface. Sidebar
+  and Events-tab changes only swap child widgets in the existing stack.
+- Responsive Settings grids parent every new field to its card before showing
+  or visibility-filtering it. Dynamic heatmap and verse badges likewise have
+  explicit child parents before visibility changes. Generic staged-setting
+  synchronization no longer destroys and rebuilds the heatmap-card tree, while
+  actual theme and color-mode changes still refresh those previews.
 
 - Settings uses one native Qt composition at every size: a compact header,
   152 px text rail, one active page scroller, and a stable final-row footer.
@@ -67,7 +73,7 @@ The local 1.8.7 candidate is built as
 `home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon` for
 installation through **Tools → Add-ons → Install from file**. Its checksum is
 written alongside the archive: SHA-256
-`a37d2a3366438a48b1586f2d59e6947fadbc6bed6675e90620647f2ee804c2dc`.
+`09d5dbbfae01d13b0a05798a756447c52ac347a670bf884bcaab868d60cc5376`.
 This candidate remains local until the native macOS full-screen Space check
 passes. Disable any legacy source add-ons named by the activation card.
 

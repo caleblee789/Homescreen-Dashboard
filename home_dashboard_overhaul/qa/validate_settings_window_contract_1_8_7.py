@@ -23,6 +23,18 @@ def main() -> int:
     dialog = settings.split("class SettingsDialog(QDialog):", 1)[1].split(
         "def _object_name", 1
     )[0]
+    grid_mount = dialog.split("    def _place_grid_widgets(", 1)[1].split(
+        "    def _reflow_compact_grids", 1
+    )[0]
+    heatmap_refresh = dialog.split(
+        "    def _refresh_heatmap_preset_cards(", 1
+    )[1].split("    def _update_color_swatch", 1)[0]
+    apply_theme = dialog.split("    def _apply_theme(", 1)[1].split(
+        "    def _update_forecast_range_visibility", 1
+    )[0]
+    verse_row = settings.split("class VerseRowWidget(QWidget):", 1)[1].split(
+        "class ContextualActionGroup", 1
+    )[0]
     opener = controller.split("    def open_settings(", 1)[1].split(
         "    def request_settings_open", 1
     )[0]
@@ -30,10 +42,6 @@ def main() -> int:
         "    def save_config", 1
     )[0]
     menu = settings.split("def install_settings_menu", 1)[1]
-    placement = controller.split("def _clamped_settings_origin(", 1)[1].split(
-        "class DashboardController:", 1
-    )[0]
-
     errors = []
     if manifest.get("human_version") != contract.get("release"):
         errors.append("manifest and Settings window contract versions differ")
@@ -57,16 +65,67 @@ def main() -> int:
         or contract.get("resizable") is not True
         or contract.get("default_window_flags") is not True
         or contract.get("initial_placement")
-        != "one pre-exec parent-centered move clamped to mw.screen().availableGeometry()"
+        != "Qt parent-aware QDialog placement at exec()"
         or contract.get("screen_geometry_queries")
-        != "mw.screen().availableGeometry() only"
+        != "none for the primary Settings dialog"
+        or contract.get("pre_exec_move") is not False
         or contract.get("primary_screen_fallback") is not False
         or contract.get("reposition_after_open") is not False
         or contract.get("saved_geometry") is not False
+        or contract.get("initial_grid_mount")
+        != "parent every new field to its Settings card before showing or visibility filtering"
+        or contract.get("temporary_field_windows") is not False
+        or contract.get("dynamic_badge_mount")
+        != "parent heatmap and verse badges before visibility changes"
+        or contract.get("generic_theme_sync_rebuilds_heatmap") is not False
         or contract.get("programmatic_lifecycle_focus") is not False
         or contract.get("retained_dialog_object") is not False
     ):
         errors.append("focused contract does not require the native parity dialog")
+
+    for marker in (
+        "host = grid.parentWidget()",
+        "widget.setParent(host)",
+        "widget.show()",
+        "if not widget.isHidden():",
+    ):
+        if marker not in grid_mount:
+            errors.append("safe initial grid mount is missing: {}".format(marker))
+    if all(
+        marker in grid_mount
+        for marker in (
+            "widget.setParent(host)",
+            "widget.show()",
+            "if not widget.isHidden():",
+        )
+    ) and not (
+        grid_mount.index("widget.setParent(host)")
+        < grid_mount.index("widget.show()")
+        < grid_mount.index("if not widget.isHidden():")
+    ):
+        errors.append("grid fields must be parented before show and visibility filtering")
+
+    heatmap_markers = (
+        'selected_indicator = QLabel("✓", button)',
+        "swatches.addWidget(selected_indicator)",
+        "selected_indicator.setVisible(preset_name == selected)",
+    )
+    if not all(marker in heatmap_refresh for marker in heatmap_markers):
+        errors.append("heatmap indicator is not explicitly parented before visibility")
+    elif not (
+        heatmap_refresh.index(heatmap_markers[0])
+        < heatmap_refresh.index(heatmap_markers[1])
+        < heatmap_refresh.index(heatmap_markers[2])
+    ):
+        errors.append("heatmap indicator visibility precedes child mounting")
+    for marker in (
+        'self.current_badge = QLabel("Current", self)',
+        'self.selected_badge = QLabel("Selected", self)',
+    ):
+        if marker not in verse_row:
+            errors.append("verse badge is missing an explicit row parent: {}".format(marker))
+    if "self._refresh_heatmap_preset_cards()" in apply_theme:
+        errors.append("generic theme synchronization still rebuilds heatmap cards")
 
     for marker in (
         "super().__init__(parent)",
@@ -95,6 +154,9 @@ def main() -> int:
         "setWindowModality",
         "setModal(",
         "setWindowFlags",
+        "super().__init__(parent,",
+        "Qt.WindowType.Window",
+        "Qt.WindowType.CustomizeWindowHint",
         "activateWindow()",
         "raise_()",
         "setGeometry(",
@@ -124,7 +186,6 @@ def main() -> int:
         "from .settings import SettingsDialog",
         "dialog = SettingsDialog(",
         "            mw,",
-        "_place_settings_dialog(dialog, mw)",
         "dialog.exec()",
     ):
         if marker not in opener:
@@ -137,33 +198,22 @@ def main() -> int:
         "dialog.activateWindow()",
         "centralwidget",
         "host_layout",
+        "dialog.move(",
+        "parent.screen()",
+        "availableGeometry()",
     ):
         if marker in opener:
             errors.append("native opener retains custom behavior: {}".format(marker))
-    if opener.index("_place_settings_dialog(dialog, mw)") > opener.index("dialog.exec()"):
-        errors.append("screen-safe placement must occur immediately before exec")
-
     for marker in (
+        "def _clamped_settings_origin(",
+        "def _place_settings_dialog(",
+        "def _report_settings_placement_failure(",
+        "dialog.move(",
         "parent.screen()",
         "screen.availableGeometry()",
-        "dialog.move(*origin)",
-        "_report_settings_placement_failure(mw)",
     ):
-        if marker not in controller:
-            errors.append("screen-safe placement is missing: {}".format(marker))
-    if placement.count("dialog.move(") != 1:
-        errors.append("Settings placement must move the dialog exactly once")
-    for marker in (
-        "QApplication.primaryScreen",
-        "dialog.screen()",
-        "setScreen(",
-        "showEvent",
-        "activateWindow()",
-        "raise_()",
-        "QTimer",
-    ):
-        if marker in placement:
-            errors.append("screen-safe placement retains forbidden behavior: {}".format(marker))
+        if marker in controller:
+            errors.append("retired pre-exec placement remains: {}".format(marker))
 
     if "action.triggered.connect(controller.open_settings)" not in menu:
         errors.append("native menu does not open Settings directly")
@@ -201,7 +251,7 @@ def main() -> int:
         for error in errors:
             print("ERROR: {}".format(error))
         return 1
-    print("Settings window contract: PASS (1.8.7, screen-safe native QDialog)")
+    print("Settings window contract: PASS (1.8.7, Qt-owned parented QDialog)")
     return 0
 
 

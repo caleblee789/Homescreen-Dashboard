@@ -106,12 +106,11 @@ excludes buried backlog/work due in the active scheduler day.
 
 Settings is a normal movable `QDialog(mw)` matching Progress Bar and
 PronounceIt. It starts at 680×620, has a 680×560 minimum, remains resizable,
-uses default window flags, and opens through a local `exec()` call. One move
-immediately before `exec()` centers it over Anki and clamps the full rectangle
-to `mw.screen().availableGeometry()`. It never saves coordinates, repositions
-after opening, falls back to another screen, hides Anki's backing views, forces
-lifecycle focus, or contains an `AnkiWebView`. It uses one compact header,
-152 px rail, active-page scroller, and final-row footer.
+uses default window flags, and opens through a local `exec()` call. It performs
+no screen query or pre-`exec()` move, leaving parent-aware placement to Qt. It
+never saves coordinates, repositions after opening, hides Anki's backing
+views, forces lifecycle focus, or contains an `AnkiWebView`. It uses one
+compact header, 152 px rail, active-page scroller, and final-row footer.
 
 Settings colors derive only from Anki's light/dark appearance; dashboard themes
 affect swatches and production rendering. Staged display, event, heatmap, and

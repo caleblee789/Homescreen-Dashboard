@@ -4,16 +4,25 @@
 
 ## 1.8.7 — 2026-08-25
 
-- Corrected the full-screen macOS Space transition caused when Qt centered the
-  680×620 dialog at `(-6, 41)` over a 667×570 Anki window. Settings now performs
-  one pre-`exec()` move that clamps the complete rectangle to Anki's assigned
-  screen, producing `(0, 41)` for the reproduced geometry.
-- Kept placement screen-safe and fail-closed: it queries only
-  `mw.screen().availableGeometry()`, never falls back to the primary screen,
-  and does not save or reapply coordinates after opening.
+- Removed Dashboard's pre-`exec()` screen query and `dialog.move()`. Explicitly
+  moving the dialog marked it as already positioned before Qt's normal
+  parent-aware `QDialog` placement ran, allowing macOS to associate it with a
+  desktop Space instead of Anki's active full-screen Space.
+- Removed the experimental explicit `Qt.Window`/full-screen-auxiliary flags.
+  Settings now leaves both native window classification and initial placement
+  to the same default `QDialog(mw)` path used by Progress Bar and PronounceIt.
 - Matched Progress Bar and PronounceIt by restoring a normal movable,
   resizable `QDialog(mw)` with default flags, a 680×620 initial size, a
   680×560 minimum, and a local `exec()` lifetime.
+- Fixed compact grid mounting that left initial Theme, Color mode, scale,
+  Bible, and palette fields absent. New field wrappers are now adopted by
+  their Settings card before they are shown or visibility-filtered.
+- Fixed the remaining dynamic-visibility path exercised during opening and
+  ordinary setting changes. Heatmap selection indicators and saved-verse
+  badges now have explicit child parents before `setVisible()`, and generic
+  draft synchronization no longer deletes and rebuilds the heatmap-card tree.
+  Theme, color-mode, and configuration-load paths retain their explicit
+  preview refresh.
 - Removed the central workspace, backing-view hiding, focus proxy/retries and
   restoration, application shortcut filter, retained panel object, and
   menu-`aboutToHide`/50 ms handoff that could activate Finder around

@@ -360,8 +360,7 @@ def validate_sources() -> dict:
             'command == "diagnostics"', 'self.request_settings_open("about_support")',
             "def _persist_settings_transaction", "_restore_optional_bytes",
             "from .settings import SettingsDialog", "dialog = SettingsDialog(",
-            "_place_settings_dialog(dialog, mw)", "dialog.exec()",
-            "parent.screen()", "screen.availableGeometry()", "dialog.move(*origin)",
+            "dialog.exec()",
             "self._settings_request_token",
             "QTimer.singleShot(0, lambda: self._open_pending_settings(token))",
         ),
@@ -388,6 +387,11 @@ def validate_sources() -> dict:
             "def reject(self) -> None:", "def closeEvent(self, event: Any) -> None:",
             "action.triggered.connect(controller.open_settings)",
             "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
+            "host = grid.parentWidget()", "widget.setParent(host)",
+            "widget.show()", "if not widget.isHidden():",
+            'selected_indicator = QLabel("✓", button)',
+            'self.current_badge = QLabel("Current", self)',
+            'self.selected_badge = QLabel("Selected", self)',
             "def _connect_change_signals(self) -> None:",
             "def _settings_changed(self, *_args: object) -> None:",
             'SettingsCard("Study calculations")', 'SettingsCard("Calendar display")',
@@ -435,30 +439,59 @@ def validate_sources() -> dict:
     dialog_source = sources["settings.py"].split(
         "class SettingsDialog(QDialog):", 1
     )[1].split("def _object_name", 1)[0]
-    placement_source = sources["controller.py"].split(
-        "def _clamped_settings_origin(", 1
-    )[1].split("class DashboardController:", 1)[0]
+    grid_mount_source = dialog_source.split(
+        "    def _place_grid_widgets(", 1
+    )[1].split("    def _reflow_compact_grids", 1)[0]
+    if not (
+        grid_mount_source.index("widget.setParent(host)")
+        < grid_mount_source.index("widget.show()")
+        < grid_mount_source.index("if not widget.isHidden():")
+    ):
+        raise ValueError(
+            "Settings grid fields must be parented before show and visibility filtering"
+        )
+    heatmap_refresh_source = dialog_source.split(
+        "    def _refresh_heatmap_preset_cards(", 1
+    )[1].split("    def _update_color_swatch", 1)[0]
+    heatmap_markers = (
+        'selected_indicator = QLabel("✓", button)',
+        "swatches.addWidget(selected_indicator)",
+        "selected_indicator.setVisible(preset_name == selected)",
+    )
+    if not (
+        heatmap_refresh_source.index(heatmap_markers[0])
+        < heatmap_refresh_source.index(heatmap_markers[1])
+        < heatmap_refresh_source.index(heatmap_markers[2])
+    ):
+        raise ValueError(
+            "Settings heatmap indicator must be parented before visibility changes"
+        )
+    apply_theme_source = dialog_source.split("    def _apply_theme(", 1)[1].split(
+        "    def _update_forecast_range_visibility", 1
+    )[0]
+    if "self._refresh_heatmap_preset_cards()" in apply_theme_source:
+        raise ValueError("generic Settings synchronization must not rebuild heatmap cards")
     for forbidden in (
         "availableGeometry", "QApplication.primaryScreen", "clamp_window_size",
         "self.screen()", "self.move(", "setWindowModality", "setModal(",
         "def showEvent", "AnkiWebView", "QWebEngine", "raise_()",
         "setGeometry(", "setWindowFlags", "activateWindow()", "setFocus(",
-        "setFocusProxy(", "installEventFilter(self)",
+        "setFocusProxy(", "installEventFilter(self)", "super().__init__(parent,",
+        "Qt.WindowType.Window", "Qt.WindowType.CustomizeWindowHint",
     ):
         if forbidden in dialog_source:
             raise ValueError(
                 "Settings dialog retains custom lifecycle marker: {}".format(forbidden)
             )
 
-    if placement_source.count("dialog.move(") != 1:
-        raise ValueError("Settings placement must move the dialog exactly once")
     for forbidden in (
-        "QApplication.primaryScreen", "dialog.screen()", "setScreen(",
-        "def showEvent", "activateWindow()", "raise_()", "QTimer",
+        "def _clamped_settings_origin(", "def _place_settings_dialog(",
+        "def _report_settings_placement_failure(", "dialog.move(",
+        "parent.screen()", "screen.availableGeometry()",
     ):
-        if forbidden in placement_source:
+        if forbidden in sources["controller.py"]:
             raise ValueError(
-                "Settings placement retains forbidden lifecycle marker: {}".format(forbidden)
+                "retired pre-exec Settings placement remains: {}".format(forbidden)
             )
 
     save_tail = sources["settings.py"].split("    def _save(self) -> None:", 1)[1].split(
@@ -534,12 +567,16 @@ def validate_sources() -> dict:
         or settings_window_contract.get("resizable") is not True
         or settings_window_contract.get("default_window_flags") is not True
         or settings_window_contract.get("initial_placement")
-        != "one pre-exec parent-centered move clamped to mw.screen().availableGeometry()"
+        != "Qt parent-aware QDialog placement at exec()"
         or settings_window_contract.get("screen_geometry_queries")
-        != "mw.screen().availableGeometry() only"
+        != "none for the primary Settings dialog"
+        or settings_window_contract.get("pre_exec_move") is not False
         or settings_window_contract.get("primary_screen_fallback") is not False
         or settings_window_contract.get("reposition_after_open") is not False
         or settings_window_contract.get("saved_geometry") is not False
+        or settings_window_contract.get("dynamic_badge_mount")
+        != "parent heatmap and verse badges before visibility changes"
+        or settings_window_contract.get("generic_theme_sync_rebuilds_heatmap") is not False
         or settings_window_contract.get("programmatic_lifecycle_focus") is not False
         or settings_window_contract.get("retained_dialog_object") is not False
     ):

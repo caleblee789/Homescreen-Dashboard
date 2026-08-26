@@ -402,62 +402,18 @@ class ControllerCapabilityTests(unittest.TestCase):
                     "exam-42",
                 ),
             )
-            self.assertEqual(dialog.moves, [(0, 41)])
+            self.assertEqual(dialog.moves, [])
             self.assertEqual(dialog.exec_count, 1)
             self.assertEqual(FakeQTimer.pending, [])
 
-    def test_settings_origin_clamps_to_parent_screen_edges_and_negative_origins(self) -> None:
-        cases = (
-            (
-                FakeRect(0, 66, 667, 570),
-                FakeSize(680, 620),
-                FakeRect(0, 0, 1710, 1112),
-                (0, 41),
-            ),
-            (
-                FakeRect(100, 100, 1200, 800),
-                FakeSize(680, 620),
-                FakeRect(0, 0, 1710, 1112),
-                (360, 190),
-            ),
-            (
-                FakeRect(1600, 1000, 100, 100),
-                FakeSize(680, 620),
-                FakeRect(0, 0, 1710, 1112),
-                (1030, 492),
-            ),
-            (
-                FakeRect(600, -200, 100, 100),
-                FakeSize(680, 620),
-                FakeRect(0, 0, 1710, 1112),
-                (310, 0),
-            ),
-            (
-                FakeRect(-1710, 66, 667, 570),
-                FakeSize(680, 620),
-                FakeRect(-1710, 0, 1710, 1112),
-                (-1710, 41),
-            ),
-            (
-                FakeRect(0, 0, 0, 0),
-                FakeSize(680, 620),
-                FakeRect(0, 0, 1710, 1112),
-                (515, 246),
-            ),
-        )
-        for parent, dialog, screen, expected in cases:
-            with self.subTest(parent=(parent.x, parent.y), screen=(screen.x, screen.y)):
-                self.assertEqual(
-                    self.module._clamped_settings_origin(parent, dialog, screen),
-                    expected,
-                )
-
-    def test_settings_does_not_open_without_the_parent_screen(self) -> None:
+    def test_settings_open_does_not_query_or_move_against_the_parent_screen(self) -> None:
         FakeSettingsDialog.instances.clear()
         settings = ModuleType("home_dashboard_overhaul.settings")
         settings.SettingsDialog = FakeSettingsDialog
         original_screen = self.aqt.mw.screen
-        self.aqt.mw.screen = lambda: None
+        self.aqt.mw.screen = lambda: (_ for _ in ()).throw(
+            AssertionError("primary Settings must leave placement to Qt")
+        )
         try:
             with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
                 self.controller.open_settings()
@@ -466,16 +422,8 @@ class ControllerCapabilityTests(unittest.TestCase):
 
         dialog = FakeSettingsDialog.instances[-1]
         self.assertEqual(dialog.moves, [])
-        self.assertEqual(dialog.exec_count, 0)
-        self.assertEqual(
-            self.status_bar.messages,
-            [
-                (
-                    "Home Screen Dashboard settings could not open on Anki's current screen.",
-                    5000,
-                )
-            ],
-        )
+        self.assertEqual(dialog.exec_count, 1)
+        self.assertEqual(self.status_bar.messages, [])
 
     def test_profile_close_cancels_pending_bridge_dialog(self) -> None:
         FakeSettingsDialog.instances.clear()

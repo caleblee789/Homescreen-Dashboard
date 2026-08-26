@@ -1252,14 +1252,14 @@ class VerseRowWidget(QWidget):
         self.reference.setObjectName("VerseRowReference")
         self.reference.setTextFormat(Qt.TextFormat.PlainText)
         heading.addWidget(self.reference)
-        self.current_badge = QLabel("Current")
+        self.current_badge = QLabel("Current", self)
         self.current_badge.setObjectName("DataBadge")
-        self.current_badge.setVisible(current)
         heading.addWidget(self.current_badge)
-        self.selected_badge = QLabel("Selected")
+        self.current_badge.setVisible(current)
+        self.selected_badge = QLabel("Selected", self)
         self.selected_badge.setObjectName("DataBadge")
-        self.selected_badge.hide()
         heading.addWidget(self.selected_badge)
+        self.selected_badge.hide()
         heading.addStretch()
         self.excerpt = QLabel(excerpt)
         self.excerpt.setObjectName("VerseRowExcerpt")
@@ -3077,9 +3077,25 @@ class SettingsDialog(QDialog):
     ) -> None:
         while grid.count():
             grid.takeAt(0)
-        widgets = [widget for widget in widgets if not widget.isHidden()]
+        host = grid.parentWidget()
+        visible_widgets: List[QWidget] = []
+        for widget in widgets:
+            # A newly-created QWidget is hidden and parentless until a layout
+            # adopts it. Filtering on isHidden() first left every initial field
+            # parentless. A later setVisible(True) could therefore realize that
+            # field as a temporary top-level native window, which moves macOS
+            # out of Anki's full-screen Space. Mount new fields as children
+            # before showing or filtering them. Already-parented fields retain
+            # any intentional hidden state across subsequent reflows.
+            if widget.parentWidget() is None:
+                if host is None:
+                    continue
+                widget.setParent(host)
+                widget.show()
+            if not widget.isHidden():
+                visible_widgets.append(widget)
         columns = max(1, columns)
-        for index, widget in enumerate(widgets):
+        for index, widget in enumerate(visible_widgets):
             grid.addWidget(widget, index // columns, index % columns)
         for column in range(2):
             grid.setColumnStretch(column, 1 if column < columns else 0)
@@ -3225,10 +3241,10 @@ class SettingsDialog(QDialog):
                 )
                 swatches.addWidget(swatch)
             swatches.addStretch()
-            selected_indicator = QLabel("✓")
+            selected_indicator = QLabel("✓", button)
             selected_indicator.setAccessibleName("Selected")
-            selected_indicator.setVisible(preset_name == selected)
             swatches.addWidget(selected_indicator)
+            selected_indicator.setVisible(preset_name == selected)
             button.clicked.connect(
                 lambda _checked=False, name=preset_name: self._select_heatmap_preset(name)
             )
@@ -3294,7 +3310,6 @@ class SettingsDialog(QDialog):
         if self.styleSheet() != stylesheet:
             self.setStyleSheet(stylesheet)
         self._update_preset_swatch()
-        self._refresh_heatmap_preset_cards()
         self._update_color_swatch()
 
     def _update_forecast_range_visibility(self, *_args: object) -> None:

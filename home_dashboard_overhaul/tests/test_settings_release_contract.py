@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 import unittest
@@ -167,7 +168,6 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "dialog = SettingsDialog(",
             "            mw,",
             "            self,",
-            "_place_settings_dialog(dialog, mw)",
             "dialog.exec()",
         ):
             self.assertIn(marker, opener)
@@ -182,6 +182,9 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "dialog.deleteLater()",
             "dialog.raise_()",
             "dialog.activateWindow()",
+            "dialog.move(",
+            "parent.screen()",
+            "availableGeometry()",
         ):
             self.assertNotIn(forbidden_opening_marker, opener)
         dialog_source = self.settings.split("class SettingsDialog(QDialog):", 1)[1].split(
@@ -207,33 +210,19 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "installEventFilter(self)",
             "AnkiWebView",
             "QWebEngine",
+            "Qt.WindowType.Window",
+            "Qt.WindowType.CustomizeWindowHint",
         ):
             self.assertNotIn(forbidden_marker, dialog_source)
-        placement_source = self.controller.split(
-            "def _clamped_settings_origin(", 1
-        )[1].split("class DashboardController:", 1)[0]
-        for marker in (
+        for retired_placement_marker in (
+            "def _clamped_settings_origin(",
+            "def _place_settings_dialog(",
+            "def _report_settings_placement_failure(",
+            "dialog.move(",
             "parent.screen()",
             "screen.availableGeometry()",
-            "dialog.move(*origin)",
-            "return False",
         ):
-            self.assertIn(marker, placement_source)
-        self.assertEqual(placement_source.count("dialog.move("), 1)
-        for forbidden_marker in (
-            "QApplication.primaryScreen",
-            "dialog.screen()",
-            "setScreen(",
-            "showEvent",
-            "activateWindow()",
-            "raise_()",
-            "QTimer",
-        ):
-            self.assertNotIn(forbidden_marker, placement_source)
-        self.assertLess(
-            opener.index("_place_settings_dialog(dialog, mw)"),
-            opener.index("dialog.exec()"),
-        )
+            self.assertNotIn(retired_placement_marker, self.controller)
         self.assertNotIn("class SettingsWorkspace(QWidget):", self.settings)
         for retired_window_marker in (
             "Qt.WindowType.Tool",
@@ -254,14 +243,20 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertTrue(self.settings_window_contract["resizable"])
         self.assertEqual(
             self.settings_window_contract["initial_placement"],
-            "one pre-exec parent-centered move clamped to mw.screen().availableGeometry()",
+            "Qt parent-aware QDialog placement at exec()",
         )
         self.assertEqual(
             self.settings_window_contract["screen_geometry_queries"],
-            "mw.screen().availableGeometry() only",
+            "none for the primary Settings dialog",
         )
+        self.assertFalse(self.settings_window_contract["pre_exec_move"])
         self.assertFalse(self.settings_window_contract["primary_screen_fallback"])
         self.assertFalse(self.settings_window_contract["reposition_after_open"])
+        self.assertEqual(
+            self.settings_window_contract["initial_grid_mount"],
+            "parent every new field to its Settings card before showing or visibility filtering",
+        )
+        self.assertFalse(self.settings_window_contract["temporary_field_windows"])
         self.assertIn("scroll.setWidgetResizable(True)", dialog_source)
         self.assertIn(
             "scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
@@ -474,6 +469,166 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertIn("self.blur_field.setVisible(enabled)", source)
         self.assertNotIn("setValue", source)
 
+    def test_dynamic_badges_are_parented_before_visibility_changes(self) -> None:
+        verse_source = self.settings.split("class VerseRowWidget(QWidget):", 1)[1].split(
+            "class ContextualActionGroup(QWidget):", 1
+        )[0]
+        for name, label, visibility in (
+            ("current_badge", "Current", "self.current_badge.setVisible(current)"),
+            ("selected_badge", "Selected", "self.selected_badge.hide()"),
+        ):
+            creation = 'self.{} = QLabel("{}", self)'.format(name, label)
+            insertion = "heading.addWidget(self.{})".format(name)
+            self.assertIn(creation, verse_source)
+            self.assertLess(verse_source.index(creation), verse_source.index(insertion))
+            self.assertLess(verse_source.index(insertion), verse_source.index(visibility))
+
+        heatmap_source = self.settings.split(
+            "def _refresh_heatmap_preset_cards", 1
+        )[1].split("def _update_color_swatch", 1)[0]
+        indicator_creation = 'selected_indicator = QLabel("✓", button)'
+        indicator_insertion = "swatches.addWidget(selected_indicator)"
+        indicator_visibility = "selected_indicator.setVisible(preset_name == selected)"
+        self.assertIn(indicator_creation, heatmap_source)
+        self.assertLess(
+            heatmap_source.index(indicator_creation),
+            heatmap_source.index(indicator_insertion),
+        )
+        self.assertLess(
+            heatmap_source.index(indicator_insertion),
+            heatmap_source.index(indicator_visibility),
+        )
+
+    def test_heatmap_rebuilds_only_on_explicit_heatmap_paths(self) -> None:
+        apply_theme_source = self.settings.split("def _apply_theme", 1)[1].split(
+            "def _update_forecast_range_visibility", 1
+        )[0]
+        self.assertNotIn("_refresh_heatmap_preset_cards", apply_theme_source)
+        self.assertIn("self._update_preset_swatch()", apply_theme_source)
+        self.assertIn("self._update_color_swatch()", apply_theme_source)
+
+        appearance_source = self.settings.split("def _create_appearance_card", 1)[1].split(
+            "def _build_dashboard_page", 1
+        )[0]
+        self.assertIn(
+            "self.preset.currentIndexChanged.connect(self._dashboard_theme_changed)",
+            appearance_source,
+        )
+        self.assertIn(
+            "self.mode.connect_changed(self._refresh_heatmap_preset_cards)",
+            appearance_source,
+        )
+
+        theme_source = self.settings.split("def _dashboard_theme_changed", 1)[1].split(
+            "def _update_glass_controls", 1
+        )[0]
+        self.assertIn("self._refresh_heatmap_preset_cards()", theme_source)
+
+        config_source = self.settings.split("def _apply_config_to_widgets", 1)[1].split(
+            "def _walk_deck_items", 1
+        )[0]
+        self.assertIn("self._refresh_heatmap_preset_cards()", config_source)
+
+    def test_compact_grid_adopts_fields_before_visibility_filtering(self) -> None:
+        module = ast.parse(self.settings)
+        dialog = next(
+            node
+            for node in module.body
+            if isinstance(node, ast.ClassDef) and node.name == "SettingsDialog"
+        )
+        function = next(
+            node
+            for node in dialog.body
+            if isinstance(node, ast.FunctionDef) and node.name == "_place_grid_widgets"
+        )
+        function.decorator_list = []
+        function.returns = None
+        for argument in function.args.args:
+            argument.annotation = None
+        namespace: dict[str, object] = {}
+        exec(
+            compile(
+                ast.fix_missing_locations(
+                    ast.Module(body=[function], type_ignores=[])
+                ),
+                str(ROOT / "settings.py"),
+                "exec",
+            ),
+            namespace,
+        )
+        place_grid_widgets = namespace["_place_grid_widgets"]
+
+        class Field:
+            def __init__(self) -> None:
+                self.parent: object | None = None
+                self.hidden = True
+                self.show_calls = 0
+                self.was_shown_as_window = False
+
+            def parentWidget(self) -> object | None:
+                return self.parent
+
+            def setParent(self, parent: object) -> None:
+                self.parent = parent
+
+            def show(self) -> None:
+                self.show_calls += 1
+                self.was_shown_as_window = self.parent is None
+                self.hidden = False
+
+            def hide(self) -> None:
+                self.hidden = True
+
+            def isHidden(self) -> bool:
+                return self.hidden
+
+        class Grid:
+            def __init__(self, host: object) -> None:
+                self.host = host
+                self.widgets: list[Field] = []
+
+            def parentWidget(self) -> object:
+                return self.host
+
+            def count(self) -> int:
+                return len(self.widgets)
+
+            def takeAt(self, index: int) -> Field:
+                return self.widgets.pop(index)
+
+            def addWidget(self, widget: Field, _row: int, _column: int) -> None:
+                self.widgets.append(widget)
+
+            def setColumnStretch(self, _column: int, _stretch: int) -> None:
+                return
+
+            def invalidate(self) -> None:
+                return
+
+        host = object()
+        grid = Grid(host)
+        fields = [Field() for _ in range(4)]
+
+        place_grid_widgets(grid, fields, 2)
+
+        self.assertEqual(grid.widgets, fields)
+        for field in fields:
+            self.assertIs(field.parentWidget(), host)
+            self.assertEqual(field.show_calls, 1)
+            self.assertFalse(field.was_shown_as_window)
+
+        intentionally_hidden = fields[2]
+        intentionally_hidden.hide()
+        place_grid_widgets(grid, fields, 2)
+
+        self.assertTrue(intentionally_hidden.isHidden())
+        self.assertEqual(intentionally_hidden.show_calls, 1)
+        self.assertNotIn(intentionally_hidden, grid.widgets)
+        self.assertEqual(grid.widgets, [fields[0], fields[1], fields[3]])
+        for field in fields:
+            self.assertIs(field.parentWidget(), host)
+            self.assertFalse(field.was_shown_as_window)
+
     def test_event_manager_uses_two_line_rows_name_sort_and_main_scroller(self) -> None:
         for marker in (
             "class EventRowWidget(QWidget)",
@@ -494,8 +649,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
     def test_bible_library_uses_reference_excerpt_badges_and_incremental_rows(self) -> None:
         for marker in (
             "class VerseRowWidget(QWidget)",
-            'self.current_badge = QLabel("Current")',
-            'self.selected_badge = QLabel("Selected")',
+            'self.current_badge = QLabel("Current", self)',
+            'self.selected_badge = QLabel("Selected", self)',
             "split_quote_reference(quote)",
             "self._quote_render_limit = 100",
             "self._quote_render_limit += 100",

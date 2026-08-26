@@ -100,93 +100,6 @@ def _web_asset_url(package: str, filename: str) -> str:
     return "/_addons/{}/web/{}?v={}".format(package, filename, digest)
 
 
-def _clamped_settings_origin(
-    parent_geometry: Any,
-    dialog_size: Any,
-    available_geometry: Any,
-) -> Optional[Tuple[int, int]]:
-    """Return one screen-contained origin using Qt's inclusive QRect centers."""
-
-    try:
-        dialog_width = int(dialog_size.width())
-        dialog_height = int(dialog_size.height())
-        available_width = int(available_geometry.width())
-        available_height = int(available_geometry.height())
-        available_valid = bool(available_geometry.isValid())
-    except (AttributeError, TypeError, ValueError):
-        return None
-    if (
-        not available_valid
-        or dialog_width <= 0
-        or dialog_height <= 0
-        or dialog_width > available_width
-        or dialog_height > available_height
-    ):
-        return None
-
-    try:
-        parent_valid = bool(parent_geometry.isValid())
-        parent_valid = (
-            parent_valid
-            and int(parent_geometry.width()) > 0
-            and int(parent_geometry.height()) > 0
-        )
-    except (AttributeError, TypeError, ValueError):
-        parent_valid = False
-    reference = parent_geometry if parent_valid else available_geometry
-
-    try:
-        centered_x = (
-            (int(reference.left()) + int(reference.right())) // 2
-            - (dialog_width - 1) // 2
-        )
-        centered_y = (
-            (int(reference.top()) + int(reference.bottom())) // 2
-            - (dialog_height - 1) // 2
-        )
-        minimum_x = int(available_geometry.left())
-        minimum_y = int(available_geometry.top())
-        maximum_x = int(available_geometry.right()) - dialog_width + 1
-        maximum_y = int(available_geometry.bottom()) - dialog_height + 1
-    except (AttributeError, TypeError, ValueError):
-        return None
-    return (
-        min(max(centered_x, minimum_x), maximum_x),
-        min(max(centered_y, minimum_y), maximum_y),
-    )
-
-
-def _place_settings_dialog(dialog: Any, parent: Any) -> bool:
-    """Move Settings once before exec, constrained to Anki's assigned screen."""
-
-    try:
-        screen = parent.screen()
-        if screen is None:
-            return False
-        origin = _clamped_settings_origin(
-            parent.geometry(),
-            dialog.size(),
-            screen.availableGeometry(),
-        )
-    except (AttributeError, RuntimeError, TypeError):
-        return False
-    if origin is None:
-        return False
-    dialog.move(*origin)
-    return True
-
-
-def _report_settings_placement_failure(parent: Any) -> None:
-    try:
-        status_bar = parent.statusBar()
-        status_bar.showMessage(
-            "Home Screen Dashboard settings could not open on Anki's current screen.",
-            5000,
-        )
-    except (AttributeError, RuntimeError, TypeError):
-        pass
-
-
 class DashboardController:
     def __init__(self) -> None:
         self.package = mw.addonManager.addonFromModule(__name__)
@@ -1286,9 +1199,6 @@ class DashboardController:
             date_value,
             event_value,
         )
-        if not _place_settings_dialog(dialog, mw):
-            _report_settings_placement_failure(mw)
-            return
         dialog.exec()
 
     def request_settings_open(

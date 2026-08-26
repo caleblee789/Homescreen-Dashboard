@@ -99,13 +99,21 @@ The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only swatches and production rendering.
 Settings is a normal `QDialog(mw)` with a 680×620 initial size and 680×560
 minimum. It is movable and resizable, uses default Qt flags, and is opened with
-a local `exec()` call. Immediately before `exec()`, one placement operation
-centers the complete dialog over Anki and clamps it to
-`mw.screen().availableGeometry()`. It never falls back to the primary screen,
-saves coordinates, repositions after opening, hides Anki's central widgets,
-forces focus, or embeds WebEngine content. Every page remains vertically
-scrollable, and sidebar and Events-tab navigation only changes widgets inside
-the existing stack.
+a local `exec()` call. The primary dialog performs no screen query or
+pre-`exec()` move, allowing Qt to place its native dialog relative to Anki in
+the active full-screen Space. It never saves coordinates, repositions after
+opening, hides Anki's central widgets, forces focus, or embeds WebEngine
+content. Every page remains vertically scrollable, and sidebar and Events-tab
+navigation only changes widgets inside the existing stack.
+
+Responsive field grids mount every new field under its Settings card before
+changing visibility or filtering layout rows. This prevents a parentless field
+from being realized as a temporary native window during dialog construction
+and keeps all initial Appearance, Bible, and heatmap fields visible. Heatmap
+selection indicators and verse status badges are also created as explicit
+children before their visibility changes. Ordinary staged-setting updates do
+not tear down or rebuild the heatmap-card subtree; only theme, color-mode, and
+configuration-load paths refresh it.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source
