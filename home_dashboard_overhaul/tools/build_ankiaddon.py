@@ -359,12 +359,11 @@ def validate_sources() -> dict:
             "def _open_browser_target", "browser_will_search", "context.ids = ids",
             'command == "diagnostics"', 'self.request_settings_open("about_support")',
             "def _persist_settings_transaction", "_restore_optional_bytes",
-            'getattr(getattr(mw, "form", None), "centralwidget", None)',
-            "workspace = SettingsWorkspace(", "self._settings_workspace = workspace",
-            "workspace.attach()", "def request_settings_open_from_menu",
-            "def settings_menu_about_to_hide",
+            "from .settings import SettingsDialog", "dialog = SettingsDialog(",
+            "_place_settings_dialog(dialog, mw)", "dialog.exec()",
+            "parent.screen()", "screen.availableGeometry()", "dialog.move(*origin)",
+            "self._settings_request_token",
             "QTimer.singleShot(0, lambda: self._open_pending_settings(token))",
-            "QTimer.singleShot(50, lambda: self._open_pending_settings(token))",
         ),
         "insights.py": (
             "ORDER BY again_count DESC, total_answers DESC, r.cid ASC",
@@ -381,26 +380,13 @@ def validate_sources() -> dict:
             "today_session", "data-hdo-has-bible",
         ),
         "settings.py": (
-            "class SettingsPanel(QWidget):", "class SettingsWorkspace(QWidget):",
-            "class SettingsPromptPage(QWidget):", "super().__init__(host)",
-            "PREFERRED_WIDTH = 680", "PREFERRED_HEIGHT = 620",
-            "COMPACT_MIN_HEIGHT = 560", "HOST_MARGIN = 12",
-            "FOCUS_RETRY_DELAY_MS = 16", "FOCUS_RETRY_LIMIT = 2",
-            "self.host_layout.insertWidget(self.insert_index, self, 1)",
-            "self.host_layout.removeWidget(self)",
-            "self.setFocusProxy(self.panel.nav)",
-            "QApplication.activeWindow() is not mw",
-            "self.isWindow()", "self.window() is not mw",
-            "self.setFocus(Qt.FocusReason.OtherFocusReason)",
-            "application.installEventFilter(self)",
-            "QEvent.Type.ShortcutOverride",
-            "event.matches(QKeySequence.StandardKey.Close)",
-            "self._saved_callback = saved_callback",
-            "self._saved_callback()",
-            "def _settings_saved", "def _rehide_after_save",
+            "class SettingsDialog(QDialog):", "class SettingsPromptPage(QWidget):",
+            "super().__init__(parent)",
+            'self.setWindowTitle("Home Screen Dashboard settings")',
+            "self.setMinimumSize(680, 560)", "self.resize(680, 620)",
             "self._content_stack.setCurrentWidget(prompt)",
-            "connect(controller.settings_menu_about_to_hide)",
-            "action.triggered.connect(controller.request_settings_open_from_menu)",
+            "def reject(self) -> None:", "def closeEvent(self, event: Any) -> None:",
+            "action.triggered.connect(controller.open_settings)",
             "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
             "def _connect_change_signals(self) -> None:",
             "def _settings_changed(self, *_args: object) -> None:",
@@ -446,31 +432,37 @@ def validate_sources() -> dict:
         if absent:
             raise ValueError("{} is missing corrected release contracts: {}".format(relative, ", ".join(absent)))
 
-    panel_source = sources["settings.py"].split("class SettingsPanel(QWidget):", 1)[1].split(
-        "class SettingsWorkspace(QWidget):", 1
-    )[0]
-    workspace_source = sources["settings.py"].split("class SettingsWorkspace(QWidget):", 1)[1].split(
-        "def _object_name", 1
-    )[0]
+    dialog_source = sources["settings.py"].split(
+        "class SettingsDialog(QDialog):", 1
+    )[1].split("def _object_name", 1)[0]
+    placement_source = sources["controller.py"].split(
+        "def _clamped_settings_origin(", 1
+    )[1].split("class DashboardController:", 1)[0]
     for forbidden in (
         "availableGeometry", "QApplication.primaryScreen", "clamp_window_size",
         "self.screen()", "self.move(", "setWindowModality", "setModal(",
-        "def showEvent", "AnkiWebView", "QWebEngine",
+        "def showEvent", "AnkiWebView", "QWebEngine", "raise_()",
+        "setGeometry(", "setWindowFlags", "activateWindow()", "setFocus(",
+        "setFocusProxy(", "installEventFilter(self)",
     ):
-        if forbidden in panel_source + workspace_source:
-            raise ValueError("Settings panel retains forbidden marker: {}".format(forbidden))
+        if forbidden in dialog_source:
+            raise ValueError(
+                "Settings dialog retains custom lifecycle marker: {}".format(forbidden)
+            )
 
+    if placement_source.count("dialog.move(") != 1:
+        raise ValueError("Settings placement must move the dialog exactly once")
     for forbidden in (
-        "raise_()", "setGeometry(",
-        "setWindowFlags", "activateWindow()",
+        "QApplication.primaryScreen", "dialog.screen()", "setScreen(",
+        "def showEvent", "activateWindow()", "raise_()", "QTimer",
     ):
-        if forbidden in workspace_source:
-            raise ValueError("Settings workspace retains manual window behavior: {}".format(forbidden))
+        if forbidden in placement_source:
+            raise ValueError(
+                "Settings placement retains forbidden lifecycle marker: {}".format(forbidden)
+            )
 
-    if "class SettingsDialog(QDialog):" in sources["settings.py"]:
-        raise ValueError("primary Settings still creates a native dialog")
     save_tail = sources["settings.py"].split("    def _save(self) -> None:", 1)[1].split(
-        "class SettingsWorkspace(QWidget):", 1
+        "def _object_name", 1
     )[0]
     if "message = QMessageBox(self)" in save_tail or "message.exec()" in save_tail:
         raise ValueError("primary Settings prompts must remain embedded children")
@@ -482,18 +474,18 @@ def validate_sources() -> dict:
         "self.move(",
     ):
         if retired in sources["settings.py"]:
-            raise ValueError("retired macOS Settings panel behavior remains: {}".format(retired))
+            raise ValueError(
+                "retired macOS Settings panel behavior remains: {}".format(retired)
+            )
 
     for retired in (
-        "self.settings_dialog", "SETTINGS_WINDOW_MODALITY",
-        "SettingsDialog", "dialog.exec()",
-        "setWindowModality", "dialog.open()", "dialog.show()",
-        "dialog.finished.connect(", "def _settings_dialog_finished",
-        "dialog.raise_()", "dialog.activateWindow()",
+        "SettingsWorkspace", "_settings_workspace", "_settings_menu_waiting_for_hide",
+        "request_settings_open_from_menu", "settings_menu_about_to_hide",
+        "QTimer.singleShot(50", "dialog.open()", "dialog.show()",
+        "dialog.finished.connect(", "dialog.raise_()", "dialog.activateWindow()",
     ):
-        if retired in sources["controller.py"]:
-            raise ValueError("retired top-level Settings lifecycle remains: {}".format(retired))
-
+        if retired in sources["controller.py"] + sources["settings.py"]:
+            raise ValueError("retired Settings lifecycle remains: {}".format(retired))
     for retired in (
         "AnkiWebView", "aqt.webview", "stdHtml", "focusChanged",
         "PreviewDock", "_schedule_preview", "_render_preview", "_open_full_preview",
@@ -534,17 +526,24 @@ def validate_sources() -> dict:
     if settings_window_contract.get("release") != version:
         raise ValueError("focused Settings contract must match the manifest version")
     if (
-        settings_window_contract.get("preferred_size") != [680, 620]
-        or settings_window_contract.get("compact_min_height") != 560
-        or settings_window_contract.get("host_margin") != 12
-        or settings_window_contract.get("native_window") is not False
-        or settings_window_contract.get("top_level_fallback") is not False
-        or settings_window_contract.get("focus_handoff") != "insert show focus then hide backing"
-        or settings_window_contract.get("close_handoff") != "show backing restore focus then remove workspace"
-        or settings_window_contract.get("focus_retries") != 2
-        or settings_window_contract.get("focus_retry_delay_ms") != 16
+        settings_window_contract.get("reference_addons") != ["Progress Bar", "PronounceIt"]
+        or settings_window_contract.get("minimum_size") != [680, 560]
+        or settings_window_contract.get("initial_size") != [680, 620]
+        or settings_window_contract.get("native_window") is not True
+        or settings_window_contract.get("movable") is not True
+        or settings_window_contract.get("resizable") is not True
+        or settings_window_contract.get("default_window_flags") is not True
+        or settings_window_contract.get("initial_placement")
+        != "one pre-exec parent-centered move clamped to mw.screen().availableGeometry()"
+        or settings_window_contract.get("screen_geometry_queries")
+        != "mw.screen().availableGeometry() only"
+        or settings_window_contract.get("primary_screen_fallback") is not False
+        or settings_window_contract.get("reposition_after_open") is not False
+        or settings_window_contract.get("saved_geometry") is not False
+        or settings_window_contract.get("programmatic_lifecycle_focus") is not False
+        or settings_window_contract.get("retained_dialog_object") is not False
     ):
-        raise ValueError("focused Settings contract does not require the in-Anki workspace")
+        raise ValueError("focused Settings contract does not require native dialog parity")
     if capture_contract.get("runtime_smoke_requirements") != {
         "active_head_deck": "A",
         "raw_new_cards_per_head_minimum": 40,

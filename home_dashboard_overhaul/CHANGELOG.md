@@ -4,32 +4,30 @@
 
 ## 1.8.7 — 2026-08-25
 
-- Replaced the primary Settings `QDialog` and later floating child overlay with
-  a centered workspace inserted into Anki's persistent central layout. The
-  dashboard slot is hidden and restored without creating or stacking a window.
-- Preserved the compact 680×620 presentation, 152-pixel rail, page scrolling,
-  fixed footer, and staged changes. Smaller Anki windows receive a responsive
-  panel within 12-pixel host margins.
-- Reused one controller-owned workspace for deferred, coalesced menu and bridge
-  requests. Primary Save-conflict and dirty-close prompts are stacked layout
-  pages; profile shutdown force-cleans the workspace without prompting.
-- Replaced the native menu's unspecified zero-timer handoff with the Caleb
-  menu's `aboutToHide` lifecycle, one queued turn, and a guarded 50 ms fallback.
-  Deck Browser bridge requests remain separately deferred and coalesced.
-- Made workspace attachment atomic: insert and show the child, verify it belongs
-  to Anki and owns focus, then hide the backing views. Focus retries twice at
-  16 ms; failure removes Settings and leaves Anki unchanged. Closing reverses
-  the order by restoring backing views and focus before workspace removal.
-- Keeps the backing views hidden when a successful Save refreshes the Deck
-  Browser, so Save remains inside the same focused workspace until Close.
-- Scoped Save, Escape, and Close shortcuts to the workspace's widget tree and
-  intercepts Cmd-W only while focus is inside Settings, avoiding Anki's global
-  Close handler. Sidebar and Events-tab navigation create no host lifecycle.
-- Preserved schema 8, Settings pages and staged-save behavior, dashboard and
-  statistics calculations, bridge commands, and the frozen 1.8.6 evidence.
+- Corrected the full-screen macOS Space transition caused when Qt centered the
+  680×620 dialog at `(-6, 41)` over a 667×570 Anki window. Settings now performs
+  one pre-`exec()` move that clamps the complete rectangle to Anki's assigned
+  screen, producing `(0, 41)` for the reproduced geometry.
+- Kept placement screen-safe and fail-closed: it queries only
+  `mw.screen().availableGeometry()`, never falls back to the primary screen,
+  and does not save or reapply coordinates after opening.
+- Matched Progress Bar and PronounceIt by restoring a normal movable,
+  resizable `QDialog(mw)` with default flags, a 680×620 initial size, a
+  680×560 minimum, and a local `exec()` lifetime.
+- Removed the central workspace, backing-view hiding, focus proxy/retries and
+  restoration, application shortcut filter, retained panel object, and
+  menu-`aboutToHide`/50 ms handoff that could activate Finder around
+  full-screen Settings transitions.
+- Opened Settings synchronously from the Caleb menu while retaining one
+  coalesced queued turn only for calendar/WebEngine bridge requests.
+- Preserved the four-page sidebar, Events tabs, native page scrollers, fixed
+  footer, staged Save behavior, and embedded conflict/dirty-close prompts.
+  Escape, Cmd-W, the title-bar control, and Close share the guarded dialog
+  rejection path.
+- Preserved schema 8, configuration keys, bridge commands, dashboard and
+  statistics calculations, calendar behavior, and frozen 1.8.6 evidence.
   Full-screen macOS Space behavior remains a manual acceptance gate before any
-  PR, push, or release.
-
+  push, PR, merge, or release.
 ## 1.8.6 — 2026-08-24
 
 - Audited every study-derived value shown in Today’s Progress, Today’s

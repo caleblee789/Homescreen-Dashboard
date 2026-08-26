@@ -104,12 +104,14 @@ excludes buried backlog/work due in the active scheduler day.
 
 ## Settings
 
-Settings is a non-window `QWidget` panel hosted directly inside Anki's central
-widget. A full-host dimming layer centers the preferred 680×620 panel and
-shrinks it within 12 px margins when Anki is smaller. It never assigns opening
-coordinates, queries screen geometry, starts a modal event loop, or contains
-an `AnkiWebView`. It uses one compact header, 152 px rail, active-page scroller,
-and final-row footer.
+Settings is a normal movable `QDialog(mw)` matching Progress Bar and
+PronounceIt. It starts at 680×620, has a 680×560 minimum, remains resizable,
+uses default window flags, and opens through a local `exec()` call. One move
+immediately before `exec()` centers it over Anki and clamps the full rectangle
+to `mw.screen().availableGeometry()`. It never saves coordinates, repositions
+after opening, falls back to another screen, hides Anki's backing views, forces
+lifecycle focus, or contains an `AnkiWebView`. It uses one compact header,
+152 px rail, active-page scroller, and final-row footer.
 
 Settings colors derive only from Anki's light/dark appearance; dashboard themes
 affect swatches and production rendering. Staged display, event, heatmap, and

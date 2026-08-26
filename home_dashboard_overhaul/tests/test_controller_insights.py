@@ -167,26 +167,80 @@ class FakeCentralWidget:
         return self._layout
 
 
-class FakeSettingsWorkspace:
+class FakeRect:
+    def __init__(self, x, y, width, height) -> None:
+        self.x = x
+        self.y = y
+        self._width = width
+        self._height = height
+
+    def isValid(self):
+        return self._width > 0 and self._height > 0
+
+    def width(self):
+        return self._width
+
+    def height(self):
+        return self._height
+
+    def left(self):
+        return self.x
+
+    def top(self):
+        return self.y
+
+    def right(self):
+        return self.x + self._width - 1
+
+    def bottom(self):
+        return self.y + self._height - 1
+
+
+class FakeSize:
+    def __init__(self, width, height) -> None:
+        self._width = width
+        self._height = height
+
+    def width(self):
+        return self._width
+
+    def height(self):
+        return self._height
+
+
+class FakeScreen:
+    def __init__(self, available_geometry) -> None:
+        self.available_geometry = available_geometry
+
+    def availableGeometry(self):
+        return self.available_geometry
+
+
+class FakeStatusBar:
+    def __init__(self) -> None:
+        self.messages = []
+
+    def showMessage(self, message, duration) -> None:
+        self.messages.append((message, duration))
+
+
+class FakeSettingsDialog:
     instances = []
 
     def __init__(self, *args) -> None:
         self.args = args
-        self.closed_callback = args[-1]
-        self.attach_count = 0
-        self.force_close_count = 0
-        self.opened_pages = []
+        self.exec_count = 0
+        self.moves = []
         self.__class__.instances.append(self)
 
-    def attach(self) -> None:
-        self.attach_count += 1
+    def size(self):
+        return FakeSize(680, 620)
 
-    def open_page(self, *args) -> None:
-        self.opened_pages.append(args)
+    def move(self, x, y) -> None:
+        self.moves.append((x, y))
 
-    def force_close(self) -> None:
-        self.force_close_count += 1
-        self.closed_callback(self)
+    def exec(self) -> None:
+        self.exec_count += 1
 
 
 class ControllerCapabilityTests(unittest.TestCase):
@@ -220,6 +274,10 @@ class ControllerCapabilityTests(unittest.TestCase):
         aqt.mw.web = object()
         aqt.mw.form = SimpleNamespace(centralwidget=FakeCentralWidget(aqt.mw.web))
         aqt.mw.centralWidget = lambda: aqt.mw.form.centralwidget
+        aqt.mw.geometry = lambda: FakeRect(0, 66, 667, 570)
+        aqt.mw.screen = lambda: FakeScreen(FakeRect(0, 0, 1710, 1112))
+        cls.status_bar = FakeStatusBar()
+        aqt.mw.statusBar = lambda: cls.status_bar
         deckbrowser = ModuleType("aqt.deckbrowser")
         deckbrowser.DeckBrowser = FakeDeckBrowser
         operations = ModuleType("aqt.operations")
@@ -250,6 +308,7 @@ class ControllerCapabilityTests(unittest.TestCase):
     def setUp(self) -> None:
         FakeQueryOp.pending.clear()
         FakeQTimer.pending.clear()
+        self.status_bar.messages.clear()
         self.aqt.mw.addonManager.config = {}
         self.aqt.mw.addonManager.writes.clear()
         self.aqt.mw.state = "deckBrowser"
@@ -324,107 +383,117 @@ class ControllerCapabilityTests(unittest.TestCase):
         self.assertFalse(self.controller._settings_open_pending)
         self.assertIsNone(self.controller._pending_settings_request)
 
-    def test_native_menu_waits_for_dismissal_then_uses_one_queued_turn(self) -> None:
-        calls = []
-        self.controller.open_settings = lambda *args: calls.append(args)
-
-        self.controller.request_settings_open_from_menu("dashboard")
-
-        self.assertEqual(calls, [])
-        self.assertTrue(self.controller._settings_menu_waiting_for_hide)
-        self.assertEqual([delay for delay, _callback in FakeQTimer.pending], [50])
-
-        self.controller.settings_menu_about_to_hide()
-
-        self.assertFalse(self.controller._settings_menu_waiting_for_hide)
-        self.assertEqual(sorted(delay for delay, _callback in FakeQTimer.pending), [0, 50])
-        FakeQTimer.run_next()
-        self.assertEqual(calls, [("dashboard", "", "")])
-
-        FakeQTimer.run_next()
-        self.assertEqual(calls, [("dashboard", "", "")])
-
-    def test_native_menu_fallback_opens_when_hide_signal_is_unavailable(self) -> None:
-        calls = []
-        self.controller.open_settings = lambda *args: calls.append(args)
-
-        self.controller.request_settings_open_from_menu("events", "2026-08-28", "exam-42")
-
-        self.assertEqual(calls, [])
-        FakeQTimer.run_next()
-        self.assertEqual(calls, [("events", "2026-08-28", "exam-42")])
-        self.assertFalse(self.controller._settings_open_pending)
-        self.assertFalse(self.controller._settings_menu_waiting_for_hide)
-
-    def test_repeated_native_menu_requests_coalesce_to_latest_route(self) -> None:
-        calls = []
-        self.controller.open_settings = lambda *args: calls.append(args)
-
-        self.controller.request_settings_open_from_menu("dashboard")
-        self.controller.request_settings_open_from_menu(
-            "events", "2026-08-28", "exam-42"
-        )
-
-        self.assertEqual(len(FakeQTimer.pending), 1)
-        self.controller.settings_menu_about_to_hide()
-        FakeQTimer.run_next()
-        self.assertEqual(calls, [("events", "2026-08-28", "exam-42")])
-        FakeQTimer.run_next()
-        self.assertEqual(calls, [("events", "2026-08-28", "exam-42")])
-
-    def test_settings_reuses_one_central_workspace(self) -> None:
-        FakeSettingsWorkspace.instances.clear()
+    def test_settings_constructs_parented_dialog_and_executes_immediately(self) -> None:
+        FakeSettingsDialog.instances.clear()
         settings = ModuleType("home_dashboard_overhaul.settings")
-        settings.SettingsWorkspace = FakeSettingsWorkspace
+        settings.SettingsDialog = FakeSettingsDialog
 
         with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
             self.controller.open_settings("calendar_data", "2026-08-28", "exam-42")
-            workspace = FakeSettingsWorkspace.instances[-1]
+            dialog = FakeSettingsDialog.instances[-1]
 
             self.assertEqual(
-                workspace.args[:-1],
+                dialog.args,
                 (
-                    self.aqt.mw.form.centralwidget,
-                    self.aqt.mw.form.centralwidget.layout(),
-                    0,
+                    self.aqt.mw,
                     self.controller,
                     "calendar_data",
                     "2026-08-28",
                     "exam-42",
                 ),
             )
-            self.assertEqual(workspace.attach_count, 1)
-            self.assertIs(self.controller._settings_workspace, workspace)
+            self.assertEqual(dialog.moves, [(0, 41)])
+            self.assertEqual(dialog.exec_count, 1)
+            self.assertEqual(FakeQTimer.pending, [])
 
-            self.controller.open_settings("events")
-            self.assertEqual(len(FakeSettingsWorkspace.instances), 1)
-            self.assertEqual(workspace.opened_pages, [("events", "", "")])
+    def test_settings_origin_clamps_to_parent_screen_edges_and_negative_origins(self) -> None:
+        cases = (
+            (
+                FakeRect(0, 66, 667, 570),
+                FakeSize(680, 620),
+                FakeRect(0, 0, 1710, 1112),
+                (0, 41),
+            ),
+            (
+                FakeRect(100, 100, 1200, 800),
+                FakeSize(680, 620),
+                FakeRect(0, 0, 1710, 1112),
+                (360, 190),
+            ),
+            (
+                FakeRect(1600, 1000, 100, 100),
+                FakeSize(680, 620),
+                FakeRect(0, 0, 1710, 1112),
+                (1030, 492),
+            ),
+            (
+                FakeRect(600, -200, 100, 100),
+                FakeSize(680, 620),
+                FakeRect(0, 0, 1710, 1112),
+                (310, 0),
+            ),
+            (
+                FakeRect(-1710, 66, 667, 570),
+                FakeSize(680, 620),
+                FakeRect(-1710, 0, 1710, 1112),
+                (-1710, 41),
+            ),
+            (
+                FakeRect(0, 0, 0, 0),
+                FakeSize(680, 620),
+                FakeRect(0, 0, 1710, 1112),
+                (515, 246),
+            ),
+        )
+        for parent, dialog, screen, expected in cases:
+            with self.subTest(parent=(parent.x, parent.y), screen=(screen.x, screen.y)):
+                self.assertEqual(
+                    self.module._clamped_settings_origin(parent, dialog, screen),
+                    expected,
+                )
 
-            workspace.force_close()
-            self.assertIsNone(self.controller._settings_workspace)
-
-    def test_profile_close_force_closes_settings_workspace_and_pending_request(self) -> None:
-        FakeSettingsWorkspace.instances.clear()
+    def test_settings_does_not_open_without_the_parent_screen(self) -> None:
+        FakeSettingsDialog.instances.clear()
         settings = ModuleType("home_dashboard_overhaul.settings")
-        settings.SettingsWorkspace = FakeSettingsWorkspace
+        settings.SettingsDialog = FakeSettingsDialog
+        original_screen = self.aqt.mw.screen
+        self.aqt.mw.screen = lambda: None
+        try:
+            with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
+                self.controller.open_settings()
+        finally:
+            self.aqt.mw.screen = original_screen
+
+        dialog = FakeSettingsDialog.instances[-1]
+        self.assertEqual(dialog.moves, [])
+        self.assertEqual(dialog.exec_count, 0)
+        self.assertEqual(
+            self.status_bar.messages,
+            [
+                (
+                    "Home Screen Dashboard settings could not open on Anki's current screen.",
+                    5000,
+                )
+            ],
+        )
+
+    def test_profile_close_cancels_pending_bridge_dialog(self) -> None:
+        FakeSettingsDialog.instances.clear()
+        settings = ModuleType("home_dashboard_overhaul.settings")
+        settings.SettingsDialog = FakeSettingsDialog
 
         with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
-            self.controller.open_settings("dashboard")
-            workspace = FakeSettingsWorkspace.instances[-1]
-            self.controller.request_settings_open_from_menu("events")
+            self.controller.request_settings_open("events")
             pending_token = self.controller._settings_request_token
 
             self.controller.on_profile_close()
 
-            self.assertEqual(workspace.force_close_count, 1)
-            self.assertIsNone(self.controller._settings_workspace)
             self.assertIsNone(self.controller._pending_settings_request)
             self.assertFalse(self.controller._settings_open_pending)
-            self.assertFalse(self.controller._settings_menu_waiting_for_hide)
             self.assertGreater(self.controller._settings_request_token, pending_token)
 
             FakeQTimer.run_next()
-            self.assertEqual(len(FakeSettingsWorkspace.instances), 1)
+            self.assertEqual(FakeSettingsDialog.instances, [])
 
     def test_year_scroll_position_survives_a_controller_rerender(self) -> None:
         message = "hdo:" + json.dumps({

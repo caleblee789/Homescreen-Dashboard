@@ -109,11 +109,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
 
     def test_settings_use_one_canonical_native_shell(self) -> None:
         for marker in (
-            "class SettingsPanel(QWidget):",
-            "class SettingsWorkspace(QWidget):",
-            "PREFERRED_WIDTH = 680",
-            "PREFERRED_HEIGHT = 620",
-            "COMPACT_MIN_HEIGHT = 560",
+            "class SettingsDialog(QDialog):",
             "self.settings_shell.setMaximumWidth(1240)",
             "self.settings_shell.setSizePolicy(",
             "self._update_settings_shell_margins()",
@@ -133,10 +129,10 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "self.setMinimumSize(min(1040, width), min(700, height))",
             "self.setMinimumSize(1040, 700)",
             "self.resize(1200, 800)",
+            "setFixedSize(width, height)",
+            "setFixedSize(1200, 800)",
         ):
             self.assertNotIn(retired_geometry, self.settings)
-        self.assertNotIn("setFixedSize(width, height)", self.settings)
-        self.assertNotIn("setFixedSize(1200, 800)", self.settings)
         shell_source = self.settings.split("dialog_layout = QHBoxLayout(self)", 1)[1].split(
             "outer = QGridLayout(self.settings_shell)", 1
         )[0]
@@ -153,49 +149,45 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired, self.settings)
 
-    def test_settings_uses_a_layout_managed_non_window_central_workspace(self) -> None:
+    def test_window_uses_parented_standard_dialog_exec_contract(self) -> None:
         for marker in (
-            "super().__init__(host)",
-            'self.setObjectName("HomeDashboardSettingsWorkspace")',
-            "self.host_layout.insertWidget(self.insert_index, self, 1)",
-            "self.host_layout.removeWidget(self)",
-            "widget.hide()",
-            "widget.setVisible(was_visible)",
-            "workspace_layout.addWidget(",
-            "Qt.AlignmentFlag.AlignCenter",
-            "self.panel.setMaximumSize(self.PREFERRED_WIDTH, self.PREFERRED_HEIGHT)",
+            "parent: QWidget",
+            "super().__init__(parent)",
+            'self.setWindowTitle("Home Screen Dashboard settings")',
+            "self.setMinimumSize(680, 560)",
+            "self.resize(680, 620)",
             "self._settle_initial_scroll_top()",
         ):
             self.assertIn(marker, self.settings)
         opener = self.controller.split("    def open_settings(", 1)[1].split(
             "    def request_settings_open", 1
         )[0]
-        self.assertIn('getattr(getattr(mw, "form", None), "centralwidget", None)', opener)
-        self.assertIn("host_layout = host.layout()", opener)
-        self.assertIn("web_index = index_of(web)", opener)
-        self.assertIn("workspace = SettingsWorkspace(", opener)
-        self.assertIn("self._settings_workspace = workspace", opener)
-        self.assertIn("workspace.attach()", opener)
-        for forbidden_opening_marker in (
-            "SettingsDialog",
+        for marker in (
+            "from .settings import SettingsDialog",
+            "dialog = SettingsDialog(",
+            "            mw,",
+            "            self,",
+            "_place_settings_dialog(dialog, mw)",
             "dialog.exec()",
-            "setWindowModality",
-            "WindowModal",
-            "dialog.open()",
+        ):
+            self.assertIn(marker, opener)
+        for forbidden_opening_marker in (
+            "self.settings_dialog",
+            "SettingsWorkspace",
+            "centralwidget",
+            "host_layout",
             "dialog.show()",
+            "dialog.open()",
             "dialog.finished",
             "dialog.deleteLater()",
             "dialog.raise_()",
             "dialog.activateWindow()",
         ):
             self.assertNotIn(forbidden_opening_marker, opener)
-        panel_source = self.settings.split("class SettingsPanel(QWidget):", 1)[1].split(
-            "class SettingsWorkspace(QWidget):", 1
-        )[0]
-        workspace_source = self.settings.split("class SettingsWorkspace(QWidget):", 1)[1].split(
+        dialog_source = self.settings.split("class SettingsDialog(QDialog):", 1)[1].split(
             "def _object_name", 1
         )[0]
-        for forbidden_geometry in (
+        for forbidden_marker in (
             "availableGeometry",
             "QApplication.primaryScreen",
             "clamp_window_size",
@@ -204,62 +196,45 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "settingsWindowSize",
             "def _settle_window_to_screen",
             "def showEvent",
-        ):
-            self.assertNotIn(forbidden_geometry, panel_source + workspace_source)
-        for forbidden_primary_window_marker in (
-            "class SettingsDialog(QDialog):",
+            "setWindowModality",
+            "setModal(",
             "setWindowFlags",
             "activateWindow()",
             "raise_()",
             "setGeometry(",
+            "setFocus(",
+            "setFocusProxy(",
+            "installEventFilter(self)",
+            "AnkiWebView",
+            "QWebEngine",
         ):
-            self.assertNotIn(forbidden_primary_window_marker, workspace_source)
-        for focus_handoff_marker in (
-            "FOCUS_RETRY_DELAY_MS = 16",
-            "FOCUS_RETRY_LIMIT = 2",
-            "self.setFocusProxy(self.panel.nav)",
-            "QApplication.activeWindow() is not mw",
-            "self.isWindow()",
-            "self.window() is not mw",
-            "self.setFocus(Qt.FocusReason.OtherFocusReason)",
-            "QTimer.singleShot(0, lambda: self._verify_attach_focus(token, 0))",
-            "application.installEventFilter(self)",
-            "application.removeEventFilter(self)",
-            "QEvent.Type.ShortcutOverride",
-            "event.matches(QKeySequence.StandardKey.Close)",
+            self.assertNotIn(forbidden_marker, dialog_source)
+        placement_source = self.controller.split(
+            "def _clamped_settings_origin(", 1
+        )[1].split("class DashboardController:", 1)[0]
+        for marker in (
+            "parent.screen()",
+            "screen.availableGeometry()",
+            "dialog.move(*origin)",
+            "return False",
         ):
-            self.assertIn(focus_handoff_marker, workspace_source)
-        self.assertIn("self._saved_callback = saved_callback", panel_source)
-        self.assertIn("self._saved_callback()", panel_source)
-        self.assertIn("def _settings_saved", workspace_source)
-        self.assertIn("def _rehide_after_save", workspace_source)
-        begin_attach = workspace_source.split("    def _begin_attach", 1)[1].split(
-            "    def _verify_attach_focus", 1
-        )[0]
+            self.assertIn(marker, placement_source)
+        self.assertEqual(placement_source.count("dialog.move("), 1)
+        for forbidden_marker in (
+            "QApplication.primaryScreen",
+            "dialog.screen()",
+            "setScreen(",
+            "showEvent",
+            "activateWindow()",
+            "raise_()",
+            "QTimer",
+        ):
+            self.assertNotIn(forbidden_marker, placement_source)
         self.assertLess(
-            begin_attach.index("self.host_layout.insertWidget"),
-            begin_attach.index("self.show()"),
+            opener.index("_place_settings_dialog(dialog, mw)"),
+            opener.index("dialog.exec()"),
         )
-        self.assertLess(begin_attach.index("self.show()"), begin_attach.index("self.isWindow()"))
-        self.assertLess(
-            begin_attach.index("self.isWindow()"),
-            begin_attach.index("self.setFocus(Qt.FocusReason.OtherFocusReason)"),
-        )
-        verify_attach = workspace_source.split("    def _verify_attach_focus", 1)[1].split(
-            "    def _hide_backing_widgets", 1
-        )[0]
-        self.assertLess(verify_attach.index("self._owns_widget(focus)"), verify_attach.index("self._hide_backing_widgets()"))
-        close_source = workspace_source.split("    def close_panel", 1)[1].split(
-            "    def _finish_close_focus", 1
-        )[0]
-        self.assertLess(close_source.index("self._restore_backing_widgets()"), close_source.index("target.setFocus"))
-        self.assertLess(close_source.index("target.setFocus"), close_source.index("QTimer.singleShot(0"))
-        self.assertNotIn("self.host_layout.removeWidget(self)", close_source)
-        fail_source = workspace_source.split("    def _fail_closed", 1)[1].split(
-            "    def _dispose", 1
-        )[0]
-        self.assertLess(fail_source.index("self._restore_backing_widgets()"), fail_source.index("self._dispose()"))
-        self.assertNotIn("class SettingsDialog(QDialog):", self.settings)
+        self.assertNotIn("class SettingsWorkspace(QWidget):", self.settings)
         for retired_window_marker in (
             "Qt.WindowType.Tool",
             "Qt.WindowModality.NonModal",
@@ -272,24 +247,52 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired_window_marker, self.settings)
         self.assertNotIn("settingsWindowSize", json.dumps(self.config))
-        self.assertEqual(self.settings_window_contract["preferred_size"], [680, 620])
-        self.assertEqual(self.settings_window_contract["compact_min_height"], 560)
-        self.assertEqual(self.settings_window_contract["host_margin"], 12)
-        self.assertFalse(self.settings_window_contract["native_window"])
-        self.assertIn("scroll.setWidgetResizable(True)", panel_source)
+        self.assertEqual(self.settings_window_contract["minimum_size"], [680, 560])
+        self.assertEqual(self.settings_window_contract["initial_size"], [680, 620])
+        self.assertTrue(self.settings_window_contract["native_window"])
+        self.assertTrue(self.settings_window_contract["movable"])
+        self.assertTrue(self.settings_window_contract["resizable"])
+        self.assertEqual(
+            self.settings_window_contract["initial_placement"],
+            "one pre-exec parent-centered move clamped to mw.screen().availableGeometry()",
+        )
+        self.assertEqual(
+            self.settings_window_contract["screen_geometry_queries"],
+            "mw.screen().availableGeometry() only",
+        )
+        self.assertFalse(self.settings_window_contract["primary_screen_fallback"])
+        self.assertFalse(self.settings_window_contract["reposition_after_open"])
+        self.assertIn("scroll.setWidgetResizable(True)", dialog_source)
         self.assertIn(
             "scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
-            panel_source,
+            dialog_source,
         )
-        for shortcut_owner in ("self.escape_action", "self.save_shortcut", "self.close_shortcut", "self.escape_shortcut"):
-            shortcut_source = self.settings.split(shortcut_owner, 1)[1].split("self.addAction", 1)[0]
-            self.assertIn("Qt.ShortcutContext.WidgetWithChildrenShortcut", shortcut_source)
+        for shortcut_owner in (
+            "self.escape_action",
+            "self.save_shortcut",
+            "self.close_shortcut",
+            "self.escape_shortcut",
+        ):
+            shortcut_source = self.settings.split(shortcut_owner, 1)[1].split(
+                "self.addAction", 1
+            )[0]
+            self.assertIn(
+                "Qt.ShortcutContext.WidgetWithChildrenShortcut",
+                shortcut_source,
+            )
 
         navigation_source = self.settings.split("    def _nav_changed", 1)[1].split(
             "    def _schedule_dashboard_anchor", 1
         )[0]
         self.assertIn("self.stack.setCurrentIndex", navigation_source)
-        for lifecycle_marker in ("attach(", "hide()", "show()", "setFocus(", "window()"):
+        for lifecycle_marker in (
+            "attach(",
+            "hide()",
+            "show()",
+            "setFocus(",
+            "window()",
+            "QTimer",
+        ):
             self.assertNotIn(lifecycle_marker, navigation_source)
 
     def test_primary_save_and_close_prompts_are_embedded_children(self) -> None:
@@ -300,36 +303,41 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertIn('"Settings changed elsewhere"', self.settings)
         self.assertIn("self._show_prompt(", self.settings)
         primary_source = self.settings.split("    def _save(self) -> None:", 1)[1].split(
-            "class SettingsWorkspace(QWidget):", 1
+            "def _object_name", 1
         )[0]
         self.assertNotIn("message = QMessageBox(self)", primary_source)
         self.assertNotIn("message.exec()", primary_source)
+        for marker in (
+            "def reject(self) -> None:",
+            "def closeEvent(self, event: Any) -> None:",
+            "self.request_close()",
+            "super().reject()",
+            "event.ignore()",
+        ):
+            self.assertIn(marker, primary_source)
 
-    def test_all_settings_opening_is_deferred_and_controller_retains_one_workspace(self) -> None:
+    def test_native_menu_is_direct_and_only_bridge_opening_is_deferred(self) -> None:
         bridge_source = self.controller.split("    def request_settings_open(", 1)[1].split(
-            "    def request_settings_open_from_menu", 1
+            "    def save_config", 1
         )[0]
-        menu_controller_source = self.controller.split(
-            "    def request_settings_open_from_menu", 1
-        )[1].split("    def save_config", 1)[0]
         self.assertIn("QTimer.singleShot(0, lambda: self._open_pending_settings(token))", bridge_source)
         self.assertIn("self._pending_settings_request", bridge_source)
         self.assertIn("self._settings_open_pending", bridge_source)
-        self.assertIn("QTimer.singleShot(50, lambda: self._open_pending_settings(token))", menu_controller_source)
-        self.assertIn("def settings_menu_about_to_hide", menu_controller_source)
-        self.assertIn("QTimer.singleShot(0, lambda: self._open_pending_settings(token))", menu_controller_source)
-        self.assertIn("token != self._settings_request_token", menu_controller_source)
+        self.assertIn("token != self._settings_request_token", bridge_source)
         self.assertNotIn("SettingsDialog", bridge_source)
         self.assertNotIn("settings_dialog", bridge_source)
-        self.assertIn("self._settings_workspace: Optional[Any] = None", self.controller)
-        self.assertIn("workspace.open_page(page_name, date_value, event_value)", self.controller)
-        self.assertIn("workspace.force_close()", self.controller)
         menu_source = self.settings.split("def install_settings_menu", 1)[1]
-        self.assertIn("_connect_settings_menu_handoff(submenu, controller)", menu_source)
-        self.assertIn("_connect_settings_menu_action(action, controller)", menu_source)
-        self.assertIn("signal.disconnect(previous.settings_menu_about_to_hide)", self.settings)
-        self.assertIn("connect(controller.settings_menu_about_to_hide)", self.settings)
-        self.assertIn("action.triggered.connect(controller.request_settings_open_from_menu)", self.settings)
+        self.assertIn("action.triggered.connect(controller.open_settings)", menu_source)
+        for retired in (
+            "_settings_workspace",
+            "_settings_menu_waiting_for_hide",
+            "request_settings_open_from_menu",
+            "settings_menu_about_to_hide",
+            "aboutToHide",
+            "QTimer.singleShot(50",
+            "_connect_settings_menu_handoff",
+        ):
+            self.assertNotIn(retired, self.controller + self.settings)
 
     def test_native_probe_window_overrides_remain_outside_product_code(self) -> None:
         self.assertNotIn("SETTINGS_SIZE_KEY", self.settings)
@@ -556,7 +564,13 @@ class SettingsReleaseContractTests(unittest.TestCase):
             self.assertIn(marker, self.settings)
 
     def test_legacy_calendar_route_settles_to_the_dashboard_card(self) -> None:
+        self.assertIn('"": ("dashboard", "")', self.model)
         self.assertIn('"calendar": ("dashboard", "calendar")', self.model)
+        constructor_tail = self.settings.split("self.open_page(initial_page", 1)[1].split(
+            "def resizeEvent", 1
+        )[0]
+        self.assertIn("if not self._requested_dashboard_anchor:", constructor_tail)
+        self.assertIn("self._settle_initial_scroll_top()", constructor_tail)
         source = self.settings.split("def _schedule_dashboard_anchor", 1)[1].split(
             "def _apply_canonical_layout", 1
         )[0]

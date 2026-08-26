@@ -7,18 +7,15 @@ Browser or statistics classes.
 
 ## 1.8.7 highlights
 
-- Settings now opens as a compact 680×620 workspace inserted into Anki's
-  existing central layout. It is shown and focused as a child of Anki before
-  the backing dashboard is hidden, so there is no moment with an unfocused
-  full-screen Anki window and no separate macOS window to move to another
-  Space.
-- One central workspace is retained while open so repeated menu or bridge
-  requests reroute the current draft. Native-menu opening waits for the Caleb
-  menu to dismiss, with a guarded fallback; WebEngine requests remain deferred
-  and coalesced. Save and dirty-close confirmations use stacked layout pages.
-- Closing restores Anki's backing views and their prior valid focus before the
-  workspace is removed. If opening cannot establish child focus, Settings is
-  removed and Anki's existing views remain visible and enabled.
+- Settings now uses the same native window contract as Progress Bar and
+  PronounceIt: a movable, resizable `QDialog(mw)` with a 680×620 initial size,
+  a 680×560 minimum, default flags, and a local `exec()` lifetime.
+- The Caleb menu opens Settings directly and synchronously. Calendar/WebEngine
+  requests alone wait one coalesced event-loop turn so the bridge callback can
+  return before the dialog opens.
+- Dashboard-specific workspace insertion, backing-view hiding, menu-dismissal
+  timers, focus retries, focus restoration, and activation handling have been
+  removed. Qt owns the window and focus lifecycle.
 - Schema 8, all Settings fields, dashboard rendering, and the corrected 1.8.6
   statistics calculations remain unchanged.
 
@@ -40,11 +37,11 @@ Browser or statistics classes.
   narrow shells, and hard restart are contractually checked
   against identical values from the same collection snapshot.
 - Settings keeps the compact visual workflow used by conventional add-on
-  settings while rendering as a non-window page in Anki's central layout. It
-  never calls a modal event loop, stacks or raises a floating child, assigns
-  screen coordinates, replaces Anki's central widget, or contains a WebEngine
-  preview surface. Sidebar and Events-tab changes only swap child widgets in
-  the existing stack.
+  settings in a normal parented dialog. Immediately before opening, it centers
+  once over Anki and clamps the complete dialog to Anki's assigned screen; it
+  does not save or reapply coordinates, set window flags, hide Anki's backing
+  views, force focus, or contain a WebEngine preview surface. Sidebar and
+  Events-tab changes only swap child widgets in the existing stack.
 
 - Settings uses one native Qt composition at every size: a compact header,
   152 px text rail, one active page scroller, and a stable final-row footer.
@@ -70,7 +67,7 @@ The local 1.8.7 candidate is built as
 `home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon` for
 installation through **Tools → Add-ons → Install from file**. Its checksum is
 written alongside the archive: SHA-256
-`fbb977a8cd65b30e47c3079709efc83bfef9f53a2ad76f66777db0c648c88838`.
+`a37d2a3366438a48b1586f2d59e6947fadbc6bed6675e90620647f2ee804c2dc`.
 This candidate remains local until the native macOS full-screen Space check
 passes. Disable any legacy source add-ons named by the activation card.
 

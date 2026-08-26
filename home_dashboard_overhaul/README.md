@@ -7,17 +7,16 @@ Browser or statistics classes.
 
 ## What changed in 1.8.7
 
-- Settings now opens as a compact centered workspace inserted into Anki's
-  existing central layout. It prefers 680×620, adapts within 12-pixel host
-  margins, and cannot become a separate macOS window or Space.
-- The controller reuses one workspace while it is open. Menu and Deck Browser
-  requests are coalesced. Native-menu opening waits for the Caleb menu to hide
-  before its queued focus handoff, while Deck Browser bridge opening remains
-  deferred until its callback returns. Primary Save and dirty-close
-  confirmations use stacked layout pages instead of floating layers.
-- Anki's current views stay visible until the child workspace owns focus. A
-  failed focus handoff removes Settings without changing Anki; closing restores
-  the backing views and their prior valid focus before removing the workspace.
+- Settings now matches Progress Bar and PronounceIt with a normal parented
+  `QDialog`, a 680×620 initial size, a 680×560 minimum, default flags, and a
+  movable, upward-resizable native title bar.
+- The Caleb menu constructs and executes the dialog synchronously. Deck Browser
+  bridge requests alone remain deferred and coalesced until their callback
+  returns. Primary Save and dirty-close confirmations remain stacked child
+  pages inside the dialog.
+- The retired central workspace, backing-view hiding, focus handoff/retries,
+  focus restoration, application event filter, and menu-dismissal timer are
+  removed. Qt manages the same dialog lifecycle as the two working add-ons.
 - The corrected 1.8.6 statistics, schema 8, configuration keys, bridge
   commands, and all four Settings pages remain unchanged.
 
@@ -98,15 +97,15 @@ saved baseline. The baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only swatches and production rendering.
-Settings temporarily replaces the dashboard's slot in Anki's persistent
-central layout with a centered 680×620 workspace. It verifies that the child
-workspace owns focus before hiding the prior central widgets, and restores
-those widgets and a prior valid focus target before removing Settings. It
-creates no native Settings window, floating overlay, manual z-order, screen
-coordinates, screen-geometry query, or embedded WebEngine content. On smaller
-Anki windows it shrinks within 12-pixel margins; every page remains vertically
-scrollable. Sidebar and Events-tab navigation only changes widgets inside the
-existing stack.
+Settings is a normal `QDialog(mw)` with a 680×620 initial size and 680×560
+minimum. It is movable and resizable, uses default Qt flags, and is opened with
+a local `exec()` call. Immediately before `exec()`, one placement operation
+centers the complete dialog over Anki and clamps it to
+`mw.screen().availableGeometry()`. It never falls back to the primary screen,
+saves coordinates, repositions after opening, hides Anki's central widgets,
+forces focus, or embeds WebEngine content. Every page remains vertically
+scrollable, and sidebar and Events-tab navigation only changes widgets inside
+the existing stack.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source

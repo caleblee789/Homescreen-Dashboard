@@ -313,6 +313,7 @@ class SettingsUtilityTests(unittest.TestCase):
         self.assertEqual(clamp_window_size((1200, 800), (800, 600)), (768, 568))
 
     def test_routes_keep_old_aliases(self) -> None:
+        self.assertEqual(resolve_section_target(""), ("dashboard", ""))
         self.assertEqual(resolve_section("appearance"), "dashboard")
         self.assertEqual(resolve_section("dashboard"), "dashboard")
         self.assertEqual(resolve_section("activity"), "dashboard")

@@ -100,6 +100,93 @@ def _web_asset_url(package: str, filename: str) -> str:
     return "/_addons/{}/web/{}?v={}".format(package, filename, digest)
 
 
+def _clamped_settings_origin(
+    parent_geometry: Any,
+    dialog_size: Any,
+    available_geometry: Any,
+) -> Optional[Tuple[int, int]]:
+    """Return one screen-contained origin using Qt's inclusive QRect centers."""
+
+    try:
+        dialog_width = int(dialog_size.width())
+        dialog_height = int(dialog_size.height())
+        available_width = int(available_geometry.width())
+        available_height = int(available_geometry.height())
+        available_valid = bool(available_geometry.isValid())
+    except (AttributeError, TypeError, ValueError):
+        return None
+    if (
+        not available_valid
+        or dialog_width <= 0
+        or dialog_height <= 0
+        or dialog_width > available_width
+        or dialog_height > available_height
+    ):
+        return None
+
+    try:
+        parent_valid = bool(parent_geometry.isValid())
+        parent_valid = (
+            parent_valid
+            and int(parent_geometry.width()) > 0
+            and int(parent_geometry.height()) > 0
+        )
+    except (AttributeError, TypeError, ValueError):
+        parent_valid = False
+    reference = parent_geometry if parent_valid else available_geometry
+
+    try:
+        centered_x = (
+            (int(reference.left()) + int(reference.right())) // 2
+            - (dialog_width - 1) // 2
+        )
+        centered_y = (
+            (int(reference.top()) + int(reference.bottom())) // 2
+            - (dialog_height - 1) // 2
+        )
+        minimum_x = int(available_geometry.left())
+        minimum_y = int(available_geometry.top())
+        maximum_x = int(available_geometry.right()) - dialog_width + 1
+        maximum_y = int(available_geometry.bottom()) - dialog_height + 1
+    except (AttributeError, TypeError, ValueError):
+        return None
+    return (
+        min(max(centered_x, minimum_x), maximum_x),
+        min(max(centered_y, minimum_y), maximum_y),
+    )
+
+
+def _place_settings_dialog(dialog: Any, parent: Any) -> bool:
+    """Move Settings once before exec, constrained to Anki's assigned screen."""
+
+    try:
+        screen = parent.screen()
+        if screen is None:
+            return False
+        origin = _clamped_settings_origin(
+            parent.geometry(),
+            dialog.size(),
+            screen.availableGeometry(),
+        )
+    except (AttributeError, RuntimeError, TypeError):
+        return False
+    if origin is None:
+        return False
+    dialog.move(*origin)
+    return True
+
+
+def _report_settings_placement_failure(parent: Any) -> None:
+    try:
+        status_bar = parent.statusBar()
+        status_bar.showMessage(
+            "Home Screen Dashboard settings could not open on Anki's current screen.",
+            5000,
+        )
+    except (AttributeError, RuntimeError, TypeError):
+        pass
+
+
 class DashboardController:
     def __init__(self) -> None:
         self.package = mw.addonManager.addonFromModule(__name__)
@@ -134,9 +221,7 @@ class DashboardController:
         self.year_scroll_left: Optional[float] = None
         self._pending_settings_request: Optional[Tuple[str, str, str]] = None
         self._settings_open_pending = False
-        self._settings_menu_waiting_for_hide = False
         self._settings_request_token = 0
-        self._settings_workspace: Optional[Any] = None
 
     def start(self) -> None:
         mw.addonManager.setWebExports(self.package, r"web/.*\.(css|js)")
@@ -221,15 +306,7 @@ class DashboardController:
     def on_profile_close(self, *_args: object) -> None:
         self._pending_settings_request = None
         self._settings_open_pending = False
-        self._settings_menu_waiting_for_hide = False
         self._settings_request_token += 1
-        workspace = self._settings_workspace
-        if workspace is not None:
-            try:
-                workspace.force_close()
-            except RuntimeError:
-                pass
-        self._settings_workspace = None
         self.profile_generation += 1
         self.snapshot = None
         self.cache_key = None
@@ -1197,59 +1274,22 @@ class DashboardController:
         selected_event_id: object = None,
         *_args: object,
     ) -> None:
-        from .settings import SettingsWorkspace
+        from .settings import SettingsDialog
 
         page_name = page if isinstance(page, str) else ""
         date_value = selected_date if self._valid_bridge_date(selected_date) else ""
         event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
-        workspace = self._settings_workspace
-        if workspace is not None:
-            try:
-                workspace.open_page(page_name, date_value, event_value)
-                return
-            except RuntimeError:
-                self._settings_workspace = None
-
-        host = getattr(getattr(mw, "form", None), "centralwidget", None)
-        central_widget = getattr(mw, "centralWidget", None)
-        resolved_central = central_widget() if callable(central_widget) else None
-        if host is None or (resolved_central is not None and resolved_central is not host):
-            status_bar = getattr(mw, "statusBar", None)
-            status = status_bar() if callable(status_bar) else None
-            show_message = getattr(status, "showMessage", None)
-            if callable(show_message):
-                show_message("Home Screen Dashboard Settings could not attach to Anki.", 5000)
-            return
-
-        host_layout = host.layout()
-        web = getattr(mw, "web", None)
-        insert_widget = getattr(host_layout, "insertWidget", None)
-        index_of = getattr(host_layout, "indexOf", None)
-        web_index = index_of(web) if callable(index_of) and web is not None else -1
-        if host_layout is None or not callable(insert_widget) or web_index < 0:
-            status_bar = getattr(mw, "statusBar", None)
-            status = status_bar() if callable(status_bar) else None
-            show_message = getattr(status, "showMessage", None)
-            if callable(show_message):
-                show_message("Home Screen Dashboard Settings could not attach to Anki.", 5000)
-            return
-
-        def workspace_closed(closed_workspace: Any) -> None:
-            if self._settings_workspace is closed_workspace:
-                self._settings_workspace = None
-
-        workspace = SettingsWorkspace(
-            host,
-            host_layout,
-            web_index,
+        dialog = SettingsDialog(
+            mw,
             self,
             page_name,
             date_value,
             event_value,
-            workspace_closed,
         )
-        self._settings_workspace = workspace
-        workspace.attach()
+        if not _place_settings_dialog(dialog, mw):
+            _report_settings_placement_failure(mw)
+            return
+        dialog.exec()
 
     def request_settings_open(
         self,
@@ -1257,48 +1297,17 @@ class DashboardController:
         selected_date: object = None,
         selected_event_id: object = None,
     ) -> None:
-        """Leave a WebEngine callback before attaching the central workspace."""
+        """Leave a WebEngine callback before entering the native dialog."""
 
         page_name = page if isinstance(page, str) else ""
         date_value = selected_date if self._valid_bridge_date(selected_date) else ""
         event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
         self._pending_settings_request = (page_name, date_value, event_value)
-        if self._settings_open_pending and not self._settings_menu_waiting_for_hide:
+        if self._settings_open_pending:
             return
         self._settings_request_token += 1
         token = self._settings_request_token
         self._settings_open_pending = True
-        self._settings_menu_waiting_for_hide = False
-        QTimer.singleShot(0, lambda: self._open_pending_settings(token))
-
-    def request_settings_open_from_menu(
-        self,
-        page: object = None,
-        selected_date: object = None,
-        selected_event_id: object = None,
-        *_args: object,
-    ) -> None:
-        """Wait for the native menu to dismiss before changing central focus."""
-
-        page_name = page if isinstance(page, str) else ""
-        date_value = selected_date if self._valid_bridge_date(selected_date) else ""
-        event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
-        self._pending_settings_request = (page_name, date_value, event_value)
-        if self._settings_open_pending and self._settings_menu_waiting_for_hide:
-            return
-        self._settings_request_token += 1
-        token = self._settings_request_token
-        self._settings_open_pending = True
-        self._settings_menu_waiting_for_hide = True
-        QTimer.singleShot(50, lambda: self._open_pending_settings(token))
-
-    def settings_menu_about_to_hide(self) -> None:
-        """Queue the pending native-menu request after ``QMenu.aboutToHide``."""
-
-        if not self._settings_open_pending or not self._settings_menu_waiting_for_hide:
-            return
-        self._settings_menu_waiting_for_hide = False
-        token = self._settings_request_token
         QTimer.singleShot(0, lambda: self._open_pending_settings(token))
 
     def _open_pending_settings(self, token: int) -> None:
@@ -1307,7 +1316,6 @@ class DashboardController:
         request = self._pending_settings_request
         self._pending_settings_request = None
         self._settings_open_pending = False
-        self._settings_menu_waiting_for_hide = False
         self._settings_request_token += 1
         if request is not None:
             self.open_settings(*request)

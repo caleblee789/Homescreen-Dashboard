@@ -226,7 +226,7 @@ def _settings_style(
         focus_offset=str(FOCUS_RING_OFFSET_PX),
     )
     return """
-QWidget#HomeDashboardSettings {{ background: {window}; border: 1px solid {border}; border-radius: 10px; color: {text}; }}
+QDialog#HomeDashboardSettings {{ background: {window}; border: 1px solid {border}; border-radius: 10px; color: {text}; }}
 QWidget#HomeDashboardSettings QLabel,
 QWidget#HomeDashboardSettings QCheckBox {{ color: {text}; }}
 QWidget#HomeDashboardSettings QListWidget#SettingsNav {{ background: transparent; border: 0; color: {text}; padding: 0; font-weight: 600; }}
@@ -1616,7 +1616,7 @@ class SettingsPromptPage(QWidget):
     def __init__(
         self,
         parent: QWidget,
-        owner: "SettingsPanel",
+        owner: "SettingsDialog",
         title: str,
         message: str,
         actions: List[tuple[str, str, Callable[[], None]]],
@@ -1691,21 +1691,17 @@ QPushButton#DangerButton {{ background: {danger_bg}; border-color: {danger}; col
         self.owner._finish_prompt(self, callback)
 
 
-class SettingsPanel(QWidget):
+class SettingsDialog(QDialog):
     def __init__(
         self,
         parent: QWidget,
         controller: Any,
-        close_callback: Callable[[], None],
-        saved_callback: Callable[[], None],
         initial_page: str = "",
         selected_event_date: str = "",
         selected_event_id: str = "",
     ) -> None:
         super().__init__(parent)
         self.controller = controller
-        self._close_callback = close_callback
-        self._saved_callback = saved_callback
         self.draft = SettingsDraft(controller.config)
         self.staged = deepcopy(self.draft.values)
         self._heatmap_preset_preferences = deepcopy(
@@ -1734,6 +1730,7 @@ class SettingsPanel(QWidget):
         self.current_section = "dashboard"
         self._requested_dashboard_anchor = ""
         self._building = True
+        self._allow_close = False
         self._saving = False
         self._active_prompt: Optional[SettingsPromptPage] = None
         self._last_save_error = ""
@@ -1743,6 +1740,9 @@ class SettingsPanel(QWidget):
             QScrollArea, tuple[int, int, int, int]
         ] = {}
         self.setObjectName("HomeDashboardSettings")
+        self.setWindowTitle("Home Screen Dashboard settings")
+        self.setMinimumSize(680, 560)
+        self.resize(680, 620)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self._hdo_theme_tokens = _theme_tokens(self.staged, self.controller.is_dark())
         self.setStyleSheet(_settings_style(self.staged, self.controller.is_dark()))
@@ -4562,7 +4562,6 @@ class SettingsPanel(QWidget):
         self._finish_saving()
         self._set_status("saved", "✓ Saved")
         self.saved_status_timer.start()
-        self._saved_callback()
 
     def _has_unsaved_changes(self) -> bool:
         self._sync_draft()
@@ -4616,359 +4615,41 @@ class SettingsPanel(QWidget):
         if self._saving or self._active_prompt is not None:
             return
         if not self._has_unsaved_changes():
-            self._close_callback()
+            self._close_dialog()
             return
         self._show_prompt(
             "Discard unsaved changes?",
             "Your changes have not been saved.",
             [
                 ("Keep editing", "primary", lambda: None),
-                ("Discard", "danger", self._close_callback),
+                ("Discard", "danger", self._close_dialog),
             ],
             lambda: None,
         )
+
+    def _close_dialog(self) -> None:
+        self._allow_close = True
+        super().reject()
+
+    def reject(self) -> None:
+        if self._allow_close:
+            super().reject()
+            return
+        self.request_close()
+
+    def closeEvent(self, event: Any) -> None:
+        if self._allow_close:
+            super().closeEvent(event)
+            return
+        event.ignore()
+        self.request_close()
 
     def force_close(self) -> None:
         if self._active_prompt is not None:
             self._active_prompt.dismiss_without_callback()
             self._active_prompt = None
         self._saving = False
-        self._close_callback()
-
-
-class SettingsWorkspace(QWidget):
-    """Layout-managed central workspace that cannot own a macOS window or Space."""
-
-    PREFERRED_WIDTH = 680
-    PREFERRED_HEIGHT = 620
-    COMPACT_MIN_HEIGHT = 560
-    HOST_MARGIN = 12
-    FOCUS_RETRY_DELAY_MS = 16
-    FOCUS_RETRY_LIMIT = 2
-
-    def __init__(
-        self,
-        host: QWidget,
-        host_layout: QBoxLayout,
-        insert_index: int,
-        controller: Any,
-        initial_page: str = "",
-        selected_event_date: str = "",
-        selected_event_id: str = "",
-        on_closed: Optional[Callable[["SettingsWorkspace"], None]] = None,
-    ) -> None:
-        super().__init__(host)
-        self.host = host
-        self.host_layout = host_layout
-        self.insert_index = insert_index
-        self._on_closed = on_closed
-        self._closed = False
-        self._closing = False
-        self._shutdown_close = False
-        self._attached = False
-        self._backing_hidden = False
-        self._event_filter_installed = False
-        self._lifecycle_token = 0
-        self._previous_focus = QApplication.focusWidget()
-        self._backing_widgets: List[tuple[QWidget, bool, bool]] = []
-        for index in range(host_layout.count()):
-            item = host_layout.itemAt(index)
-            widget = item.widget() if item is not None else None
-            if widget is not None:
-                self._backing_widgets.append(
-                    (widget, widget.isVisible(), widget.isEnabled())
-                )
-        self.setObjectName("HomeDashboardSettingsWorkspace")
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.setStyleSheet(
-            "QWidget#HomeDashboardSettingsWorkspace { background: rgba(0, 0, 0, 118); }"
-        )
-        workspace_layout = QGridLayout(self)
-        workspace_layout.setContentsMargins(
-            self.HOST_MARGIN,
-            self.HOST_MARGIN,
-            self.HOST_MARGIN,
-            self.HOST_MARGIN,
-        )
-        self.panel = SettingsPanel(
-            self,
-            controller,
-            self.close_panel,
-            self._settings_saved,
-            initial_page,
-            selected_event_date,
-            selected_event_id,
-        )
-        self.panel.setMinimumSize(1, 1)
-        self.panel.setMaximumSize(self.PREFERRED_WIDTH, self.PREFERRED_HEIGHT)
-        self.panel.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding,
-        )
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.setFocusProxy(self.panel.nav)
-        workspace_layout.addWidget(
-            self.panel,
-            0,
-            0,
-            Qt.AlignmentFlag.AlignCenter,
-        )
-
-    def attach(self) -> None:
-        if self._closed or self._attached:
-            return
-        self._lifecycle_token += 1
-        self._begin_attach(self._lifecycle_token, 0)
-
-    def _begin_attach(self, token: int, attempt: int) -> None:
-        if token != self._lifecycle_token or self._closed or self._closing:
-            return
-        if QApplication.activeWindow() is not mw:
-            if attempt < self.FOCUS_RETRY_LIMIT:
-                QTimer.singleShot(
-                    self.FOCUS_RETRY_DELAY_MS,
-                    lambda: self._begin_attach(token, attempt + 1),
-                )
-            else:
-                self._fail_closed()
-            return
-        self._attached = True
-        self.host_layout.insertWidget(self.insert_index, self, 1)
-        self.show()
-        if self.isWindow() or self.window() is not mw:
-            self._fail_closed()
-            return
-        self.setFocus(Qt.FocusReason.OtherFocusReason)
-        QTimer.singleShot(0, lambda: self._verify_attach_focus(token, 0))
-
-    def _verify_attach_focus(self, token: int, attempt: int) -> None:
-        if token != self._lifecycle_token or self._closed or self._closing:
-            return
-        focus = QApplication.focusWidget()
-        if (
-            QApplication.activeWindow() is mw
-            and not self.isWindow()
-            and self.window() is mw
-            and self._owns_widget(focus)
-        ):
-            self._install_close_shortcut_filter()
-            self._hide_backing_widgets()
-            return
-        if attempt < self.FOCUS_RETRY_LIMIT:
-            self.setFocus(Qt.FocusReason.OtherFocusReason)
-            QTimer.singleShot(
-                self.FOCUS_RETRY_DELAY_MS,
-                lambda: self._verify_attach_focus(token, attempt + 1),
-            )
-            return
-        self._fail_closed()
-
-    def _hide_backing_widgets(self) -> None:
-        if self._backing_hidden:
-            return
-        self._enforce_backing_hidden()
-
-    def _enforce_backing_hidden(self) -> None:
-        for widget, _was_visible, _was_enabled in self._backing_widgets:
-            try:
-                widget.setEnabled(False)
-                widget.hide()
-            except RuntimeError:
-                pass
-        self._backing_hidden = True
-
-    def _settings_saved(self) -> None:
-        if self._closed or self._closing or not self._backing_hidden:
-            return
-        token = self._lifecycle_token
-        self._enforce_backing_hidden()
-        QTimer.singleShot(0, lambda: self._rehide_after_save(token, 0))
-
-    def _rehide_after_save(self, token: int, attempt: int) -> None:
-        if (
-            token != self._lifecycle_token
-            or self._closed
-            or self._closing
-            or not self._backing_hidden
-        ):
-            return
-        self._enforce_backing_hidden()
-        if attempt < 1:
-            QTimer.singleShot(
-                self.FOCUS_RETRY_DELAY_MS,
-                lambda: self._rehide_after_save(token, attempt + 1),
-            )
-
-    def _restore_backing_widgets(self) -> None:
-        for widget, was_visible, was_enabled in self._backing_widgets:
-            try:
-                widget.setEnabled(was_enabled)
-                widget.setVisible(was_visible)
-            except RuntimeError:
-                pass
-        self._backing_hidden = False
-
-    def _owns_widget(self, widget: Optional[QWidget]) -> bool:
-        if widget is None:
-            return False
-        try:
-            return widget is self or self.isAncestorOf(widget)
-        except RuntimeError:
-            return False
-
-    @staticmethod
-    def _contains_widget(root: QWidget, widget: Optional[QWidget]) -> bool:
-        if widget is None:
-            return False
-        try:
-            return widget is root or root.isAncestorOf(widget)
-        except RuntimeError:
-            return False
-
-    def _restored_focus_target(self) -> Optional[QWidget]:
-        previous = self._previous_focus
-        for root, _was_visible, _was_enabled in self._backing_widgets:
-            if not self._contains_widget(root, previous):
-                continue
-            try:
-                if previous is not None and previous.isVisible() and previous.isEnabled():
-                    return previous
-            except RuntimeError:
-                break
-        fallback = getattr(mw, "web", None)
-        if isinstance(fallback, QWidget):
-            try:
-                if fallback.isVisible() and fallback.isEnabled():
-                    return fallback
-            except RuntimeError:
-                pass
-        return None
-
-    def _install_close_shortcut_filter(self) -> None:
-        if self._event_filter_installed:
-            return
-        application = QApplication.instance()
-        if application is not None:
-            application.installEventFilter(self)
-            self._event_filter_installed = True
-
-    def _remove_close_shortcut_filter(self) -> None:
-        if not self._event_filter_installed:
-            return
-        application = QApplication.instance()
-        if application is not None:
-            try:
-                application.removeEventFilter(self)
-            except RuntimeError:
-                pass
-        self._event_filter_installed = False
-
-    def eventFilter(self, _watched: Any, event: Any) -> bool:
-        event_type = event.type()
-        if (
-            not self._closed
-            and not self._closing
-            and event_type in (QEvent.Type.ShortcutOverride, QEvent.Type.KeyPress)
-            and self._owns_widget(QApplication.focusWidget())
-        ):
-            try:
-                closes_window = event.matches(QKeySequence.StandardKey.Close)
-            except (AttributeError, TypeError):
-                closes_window = False
-            if closes_window:
-                if event_type == QEvent.Type.ShortcutOverride:
-                    event.accept()
-                    return True
-                if event.isAutoRepeat():
-                    return True
-                self.panel.request_close()
-                return True
-        return False
-
-    def open_page(
-        self,
-        page: str = "",
-        selected_event_date: str = "",
-        selected_event_id: str = "",
-    ) -> None:
-        if self._closed or self._closing:
-            return
-        self.panel.open_page(page, selected_event_date, selected_event_id)
-
-    def close_panel(self) -> None:
-        if self._closed or self._closing:
-            return
-        self._closing = True
-        self._lifecycle_token += 1
-        token = self._lifecycle_token
-        self._restore_backing_widgets()
-        if self._shutdown_close:
-            self._dispose()
-            return
-        target = self._restored_focus_target()
-        if QApplication.activeWindow() is mw and target is not None:
-            target.setFocus(Qt.FocusReason.OtherFocusReason)
-        QTimer.singleShot(0, lambda: self._finish_close_focus(token, target, 0))
-
-    def _finish_close_focus(
-        self,
-        token: int,
-        target: Optional[QWidget],
-        attempt: int,
-    ) -> None:
-        if token != self._lifecycle_token or self._closed or not self._closing:
-            return
-        focus = QApplication.focusWidget()
-        if (
-            QApplication.activeWindow() is mw
-            and target is not None
-            and not self._contains_widget(target, focus)
-            and attempt < self.FOCUS_RETRY_LIMIT
-        ):
-            target.setFocus(Qt.FocusReason.OtherFocusReason)
-            QTimer.singleShot(
-                self.FOCUS_RETRY_DELAY_MS,
-                lambda: self._finish_close_focus(token, target, attempt + 1),
-            )
-            return
-        self._dispose()
-
-    def _fail_closed(self) -> None:
-        if self._closed:
-            return
-        self._closing = True
-        self._lifecycle_token += 1
-        self._restore_backing_widgets()
-        status_bar = getattr(mw, "statusBar", None)
-        status = status_bar() if callable(status_bar) else None
-        show_message = getattr(status, "showMessage", None)
-        if callable(show_message):
-            show_message(
-                "Home Screen Dashboard Settings could not keep focus inside Anki.",
-                5000,
-            )
-        self._dispose()
-
-    def _dispose(self) -> None:
-        if self._closed:
-            return
-        self._closed = True
-        self._closing = False
-        self._remove_close_shortcut_filter()
-        self.hide()
-        if self._attached:
-            self.host_layout.removeWidget(self)
-            self._attached = False
-        if self._on_closed is not None:
-            self._on_closed(self)
-        self.deleteLater()
-
-    def force_close(self) -> None:
-        if self._closed:
-            return
-        self._shutdown_close = True
-        self._lifecycle_token += 1
-        self.panel.force_close()
+        self._close_dialog()
 
 
 def _object_name(menu: Any) -> str:
@@ -5006,53 +4687,20 @@ def _caleb_menu(menu_bar: Any) -> Any:
     submenu = menu_bar.addMenu(CALEB_MENU_TITLE); submenu.setObjectName(CALEB_MENU_OBJECT_NAME); mw._caleb_m_addons_menu = submenu; return submenu
 
 
-def _connect_settings_menu_handoff(submenu: Any, controller: Any) -> None:
-    previous = getattr(mw, "_home_dashboard_overhaul_settings_menu_controller", None)
-    if previous is controller:
-        return
-    signal = getattr(submenu, "aboutToHide", None)
-    if previous is not None and signal is not None:
-        try:
-            signal.disconnect(previous.settings_menu_about_to_hide)
-        except (AttributeError, RuntimeError, TypeError):
-            pass
-    connect = getattr(signal, "connect", None)
-    if callable(connect):
-        connect(controller.settings_menu_about_to_hide)
-        mw._home_dashboard_overhaul_settings_menu_controller = controller
-
-
-def _connect_settings_menu_action(action: Any, controller: Any) -> None:
-    previous = getattr(mw, "_home_dashboard_overhaul_settings_action_controller", None)
-    if previous is controller:
-        return
-    if previous is not None:
-        try:
-            action.triggered.disconnect(previous.request_settings_open_from_menu)
-        except (AttributeError, RuntimeError, TypeError):
-            pass
-    action.triggered.connect(controller.request_settings_open_from_menu)
-    mw._home_dashboard_overhaul_settings_action_controller = controller
-
-
 def install_settings_menu(controller: Any) -> None:
     menu_bar = getattr(getattr(mw, "form", None), "menubar", None)
     if menu_bar is None:
         getter = getattr(mw, "menuBar", None); menu_bar = getter() if callable(getter) else None
     if menu_bar is None: return
     submenu = _caleb_menu(menu_bar)
-    _connect_settings_menu_handoff(submenu, controller)
     existing = getattr(mw, "_home_dashboard_overhaul_settings_action", None)
-    if existing is not None:
-        _connect_settings_menu_action(existing, controller)
-        return
+    if existing is not None: return
     for action in _actions(submenu):
         text = action.text() if callable(getattr(action, "text", None)) else ""
         if text == ACTION_TEXT:
-            _connect_settings_menu_action(action, controller)
             mw._home_dashboard_overhaul_settings_action = action
             return
     action = QAction(ACTION_TEXT, mw)
-    _connect_settings_menu_action(action, controller)
+    action.triggered.connect(controller.open_settings)
     submenu.addAction(action)
     mw._home_dashboard_overhaul_settings_action = action
