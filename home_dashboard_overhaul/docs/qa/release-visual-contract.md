@@ -48,10 +48,10 @@ bottom-scrolled clearance above Anki's native actions.
 
 - One native Qt tree owns all widths: compact header, fixed 152 px rail, one
   page scroller, and final-row footer. No WebEngine content is embedded.
-- The resizable dialog targets 1200×800. A minimum up to 1040×700 is enforced
-  when the screen permits, and the initial size is clamped to available
-  geometry so the footer remains onscreen. The inner shell is centered and
-  capped at 1,240 px; no geometry is persisted or positioned manually.
+- The movable, resizable dialog starts at 680×620 with a 680×560 minimum. The
+  inner shell is capped at 1,240 px. The primary dialog performs no screen
+  query or pre-`exec()` move, so Qt retains parent-aware placement when Anki is
+  full-screen. No geometry is persisted or reapplied after opening.
 - Production opens a normal `QDialog(mw)` synchronously with `exec()` and
   default flags. Sidebar navigation only changes the native stacked page; it
   creates no timer, WebView, secondary window, or focus hook.
@@ -66,7 +66,7 @@ bottom-scrolled clearance above Anki's native actions.
 
 Settings captures cover all four pages at 1040, 1200, and full-screen widths;
 100% and 150% application fonts; required Events/Bible/About states; dirty,
-revert, save, and error states; legacy routing; standard/clamped windows; and
+revert, save, and error states; legacy routing; standard parented windows; and
 restart.
 
 ## Persistence and meaning

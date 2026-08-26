@@ -1,11 +1,24 @@
-# Home Screen Dashboard 1.8.6
+# Home Screen Dashboard 1.8.7
 
 Home Screen Dashboard is a calendar-first Deck Browser dashboard for Anki
 Desktop 26.8. It combines study history, due work, local events, stable study
 metrics, and a rotating Bible verse without patching Anki's private Deck
 Browser or statistics classes.
 
-## What changed in 1.8.6
+## What changed in 1.8.7
+
+- Settings now matches Progress Bar and PronounceIt with a normal parented
+  `QDialog`, a 680×620 initial size, a 680×560 minimum, default flags, and a
+  movable, upward-resizable native title bar.
+- The Caleb menu constructs and executes the dialog synchronously. Deck Browser
+  bridge requests alone remain deferred and coalesced until their callback
+  returns. Primary Save and dirty-close confirmations remain stacked child
+  pages inside the dialog.
+- The retired central workspace, backing-view hiding, focus handoff/retries,
+  focus restoration, application event filter, and menu-dismissal timer are
+  removed. Qt manages the same dialog lifecycle as the two working add-ons.
+- The corrected 1.8.6 statistics, schema 8, configuration keys, bridge
+  commands, and all four Settings pages remain unchanged.
 
 - Every study-derived value is computed from one scheduler-authoritative
   snapshot. Today uses `[next rollover − 86,400 seconds, next rollover)`, and
@@ -84,11 +97,23 @@ saved baseline. The baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only swatches and production rendering.
-Settings opens as a normal parented, resizable `QDialog` through `exec()` with
-default window flags, matching conventional Anki add-on settings windows. It
-assigns no screen coordinates, contains no embedded WebEngine content, targets
-1200×800, and clamps its initial size for smaller screens without restoring a
-saved size.
+Settings is a normal `QDialog(mw)` with a 680×620 initial size and 680×560
+minimum. It is movable and resizable, uses default Qt flags, and is opened with
+a local `exec()` call. The primary dialog performs no screen query or
+pre-`exec()` move, allowing Qt to place its native dialog relative to Anki in
+the active full-screen Space. It never saves coordinates, repositions after
+opening, hides Anki's central widgets, forces focus, or embeds WebEngine
+content. Every page remains vertically scrollable, and sidebar and Events-tab
+navigation only changes widgets inside the existing stack.
+
+Responsive field grids mount every new field under its Settings card before
+changing visibility or filtering layout rows. This prevents a parentless field
+from being realized as a temporary native window during dialog construction
+and keeps all initial Appearance, Bible, and heatmap fields visible. Heatmap
+selection indicators and verse status badges are also created as explicit
+children before their visibility changes. Ordinary staged-setting updates do
+not tear down or rebuild the heatmap-card subtree; only theme, color-mode, and
+configuration-load paths refresh it.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source
@@ -96,7 +121,7 @@ work remains deferred and is not packaged.
 
 ## Install
 
-Install `home-dashboard-overhaul-1.8.6.ankiaddon` through **Tools → Add-ons →
+Install `home-dashboard-overhaul-1.8.7.ankiaddon` through **Tools → Add-ons →
 Install from file**, restart Anki, and disable any legacy source add-ons named
 by the activation card. The manifest is pinned to Anki Desktop 26.8.
 
@@ -105,18 +130,15 @@ by the activation card. The manifest is pinned to Anki Desktop 26.8.
 From the repository root, use Python 3.10 or newer:
 
 ```sh
-python3 -m unittest discover -s home_dashboard_overhaul/tests -p 'test_*.py' -v
-node home_dashboard_overhaul/tests/calendar_model_test.js
-python3 home_dashboard_overhaul/qa/validate_revised_ui_contract.py
+python3 -m unittest home_dashboard_overhaul.tests.test_controller_insights home_dashboard_overhaul.tests.test_settings_release_contract -v
+python3 home_dashboard_overhaul/qa/validate_settings_window_contract_1_8_7.py
 python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
 The builder creates one 24-file allowlisted archive, checks its version and
-safe paths, and verifies every packaged byte against source. That exact archive
-is installed into one fresh sync-disabled Anki 26.8 profile for an initial pass
-and a controlled restart. Native acceptance follows the current contract: 94
-captures spanning production, Settings, and restart states, with validated
-contact-sheet coverage and direct Anki Graphs/Scheduler parity.
+safe paths, validates the focused 1.8.7 Settings contract, and verifies every
+packaged byte against source. The full 1.8.6 statistics and 94-frame native
+evidence remain frozen rather than being regenerated for this candidate.
 
 VoiceOver, Windows, Linux, forced colors, DPR 1, and OS-level display-scaling
 acceptance remain deferred and unclaimed unless separately run.

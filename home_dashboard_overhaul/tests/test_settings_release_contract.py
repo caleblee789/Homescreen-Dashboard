@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 import unittest
@@ -41,9 +42,20 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )
         cls.config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
         cls.manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
+        cls.settings_window_contract = json.loads(
+            (ROOT / "qa" / "settings_window_contract_1_8_7.json").read_text(
+                encoding="utf-8"
+            )
+        )
 
     def test_release_metadata_and_schema_eight_are_current(self) -> None:
-        self.assertEqual(self.manifest["human_version"], "1.8.6")
+        self.assertEqual(self.manifest["human_version"], "1.8.7")
+        self.assertEqual(self.settings_window_contract["release"], "1.8.7")
+        self.assertEqual(self.settings_window_contract["schema_version"], 8)
+        self.assertEqual(
+            self.settings_window_contract["pages"],
+            ["dashboard", "events", "bible_verse", "about_support"],
+        )
         self.assertEqual(self.config["schema_version"], 8)
         self.assertEqual(self.config["appearance"]["opacity"], 96)
         self.assertEqual(self.config["appearance"]["blur"], 12)
@@ -98,10 +110,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
 
     def test_settings_use_one_canonical_native_shell(self) -> None:
         for marker in (
-            "self.setMinimumSize(min(1040, width), min(700, height))",
-            "self.resize(width, height)",
-            "self.setMinimumSize(1040, 700)",
-            "self.resize(1200, 800)",
+            "class SettingsDialog(QDialog):",
             "self.settings_shell.setMaximumWidth(1240)",
             "self.settings_shell.setSizePolicy(",
             "self._update_settings_shell_margins()",
@@ -117,8 +126,14 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'self._add_page("about_support", page)',
         ):
             self.assertIn(marker, self.settings)
-        self.assertNotIn("setFixedSize(width, height)", self.settings)
-        self.assertNotIn("setFixedSize(1200, 800)", self.settings)
+        for retired_geometry in (
+            "self.setMinimumSize(min(1040, width), min(700, height))",
+            "self.setMinimumSize(1040, 700)",
+            "self.resize(1200, 800)",
+            "setFixedSize(width, height)",
+            "setFixedSize(1200, 800)",
+        ):
+            self.assertNotIn(retired_geometry, self.settings)
         shell_source = self.settings.split("dialog_layout = QHBoxLayout(self)", 1)[1].split(
             "outer = QGridLayout(self.settings_shell)", 1
         )[0]
@@ -137,34 +152,78 @@ class SettingsReleaseContractTests(unittest.TestCase):
 
     def test_window_uses_parented_standard_dialog_exec_contract(self) -> None:
         for marker in (
-            "super().__init__(mw)",
-            "width, height = clamp_window_size(",
-            "self.setMinimumSize(min(1040, width), min(700, height))",
-            "self.resize(width, height)",
-            "QTimer.singleShot(0, self._settle_initial_scroll_top)",
+            "parent: QWidget",
+            "super().__init__(parent)",
+            'self.setWindowTitle("Home Screen Dashboard settings")',
+            "self.setMinimumSize(680, 560)",
+            "self.resize(680, 620)",
+            "self._settle_initial_scroll_top()",
         ):
             self.assertIn(marker, self.settings)
         opener = self.controller.split("    def open_settings(", 1)[1].split(
-            "    def save_config", 1
+            "    def request_settings_open", 1
         )[0]
-        self.assertIn("dialog = SettingsDialog(self, page_name, date_value, event_value)", opener)
-        self.assertIn("dialog.exec()", opener)
+        for marker in (
+            "from .settings import SettingsDialog",
+            "dialog = SettingsDialog(",
+            "            mw,",
+            "            self,",
+            "dialog.exec()",
+        ):
+            self.assertIn(marker, opener)
         for forbidden_opening_marker in (
-            "settings_dialog",
-            "setWindowModality",
-            "WindowModal",
-            "dialog.open()",
+            "self.settings_dialog",
+            "SettingsWorkspace",
+            "centralwidget",
+            "host_layout",
             "dialog.show()",
+            "dialog.open()",
             "dialog.finished",
             "dialog.deleteLater()",
             "dialog.raise_()",
             "dialog.activateWindow()",
+            "dialog.move(",
+            "parent.screen()",
+            "availableGeometry()",
         ):
             self.assertNotIn(forbidden_opening_marker, opener)
-        self.assertNotIn("available.center() - self.rect().center()", self.settings)
-        self.assertNotIn("self.move(", self.settings)
-        self.assertNotIn("settingsWindowSize", self.settings)
-        self.assertNotIn("def _settle_window_to_screen", self.settings)
+        dialog_source = self.settings.split("class SettingsDialog(QDialog):", 1)[1].split(
+            "def _object_name", 1
+        )[0]
+        for forbidden_marker in (
+            "availableGeometry",
+            "QApplication.primaryScreen",
+            "clamp_window_size",
+            "self.screen()",
+            "self.move(",
+            "settingsWindowSize",
+            "def _settle_window_to_screen",
+            "def showEvent",
+            "setWindowModality",
+            "setModal(",
+            "setWindowFlags",
+            "activateWindow()",
+            "raise_()",
+            "setGeometry(",
+            "setFocus(",
+            "setFocusProxy(",
+            "installEventFilter(self)",
+            "AnkiWebView",
+            "QWebEngine",
+            "Qt.WindowType.Window",
+            "Qt.WindowType.CustomizeWindowHint",
+        ):
+            self.assertNotIn(forbidden_marker, dialog_source)
+        for retired_placement_marker in (
+            "def _clamped_settings_origin(",
+            "def _place_settings_dialog(",
+            "def _report_settings_placement_failure(",
+            "dialog.move(",
+            "parent.screen()",
+            "screen.availableGeometry()",
+        ):
+            self.assertNotIn(retired_placement_marker, self.controller)
+        self.assertNotIn("class SettingsWorkspace(QWidget):", self.settings)
         for retired_window_marker in (
             "Qt.WindowType.Tool",
             "Qt.WindowModality.NonModal",
@@ -176,9 +235,104 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "self.winId()",
         ):
             self.assertNotIn(retired_window_marker, self.settings)
-        self.assertIn("default: Tuple[int, int] = (1200, 800)", self.model)
-        self.assertIn("minimum: Tuple[int, int] = (1040, 700)", self.model)
         self.assertNotIn("settingsWindowSize", json.dumps(self.config))
+        self.assertEqual(self.settings_window_contract["minimum_size"], [680, 560])
+        self.assertEqual(self.settings_window_contract["initial_size"], [680, 620])
+        self.assertTrue(self.settings_window_contract["native_window"])
+        self.assertTrue(self.settings_window_contract["movable"])
+        self.assertTrue(self.settings_window_contract["resizable"])
+        self.assertEqual(
+            self.settings_window_contract["initial_placement"],
+            "Qt parent-aware QDialog placement at exec()",
+        )
+        self.assertEqual(
+            self.settings_window_contract["screen_geometry_queries"],
+            "none for the primary Settings dialog",
+        )
+        self.assertFalse(self.settings_window_contract["pre_exec_move"])
+        self.assertFalse(self.settings_window_contract["primary_screen_fallback"])
+        self.assertFalse(self.settings_window_contract["reposition_after_open"])
+        self.assertEqual(
+            self.settings_window_contract["initial_grid_mount"],
+            "parent every new field to its Settings card before showing or visibility filtering",
+        )
+        self.assertFalse(self.settings_window_contract["temporary_field_windows"])
+        self.assertIn("scroll.setWidgetResizable(True)", dialog_source)
+        self.assertIn(
+            "scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
+            dialog_source,
+        )
+        for shortcut_owner in (
+            "self.escape_action",
+            "self.save_shortcut",
+            "self.close_shortcut",
+            "self.escape_shortcut",
+        ):
+            shortcut_source = self.settings.split(shortcut_owner, 1)[1].split(
+                "self.addAction", 1
+            )[0]
+            self.assertIn(
+                "Qt.ShortcutContext.WidgetWithChildrenShortcut",
+                shortcut_source,
+            )
+
+        navigation_source = self.settings.split("    def _nav_changed", 1)[1].split(
+            "    def _schedule_dashboard_anchor", 1
+        )[0]
+        self.assertIn("self.stack.setCurrentIndex", navigation_source)
+        for lifecycle_marker in (
+            "attach(",
+            "hide()",
+            "show()",
+            "setFocus(",
+            "window()",
+            "QTimer",
+        ):
+            self.assertNotIn(lifecycle_marker, navigation_source)
+
+    def test_primary_save_and_close_prompts_are_embedded_children(self) -> None:
+        self.assertIn("class SettingsPromptPage(QWidget):", self.settings)
+        self.assertIn("self._content_stack.setCurrentWidget(prompt)", self.settings)
+        self.assertIn("self._content_stack.setCurrentWidget(self.settings_shell)", self.settings)
+        self.assertIn('"Discard unsaved changes?"', self.settings)
+        self.assertIn('"Settings changed elsewhere"', self.settings)
+        self.assertIn("self._show_prompt(", self.settings)
+        primary_source = self.settings.split("    def _save(self) -> None:", 1)[1].split(
+            "def _object_name", 1
+        )[0]
+        self.assertNotIn("message = QMessageBox(self)", primary_source)
+        self.assertNotIn("message.exec()", primary_source)
+        for marker in (
+            "def reject(self) -> None:",
+            "def closeEvent(self, event: Any) -> None:",
+            "self.request_close()",
+            "super().reject()",
+            "event.ignore()",
+        ):
+            self.assertIn(marker, primary_source)
+
+    def test_native_menu_is_direct_and_only_bridge_opening_is_deferred(self) -> None:
+        bridge_source = self.controller.split("    def request_settings_open(", 1)[1].split(
+            "    def save_config", 1
+        )[0]
+        self.assertIn("QTimer.singleShot(0, lambda: self._open_pending_settings(token))", bridge_source)
+        self.assertIn("self._pending_settings_request", bridge_source)
+        self.assertIn("self._settings_open_pending", bridge_source)
+        self.assertIn("token != self._settings_request_token", bridge_source)
+        self.assertNotIn("SettingsDialog", bridge_source)
+        self.assertNotIn("settings_dialog", bridge_source)
+        menu_source = self.settings.split("def install_settings_menu", 1)[1]
+        self.assertIn("action.triggered.connect(controller.open_settings)", menu_source)
+        for retired in (
+            "_settings_workspace",
+            "_settings_menu_waiting_for_hide",
+            "request_settings_open_from_menu",
+            "settings_menu_about_to_hide",
+            "aboutToHide",
+            "QTimer.singleShot(50",
+            "_connect_settings_menu_handoff",
+        ):
+            self.assertNotIn(retired, self.controller + self.settings)
 
     def test_native_probe_window_overrides_remain_outside_product_code(self) -> None:
         self.assertNotIn("SETTINGS_SIZE_KEY", self.settings)
@@ -324,6 +478,166 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertIn("self.blur_field.setVisible(enabled)", source)
         self.assertNotIn("setValue", source)
 
+    def test_dynamic_badges_are_parented_before_visibility_changes(self) -> None:
+        verse_source = self.settings.split("class VerseRowWidget(QWidget):", 1)[1].split(
+            "class ContextualActionGroup(QWidget):", 1
+        )[0]
+        for name, label, visibility in (
+            ("current_badge", "Current", "self.current_badge.setVisible(current)"),
+            ("selected_badge", "Selected", "self.selected_badge.hide()"),
+        ):
+            creation = 'self.{} = QLabel("{}", self)'.format(name, label)
+            insertion = "heading.addWidget(self.{})".format(name)
+            self.assertIn(creation, verse_source)
+            self.assertLess(verse_source.index(creation), verse_source.index(insertion))
+            self.assertLess(verse_source.index(insertion), verse_source.index(visibility))
+
+        heatmap_source = self.settings.split(
+            "def _refresh_heatmap_preset_cards", 1
+        )[1].split("def _update_color_swatch", 1)[0]
+        indicator_creation = 'selected_indicator = QLabel("✓", button)'
+        indicator_insertion = "swatches.addWidget(selected_indicator)"
+        indicator_visibility = "selected_indicator.setVisible(preset_name == selected)"
+        self.assertIn(indicator_creation, heatmap_source)
+        self.assertLess(
+            heatmap_source.index(indicator_creation),
+            heatmap_source.index(indicator_insertion),
+        )
+        self.assertLess(
+            heatmap_source.index(indicator_insertion),
+            heatmap_source.index(indicator_visibility),
+        )
+
+    def test_heatmap_rebuilds_only_on_explicit_heatmap_paths(self) -> None:
+        apply_theme_source = self.settings.split("def _apply_theme", 1)[1].split(
+            "def _update_forecast_range_visibility", 1
+        )[0]
+        self.assertNotIn("_refresh_heatmap_preset_cards", apply_theme_source)
+        self.assertIn("self._update_preset_swatch()", apply_theme_source)
+        self.assertIn("self._update_color_swatch()", apply_theme_source)
+
+        appearance_source = self.settings.split("def _create_appearance_card", 1)[1].split(
+            "def _build_dashboard_page", 1
+        )[0]
+        self.assertIn(
+            "self.preset.currentIndexChanged.connect(self._dashboard_theme_changed)",
+            appearance_source,
+        )
+        self.assertIn(
+            "self.mode.connect_changed(self._refresh_heatmap_preset_cards)",
+            appearance_source,
+        )
+
+        theme_source = self.settings.split("def _dashboard_theme_changed", 1)[1].split(
+            "def _update_glass_controls", 1
+        )[0]
+        self.assertIn("self._refresh_heatmap_preset_cards()", theme_source)
+
+        config_source = self.settings.split("def _apply_config_to_widgets", 1)[1].split(
+            "def _walk_deck_items", 1
+        )[0]
+        self.assertIn("self._refresh_heatmap_preset_cards()", config_source)
+
+    def test_compact_grid_adopts_fields_before_visibility_filtering(self) -> None:
+        module = ast.parse(self.settings)
+        dialog = next(
+            node
+            for node in module.body
+            if isinstance(node, ast.ClassDef) and node.name == "SettingsDialog"
+        )
+        function = next(
+            node
+            for node in dialog.body
+            if isinstance(node, ast.FunctionDef) and node.name == "_place_grid_widgets"
+        )
+        function.decorator_list = []
+        function.returns = None
+        for argument in function.args.args:
+            argument.annotation = None
+        namespace: dict[str, object] = {}
+        exec(
+            compile(
+                ast.fix_missing_locations(
+                    ast.Module(body=[function], type_ignores=[])
+                ),
+                str(ROOT / "settings.py"),
+                "exec",
+            ),
+            namespace,
+        )
+        place_grid_widgets = namespace["_place_grid_widgets"]
+
+        class Field:
+            def __init__(self) -> None:
+                self.parent: object | None = None
+                self.hidden = True
+                self.show_calls = 0
+                self.was_shown_as_window = False
+
+            def parentWidget(self) -> object | None:
+                return self.parent
+
+            def setParent(self, parent: object) -> None:
+                self.parent = parent
+
+            def show(self) -> None:
+                self.show_calls += 1
+                self.was_shown_as_window = self.parent is None
+                self.hidden = False
+
+            def hide(self) -> None:
+                self.hidden = True
+
+            def isHidden(self) -> bool:
+                return self.hidden
+
+        class Grid:
+            def __init__(self, host: object) -> None:
+                self.host = host
+                self.widgets: list[Field] = []
+
+            def parentWidget(self) -> object:
+                return self.host
+
+            def count(self) -> int:
+                return len(self.widgets)
+
+            def takeAt(self, index: int) -> Field:
+                return self.widgets.pop(index)
+
+            def addWidget(self, widget: Field, _row: int, _column: int) -> None:
+                self.widgets.append(widget)
+
+            def setColumnStretch(self, _column: int, _stretch: int) -> None:
+                return
+
+            def invalidate(self) -> None:
+                return
+
+        host = object()
+        grid = Grid(host)
+        fields = [Field() for _ in range(4)]
+
+        place_grid_widgets(grid, fields, 2)
+
+        self.assertEqual(grid.widgets, fields)
+        for field in fields:
+            self.assertIs(field.parentWidget(), host)
+            self.assertEqual(field.show_calls, 1)
+            self.assertFalse(field.was_shown_as_window)
+
+        intentionally_hidden = fields[2]
+        intentionally_hidden.hide()
+        place_grid_widgets(grid, fields, 2)
+
+        self.assertTrue(intentionally_hidden.isHidden())
+        self.assertEqual(intentionally_hidden.show_calls, 1)
+        self.assertNotIn(intentionally_hidden, grid.widgets)
+        self.assertEqual(grid.widgets, [fields[0], fields[1], fields[3]])
+        for field in fields:
+            self.assertIs(field.parentWidget(), host)
+            self.assertFalse(field.was_shown_as_window)
+
     def test_event_manager_uses_two_line_rows_name_sort_and_main_scroller(self) -> None:
         for marker in (
             "class EventRowWidget(QWidget)",
@@ -344,8 +658,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
     def test_bible_library_uses_reference_excerpt_badges_and_incremental_rows(self) -> None:
         for marker in (
             "class VerseRowWidget(QWidget)",
-            'self.current_badge = QLabel("Current")',
-            'self.selected_badge = QLabel("Selected")',
+            'self.current_badge = QLabel("Current", self)',
+            'self.selected_badge = QLabel("Selected", self)',
             "split_quote_reference(quote)",
             "self._quote_render_limit = 100",
             "self._quote_render_limit += 100",
@@ -414,7 +728,13 @@ class SettingsReleaseContractTests(unittest.TestCase):
             self.assertIn(marker, self.settings)
 
     def test_legacy_calendar_route_settles_to_the_dashboard_card(self) -> None:
+        self.assertIn('"": ("dashboard", "")', self.model)
         self.assertIn('"calendar": ("dashboard", "calendar")', self.model)
+        constructor_tail = self.settings.split("self.open_page(initial_page", 1)[1].split(
+            "def resizeEvent", 1
+        )[0]
+        self.assertIn("if not self._requested_dashboard_anchor:", constructor_tail)
+        self.assertIn("self._settle_initial_scroll_top()", constructor_tail)
         source = self.settings.split("def _schedule_dashboard_anchor", 1)[1].split(
             "def _apply_canonical_layout", 1
         )[0]

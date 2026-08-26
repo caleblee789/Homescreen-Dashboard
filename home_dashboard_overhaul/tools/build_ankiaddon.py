@@ -50,6 +50,8 @@ DEFERRED_SOURCE_FILES = frozenset({
 })
 DEFERRED_SOURCE_PREFIXES = ("_vendor/",)
 RELEASE_CONTRACT_FILES = (
+    "qa/settings_window_contract_1_8_7.json",
+    "qa/validate_settings_window_contract_1_8_7.py",
     "qa/calendar_surface_manifest_1_8_6.json",
     "qa/visual_regression_matrix_1_8_6.json",
     "qa/ui-surface-registry_1_8_6.json",
@@ -65,7 +67,7 @@ RELEASE_CONTRACT_FILES = (
     "qa/runtime_probe_fullscreen_profile.py",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
-FIXED_TIMESTAMP = (2026, 8, 24, 0, 0, 0)
+FIXED_TIMESTAMP = (2026, 8, 26, 0, 0, 0)
 
 
 def _json(relative: str) -> dict:
@@ -312,11 +314,12 @@ def validate_sources() -> dict:
         ROOT / "qa" / "capture_plan.json"
     )
     capture_plan.validate_authorities(ROOT / "qa")
+    settings_window_contract = _json("qa/settings_window_contract_1_8_7.json")
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.6":
-        raise ValueError("release artifact must use semantic version 1.8.6")
+    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.7":
+        raise ValueError("release artifact must use semantic version 1.8.7")
     if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260800):
         raise ValueError("release must be pinned to Anki 26.8")
     if config.get("schema_version") != 8:
@@ -363,10 +366,12 @@ def validate_sources() -> dict:
         "controller.py": (
             'page == "calendar_data"', 'page == "events"', "selected_event_id",
             "def _open_browser_target", "browser_will_search", "context.ids = ids",
-            'command == "diagnostics"', 'self.open_settings("about_support")',
+            'command == "diagnostics"', 'self.request_settings_open("about_support")',
             "def _persist_settings_transaction", "_restore_optional_bytes",
-            "dialog = SettingsDialog(self, page_name, date_value, event_value)",
+            "from .settings import SettingsDialog", "dialog = SettingsDialog(",
             "dialog.exec()",
+            "self._settings_request_token",
+            "QTimer.singleShot(0, lambda: self._open_pending_settings(token))",
         ),
         "insights.py": (
             "ORDER BY again_count DESC, total_answers DESC, r.cid ASC",
@@ -383,10 +388,19 @@ def validate_sources() -> dict:
             "today_session", "data-hdo-has-bible",
         ),
         "settings.py": (
-            "self.setMinimumSize(1040, 700)", "self.resize(1200, 800)",
-            "self.setMinimumSize(min(1040, width), min(700, height))",
-            "self.resize(width, height)", "super().__init__(mw)",
+            "class SettingsDialog(QDialog):", "class SettingsPromptPage(QWidget):",
+            "super().__init__(parent)",
+            'self.setWindowTitle("Home Screen Dashboard settings")',
+            "self.setMinimumSize(680, 560)", "self.resize(680, 620)",
+            "self._content_stack.setCurrentWidget(prompt)",
+            "def reject(self) -> None:", "def closeEvent(self, event: Any) -> None:",
+            "action.triggered.connect(controller.open_settings)",
             "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
+            "host = grid.parentWidget()", "widget.setParent(host)",
+            "widget.show()", "if not widget.isHidden():",
+            'selected_indicator = QLabel("✓", button)',
+            'self.current_badge = QLabel("Current", self)',
+            'self.selected_badge = QLabel("Selected", self)',
             "def _connect_change_signals(self) -> None:",
             "def _settings_changed(self, *_args: object) -> None:",
             'SettingsCard("Study calculations")', 'SettingsCard("Calendar display")',
@@ -431,6 +445,70 @@ def validate_sources() -> dict:
         if absent:
             raise ValueError("{} is missing corrected release contracts: {}".format(relative, ", ".join(absent)))
 
+    dialog_source = sources["settings.py"].split(
+        "class SettingsDialog(QDialog):", 1
+    )[1].split("def _object_name", 1)[0]
+    grid_mount_source = dialog_source.split(
+        "    def _place_grid_widgets(", 1
+    )[1].split("    def _reflow_compact_grids", 1)[0]
+    if not (
+        grid_mount_source.index("widget.setParent(host)")
+        < grid_mount_source.index("widget.show()")
+        < grid_mount_source.index("if not widget.isHidden():")
+    ):
+        raise ValueError(
+            "Settings grid fields must be parented before show and visibility filtering"
+        )
+    heatmap_refresh_source = dialog_source.split(
+        "    def _refresh_heatmap_preset_cards(", 1
+    )[1].split("    def _update_color_swatch", 1)[0]
+    heatmap_markers = (
+        'selected_indicator = QLabel("✓", button)',
+        "swatches.addWidget(selected_indicator)",
+        "selected_indicator.setVisible(preset_name == selected)",
+    )
+    if not (
+        heatmap_refresh_source.index(heatmap_markers[0])
+        < heatmap_refresh_source.index(heatmap_markers[1])
+        < heatmap_refresh_source.index(heatmap_markers[2])
+    ):
+        raise ValueError(
+            "Settings heatmap indicator must be parented before visibility changes"
+        )
+    apply_theme_source = dialog_source.split("    def _apply_theme(", 1)[1].split(
+        "    def _update_forecast_range_visibility", 1
+    )[0]
+    if "self._refresh_heatmap_preset_cards()" in apply_theme_source:
+        raise ValueError("generic Settings synchronization must not rebuild heatmap cards")
+    for forbidden in (
+        "availableGeometry", "QApplication.primaryScreen", "clamp_window_size",
+        "self.screen()", "self.move(", "setWindowModality", "setModal(",
+        "def showEvent", "AnkiWebView", "QWebEngine", "raise_()",
+        "setGeometry(", "setWindowFlags", "activateWindow()", "setFocus(",
+        "setFocusProxy(", "installEventFilter(self)", "super().__init__(parent,",
+        "Qt.WindowType.Window", "Qt.WindowType.CustomizeWindowHint",
+    ):
+        if forbidden in dialog_source:
+            raise ValueError(
+                "Settings dialog retains custom lifecycle marker: {}".format(forbidden)
+            )
+
+    for forbidden in (
+        "def _clamped_settings_origin(", "def _place_settings_dialog(",
+        "def _report_settings_placement_failure(", "dialog.move(",
+        "parent.screen()", "screen.availableGeometry()",
+    ):
+        if forbidden in sources["controller.py"]:
+            raise ValueError(
+                "retired pre-exec Settings placement remains: {}".format(forbidden)
+            )
+
+    save_tail = sources["settings.py"].split("    def _save(self) -> None:", 1)[1].split(
+        "def _object_name", 1
+    )[0]
+    if "message = QMessageBox(self)" in save_tail or "message.exec()" in save_tail:
+        raise ValueError("primary Settings prompts must remain embedded children")
+
     for retired in (
         "Qt.WindowType.Tool", "self.winId()", "setTransientParent",
         "_attach_transient_parent", "Qt.WindowModality.NonModal", "objc_msgSend",
@@ -438,17 +516,18 @@ def validate_sources() -> dict:
         "self.move(",
     ):
         if retired in sources["settings.py"]:
-            raise ValueError("retired macOS Settings panel behavior remains: {}".format(retired))
+            raise ValueError(
+                "retired macOS Settings panel behavior remains: {}".format(retired)
+            )
 
     for retired in (
-        "self.settings_dialog", "SETTINGS_WINDOW_MODALITY",
-        "setWindowModality", "dialog.open()", "dialog.show()",
-        "dialog.finished.connect(", "def _settings_dialog_finished",
-        "dialog.raise_()", "dialog.activateWindow()",
+        "SettingsWorkspace", "_settings_workspace", "_settings_menu_waiting_for_hide",
+        "request_settings_open_from_menu", "settings_menu_about_to_hide",
+        "QTimer.singleShot(50", "dialog.open()", "dialog.show()",
+        "dialog.finished.connect(", "dialog.raise_()", "dialog.activateWindow()",
     ):
-        if retired in sources["controller.py"]:
-            raise ValueError("retired top-level Settings lifecycle remains: {}".format(retired))
-
+        if retired in sources["controller.py"] + sources["settings.py"]:
+            raise ValueError("retired Settings lifecycle remains: {}".format(retired))
     for retired in (
         "AnkiWebView", "aqt.webview", "stdHtml", "focusChanged",
         "PreviewDock", "_schedule_preview", "_render_preview", "_open_full_preview",
@@ -482,10 +561,12 @@ def validate_sources() -> dict:
         or any(not item.get("tags") or not str(item.get("requirement", "")).strip() for item in criteria)
     ):
         raise ValueError("corrected surface contract must encode unique tagged acceptance criteria")
-    if any(contract.get("release") != version for contract in (
+    if any(contract.get("release") != "1.8.6" for contract in (
         surface_contract, visual_matrix, capture_contract, probe_contract
-    )) or capture_plan.release != version:
-        raise ValueError("release contracts must match the manifest version")
+    )):
+        raise ValueError("frozen 1.8.6 release contracts were modified")
+    if capture_plan.release != version:
+        raise ValueError("capture plan must match the manifest version")
     if (
         probe_contract.get("capture_plan") != "capture_plan.json"
         or probe_contract.get("capture_profile_authority") != "capture_plan.json#profiles"
@@ -495,6 +576,31 @@ def validate_sources() -> dict:
         or probe_contract.get("base_probe") != "runtime_probe_release_1_8_4.py"
     ):
         raise ValueError("runtime probe metadata does not delegate profiles and counts to the capture plan")
+    if settings_window_contract.get("release") != version:
+        raise ValueError("focused Settings contract must match the manifest version")
+    if (
+        settings_window_contract.get("reference_addons") != ["Progress Bar", "PronounceIt"]
+        or settings_window_contract.get("minimum_size") != [680, 560]
+        or settings_window_contract.get("initial_size") != [680, 620]
+        or settings_window_contract.get("native_window") is not True
+        or settings_window_contract.get("movable") is not True
+        or settings_window_contract.get("resizable") is not True
+        or settings_window_contract.get("default_window_flags") is not True
+        or settings_window_contract.get("initial_placement")
+        != "Qt parent-aware QDialog placement at exec()"
+        or settings_window_contract.get("screen_geometry_queries")
+        != "none for the primary Settings dialog"
+        or settings_window_contract.get("pre_exec_move") is not False
+        or settings_window_contract.get("primary_screen_fallback") is not False
+        or settings_window_contract.get("reposition_after_open") is not False
+        or settings_window_contract.get("saved_geometry") is not False
+        or settings_window_contract.get("dynamic_badge_mount")
+        != "parent heatmap and verse badges before visibility changes"
+        or settings_window_contract.get("generic_theme_sync_rebuilds_heatmap") is not False
+        or settings_window_contract.get("programmatic_lifecycle_focus") is not False
+        or settings_window_contract.get("retained_dialog_object") is not False
+    ):
+        raise ValueError("focused Settings contract does not require native dialog parity")
     if capture_contract.get("runtime_smoke_requirements") != {
         "active_head_deck": "A",
         "raw_new_cards_per_head_minimum": 40,

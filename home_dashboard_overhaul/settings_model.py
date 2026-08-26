@@ -108,7 +108,7 @@ SECTION_GROUPS = {
 }
 
 _SECTION_TARGETS = {
-    "": ("dashboard", "appearance"),
+    "": ("dashboard", ""),
     "appearance": ("dashboard", "appearance"),
     "theme": ("dashboard", "appearance"),
     "theme & layout": ("dashboard", "appearance"),

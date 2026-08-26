@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+## 1.8.7 — 2026-08-25
+
+- Removed Dashboard's pre-`exec()` screen query and `dialog.move()`. Explicitly
+  moving the dialog marked it as already positioned before Qt's normal
+  parent-aware `QDialog` placement ran, allowing macOS to associate it with a
+  desktop Space instead of Anki's active full-screen Space.
+- Removed the experimental explicit `Qt.Window`/full-screen-auxiliary flags.
+  Settings now leaves both native window classification and initial placement
+  to the same default `QDialog(mw)` path used by Progress Bar and PronounceIt.
+- Matched Progress Bar and PronounceIt by restoring a normal movable,
+  resizable `QDialog(mw)` with default flags, a 680×620 initial size, a
+  680×560 minimum, and a local `exec()` lifetime.
+- Fixed compact grid mounting that left initial Theme, Color mode, scale,
+  Bible, and palette fields absent. New field wrappers are now adopted by
+  their Settings card before they are shown or visibility-filtered.
+- Fixed the remaining dynamic-visibility path exercised during opening and
+  ordinary setting changes. Heatmap selection indicators and saved-verse
+  badges now have explicit child parents before `setVisible()`, and generic
+  draft synchronization no longer deletes and rebuilds the heatmap-card tree.
+  Theme, color-mode, and configuration-load paths retain their explicit
+  preview refresh.
+- Removed the central workspace, backing-view hiding, focus proxy/retries and
+  restoration, application shortcut filter, retained panel object, and
+  menu-`aboutToHide`/50 ms handoff that could activate Finder around
+  full-screen Settings transitions.
+- Opened Settings synchronously from the Caleb menu while retaining one
+  coalesced queued turn only for calendar/WebEngine bridge requests.
+- Preserved the four-page sidebar, Events tabs, native page scrollers, fixed
+  footer, staged Save behavior, and embedded conflict/dirty-close prompts.
+  Escape, Cmd-W, the title-bar control, and Close share the guarded dialog
+  rejection path.
+- Preserved schema 8, configuration keys, bridge commands, dashboard and
+  statistics calculations, calendar behavior, and frozen 1.8.6 evidence.
+  Full-screen macOS Space behavior remains a manual acceptance gate before any
+  push, PR, merge, or release.
 ## 1.8.6 — 2026-08-24
 
 - Audited every study-derived value shown in Today’s Progress, Today’s
