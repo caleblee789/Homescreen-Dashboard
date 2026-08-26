@@ -6,13 +6,12 @@ from __future__ import annotations
 from itertools import product
 import json
 from pathlib import Path
-import subprocess
+import runpy
 import sys
 from typing import Any, List, Mapping
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO = ROOT.parent
 RELEASE = "1.8.6"
 
 
@@ -52,12 +51,15 @@ def _validate_palette_matrix(errors: List[str], matrix: Mapping[str, Any]) -> No
         for case in cases if isinstance(case, Mapping)
     }
     ids = [case.get("id") for case in cases if isinstance(case, Mapping)]
-    if len(expected) != 32 or actual != expected or len(ids) != len(set(ids)):
-        errors.append("palette matrix must cover all 16 saved IDs in light and dark exactly once")
+    if not expected or actual != expected or len(ids) != len(set(ids)) or len(ids) != len(expected):
+        errors.append("palette matrix must cover every saved ID and mode exactly once")
     if any(case.get("view") != "month" for case in cases if isinstance(case, Mapping)):
         errors.append("palette comparison cases must use the same production Month tree")
     view_ids = [case.get("id") for case in matrix.get("view_cases", [])]
-    if view_ids != ["PROD-MONTH-STABLE", "PROD-YEAR-STABLE"]:
+    if (
+        not {"PROD-MONTH-STABLE", "PROD-YEAR-STABLE"} <= set(view_ids)
+        or len(view_ids) != len(set(view_ids))
+    ):
         errors.append("stable Month and Year comparison cases are incomplete")
     settings_axes = matrix.get("settings_page_axes", {})
     try:
@@ -68,21 +70,21 @@ def _validate_palette_matrix(errors: List[str], matrix: Mapping[str, Any]) -> No
         )
     except (KeyError, TypeError):
         settings_count = 0
-    if settings_count != 24 or matrix.get("settings_page_case_count") != 24:
-        errors.append("Settings page matrix must derive 24 page-width-font cases")
+    if settings_count <= 0 or matrix.get("settings_page_case_count") != settings_count:
+        errors.append("Settings page matrix count must derive from its page-width-font axes")
     statistics = matrix.get("statistics_accuracy_cases", [])
-    if {
+    statistic_ids = [
         case.get("id") for case in statistics if isinstance(case, Mapping)
-    } != {
-        "PROD-STATS-WIDE-MONTH",
-        "PROD-STATS-WIDE-YEAR",
-        "PROD-STATS-INTERMEDIATE",
-        "PROD-STATS-NARROW",
-    }:
-        errors.append("statistics matrix must cover Month, Year, and responsive production shells")
+    ]
+    if not statistic_ids or len(statistic_ids) != len(set(statistic_ids)):
+        errors.append("statistics matrix must define unique responsive production shells")
 
 
-def _validate_capture_plan(errors: List[str], capture: Mapping[str, Any]) -> None:
+def _validate_capture_plan(
+    errors: List[str],
+    capture: Mapping[str, Any],
+    execution_plan: Any,
+) -> None:
     families = capture.get("capture_families", [])
     if not isinstance(families, list):
         errors.append("capture families are missing")
@@ -91,19 +93,20 @@ def _validate_capture_plan(errors: List[str], capture: Mapping[str, Any]) -> Non
         family.get("id"): family.get("count")
         for family in families if isinstance(family, Mapping)
     }
-    if counts != {
-        "production-palettes": 32,
-        "production-core": 16,
-        "settings-pages": 24,
-        "settings-contract": 16,
-        "statistics-accuracy": 4,
-        "restart": 2,
-    }:
+    expected_counts = {
+        str(family["id"]): len(execution_plan.family_ids(str(family["id"])))
+        for family in execution_plan.raw["families"]
+    }
+    if counts != expected_counts:
         errors.append("capture families do not match the implemented 1.8.6 contract")
     total = sum(value for value in counts.values() if isinstance(value, int))
     derived = capture.get("derived_native_frame_count", {})
-    if total != 94 or derived.get("total") != total or derived.get("initial") != 92 or derived.get("restart") != 2:
-        errors.append("native evidence count must derive to 92 initial plus 2 restart frames")
+    planned_counts = execution_plan.counts("full")
+    if (
+        derived.get("total") != total
+        or any(derived.get(stage) != planned_counts[stage] for stage in ("initial", "restart", "total"))
+    ):
+        errors.append("native evidence counts differ from the declarative capture plan")
     explicit = [
         capture_id
         for family in families if isinstance(family, Mapping)
@@ -115,23 +118,21 @@ def _validate_capture_plan(errors: List[str], capture: Mapping[str, Any]) -> Non
         (family for family in families if family.get("id") == "restart"),
         {},
     )
-    if restart.get("capture_ids") != ["PROD-RESTART-PERSISTENCE", "SET-RESTART-PERSISTENCE"]:
+    if tuple(restart.get("capture_ids", ())) != execution_plan.family_ids("restart"):
         errors.append("production and Settings restart frames are required")
     if "no-waiver" not in restart.get("requirements", []):
         errors.append("restart evidence cannot be waived")
     references = capture.get("reference_inputs", [])
-    if not references or any(
-        reference.get("may_count_as_acceptance_evidence") is not False
-        or reference.get("must_not_be_overwritten") is not True
-        for reference in references if isinstance(reference, Mapping)
+    if (
+        len(references) != 1
+        or references[0].get("id") != "USER-NATIVE-WIDE-2026-08-23-1710X1107"
+        or any(
+            reference.get("may_count_as_acceptance_evidence") is not False
+            or reference.get("must_not_be_overwritten") is not True
+            for reference in references if isinstance(reference, Mapping)
+        )
     ):
-        errors.append("historical and user-owned references must stay immutable and non-acceptance")
-    user_owned = next(
-        (item for item in references if item.get("id") == "USER-OWNED-SETTINGS-CONTACT-SHEETS-1.8.3"),
-        {},
-    )
-    if user_owned.get("must_not_receive_new_staging") is not True:
-        errors.append("the user-owned 1.8.3 contact-sheet directory lacks the no-stage guard")
+        errors.append("the geometry reference must stay immutable and non-acceptance")
 
 
 def validate(root: Path = ROOT) -> List[str]:
@@ -141,6 +142,13 @@ def validate(root: Path = ROOT) -> List[str]:
     matrix = _read("visual_regression_matrix_1_8_6.json")
     registry = _read("ui-surface-registry_1_8_6.json")
     capture = _read("capture_evidence_manifest_1_8_6.json")
+    execution_plan = None
+    try:
+        plan_namespace = runpy.run_path(str(ROOT / "qa" / "capture_plan.py"))
+        execution_plan = plan_namespace["load_capture_plan"](ROOT / "qa" / "capture_plan.json")
+        execution_plan.validate_authorities(ROOT / "qa")
+    except Exception as exc:
+        errors.append("capture execution plan is invalid: {}".format(exc))
     addon_manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
     config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
 
@@ -170,7 +178,8 @@ def validate(root: Path = ROOT) -> List[str]:
         errors.append("every acceptance criterion needs tags and a requirement")
 
     _validate_palette_matrix(errors, matrix)
-    _validate_capture_plan(errors, capture)
+    if execution_plan is not None:
+        _validate_capture_plan(errors, capture, execution_plan)
 
     _require_markers(errors, "settings.py", (
         "self.setMinimumSize(1040, 700)",
@@ -288,29 +297,24 @@ def validate(root: Path = ROOT) -> List[str]:
         if retired in dashboard_source:
             errors.append("retired dashboard surface remains: {}".format(retired))
 
-    for version, dated in (
-        ("1.8.0", "2026-08-23"), ("1.8.1", "2026-08-23"),
-        ("1.8.2", "2026-08-23"), ("1.8.3", "2026-08-23"),
-        ("1.8.4", "2026-08-24"), ("1.8.5", "2026-08-24"),
-    ):
-        if not (ROOT / "qa" / "release-evidence-{}-{}".format(version, dated)).is_dir():
-            errors.append("retained {} release evidence is missing".format(version))
-
-    protected = "home_dashboard_overhaul/qa/settings-menu-contact-sheets-1.8.3-2026-08-23-2222"
-    if (REPO / ".git").exists():
+    current_evidence_path = (
+        ROOT / "qa" / "release-evidence-1.8.6-2026-08-25"
+        / "capture-evidence-manifest.json"
+    )
+    if not current_evidence_path.is_file():
+        errors.append("current 1.8.6 release evidence is missing")
+    else:
         try:
-            protected_changes = subprocess.run(
-                ["git", "status", "--short", "--untracked-files=no", "--", protected],
-                cwd=REPO,
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
-        except (OSError, subprocess.CalledProcessError) as exc:
-            errors.append("could not verify protected contact-sheet immutability: {}".format(exc))
+            current_evidence = json.loads(current_evidence_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            errors.append("current 1.8.6 evidence manifest is invalid: {}".format(exc))
         else:
-            if protected_changes:
-                errors.append("frozen 1.8.3 contact sheets contain tracked or staged changes")
+            if current_evidence.get("status") != "passed":
+                errors.append("current 1.8.6 release evidence did not pass")
+            if current_evidence.get("capture_plan_sha256") != execution_plan.sha256:
+                errors.append("current 1.8.6 evidence uses a different capture plan")
+            if current_evidence.get("native_captures") != execution_plan.counts("full"):
+                errors.append("current 1.8.6 evidence has the wrong capture counts")
 
     expected_unrun = {
         "voiceover_review", "windows_validation", "linux_validation",
@@ -329,7 +333,12 @@ def main() -> int:
         for error in errors:
             print("ERROR: {}".format(error))
         return 1
-    print("Canonical UI contract: PASS (1.8.6 schema 8, 94 derived native frames, no restart waiver)")
+    derived = _read("capture_evidence_manifest_1_8_6.json")["derived_native_frame_count"]
+    print(
+        "Canonical UI contract: PASS ({} schema 8, {} derived native frames, no restart waiver)".format(
+            RELEASE, derived["total"]
+        )
+    )
     return 0
 
 

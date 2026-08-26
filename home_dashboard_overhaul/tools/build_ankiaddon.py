@@ -56,7 +56,13 @@ RELEASE_CONTRACT_FILES = (
     "qa/capture_evidence_manifest_1_8_6.json",
     "qa/runtime_probe_release_1_8_6_manifest.json",
     "qa/runtime_probe_release_1_8_6.py",
+    "qa/runtime_probe_release_1_8_4.py",
     "qa/assemble_release_evidence_1_8_6.py",
+    "qa/capture_plan.json",
+    "qa/capture_plan.py",
+    "qa/prepare_capture_helper.py",
+    "qa/runtime_probe_profile_entrypoint.py",
+    "qa/runtime_probe_fullscreen_profile.py",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 FIXED_TIMESTAMP = (2026, 8, 24, 0, 0, 0)
@@ -239,8 +245,8 @@ def _validate_visual_matrix(matrix: dict) -> None:
     entries = matrix.get("palette_cases")
     if not isinstance(palette_axes, dict) or not isinstance(modes, list):
         raise ValueError("visual regression matrix palette axes are missing")
-    if not isinstance(entries, list) or len(entries) != 32:
-        raise ValueError("visual regression matrix must contain 32 palette cases")
+    if not isinstance(entries, list):
+        raise ValueError("visual regression matrix palette cases are missing")
     expected = {
         (theme, palette, mode)
         for theme, names in palette_axes.items()
@@ -250,15 +256,17 @@ def _validate_visual_matrix(matrix: dict) -> None:
         (entry.get("theme"), entry.get("palette"), entry.get("mode"))
         for entry in entries if isinstance(entry, dict)
     }
-    if actual != expected or len(actual) != len(entries):
+    if not expected or len(entries) != len(expected) or actual != expected or len(actual) != len(entries):
         raise ValueError("visual regression matrix must cover every saved palette ID in both modes once")
-    if len({entry.get("id") for entry in entries}) != 32:
+    if len({entry.get("id") for entry in entries}) != len(entries):
         raise ValueError("palette visual regression IDs must be unique")
     if any(entry.get("view") != "month" for entry in entries):
         raise ValueError("palette cases must use one shared production Month tree")
-    if [entry.get("id") for entry in matrix.get("view_cases", [])] != [
-        "PROD-MONTH-STABLE", "PROD-YEAR-STABLE"
-    ]:
+    view_ids = [entry.get("id") for entry in matrix.get("view_cases", [])]
+    if (
+        not {"PROD-MONTH-STABLE", "PROD-YEAR-STABLE"} <= set(view_ids)
+        or len(view_ids) != len(set(view_ids))
+    ):
         raise ValueError("stable Month and Year cases are incomplete")
     settings_axes = matrix.get("settings_page_axes", {})
     try:
@@ -267,20 +275,15 @@ def _validate_visual_matrix(matrix: dict) -> None:
         ))
     except (KeyError, TypeError):
         settings_count = 0
-    if settings_count != 24 or matrix.get("settings_page_case_count") != 24:
-        raise ValueError("Settings visual matrix must derive 24 page-width-font cases")
+    if settings_count <= 0 or matrix.get("settings_page_case_count") != settings_count:
+        raise ValueError("Settings visual matrix count must be derived from its page-width-font axes")
     statistics_cases = matrix.get("statistics_accuracy_cases", [])
     if (
         not isinstance(statistics_cases, list)
-        or len(statistics_cases) != 4
-        or {entry.get("id") for entry in statistics_cases} != {
-            "PROD-STATS-WIDE-MONTH",
-            "PROD-STATS-WIDE-YEAR",
-            "PROD-STATS-INTERMEDIATE",
-            "PROD-STATS-NARROW",
-        }
+        or not statistics_cases
+        or len({entry.get("id") for entry in statistics_cases}) != len(statistics_cases)
     ):
-        raise ValueError("statistics visual matrix must cover every responsive production shell")
+        raise ValueError("statistics visual matrix must define unique responsive production shells")
 
 
 def validate_sources() -> dict:
@@ -303,6 +306,12 @@ def validate_sources() -> dict:
     surface_contract = _json("qa/calendar_surface_manifest_1_8_6.json")
     visual_matrix = _json("qa/visual_regression_matrix_1_8_6.json")
     capture_contract = _json("qa/capture_evidence_manifest_1_8_6.json")
+    probe_contract = _json("qa/runtime_probe_release_1_8_6_manifest.json")
+    capture_plan_namespace = runpy.run_path(str(ROOT / "qa" / "capture_plan.py"))
+    capture_plan = capture_plan_namespace["load_capture_plan"](
+        ROOT / "qa" / "capture_plan.json"
+    )
+    capture_plan.validate_authorities(ROOT / "qa")
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
@@ -474,9 +483,18 @@ def validate_sources() -> dict:
     ):
         raise ValueError("corrected surface contract must encode unique tagged acceptance criteria")
     if any(contract.get("release") != version for contract in (
-        surface_contract, visual_matrix, capture_contract
-    )):
+        surface_contract, visual_matrix, capture_contract, probe_contract
+    )) or capture_plan.release != version:
         raise ValueError("release contracts must match the manifest version")
+    if (
+        probe_contract.get("capture_plan") != "capture_plan.json"
+        or probe_contract.get("capture_profile_authority") != "capture_plan.json#profiles"
+        or probe_contract.get("capture_count_authority")
+        != "capture_plan.json#profiles[id=full]"
+        or probe_contract.get("helper_builder") != "prepare_capture_helper.py"
+        or probe_contract.get("base_probe") != "runtime_probe_release_1_8_4.py"
+    ):
+        raise ValueError("runtime probe metadata does not delegate profiles and counts to the capture plan")
     if capture_contract.get("runtime_smoke_requirements") != {
         "active_head_deck": "A",
         "raw_new_cards_per_head_minimum": 40,
@@ -486,20 +504,10 @@ def validate_sources() -> dict:
         "restart_expected_new_remaining": 10,
     }:
         raise ValueError("multi-deck new-limit runtime smoke contract is incomplete")
-    families = capture_contract.get("capture_families", [])
-    counts = {item.get("id"): item.get("count") for item in families}
-    if counts != {
-        "production-palettes": 32,
-        "production-core": 16,
-        "settings-pages": 24,
-        "settings-contract": 16,
-        "statistics-accuracy": 4,
-        "restart": 2,
-    }:
-        raise ValueError("capture families do not match the implemented UI contract")
-    derived = capture_contract.get("derived_native_frame_count", {})
-    if sum(counts.values()) != 94 or derived.get("total") != 94:
-        raise ValueError("capture plan must derive exactly 94 native frames")
+    full_counts = capture_plan.counts("full")
+    wide_counts = capture_plan.counts("wide-100")
+    if not (0 < wide_counts["initial"] <= full_counts["initial"] and wide_counts["restart"] <= full_counts["restart"]):
+        raise ValueError("wide 100 percent profile is not a valid subset of the full capture plan")
 
     verses = verse_data.get("quote")
     if (

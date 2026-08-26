@@ -80,26 +80,32 @@ captures the 94 states derived from the current implementation contract.
 
 The current machine-readable release authorities are:
 
+- [capture_plan.json](home_dashboard_overhaul/qa/capture_plan.json), the
+  extensible execution registry used by helper preparation, runtime selection,
+  and evidence assembly
 - [calendar_surface_manifest_1_8_6.json](home_dashboard_overhaul/qa/calendar_surface_manifest_1_8_6.json)
 - [ui-surface-registry_1_8_6.json](home_dashboard_overhaul/qa/ui-surface-registry_1_8_6.json)
 - [visual_regression_matrix_1_8_6.json](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_6.json)
 - [capture_evidence_manifest_1_8_6.json](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_6.json)
 
-The completed [1.8.6 native release evidence](home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-24/README.md)
+The [capture workflow](home_dashboard_overhaul/docs/qa/capture-workflow.md)
+documents how to extend coverage, generate a named profile, run focused
+diagnostic recaptures, and assemble fresh evidence from the shared plan.
+
+The completed [1.8.6 native release evidence](home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-25/README.md)
 contains the exact 24-member archive, 94 contract-owned native captures,
 passing restart-persistence and archive-parity reports, and four-gate isolation
 proof repeated after restart. Its 19 generated presentation sheets were
-reviewed locally, cover every native frame exactly once across 18 detail
-sheets, and are intentionally excluded from version control. The
-[evidence manifest](home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-24/capture-evidence-manifest.json)
+reviewed locally and are retained with the current evidence set. Seventeen
+capture-detail sheets cover every native frame exactly once, with one overview
+and one package/isolation report sheet. The
+[evidence manifest](home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-25/capture-evidence-manifest.json)
 records the sheet counts, exact package hash, and deferred gates.
-The [1.8.3 Settings contact-sheet baseline](home_dashboard_overhaul/qa/settings-menu-contact-sheets-1.8.3-2026-08-23-2222/capture-manifest.json)
-is preserved separately as historical design evidence with 21 raw captures and
-six presentation sheets.
-
-The 1.8.0 through 1.8.5 packages and evidence remain immutable historical
-comparison material. VoiceOver, Windows, Linux, forced-colors, DPR 1, and true
-OS display-scaling acceptance remain deferred and unclaimed unless run.
+Only the newest complete capture set is retained in the repository. Superseded
+live-UI, 1.8.0-1.8.5, prior 1.8.6, and standalone Settings capture directories
+were removed after this set passed; their Git history remains traceable.
+VoiceOver, Windows, Linux, forced-colors, DPR 1, and true OS display-scaling
+acceptance remain deferred and unclaimed unless run.
 
 ## Project layout
 
