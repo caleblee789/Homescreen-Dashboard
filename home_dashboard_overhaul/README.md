@@ -1,11 +1,28 @@
-# Home Screen Dashboard 1.8.6
+# Home Screen Dashboard 1.8.7
 
 Home Screen Dashboard is a calendar-first Deck Browser dashboard for Anki
 Desktop 26.8. It combines study history, due work, local events, stable study
 metrics, and a rotating Bible verse without patching Anki's private Deck
 Browser or statistics classes.
 
-## What changed in 1.8.6
+## What changed in 1.8.7
+
+- Settings remains a normal parented `QDialog` with default flags and a local
+  `exec()` lifetime. It opens at 1080×760 logical pixels, has a 920×640 normal
+  minimum, and uses 48 px normal or 24 px constrained-screen margins.
+- The UI-only `settings_dialog_geometry/v3` record preserves a deliberate
+  non-transient logical rectangle and screen identity. Invalid, off-screen,
+  disconnected, compact-triggering, maximized, and full-screen records are
+  rejected, and the retired v2 record is never restored.
+- The Caleb menu constructs and executes the dialog synchronously. Deck Browser
+  bridge requests alone remain deferred and coalesced until their callback
+  returns. Primary Save and dirty-close confirmations remain stacked child
+  pages inside the dialog.
+- The retired central workspace, backing-view hiding, focus handoff/retries,
+  focus restoration, application event filter, and menu-dismissal timer are
+  removed. Qt manages the same dialog lifecycle as the two working add-ons.
+- The corrected statistics, schema 8, configuration keys, bridge
+  commands, and all four Settings pages remain unchanged.
 
 - Every study-derived value is computed from one scheduler-authoritative
   snapshot. Today uses `[next rollover − 86,400 seconds, next rollover)`, and
@@ -36,12 +53,22 @@ Browser or statistics classes.
   states are checked for identical metric values. Schema
   8, all existing labels/order/JSON/DOM keys, and bridge commands are unchanged.
 
-- Settings has one native Qt widget tree at every size: a compact global
-  header, fixed 152 px text rail, one page scroller, and a true final-row
-  footer.
-- Dashboard, Events, Bible verse, and About use compact shared rows and
-  content-sized controls. All controls are native Qt and staged state writes
-  nothing until Save.
+- Settings has one native Qt widget tree at every size: fixed header, a body
+  with one vertical scroller per page, and a true final-row footer. The
+  shell is capped near 1,240 px, the sidebar is 184 px, the page header is
+  72 px, the footer is 60 px, and the page column is capped at 980 px.
+- Compact top navigation activates below 820 logical pixels only on a screen
+  that cannot accommodate the normal 920×640 minimum. Forms and toolbars
+  remain horizontally contained without rendered Settings previews.
+- Dashboard groups Appearance, Dashboard sections, Study metrics, and Calendar
+  display. Events uses a flexible searchable/sortable Active/Archived list,
+  54 px rows, and a parented 560×320 editor. Bible verse uses a flexible
+  filtered library with two-line clamped excerpts and one inline hex error.
+  About groups Version and support, Privacy and legal, and Backup and recovery.
+- Dirty, saving, saved, validation, and persistence feedback is action-local
+  in the footer. A failed save retains all staged values, enables retry, and
+  keeps technical details behind a disclosure. All controls remain native Qt
+  and staged state writes nothing until Save.
 - Month is always 42 cells. Year always uses one responsive 53-week tree that
   stays inside the dashboard without horizontal scrolling at 480 px and above;
   only the heatmap may scroll below that boundary. Calendar legend and
@@ -78,17 +105,28 @@ are omitted when their corresponding features are disabled.
 
 ## Themes, settings, and persistence
 
-Open settings from Anki's Tools menu or the calendar gear. Changes stay staged
-until **Save changes**. **Revert changes** returns every staged field to the
-saved baseline. The baseline updates only after a completely successful save.
+Open settings from Anki's Tools menu or the calendar gear. Changes are applied
+when you save. **Discard changes** returns every staged field to the saved
+baseline, while each visible **Reset** affects only its own default scope. The
+baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
-appearance. Dashboard themes affect only swatches and production rendering.
-Settings opens as a normal parented, resizable `QDialog` through `exec()` with
-default window flags, matching conventional Anki add-on settings windows. It
-assigns no screen coordinates, contains no embedded WebEngine content, targets
-1200×800, and clamps its initial size for smaller screens without restoring a
-saved size.
+appearance. Dashboard themes affect only production rendering; Settings shows
+text selectors and retains the custom-color input well without preview cards.
+Settings is a movable, resizable `QDialog(mw)` with a 1080×760 logical default,
+920×640 normal minimum, default Qt flags, and a local `exec()` call. It resolves the
+parent window's active screen, falls back to the screen containing the parent
+center and then the primary screen, and applies a clamped logical geometry
+before first visibility. It never calls `winId()`, repositions after opening,
+hides Anki's central widgets, forces focus, or embeds WebEngine content. Every
+page remains vertically scrollable, and navigation only changes child widgets
+inside the existing stack.
+
+Responsive field grids mount every new field under its Settings card before
+changing visibility or filtering layout rows. This prevents a parentless field
+from being realized as a temporary native window during dialog construction.
+No Dashboard card, verse card, palette, theme, or heatmap preview widget is
+constructed in Settings.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source
@@ -96,7 +134,7 @@ work remains deferred and is not packaged.
 
 ## Install
 
-Install `home-dashboard-overhaul-1.8.6.ankiaddon` through **Tools → Add-ons →
+Install `home-dashboard-overhaul-1.8.7.ankiaddon` through **Tools → Add-ons →
 Install from file**, restart Anki, and disable any legacy source add-ons named
 by the activation card. The manifest is pinned to Anki Desktop 26.8.
 
@@ -105,21 +143,30 @@ by the activation card. The manifest is pinned to Anki Desktop 26.8.
 From the repository root, use Python 3.10 or newer:
 
 ```sh
-python3 -m unittest discover -s home_dashboard_overhaul/tests -p 'test_*.py' -v
+python3 -m unittest home_dashboard_overhaul.tests.test_controller_insights home_dashboard_overhaul.tests.test_settings_release_contract -v
+python3 -m unittest discover -s home_dashboard_overhaul/tests -v
 node home_dashboard_overhaul/tests/calendar_model_test.js
+python3 home_dashboard_overhaul/qa/capture_plan.py --json
 python3 home_dashboard_overhaul/qa/validate_revised_ui_contract.py
+python3 home_dashboard_overhaul/qa/validate_settings_window_contract_1_8_7.py
 python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
 The builder creates one 24-file allowlisted archive, checks its version and
-safe paths, and verifies every packaged byte against source. That exact archive
-is installed into one fresh sync-disabled Anki 26.8 profile for an initial pass
-and a controlled restart. Native acceptance follows the current contract: 94
-captures spanning production, Settings, and restart states, with validated
-contact-sheet coverage and direct Anki Graphs/Scheduler parity.
+safe paths, validates the 1.8.7 release authorities, and verifies every
+packaged byte against source. The canonical plan contains 94 native frames,
+including exactly 41 Settings frames at 100% application font and two total
+controlled-restart states. Settings presentation is capped at 11 sheets.
+The focused Settings assembler additionally requires a structured exact-package
+native macOS result proving that both the full-screen menu and Dashboard-gear
+paths remain on Anki's full-screen Space without switching to the desktop,
+including after hard restart. This required result adds no PNG frames.
 
-VoiceOver, Windows, Linux, forced colors, DPR 1, and OS-level display-scaling
-acceptance remain deferred and unclaimed unless separately run.
+VoiceOver and forced-colors remain explicitly unrun and nonblocking. The macOS
+full-screen no-switch result is mandatory for Settings acceptance. Windows,
+Linux, DPR 1, and native OS display scaling remain separate release-blocking
+gates and remain unclaimed until their native reports pass against one exact
+package and capture-plan hash.
 
 Copyright 2026. Licensed under AGPL-3.0-or-later. See
 `THIRD_PARTY_NOTICES.md` for Scripture and upstream notices.

@@ -2,6 +2,51 @@
 
 ## Unreleased
 
+## 1.8.7 — 2026-08-25
+
+- Kept the parented native `QDialog(mw)` and local `exec()` lifecycle while
+  replacing the Settings geometry contract with logical 940×680 defaults,
+  720×520 minimums, and 92%×88% initial screen caps. A versioned UI-only
+  `QSettings` value preserves non-maximized geometry and clamps or recenters it
+  on the active screen before first visibility.
+- Rebuilt the shell as fixed header, zero-minimum scrollable body, and fixed
+  footer. The centered shell is capped at 1,120 px; the page column is capped
+  at 940 px; and a synchronized, non-eliding `QTabBar` replaces the 152 px
+  sidebar below 760 logical body pixels or before a label would wrap.
+- Added application-font-relative role fonts, 36 px shared controls, the
+  4/8/12/16/20/24/32 spacing scale, supplied graphite dark/light roles,
+  accent-soft selection, neutral Events tabs, standardized disclosures, and
+  scoped Reset visibility.
+- Reworked Dashboard Appearance, sections, Study metrics, Calendar display,
+  Calendar range, and Local data into responsive native groups. Added a native
+  dashboard-card preview at wide page widths and retained all saved palette
+  IDs, ranges, filters, and date semantics.
+- Rebuilt Events as one bounded list surface with explicit sorting, search
+  clearing and result summaries, separate empty/no-results states, neutral
+  Active/Archived tabs, readable two-line rows, and 32 px action menus. Normal
+  row activation opens the editor; persistent row selection was removed.
+- Added a native Bible verse preview, attached Custom color field/swatch,
+  blocking invalid-hex validation, nonblocking contrast warnings, dynamic
+  Rotation help, and a complete filtered `QAbstractListModel`/`QListView`
+  implementation with delegate-painted two-line rows instead of a visible
+  100-item cap.
+- Top-aligned independently sized About Version and Help cards, derived Anki
+  compatibility copy from the manifest, added two-second Copy diagnostics
+  feedback, standardized legal disclosures, tightened the local-data and
+  backup copy, and renamed the export action to Export verse edits.
+- Moved dirty, saving, success, validation, and failure feedback into the
+  footer beside its actions. Save failure now retains the draft and retry
+  state, shows production-safe copy, and keeps raw details collapsed. Dirty
+  close uses the existing embedded prompt with Keep editing and Discard and
+  close actions.
+- Expanded the canonical plan to 106 native frames and added hard native
+  Windows, Linux, DPR, OS-scaling, and macOS full-screen report gates keyed to
+  one package and plan hash. VoiceOver and forced colors remain explicitly
+  unrun and nonblocking. Existing 1.8.6 release evidence and the untracked
+  41-frame 1.8.7 review set remain immutable provenance.
+- Preserved schema 8, every setting key and saved identifier, events and verse
+  data, transactional persistence, dashboard statistics, native isolation,
+  and the 24-member package allowlist.
 ## 1.8.6 — 2026-08-24
 
 - Audited every study-derived value shown in Today’s Progress, Today’s

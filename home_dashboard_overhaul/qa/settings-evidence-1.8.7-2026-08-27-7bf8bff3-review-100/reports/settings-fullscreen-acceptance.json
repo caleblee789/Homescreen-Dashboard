@@ -1,0 +1,33 @@
+{
+  "all_four_pages": false,
+  "candidate_sha256": "7bf8bff3099699bca4d1922d429fea5d81e971accd7b73ed84cf9cc7c321a4fe",
+  "capture_plan_sha256": "316679cdc523f58e5d8d38a1c03560cad678a3e428b86b4e52351270439cb335",
+  "desktop_space_switch_regression": "unrun",
+  "events_tabs": false,
+  "font_percent": 100,
+  "hard_restart_recheck": false,
+  "host_platform": "macos",
+  "id": "macos-fullscreen-no-space-switch-menu-and-dashboard-gear",
+  "native_fullscreen": false,
+  "opening_paths": {
+    "dashboard-gear": {
+      "desktop_or_space_switch_observed": null,
+      "remained_on_anki_fullscreen_space": null,
+      "settings_opened": false,
+      "status": "unrun"
+    },
+    "menu": {
+      "desktop_or_space_switch_observed": null,
+      "remained_on_anki_fullscreen_space": null,
+      "settings_opened": false,
+      "status": "unrun"
+    }
+  },
+  "reason": "Skipped by explicit user direction before the remaining isolated QA window check.",
+  "release": "1.8.7",
+  "requested_disposition": "assemble-review-sheets-without-fullscreen-acceptance",
+  "resize": false,
+  "save_close_reopen": false,
+  "schema_version": 1,
+  "status": "unrun"
+}

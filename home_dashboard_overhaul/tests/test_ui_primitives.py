@@ -38,8 +38,8 @@ class SharedUiPrimitiveContractTests(unittest.TestCase):
         self.assertEqual(len(ui.PRIMITIVE_NAMES), len(set(ui.PRIMITIVE_NAMES)))
 
     def test_interaction_and_completion_tokens_are_shared(self) -> None:
-        self.assertEqual(ui.INTERACTION_TARGET_MIN_PX, 34)
-        self.assertEqual(ui.VISUAL_CHROME_PX, 32)
+        self.assertEqual(ui.INTERACTION_TARGET_MIN_PX, 36)
+        self.assertEqual(ui.VISUAL_CHROME_PX, 36)
         self.assertEqual((ui.FOCUS_RING_PX, ui.FOCUS_RING_OFFSET_PX), (3, 2))
         self.assertEqual(ui.COMPLETION_TOKEN_ROLE, "completion")
 

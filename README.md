@@ -1,11 +1,27 @@
 # Home Screen Dashboard
 
-Home Screen Dashboard 1.8.6 is a calendar-first Deck Browser dashboard for
+Home Screen Dashboard 1.8.7 is a calendar-first Deck Browser dashboard for
 Anki Desktop 26.8. It combines study history, due work, local events, stable
 metrics, and a rotating Bible verse without patching Anki's private Deck
 Browser or statistics classes.
 
-## 1.8.6 highlights
+## 1.8.7 highlights
+
+- Settings remains a parented native `QDialog(mw)` with a local `exec()`
+  lifetime. Its logical default is 1080×760, its normal minimum is 920×640,
+  and it keeps 48 px normal screen margins or 24 px on a constrained screen.
+- The UI-only `settings_dialog_geometry/v3` record stores a non-transient
+  logical rectangle plus screen identity. Invalid, compact-triggering,
+  off-screen, disconnected-screen, maximized, and full-screen geometry is
+  never restored or persisted; the retired v2 record is never read.
+- The Caleb menu opens Settings directly and synchronously. Calendar/WebEngine
+  requests alone wait one coalesced event-loop turn so the bridge callback can
+  return before the dialog opens.
+- Dashboard-specific workspace insertion, backing-view hiding, menu-dismissal
+  timers, focus retries, focus restoration, and activation handling have been
+  removed. Qt owns the window and focus lifecycle.
+- Schema 8, all Settings fields, dashboard rendering, and the corrected 1.8.6
+  statistics calculations remain unchanged.
 
 - Every study-derived value now uses one collection-wide analytics scope.
   Today and historical facts use exact rollover-relative periods; New,
@@ -24,19 +40,28 @@ Browser or statistics classes.
 - Initial HTML, live refresh, wide Month and Year 2×2 layouts, intermediate and
   narrow shells, and hard restart are contractually checked
   against identical values from the same collection snapshot.
-- Settings now matches the conventional add-on window used by Progress Bar: a
-  parented, resizable `QDialog` opened synchronously with `exec()` and default
-  window flags. It never assigns screen coordinates and contains no WebEngine
-  or preview surface, so opening Settings and switching pages remain native Qt
-  operations rather than macOS window-modal sheet transitions.
+- Settings uses a fixed header, vertically scrollable native page body, and
+  fixed 60 px footer. A shell capped near 1,240 px contains a 184 px sidebar,
+  fixed 72 px page header, and page column capped at 980 px. Compact top
+  navigation is reserved for screens that cannot accommodate the 920×640
+  normal minimum and activates below 820 logical pixels.
+- Responsive Settings grids parent every field to its card before showing or
+  filtering it. Settings renders no Dashboard, verse, palette, theme, or
+  heatmap previews; selector text carries those choices and the custom-color
+  well remains an input.
 
-- Settings uses one native Qt composition at every size: a compact header,
-  152 px text rail, one active page scroller, and a stable final-row footer.
-- At 150% application font size, long Settings rail labels wrap within that
-  fixed rail instead of being clipped or elided.
-- Dashboard, Events, Bible verse, and About use compact content-sized controls
-  while retaining schema 8, staged changes, three-way merge behavior, and all
-  existing configuration keys. Event sorting additionally accepts `name`.
+- Dashboard groups Appearance, Dashboard sections, Study metrics, and Calendar
+  display. Events has a header Add action, flexible searchable/sortable
+  Active/Archived list with 54 px rows, and a parented 560×320 editor. Bible
+  verse has Appearance, Rotation, and a flexible clamped Verse library. About
+  groups Version and support, Privacy and legal, and Backup and recovery.
+- Dirty, saving, success, validation, and persistence feedback now lives in
+  the footer beside Close and Save. Failed saves retain every staged value and
+  expose generic user-facing copy with technical details collapsed separately.
+- Settings colors follow only Anki's live palette. Dark and light graphite
+  tokens, accent-soft selection, neutral Events tabs, relative role fonts,
+  36 px controls, and the shared 4/8/12/16/20/24/32 spacing scale are applied
+  consistently at the canonical 100% application font.
 - Month is a stable 42-cell grid and Year remains a true 53-week grid. The
   production dashboard is capped at 1,120 px and measures Anki's visible
   bottom actions to maintain 24 px of clearance in normal document flow.
@@ -50,13 +75,12 @@ Browser or statistics classes.
 
 ## Install
 
-The local 1.8.6 candidate is built as
-`home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.6.ankiaddon` for
-installation through **Tools → Add-ons → Install from file**. Its SHA-256 is
-`095bada7a6daf7cb9687feee81fb5918cacca1b51cfc62959c431fce120da724`.
-The byte-identical archive is retained in the completed versioned native
-release evidence. Disable any legacy source add-ons named by the activation
-card.
+The local 1.8.7 candidate is built as
+`home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon` for
+installation through **Tools → Add-ons → Install from file**. The builder
+writes the candidate checksum beside the archive. This candidate remains local
+until the native platform matrix and macOS full-screen Space checks pass.
+Disable any legacy source add-ons named by the activation card.
 
 The manifest supports Anki Desktop 26.8 (`min_point_version` and
 `max_point_version` 260800).
@@ -66,27 +90,38 @@ The manifest supports Anki Desktop 26.8 (`min_point_version` and
 Use Python 3.10 or newer:
 
 ```sh
-python3 -m unittest discover -s home_dashboard_overhaul/tests -p 'test_*.py' -v
+python3 -m unittest home_dashboard_overhaul.tests.test_controller_insights home_dashboard_overhaul.tests.test_settings_release_contract -v
+python3 -m unittest discover -s home_dashboard_overhaul/tests -v
 node home_dashboard_overhaul/tests/calendar_model_test.js
+python3 home_dashboard_overhaul/qa/capture_plan.py --json
 python3 home_dashboard_overhaul/qa/validate_revised_ui_contract.py
+python3 home_dashboard_overhaul/qa/validate_settings_window_contract_1_8_7.py
 python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
 The builder creates one 24-member allowlisted archive and verifies its version,
-safe paths, and source/archive byte parity. Release validation installs that
-exact archive in a fresh sync-disabled disposable Anki profile, proves four
-isolation gates before interaction and after one controlled restart, and
-captures the 94 states derived from the current implementation contract.
+safe paths, current Settings contract, and source/archive byte parity. The
+canonical 1.8.7 plan contains 94 native frames: 92 initial states and two
+controlled-restart states. Its minimal Settings profile is exactly 41 frames
+at 100% application font, with no more than 11 compact contact sheets.
+Each PNG must sample-match the live Settings client, and all 12 page captures
+must include the complete decorated native Settings window; a same-sized
+Dashboard background is a capture failure.
+Settings acceptance also requires a structured exact-package native macOS
+result proving that opening Settings from both the full-screen menu and the
+Dashboard gear stays on Anki's full-screen Space without switching to the
+desktop, including after hard restart. This gate adds no PNG captures.
 
-The current machine-readable release authorities are:
+The current 1.8.7 authorities are:
 
-- [capture_plan.json](home_dashboard_overhaul/qa/capture_plan.json), the
-  extensible execution registry used by helper preparation, runtime selection,
-  and evidence assembly
-- [calendar_surface_manifest_1_8_6.json](home_dashboard_overhaul/qa/calendar_surface_manifest_1_8_6.json)
-- [ui-surface-registry_1_8_6.json](home_dashboard_overhaul/qa/ui-surface-registry_1_8_6.json)
-- [visual_regression_matrix_1_8_6.json](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_6.json)
-- [capture_evidence_manifest_1_8_6.json](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_6.json)
+- [capture_plan.json](home_dashboard_overhaul/qa/capture_plan.json), the sole
+  executable case, count, order, profile, and presentation authority
+- [calendar_surface_manifest_1_8_7.json](home_dashboard_overhaul/qa/calendar_surface_manifest_1_8_7.json)
+- [ui-surface-registry_1_8_7.json](home_dashboard_overhaul/qa/ui-surface-registry_1_8_7.json)
+- [visual_regression_matrix_1_8_7.json](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_7.json)
+- [capture_evidence_manifest_1_8_7.json](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_7.json)
+- [runtime_probe_release_1_8_7_manifest.json](home_dashboard_overhaul/qa/runtime_probe_release_1_8_7_manifest.json)
+- [settings_window_contract_1_8_7.json](home_dashboard_overhaul/qa/settings_window_contract_1_8_7.json)
 
 The [capture workflow](home_dashboard_overhaul/docs/qa/capture-workflow.md)
 documents how to extend coverage, generate a named profile, run focused
@@ -96,16 +131,23 @@ The completed [1.8.6 native release evidence](home_dashboard_overhaul/qa/release
 contains the exact 24-member archive, 94 contract-owned native captures,
 passing restart-persistence and archive-parity reports, and four-gate isolation
 proof repeated after restart. Its 19 generated presentation sheets were
-reviewed locally and are retained with the current evidence set. Seventeen
+reviewed locally and remain the latest product-wide evidence. Seventeen
 capture-detail sheets cover every native frame exactly once, with one overview
 and one package/isolation report sheet. The
 [evidence manifest](home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-25/capture-evidence-manifest.json)
 records the sheet counts, exact package hash, and deferred gates.
-Only the newest complete capture set is retained in the repository. Superseded
-live-UI, 1.8.0-1.8.5, prior 1.8.6, and standalone Settings capture directories
-were removed after this set passed; their Git history remains traceable.
-VoiceOver, Windows, Linux, forced-colors, DPR 1, and true OS display-scaling
-acceptance remain deferred and unclaimed unless run.
+
+The retained [1.8.7 Settings review evidence](home_dashboard_overhaul/qa/settings-evidence-1.8.7-2026-08-27-7bf8bff3-review-100/README.md)
+matches the current package and contains exactly 41 native Settings captures
+at 100% application font plus 11 contact sheets. Its status is
+`review-incomplete-nonrelease`: capture cases completed without per-frame
+failures, but the exact-package full-screen macOS opening-path check was
+explicitly skipped and remains unrun. Superseded and failed 1.8.7 Settings
+capture directories were removed after a recoverable safety snapshot; the
+broader 1.8.6 set remains because a Settings-only review is not a replacement
+for product-wide evidence. VoiceOver and forced-colors remain explicitly unrun
+and nonblocking. Windows, Linux, DPR 1, and true OS display scaling remain
+separate release-blocking gates until run successfully.
 
 ## Project layout
 
@@ -114,7 +156,7 @@ acceptance remain deferred and unclaimed unless run.
 - `home_dashboard_overhaul/qa/`: machine-readable contracts, QA tools, and
   versioned release evidence
 - `deferred/calendar_sources_vnext/`: intentionally deferred external-calendar
-  source excluded from 1.8.6
+  source excluded from 1.8.7
 
 ## License and notices
 

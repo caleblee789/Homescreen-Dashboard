@@ -15,36 +15,42 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         qa = ROOT / "qa"
         cls.manifest = json.loads(
-            (qa / "calendar_surface_manifest_1_8_6.json").read_text(encoding="utf-8")
+            (qa / "calendar_surface_manifest_1_8_7.json").read_text(encoding="utf-8")
         )
         cls.matrix = json.loads(
-            (qa / "visual_regression_matrix_1_8_6.json").read_text(encoding="utf-8")
+            (qa / "visual_regression_matrix_1_8_7.json").read_text(encoding="utf-8")
         )
         cls.capture = json.loads(
-            (qa / "capture_evidence_manifest_1_8_6.json").read_text(encoding="utf-8")
+            (qa / "capture_evidence_manifest_1_8_7.json").read_text(encoding="utf-8")
         )
         cls.registry = json.loads(
-            (qa / "ui-surface-registry_1_8_6.json").read_text(encoding="utf-8")
+            (qa / "ui-surface-registry_1_8_7.json").read_text(encoding="utf-8")
         )
         plan_namespace = runpy.run_path(str(qa / "capture_plan.py"))
         cls.plan = plan_namespace["load_capture_plan"](qa / "capture_plan.json")
 
-    def test_manifest_is_the_authoritative_1_8_6_schema_eight_contract(self) -> None:
+    def test_manifest_is_the_authoritative_1_8_7_schema_eight_contract(self) -> None:
         self.assertEqual(self.manifest["schema_version"], 8)
-        self.assertEqual(self.manifest["release"], "1.8.6")
+        self.assertEqual(self.manifest["release"], "1.8.7")
         self.assertEqual(
             self.manifest["contract"],
-            "canonical-settings-and-production-dashboard-final-ui-2026-08-24",
+            "corrected-native-settings-and-production-dashboard-release-ui-2026-08-26",
         )
         self.assertEqual(
             self.manifest["dashboard_order"],
             ["study_calendar", "summary_metrics", "bible_verse"],
         )
         settings = self.manifest["settings_architecture"]
-        self.assertEqual(settings["default_window"], [1200, 800])
-        self.assertEqual(settings["minimum_normal_window"], [1040, 700])
+        self.assertEqual(settings["default_window"], [1080, 760])
+        self.assertEqual(settings["minimum_normal_window"], [920, 640])
+        self.assertEqual(settings["screen_margins"], {"normal": 48, "small_screen_fallback": 24})
+        self.assertEqual(settings["minimum_saved_visible_ratio"], .8)
         self.assertEqual(settings["maximum_inner_width"], 1240)
-        self.assertEqual(settings["rail_width"], 152)
+        self.assertEqual(settings["maximum_page_width"], 980)
+        self.assertEqual(settings["rail_width"], 184)
+        self.assertEqual(settings["fixed_header_height"], 72)
+        self.assertEqual(settings["fixed_footer_height"], 60)
+        self.assertEqual(settings["compact_navigation_threshold"], 820)
         self.assertEqual(settings["embedded_web_content"], "none")
         self.assertEqual(settings["window_lifecycle"], "parented-standard-dialog-exec")
         self.assertEqual(settings["page_switching"], "native-stacked-widget-only-no-render-timer")
@@ -67,7 +73,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertTrue(self.registry["exact_once"])
         self.assertEqual(
             self.registry["authority"],
-            "qa/calendar_surface_manifest_1_8_6.json",
+            "qa/calendar_surface_manifest_1_8_7.json",
         )
 
     def test_palette_matrix_covers_every_theme_id_in_both_modes(self) -> None:
@@ -99,8 +105,10 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         )
         self.assertGreater(expected_count, 0)
         self.assertEqual(self.matrix["settings_page_case_count"], expected_count)
-        self.assertEqual(axes["window_width"], [1040, 1200, "full-screen"])
-        self.assertEqual(axes["application_font_percent"], [100, 150])
+        self.assertEqual(axes["window_width"], [1080, 1280, "full-screen"])
+        self.assertEqual(axes["application_font_percent"], [100])
+        self.assertEqual(self.plan.counts("settings"), {"initial": 40, "restart": 1, "total": 41})
+        self.assertLessEqual(2 + len(self.plan.detail_groups("settings")), 11)
 
     def test_capture_count_is_derived_from_contract_families(self) -> None:
         families = self.capture["capture_families"]
@@ -137,15 +145,19 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
             item for item in self.capture["capture_families"]
             if item["id"] == "settings-contract"
         )
+        self.assertEqual(
+            tuple(family["capture_ids"]),
+            self.plan.family_ids("settings-contract"),
+        )
         required = {
-            "SET-EVENTS-EMPTY", "SET-EVENTS-POPULATED", "SET-EVENTS-SELECTED",
-            "SET-EVENTS-SEARCHED", "SET-EVENTS-ARCHIVED",
-            "SET-BIBLE-SHORT", "SET-BIBLE-LONG", "SET-BIBLE-CUSTOM",
-            "SET-ABOUT-BOTTOM", "SET-DIRTY", "SET-REVERT",
-            "SET-SAVE-SUCCESS", "SET-SAVE-ERROR", "SET-LEGACY-ROUTE",
-            "SET-WINDOW-STANDARD", "SET-WINDOW-CLAMP",
+            "SET-EVENT-EDITOR-OPEN", "SET-EVENTS-NO-RESULTS", "SET-EVENT-LONG-TITLE",
+            "SET-BIBLE-CUSTOM-VALID", "SET-BIBLE-CUSTOM-INVALID", "SET-BIBLE-LONG-ROW",
+            "SET-DASHBOARD-FUTURE-OFF", "SET-DASHBOARD-FUTURE-ON", "SET-DASHBOARD-ADVANCED",
+            "SET-CLOSE-CONFIRM", "SET-SAVE-IN-PROGRESS", "SET-WINDOW-OFFSCREEN-RESTORE",
+            "SET-THEME-LIGHT", "SET-THEME-DARK",
         }
         self.assertTrue(required <= set(family["capture_ids"]))
+        self.assertNotIn("SET-EVENTS-SELECTED", family["capture_ids"])
 
     def test_statistics_accuracy_family_covers_every_value_shell(self) -> None:
         family = next(
@@ -191,17 +203,62 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
 
     def test_acceptance_boundaries_and_isolation_are_explicit(self) -> None:
         expected_unrun = {
-            "voiceover_review", "windows_validation", "linux_validation",
-            "forced_colors_review", "device_pixel_ratio_1", "os_display_scaling",
+            "windows-native-settings-validation",
+            "linux-native-settings-validation",
+            "alternate-os-scaling-settings-validation",
+            "alternate-application-font-settings-validation",
+            "voiceover_review",
+            "forced_colors_review",
         }
         self.assertEqual(set(self.capture["deferred_unrun"]), expected_unrun)
         self.assertEqual(set(self.matrix["deferred_unrun"]), expected_unrun)
+        self.assertEqual(
+            self.capture["required_native_platform_profiles"],
+            self.plan.raw["native_platform_matrix"],
+        )
+        self.assertEqual(
+            self.matrix["required_native_platform_profiles"],
+            self.plan.raw["native_platform_matrix"],
+        )
         self.assertEqual(len(self.capture["isolation_gates"]), 4)
         self.assertIn("controlled-restart", self.capture["required_automated_gates"])
         self.assertIn("native-statistics-parity", self.capture["required_automated_gates"])
+        self.assertIn(
+            "macos-fullscreen-space-switch-acceptance",
+            self.capture["required_automated_gates"],
+        )
+        gate = self.capture["settings_profile_structured_manual_gate"]
+        self.assertEqual(gate, {
+            "id": "macos-fullscreen-no-space-switch-menu-and-dashboard-gear",
+            "required_for_acceptance": True,
+            "adds_png_frames": False,
+            "opening_paths": ["menu", "dashboard-gear"],
+            "required_result": "both paths remain on the native Anki full-screen Space with no desktop switch, including hard-restart recheck",
+        })
+        self.assertEqual(
+            self.plan.profile("settings")["required_structured_manual_results"],
+            [gate["id"]],
+        )
+        self.assertIn(
+            "macos-fullscreen-menu-and-dashboard-gear-open-without-desktop-space-switch",
+            self.matrix["settings_quality_assertions"],
+        )
+        self.assertIn(
+            "every-png-sample-matches-live-settings-surface",
+            self.matrix["settings_quality_assertions"],
+        )
+        for family_id in ("settings-pages", "settings-contract"):
+            family = next(
+                item for item in self.capture["capture_families"]
+                if item["id"] == family_id
+            )
+            self.assertIn("live-settings-surface-sample-match", family["requirements"])
         criteria = self.manifest["acceptance_criteria"]
         self.assertEqual(len({item["id"] for item in criteria}), len(criteria))
         self.assertTrue(all(item["tags"] and item["requirement"].strip() for item in criteria))
+        workflow = next(item for item in criteria if item["id"] == "SET-WORKFLOW")
+        self.assertIn("both menu and Dashboard gear", workflow["requirement"])
+        self.assertIn("without a desktop or Space switch", workflow["requirement"])
 
 
 if __name__ == "__main__":

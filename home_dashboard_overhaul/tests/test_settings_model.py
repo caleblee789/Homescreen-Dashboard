@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import replace
 from datetime import date
 import unittest
@@ -19,6 +20,7 @@ from home_dashboard_overhaul.settings_model import (
     SECTION_IDS,
     SECTION_LABELS,
     SettingsDraft,
+    clamp_window_geometry,
     clamp_window_size,
     changed_paths,
     font_family_value,
@@ -28,7 +30,10 @@ from home_dashboard_overhaul.settings_model import (
     preview_snapshot_with_staged_events,
     resolve_section,
     resolve_section_target,
+    saved_window_geometry_is_valid,
+    settings_screen_uses_compact_fallback,
     three_way_merge,
+    visible_geometry_ratio,
 )
 from home_dashboard_overhaul.tests.fixtures import sample_snapshot
 
@@ -302,17 +307,96 @@ class SettingsDraftTests(unittest.TestCase):
 
 
 class SettingsUtilityTests(unittest.TestCase):
-    def test_default_settings_size_is_1200_by_800(self) -> None:
-        self.assertEqual(clamp_window_size(None, (1440, 900)), (1200, 800))
+    def test_default_settings_size_is_1080_by_760_logical_pixels(self) -> None:
+        self.assertEqual(clamp_window_size(None, (1440, 900)), (1080, 760))
 
     def test_requested_settings_size_is_clamped_to_minimum_and_screen(self) -> None:
-        self.assertEqual(clamp_window_size((700, 500), (1440, 900)), (1040, 700))
-        self.assertEqual(clamp_window_size((4000, 3000), (1440, 900)), (1408, 868))
+        self.assertEqual(clamp_window_size((700, 500), (1440, 900)), (920, 640))
+        self.assertEqual(clamp_window_size((4000, 3000), (1440, 900)), (1344, 804))
 
     def test_physically_small_screen_uses_same_shell_inside_available_geometry(self) -> None:
-        self.assertEqual(clamp_window_size((1200, 800), (800, 600)), (768, 568))
+        self.assertEqual(clamp_window_size((1200, 800), (800, 600)), (752, 552))
+        self.assertTrue(settings_screen_uses_compact_fallback((800, 600)))
+        self.assertFalse(settings_screen_uses_compact_fallback((1440, 900)))
+
+    def test_default_geometry_centers_on_parent_in_logical_coordinates(self) -> None:
+        self.assertEqual(
+            clamp_window_geometry(None, (100, 50, 1440, 900), parent=(200, 100, 1000, 700)),
+            (160, 98, 1080, 760),
+        )
+
+    def test_valid_saved_geometry_keeps_position(self) -> None:
+        self.assertEqual(
+            clamp_window_geometry((150, 100, 1180, 800), (100, 50, 1600, 1000)),
+            (150, 100, 1180, 800),
+        )
+
+    def test_offscreen_or_disconnected_monitor_geometry_recenters(self) -> None:
+        expected = (160, 98, 1080, 760)
+        self.assertEqual(
+            clamp_window_geometry((5000, 4000, 1080, 760), (100, 50, 1440, 900), parent=(200, 100, 1000, 700)),
+            expected,
+        )
+        self.assertEqual(
+            clamp_window_geometry((-4000, -3000, 1080, 760), (100, 50, 1440, 900), parent=(200, 100, 1000, 700)),
+            expected,
+        )
+
+    def test_oversized_normal_geometry_is_capped_and_fully_visible(self) -> None:
+        self.assertEqual(
+            clamp_window_geometry((-500, -500, 3000, 2000), (0, 0, 1440, 900)),
+            (48, 48, 1344, 804),
+        )
+
+    def test_geometry_result_is_dpr_independent(self) -> None:
+        logical = (60, 60, 1180, 800)
+        self.assertEqual(clamp_window_geometry(logical, (0, 0, 1600, 1000)), logical)
+
+    def test_v3_saved_geometry_requires_minimum_size_screen_and_eighty_percent_visibility(self) -> None:
+        primary = (0, 0, 1600, 1000)
+        secondary = (1600, 0, 1920, 1080)
+        self.assertFalse(saved_window_geometry_is_valid((100, 100, 720, 520), [primary]))
+        self.assertTrue(saved_window_geometry_is_valid((100, 100, 940, 680), [primary]))
+        self.assertTrue(saved_window_geometry_is_valid((100, 100, 1180, 800), [primary]))
+        self.assertTrue(saved_window_geometry_is_valid((-236, 100, 1180, 800), [primary]))
+        self.assertFalse(saved_window_geometry_is_valid((-237, 100, 1180, 800), [primary]))
+        self.assertEqual(visible_geometry_ratio((-236, 100, 1180, 800), [primary]), .8)
+        self.assertTrue(
+            saved_window_geometry_is_valid(
+                (1700, 100, 1180, 800),
+                [primary, secondary],
+                saved_screen_exists=True,
+            )
+        )
+        self.assertFalse(
+            saved_window_geometry_is_valid(
+                (1700, 100, 1180, 800),
+                [primary],
+                saved_screen_exists=False,
+            )
+        )
+
+    def test_reset_scope_visibility_and_split_calendar_scopes(self) -> None:
+        baseline = normalize_config({
+            "heatmap": {
+                "calendar_view": "month",
+                "show_due_forecast": False,
+                "exclude_deleted_cards": True,
+            }
+        })
+        draft = SettingsDraft(baseline)
+        self.assertTrue(draft.scope_differs_from_defaults("calendar_display"))
+        self.assertTrue(draft.scope_differs_from_defaults("calendar_range"))
+        self.assertTrue(draft.scope_differs_from_defaults("local_data"))
+        self.assertFalse(draft.scope_differs_from_defaults("study_metrics"))
+        local_before = deepcopy(draft.values["heatmap"]["exclude_deleted_cards"])
+        self.assertTrue(draft.reset_card("calendar_display"))
+        self.assertFalse(draft.scope_differs_from_defaults("calendar_display"))
+        self.assertEqual(draft.values["heatmap"]["exclude_deleted_cards"], local_before)
+        self.assertTrue(draft.dirty)
 
     def test_routes_keep_old_aliases(self) -> None:
+        self.assertEqual(resolve_section_target(""), ("dashboard", ""))
         self.assertEqual(resolve_section("appearance"), "dashboard")
         self.assertEqual(resolve_section("dashboard"), "dashboard")
         self.assertEqual(resolve_section("activity"), "dashboard")

@@ -50,14 +50,16 @@ DEFERRED_SOURCE_FILES = frozenset({
 })
 DEFERRED_SOURCE_PREFIXES = ("_vendor/",)
 RELEASE_CONTRACT_FILES = (
-    "qa/calendar_surface_manifest_1_8_6.json",
-    "qa/visual_regression_matrix_1_8_6.json",
-    "qa/ui-surface-registry_1_8_6.json",
-    "qa/capture_evidence_manifest_1_8_6.json",
-    "qa/runtime_probe_release_1_8_6_manifest.json",
-    "qa/runtime_probe_release_1_8_6.py",
+    "qa/settings_window_contract_1_8_7.json",
+    "qa/validate_settings_window_contract_1_8_7.py",
+    "qa/calendar_surface_manifest_1_8_7.json",
+    "qa/visual_regression_matrix_1_8_7.json",
+    "qa/ui-surface-registry_1_8_7.json",
+    "qa/capture_evidence_manifest_1_8_7.json",
+    "qa/runtime_probe_release_1_8_7_manifest.json",
+    "qa/runtime_probe_release_1_8_7.py",
     "qa/runtime_probe_release_1_8_4.py",
-    "qa/assemble_release_evidence_1_8_6.py",
+    "qa/assemble_release_evidence_1_8_7.py",
     "qa/capture_plan.json",
     "qa/capture_plan.py",
     "qa/prepare_capture_helper.py",
@@ -65,7 +67,7 @@ RELEASE_CONTRACT_FILES = (
     "qa/runtime_probe_fullscreen_profile.py",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
-FIXED_TIMESTAMP = (2026, 8, 24, 0, 0, 0)
+FIXED_TIMESTAMP = (2026, 8, 26, 0, 0, 0)
 
 
 def _json(relative: str) -> dict:
@@ -303,20 +305,22 @@ def validate_sources() -> dict:
     manifest = _json("manifest.json")
     config = _json("config.json")
     verse_data = _json("default_verses.json")
-    surface_contract = _json("qa/calendar_surface_manifest_1_8_6.json")
-    visual_matrix = _json("qa/visual_regression_matrix_1_8_6.json")
-    capture_contract = _json("qa/capture_evidence_manifest_1_8_6.json")
-    probe_contract = _json("qa/runtime_probe_release_1_8_6_manifest.json")
+    surface_contract = _json("qa/calendar_surface_manifest_1_8_7.json")
+    visual_matrix = _json("qa/visual_regression_matrix_1_8_7.json")
+    capture_contract = _json("qa/capture_evidence_manifest_1_8_7.json")
+    probe_contract = _json("qa/runtime_probe_release_1_8_7_manifest.json")
+    surface_registry = _json("qa/ui-surface-registry_1_8_7.json")
     capture_plan_namespace = runpy.run_path(str(ROOT / "qa" / "capture_plan.py"))
     capture_plan = capture_plan_namespace["load_capture_plan"](
         ROOT / "qa" / "capture_plan.json"
     )
     capture_plan.validate_authorities(ROOT / "qa")
+    settings_window_contract = _json("qa/settings_window_contract_1_8_7.json")
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.6":
-        raise ValueError("release artifact must use semantic version 1.8.6")
+    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.7":
+        raise ValueError("release artifact must use semantic version 1.8.7")
     if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260800):
         raise ValueError("release must be pinned to Anki 26.8")
     if config.get("schema_version") != 8:
@@ -343,6 +347,13 @@ def validate_sources() -> dict:
             "ui_primitives.py", "web/dashboard.js", "web/dashboard.css",
         )
     }
+    packaged_text = "\n".join(
+        (ROOT / relative).read_text(encoding="utf-8", errors="ignore")
+        for relative in PACKAGE_FILES
+        if (ROOT / relative).suffix.casefold() in {".py", ".json", ".md", ".txt", ".js", ".css"}
+    )
+    if "simulated transactional write failure" in packaged_text:
+        raise ValueError("developer-facing save fixture wording must not ship")
     required = {
         "analytics.py": (
             "due_load_reference", "math.ceil(len(forecast_counts) * .90)",
@@ -363,10 +374,12 @@ def validate_sources() -> dict:
         "controller.py": (
             'page == "calendar_data"', 'page == "events"', "selected_event_id",
             "def _open_browser_target", "browser_will_search", "context.ids = ids",
-            'command == "diagnostics"', 'self.open_settings("about_support")',
+            'command == "diagnostics"', 'self.request_settings_open("about_support")',
             "def _persist_settings_transaction", "_restore_optional_bytes",
-            "dialog = SettingsDialog(self, page_name, date_value, event_value)",
+            "from .settings import SettingsDialog", "dialog = SettingsDialog(",
             "dialog.exec()",
+            "self._settings_request_token",
+            "QTimer.singleShot(0, lambda: self._open_pending_settings(token))",
         ),
         "insights.py": (
             "ORDER BY again_count DESC, total_answers DESC, r.cid ASC",
@@ -383,17 +396,31 @@ def validate_sources() -> dict:
             "today_session", "data-hdo-has-bible",
         ),
         "settings.py": (
-            "self.setMinimumSize(1040, 700)", "self.resize(1200, 800)",
-            "self.setMinimumSize(min(1040, width), min(700, height))",
-            "self.resize(width, height)", "super().__init__(mw)",
-            "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
+            "class SettingsDialog(QDialog):", "class SettingsPromptPage(QWidget):",
+            "super().__init__(parent)",
+            'self.setWindowTitle("Home Screen Dashboard Settings")',
+            "self.setMinimumSize(*SETTINGS_MINIMUM_SIZE)",
+            "SETTINGS_GEOMETRY_KEY", "clamp_window_geometry(",
+            "self._content_stack.setCurrentWidget(prompt)",
+            "def reject(self) -> None:", "def closeEvent(self, event: Any) -> None:",
+            "action.triggered.connect(controller.open_settings)",
+            "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)", "self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)",
+            "self.compact_nav = QTabBar", "SETTINGS_COMPACT_BODY_WIDTH = 820",
+            "SETTINGS_PAGE_MAX_WIDTH = 980", "SETTINGS_HEADER_HEIGHT = 72",
+            "SETTINGS_FOOTER_MIN_HEIGHT = 60", "ScrollBarAlwaysOff",
+            "host = grid.parentWidget()", "widget.setParent(host)",
+            "widget.show()", "if not widget.isHidden():",
+            "self.heatmap_preset = QComboBox()", "def _refresh_heatmap_preset_options",
             "def _connect_change_signals(self) -> None:",
             "def _settings_changed(self, *_args: object) -> None:",
-            'SettingsCard("Study calculations")', 'SettingsCard("Calendar display")',
-            'SettingsCard("Calendar range")', 'SettingsCard("Data and reset"',
-            "class EventRowWidget", "class VerseRowWidget", "def _attach_event_menu",
-            'self.revert_button = QPushButton("Revert changes")',
-            'self.save_error.setObjectName("InlineSaveError")',
+            'SettingsCard("Study metrics", "", "Reset")', '"Calendar display",',
+            'SettingsCard("Calendar range", "", "Reset")', "class DisclosureHeader",
+            "class EventRowWidget", "class VerseLibraryModel", "class VerseLibraryDelegate",
+            "def _attach_event_menu", 'self.revert_button = QPushButton("Discard changes")',
+            "class SettingsFooter", 'self.error_label.setObjectName("InlineSaveError")',
+            "Save failed. Your changes are still available.",
+            "scope_differs_from_defaults", 'SettingsCard("Version and support")',
+            'SettingsCard("Privacy and legal")',
         ),
         "web/dashboard.js": (
             "function buildCalendarTooltipRows", "function getSelectedDateCapabilities",
@@ -431,6 +458,53 @@ def validate_sources() -> dict:
         if absent:
             raise ValueError("{} is missing corrected release contracts: {}".format(relative, ", ".join(absent)))
 
+    dialog_source = sources["settings.py"].split(
+        "class SettingsDialog(QDialog):", 1
+    )[1].split("def _object_name", 1)[0]
+    grid_mount_source = dialog_source.split(
+        "    def _place_grid_widgets(", 1
+    )[1].split("    def _reflow_compact_grids", 1)[0]
+    if not (
+        grid_mount_source.index("widget.setParent(host)")
+        < grid_mount_source.index("widget.show()")
+        < grid_mount_source.index("if not widget.isHidden():")
+    ):
+        raise ValueError(
+            "Settings grid fields must be parented before show and visibility filtering"
+        )
+    apply_theme_source = dialog_source.split("    def _apply_theme(", 1)[1].split(
+        "    def _update_forecast_range_visibility", 1
+    )[0]
+    if "self._refresh_heatmap_preset_options()" in apply_theme_source:
+        raise ValueError("generic Settings synchronization must not rebuild heatmap options")
+    for forbidden in (
+        "clamp_window_size", "self.screen()", "self.move(", "setWindowModality", "setModal(",
+        "def showEvent", "AnkiWebView", "QWebEngine", "raise_()",
+        "setWindowFlags", "activateWindow()", "setFocus(",
+        "setFocusProxy(", "installEventFilter(self)", "super().__init__(parent,",
+        "Qt.WindowType.Window", "Qt.WindowType.CustomizeWindowHint",
+    ):
+        if forbidden in dialog_source:
+            raise ValueError(
+                "Settings dialog retains custom lifecycle marker: {}".format(forbidden)
+            )
+
+    for forbidden in (
+        "def _clamped_settings_origin(", "def _place_settings_dialog(",
+        "def _report_settings_placement_failure(", "dialog.move(",
+        "parent.screen()", "screen.availableGeometry()",
+    ):
+        if forbidden in sources["controller.py"]:
+            raise ValueError(
+                "retired pre-exec Settings placement remains: {}".format(forbidden)
+            )
+
+    save_tail = sources["settings.py"].split("    def _save(self) -> None:", 1)[1].split(
+        "def _object_name", 1
+    )[0]
+    if "message = QMessageBox(self)" in save_tail or "message.exec()" in save_tail:
+        raise ValueError("primary Settings prompts must remain embedded children")
+
     for retired in (
         "Qt.WindowType.Tool", "self.winId()", "setTransientParent",
         "_attach_transient_parent", "Qt.WindowModality.NonModal", "objc_msgSend",
@@ -438,20 +512,23 @@ def validate_sources() -> dict:
         "self.move(",
     ):
         if retired in sources["settings.py"]:
-            raise ValueError("retired macOS Settings panel behavior remains: {}".format(retired))
+            raise ValueError(
+                "retired macOS Settings panel behavior remains: {}".format(retired)
+            )
 
     for retired in (
-        "self.settings_dialog", "SETTINGS_WINDOW_MODALITY",
-        "setWindowModality", "dialog.open()", "dialog.show()",
-        "dialog.finished.connect(", "def _settings_dialog_finished",
-        "dialog.raise_()", "dialog.activateWindow()",
+        "SettingsWorkspace", "_settings_workspace", "_settings_menu_waiting_for_hide",
+        "request_settings_open_from_menu", "settings_menu_about_to_hide",
+        "QTimer.singleShot(50", "dialog.open()", "dialog.show()",
+        "dialog.finished.connect(", "dialog.raise_()", "dialog.activateWindow()",
     ):
-        if retired in sources["controller.py"]:
-            raise ValueError("retired top-level Settings lifecycle remains: {}".format(retired))
-
+        if retired in sources["controller.py"] + sources["settings.py"]:
+            raise ValueError("retired Settings lifecycle remains: {}".format(retired))
     for retired in (
         "AnkiWebView", "aqt.webview", "stdHtml", "focusChanged",
         "PreviewDock", "_schedule_preview", "_render_preview", "_open_full_preview",
+        "DashboardCardPreview", "VerseCardPreview", "HeatmapPresetCard",
+        "heatmap_preset_cards", "preset_swatch",
     ):
         if retired in sources["settings.py"]:
             raise ValueError("retired Settings preview behavior remains: {}".format(retired))
@@ -483,9 +560,14 @@ def validate_sources() -> dict:
     ):
         raise ValueError("corrected surface contract must encode unique tagged acceptance criteria")
     if any(contract.get("release") != version for contract in (
-        surface_contract, visual_matrix, capture_contract, probe_contract
-    )) or capture_plan.release != version:
-        raise ValueError("release contracts must match the manifest version")
+        surface_contract, visual_matrix, capture_contract, probe_contract,
+        surface_registry,
+    )):
+        raise ValueError("1.8.7 release authorities use different versions")
+    if surface_registry.get("surfaces") != surface_contract.get("canonical_surfaces"):
+        raise ValueError("surface registry differs from the canonical surface authority")
+    if capture_plan.release != version:
+        raise ValueError("capture plan must match the manifest version")
     if (
         probe_contract.get("capture_plan") != "capture_plan.json"
         or probe_contract.get("capture_profile_authority") != "capture_plan.json#profiles"
@@ -493,8 +575,50 @@ def validate_sources() -> dict:
         != "capture_plan.json#profiles[id=full]"
         or probe_contract.get("helper_builder") != "prepare_capture_helper.py"
         or probe_contract.get("base_probe") != "runtime_probe_release_1_8_4.py"
+        or probe_contract.get("release_probe") != "runtime_probe_release_1_8_7.py"
+        or probe_contract.get("required_platform_matrix")
+        != "capture_plan.json#native_platform_matrix"
     ):
         raise ValueError("runtime probe metadata does not delegate profiles and counts to the capture plan")
+    if settings_window_contract.get("release") != version:
+        raise ValueError("focused Settings contract must match the manifest version")
+    if (
+        settings_window_contract.get("reference_addons") != ["Progress Bar", "PronounceIt"]
+        or settings_window_contract.get("minimum_size") != [920, 640]
+        or settings_window_contract.get("default_size") != [1080, 760]
+        or settings_window_contract.get("screen_margins")
+        != {"normal": 48, "small_screen_fallback": 24}
+        or settings_window_contract.get("minimum_saved_visible_ratio") != .8
+        or settings_window_contract.get("native_window") is not True
+        or settings_window_contract.get("logical_coordinates") is not True
+        or settings_window_contract.get("movable") is not True
+        or settings_window_contract.get("resizable") is not True
+        or settings_window_contract.get("default_window_flags") is not True
+        or settings_window_contract.get("initial_placement")
+        != "restore a valid logical v3 QRect on its connected screen or center on the active parent screen before first visibility"
+        or settings_window_contract.get("pre_exec_geometry") is not True
+        or settings_window_contract.get("reposition_after_open") is not False
+        or settings_window_contract.get("saved_geometry")
+        != "versioned UI-only QSettings normal logical QRect plus screen identity; reject undersized offscreen disconnected and compact records"
+        or settings_window_contract.get("geometry_key")
+        != "home_dashboard_overhaul/settings_dialog_geometry/v3"
+        or settings_window_contract.get("geometry_screen_key")
+        != "home_dashboard_overhaul/settings_dialog_geometry/v3_screen"
+        or settings_window_contract.get("active_screen_order")
+        != ["parent window handle", "screen containing parent center", "primary screen"]
+        or settings_window_contract.get("shell_maximum_width") != 1240
+        or settings_window_contract.get("page_maximum_width") != 980
+        or settings_window_contract.get("rail_width") != 184
+        or settings_window_contract.get("header_height") != 72
+        or settings_window_contract.get("footer_height") != 60
+        or settings_window_contract.get("rendered_previews")
+        != "none; dashboard verse palette swatch and heatmap preview surfaces are absent"
+        or settings_window_contract.get("settings_profile_acceptance_gate")
+        != "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 41 PNGs cannot satisfy or waive this gate"
+        or settings_window_contract.get("programmatic_lifecycle_focus") is not False
+        or settings_window_contract.get("retained_dialog_object") is not False
+    ):
+        raise ValueError("focused Settings contract does not require native dialog parity")
     if capture_contract.get("runtime_smoke_requirements") != {
         "active_head_deck": "A",
         "raw_new_cards_per_head_minimum": 40,
@@ -508,6 +632,33 @@ def validate_sources() -> dict:
     wide_counts = capture_plan.counts("wide-100")
     if not (0 < wide_counts["initial"] <= full_counts["initial"] and wide_counts["restart"] <= full_counts["restart"]):
         raise ValueError("wide 100 percent profile is not a valid subset of the full capture plan")
+    if full_counts != {"initial": 92, "restart": 2, "total": 94}:
+        raise ValueError("corrected 1.8.7 full capture count must be 94")
+    settings_counts = capture_plan.counts("settings")
+    if settings_counts != {"initial": 40, "restart": 1, "total": 41}:
+        raise ValueError("minimal 1.8.7 Settings capture count must be exactly 41")
+    if 2 + len(capture_plan.detail_groups("settings")) > 11:
+        raise ValueError("minimal 1.8.7 Settings evidence exceeds 11 sheets")
+    structured_gate_id = "macos-fullscreen-no-space-switch-menu-and-dashboard-gear"
+    if capture_plan.profile("settings").get("required_structured_manual_results") != [
+        structured_gate_id
+    ]:
+        raise ValueError("minimal Settings profile lacks its full-screen no-switch gate")
+    if capture_contract.get("settings_profile_structured_manual_gate") != {
+        "id": structured_gate_id,
+        "required_for_acceptance": True,
+        "adds_png_frames": False,
+        "opening_paths": ["menu", "dashboard-gear"],
+        "required_result": "both paths remain on the native Anki full-screen Space with no desktop switch, including hard-restart recheck",
+    }:
+        raise ValueError("Settings full-screen structured acceptance contract drifted")
+    if (
+        "macos-fullscreen-menu-and-dashboard-gear-open-without-desktop-space-switch"
+        not in visual_matrix.get("settings_quality_assertions", [])
+    ):
+        raise ValueError("visual matrix does not prevent the desktop/Space-switch regression")
+    if capture_contract.get("required_native_platform_profiles") != capture_plan.raw.get("native_platform_matrix"):
+        raise ValueError("release-blocking native platform matrix drifted")
 
     verses = verse_data.get("quote")
     if (

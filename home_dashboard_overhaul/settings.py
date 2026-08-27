@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict, List, Mapping, MutableMapping, Optional
 from aqt import mw
 from aqt.qt import (
     QAction,
+    QAbstractListModel,
     QAbstractItemView,
     QApplication,
     QBoxLayout,
@@ -27,30 +28,37 @@ from aqt.qt import (
     QDateEdit,
     QDialog,
     QDialogButtonBox,
+    QDesktopServices,
     QFileDialog,
     QFrame,
     QFontMetrics,
+    QFont,
     QFontComboBox,
     QFormLayout,
     QGridLayout,
     QHeaderView,
     QHBoxLayout,
     QInputDialog,
+    QIcon,
     QKeySequence,
     QLabel,
     QLineEdit,
     QLocale,
     QListWidget,
     QListWidgetItem,
+    QListView,
     QMenu,
     QMessageBox,
     QPainter,
     QPlainTextEdit,
     QPoint,
     QPen,
+    QPixmap,
     QPushButton,
     QEvent,
+    QRect,
     QScrollArea,
+    QSettings,
     QSize,
     QSizePolicy,
     QSlider,
@@ -58,25 +66,32 @@ from aqt.qt import (
     QStackedWidget,
     QStyle,
     QStyledItemDelegate,
-    QTabWidget,
+    QTabBar,
     QTimer,
+    QUrl,
     QVBoxLayout,
     QWidget,
     QTreeWidget,
     QTreeWidgetItem,
     Qt,
+    QModelIndex,
 )
 
 from .config_schema import normalize_config
 from .settings_model import (
     SECTION_LABELS,
+    SETTINGS_DEFAULT_SIZE,
+    SETTINGS_MINIMUM_SIZE,
+    SETTINGS_SMALL_SCREEN_MARGIN,
     SettingsDraft,
-    clamp_window_size,
+    clamp_window_geometry,
     font_family_value,
     history_range_choice,
     history_range_values,
     import_quotes,
     resolve_section_target,
+    saved_window_geometry_is_valid,
+    settings_screen_uses_compact_fallback,
 )
 from .themes import (
     DEFAULT_CUSTOM_BIBLE_COLOR,
@@ -84,7 +99,6 @@ from .themes import (
     HEATMAP_PRESETS,
     PRESETS,
     SETTINGS_COLOR_TOKENS,
-    resolve_theme,
 )
 from .ui_primitives import (
     FOCUS_RING_OFFSET_PX,
@@ -118,6 +132,29 @@ DECK_UNAVAILABLE_ROLE = Qt.ItemDataRole.UserRole + 12
 EVENT_DATE_ROLE = Qt.ItemDataRole.UserRole + 20
 EVENT_NAME_ROLE = Qt.ItemDataRole.UserRole + 21
 EVENT_STATUS_ROLE = Qt.ItemDataRole.UserRole + 22
+VERSE_SOURCE_INDEX_ROLE = Qt.ItemDataRole.UserRole + 30
+VERSE_REFERENCE_ROLE = Qt.ItemDataRole.UserRole + 31
+VERSE_EXCERPT_ROLE = Qt.ItemDataRole.UserRole + 32
+VERSE_CURRENT_ROLE = Qt.ItemDataRole.UserRole + 33
+VERSE_PENDING_ROLE = Qt.ItemDataRole.UserRole + 34
+
+SETTINGS_GEOMETRY_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v3"
+SETTINGS_GEOMETRY_SCREEN_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v3_screen"
+SETTINGS_SHELL_MAX_WIDTH = 1240
+SETTINGS_PAGE_MAX_WIDTH = 980
+SETTINGS_COMPACT_BODY_WIDTH = 820
+SETTINGS_SIDEBAR_WIDTH = 184
+SETTINGS_HEADER_HEIGHT = 72
+SETTINGS_FOOTER_MIN_HEIGHT = 60
+SETTINGS_SPACING = {
+    "tight": 4,
+    "control": 8,
+    "related": 12,
+    "card": 16,
+    "compact_page": 20,
+    "page": 24,
+    "section": 32,
+}
 
 
 def _settings_primitive(name: str) -> str:
@@ -134,9 +171,11 @@ def _palette_tokens() -> Dict[str, str]:
     source = SETTINGS_COLOR_TOKENS["dark" if window.lightness() < 128 else "light"]
     return {
         "window": source["ui_bg"],
+        "sidebar": source["ui_sidebar"],
         "base": source["ui_surface"],
         "verse_card": source["ui_surface"],
         "alternate": source["ui_surface_raised"],
+        "accent_soft": source["ui_accent_soft"],
         "hover": source["ui_surface_hover"],
         "text": source["ui_text_primary"],
         "secondary": source["ui_text_secondary"],
@@ -155,6 +194,7 @@ def _palette_tokens() -> Dict[str, str]:
         "warning": source["ui_warning"],
         "danger": source["ui_danger"],
         "danger_bg": source["ui_surface_hover"],
+        "overlay": source["ui_overlay"],
     }
 
 
@@ -169,9 +209,11 @@ def _theme_tokens(
     source = SETTINGS_COLOR_TOKENS["dark" if anki_dark else "light"]
     return {
         "window": source["ui_bg"],
+        "sidebar": source["ui_sidebar"],
         "base": source["ui_surface"],
         "verse_card": source["ui_surface"],
         "alternate": source["ui_surface_raised"],
+        "accent_soft": source["ui_accent_soft"],
         "hover": source["ui_surface_hover"],
         "text": source["ui_text_primary"],
         "secondary": source["ui_text_secondary"],
@@ -190,6 +232,7 @@ def _theme_tokens(
         "warning": source["ui_warning"],
         "danger": source["ui_danger"],
         "danger_bg": source["ui_surface_hover"],
+        "overlay": source["ui_overlay"],
     }
 
 
@@ -227,106 +270,117 @@ def _settings_style(
         focus_offset=str(FOCUS_RING_OFFSET_PX),
     )
     return """
-QDialog#HomeDashboardSettings {{ background: {window}; color: {text}; }}
-QDialog#HomeDashboardSettings QLabel,
-QDialog#HomeDashboardSettings QCheckBox {{ color: {text}; }}
-QDialog#HomeDashboardSettings QListWidget#SettingsNav {{ background: transparent; border: 0; color: {text}; padding: 0; font-weight: 600; }}
-QDialog#HomeDashboardSettings QListWidget#SettingsNav::item {{ border: 0; border-left: 2px solid transparent; border-radius: 6px; color: {secondary}; margin: 2px 0; min-height: 34px; padding: 0 10px; }}
-QDialog#HomeDashboardSettings QListWidget#SettingsNav::item:hover:!selected {{ color: {text}; }}
-QDialog#HomeDashboardSettings QListWidget#SettingsNav::item:selected {{ background: {alternate}; border-left-color: {highlight}; color: {text}; font-weight: 650; }}
-QDialog#HomeDashboardSettings QListWidget#SettingsNav::item:focus {{ border: {focus_ring}px solid {focus}; }}
-QDialog#HomeDashboardSettings QScrollArea {{ background: transparent; border: 0; }}
-QDialog#HomeDashboardSettings QWidget#SettingsPage {{ background: transparent; border: 0; }}
-QDialog#HomeDashboardSettings QWidget#SettingsCard {{ background: {base}; border: 1px solid {border}; border-radius: 8px; }}
-QDialog#HomeDashboardSettings QWidget#SettingsHeader {{ background: {window}; border: 0; }}
-QDialog#HomeDashboardSettings QLabel#GlobalTitle {{ font-size: 20px; font-weight: 700; color: {text}; }}
-QDialog#HomeDashboardSettings QLabel#PageTitle {{ font-size: 18px; font-weight: 650; color: {text}; }}
-QDialog#HomeDashboardSettings QLabel#CardTitle {{ font-size: 15px; font-weight: 650; color: {text}; }}
-QDialog#HomeDashboardSettings QLabel#SectionTitle {{ color: {text}; font-size: 14px; font-weight: 650; padding-top: 10px; }}
-QDialog#HomeDashboardSettings QLabel#PageHelp,
-QDialog#HomeDashboardSettings QLabel#FieldHelp {{ color: {muted}; }}
-QDialog#HomeDashboardSettings QWidget#SettingsRow {{ background: transparent; border: 0; }}
-QDialog#HomeDashboardSettings QWidget#AboutDefinitionList {{ background: transparent; border: 0; }}
-QDialog#HomeDashboardSettings QFrame#AboutDivider {{ color: {border}; }}
-QDialog#HomeDashboardSettings QWidget#ActionBar {{ background: {base}; border-top: 1px solid {border}; border-radius: 0; }}
-QDialog#HomeDashboardSettings QWidget#UndoToast {{ background: {alternate}; border: 1px solid {highlight}; border-radius: 8px; }}
-QDialog#HomeDashboardSettings QWidget#ContextualActionGroup {{ background: transparent; border: 0; }}
-QDialog#HomeDashboardSettings QLabel#DirtyBadge {{ background: {alternate}; border: 1px solid {border}; border-radius: 9px; color: {muted}; font-size: 12px; font-weight: 700; padding: 3px 7px; }}
-QDialog#HomeDashboardSettings QLabel#DirtyBadge[state="dirty"] {{ color: {warning}; }}
-QDialog#HomeDashboardSettings QLabel#DirtyBadge[state="saved"] {{ color: {success}; }}
-QDialog#HomeDashboardSettings QLabel#DirtyBadge[state="error"] {{ color: {danger}; }}
-QDialog#HomeDashboardSettings QLabel#InlineSaveError {{ color: {danger}; }}
-QDialog#HomeDashboardSettings QLabel#DataBadge {{ background: {alternate}; border-radius: 8px; color: {text}; font-weight: 650; padding: 3px 7px; }}
-QDialog#HomeDashboardSettings QPushButton#HeatmapPresetCard {{ background: {base}; border: 1px solid {border}; border-radius: 9px; margin: 0; min-height: 64px; padding: 7px 9px; text-align: left; }}
-QDialog#HomeDashboardSettings QPushButton#HeatmapPresetCard[active="true"] {{ background: {alternate}; border: 2px solid {highlight}; color: {text}; }}
-QDialog#HomeDashboardSettings QWidget#SegmentedControl {{ background: {window}; border: 1px solid {border}; border-radius: 7px; }}
-QDialog#HomeDashboardSettings QPushButton#SegmentButton {{ background: transparent; border: 0; border-radius: 5px; margin: 2px; min-height: 30px; padding: 0 12px; }}
-QDialog#HomeDashboardSettings QPushButton#SegmentButton:checked {{ background: {highlight}; border: 0; color: {highlight_text}; font-weight: 650; }}
-QDialog#HomeDashboardSettings QPushButton#SegmentButton:focus {{ border: 2px solid {focus}; margin: 0; }}
-QDialog#HomeDashboardSettings QPushButton#SettingsSwitch {{ background: transparent; border: 0; margin: 0; min-height: 20px; min-width: 34px; max-height: 20px; max-width: 34px; padding: 0; }}
-QDialog#HomeDashboardSettings QPushButton#LinkButton {{ background: transparent; border: 0; color: {highlight}; min-height: 30px; padding: 0 4px; }}
-QDialog#HomeDashboardSettings QLineEdit,
-QDialog#HomeDashboardSettings QComboBox,
-QDialog#HomeDashboardSettings QSpinBox,
-QDialog#HomeDashboardSettings QDoubleSpinBox,
-QDialog#HomeDashboardSettings QDateEdit {{
-  background: {base}; border: 1px solid {border}; border-radius: 7px; color: {text}; min-height: {visual_chrome}px; margin: {focus_offset}px 0; padding: 0 7px;
+QDialog#HomeDashboardSettings {{ background: {window}; border: 1px solid {border}; border-radius: 10px; color: {text}; }}
+QWidget#HomeDashboardSettings QLabel,
+QWidget#HomeDashboardSettings QCheckBox {{ color: {text}; }}
+QWidget#HomeDashboardSettings QWidget#SettingsSidebarPanel {{ background: {sidebar}; border: 0; border-right: 1px solid {border}; }}
+QWidget#HomeDashboardSettings QListWidget#SettingsNav {{ background: transparent; border: 0; color: {text}; padding: 0; font-weight: 600; }}
+QWidget#HomeDashboardSettings QListWidget#SettingsNav::item {{ border: 1px solid transparent; border-left: 3px solid transparent; border-radius: 6px; color: {secondary}; margin: 2px 0; min-height: 40px; padding: 0 8px; }}
+QWidget#HomeDashboardSettings QListWidget#SettingsNav::item:hover:!selected {{ background: {hover}; color: {text}; }}
+QWidget#HomeDashboardSettings QListWidget#SettingsNav::item:selected {{ background: {accent_soft}; border-color: {border_strong}; border-left-color: {highlight}; color: {text}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QListWidget#SettingsNav::item:focus {{ border: {focus_ring}px solid {focus}; }}
+QWidget#HomeDashboardSettings QTabBar#CompactSettingsNav {{ background: {sidebar}; border: 1px solid {border}; border-radius: 8px; }}
+QWidget#HomeDashboardSettings QTabBar#CompactSettingsNav::tab {{ background: transparent; border: 1px solid transparent; border-bottom: 3px solid transparent; color: {secondary}; min-height: 36px; padding: 0 12px; }}
+QWidget#HomeDashboardSettings QTabBar#CompactSettingsNav::tab:hover:!selected {{ background: {hover}; color: {text}; }}
+QWidget#HomeDashboardSettings QTabBar#CompactSettingsNav::tab:selected {{ background: {accent_soft}; border-color: {border_strong}; border-bottom-color: {highlight}; color: {text}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QScrollArea {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QWidget#SettingsPage {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QWidget#SettingsCard {{ background: {base}; border: 1px solid {border}; border-radius: 8px; }}
+QWidget#HomeDashboardSettings QWidget#SettingsHeader {{ background: {window}; border: 0; border-bottom: 1px solid {border}; }}
+QWidget#HomeDashboardSettings QLabel#GlobalTitle {{ font-weight: 600; color: {text}; }}
+QWidget#HomeDashboardSettings QLabel#SidebarVersion {{ color: {muted}; }}
+QWidget#HomeDashboardSettings QLabel#PageTitle {{ font-weight: 600; color: {text}; }}
+QWidget#HomeDashboardSettings QLabel#CardTitle {{ font-weight: 600; color: {text}; }}
+QWidget#HomeDashboardSettings QLabel#SectionTitle {{ color: {text}; font-weight: 600; padding-top: 10px; }}
+QWidget#HomeDashboardSettings QLabel#PageHelp,
+QWidget#HomeDashboardSettings QLabel#FieldHelp {{ color: {muted}; }}
+QWidget#HomeDashboardSettings QWidget#SettingsRow {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QWidget#AboutDefinitionList {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QFrame#AboutDivider {{ color: {border}; }}
+QWidget#HomeDashboardSettings QWidget#ActionBar {{ background: {alternate}; border-top: 1px solid {border}; border-radius: 0; }}
+QWidget#HomeDashboardSettings QWidget#UndoToast {{ background: {alternate}; border: 1px solid {highlight}; border-radius: 8px; }}
+QWidget#HomeDashboardSettings QWidget#ContextualActionGroup {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QLabel#FooterStatus {{ color: {muted}; font-weight: 600; }}
+QWidget#HomeDashboardSettings QLabel#FooterStatus[state="dirty"] {{ color: {warning}; }}
+QWidget#HomeDashboardSettings QLabel#FooterStatus[state="saved"] {{ color: {success}; }}
+QWidget#HomeDashboardSettings QLabel#FooterStatus[state="saving"] {{ color: {secondary}; }}
+QWidget#HomeDashboardSettings QLabel#FooterStatus[state="error"] {{ color: {danger}; }}
+QWidget#HomeDashboardSettings QWidget#SaveErrorPanel {{ background: {base}; border: 1px solid {danger}; border-radius: 8px; }}
+QWidget#HomeDashboardSettings QLabel#InlineSaveError {{ color: {danger}; }}
+QWidget#HomeDashboardSettings QLabel#WarningText {{ color: {warning}; }}
+QWidget#HomeDashboardSettings QLabel#WarningText[state="error"] {{ color: {danger}; }}
+QWidget#HomeDashboardSettings QWidget#SegmentedControl {{ background: {alternate}; border: 1px solid {border}; border-radius: 7px; }}
+QWidget#HomeDashboardSettings QPushButton#SegmentButton {{ background: transparent; border: 0; border-radius: 5px; margin: 2px; min-height: 36px; padding: 0 12px; }}
+QWidget#HomeDashboardSettings QPushButton#SegmentButton:hover:!checked {{ background: {hover}; }}
+QWidget#HomeDashboardSettings QPushButton#SegmentButton:pressed {{ background: {highlight_pressed}; color: {highlight_text}; }}
+QWidget#HomeDashboardSettings QPushButton#SegmentButton:checked {{ background: {accent_soft}; border: 1px solid {highlight}; color: {text}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QPushButton#SegmentButton:focus {{ border: 2px solid {focus}; margin: 0; }}
+QWidget#HomeDashboardSettings QPushButton#SettingsSwitch {{ background: transparent; border: 0; margin: 0; min-height: 36px; min-width: 44px; max-height: 36px; max-width: 44px; padding: 0; }}
+QWidget#HomeDashboardSettings QPushButton#LinkButton {{ background: transparent; border: 0; color: {highlight}; min-height: 36px; padding: 0 8px; }}
+QWidget#HomeDashboardSettings QLineEdit,
+QWidget#HomeDashboardSettings QComboBox,
+QWidget#HomeDashboardSettings QSpinBox,
+QWidget#HomeDashboardSettings QDoubleSpinBox,
+QWidget#HomeDashboardSettings QDateEdit {{
+  background: {alternate}; border: 1px solid {border}; border-radius: 6px; color: {text}; min-height: {visual_chrome}px; margin: {focus_offset}px 0; padding: 0 8px;
 }}
-QDialog#HomeDashboardSettings QPlainTextEdit,
-QDialog#HomeDashboardSettings QListWidget#ManagerList,
-QDialog#HomeDashboardSettings QTreeWidget#ManagerTree {{
+QWidget#HomeDashboardSettings QPlainTextEdit,
+QWidget#HomeDashboardSettings QListWidget#ManagerList,
+QWidget#HomeDashboardSettings QTreeWidget#ManagerTree {{
   background: {base}; border: 1px solid {border}; border-radius: 7px; color: {text}; padding: 3px;
 }}
-QDialog#HomeDashboardSettings QLineEdit:focus,
-QDialog#HomeDashboardSettings QComboBox:focus,
-QDialog#HomeDashboardSettings QSpinBox:focus,
-QDialog#HomeDashboardSettings QDoubleSpinBox:focus,
-QDialog#HomeDashboardSettings QDateEdit:focus,
-QDialog#HomeDashboardSettings QPlainTextEdit:focus,
-QDialog#HomeDashboardSettings QListWidget#ManagerList:focus,
-QDialog#HomeDashboardSettings QTreeWidget#ManagerTree:focus {{ border: {focus_ring}px solid {focus}; }}
-QDialog#HomeDashboardSettings QComboBox QAbstractItemView,
-QDialog#HomeDashboardSettings QTreeWidget#ManagerTree::item {{ background: {base}; border-bottom: 1px solid {alternate}; color: {text}; padding: 4px 5px; }}
-QDialog#HomeDashboardSettings QTreeWidget#ManagerTree QHeaderView::section {{ background: {alternate}; border: 0; border-bottom: 1px solid {border}; color: {text}; font-weight: 700; padding: 4px 6px; }}
-QDialog#HomeDashboardSettings QComboBox QAbstractItemView {{ selection-background-color: {highlight}; selection-color: {highlight_text}; }}
-QDialog#HomeDashboardSettings QComboBox::drop-down {{ border: 0; width: 24px; }}
-QDialog#HomeDashboardSettings QComboBox::down-arrow {{ image: none; height: 0; width: 0; }}
-QDialog#HomeDashboardSettings QSpinBox::up-button,
-QDialog#HomeDashboardSettings QSpinBox::down-button {{ width: 30px; }}
-QDialog#HomeDashboardSettings QTreeWidget#ManagerTree::item:selected {{ background: {highlight}; color: {highlight_text}; }}
-QDialog#HomeDashboardSettings QWidget#EventRow {{ background: {base}; border: 1px solid {border}; border-radius: 7px; }}
-QDialog#HomeDashboardSettings QWidget#EventRow[selected="true"] {{ background: {alternate}; border: 1px solid {highlight}; }}
-QDialog#HomeDashboardSettings QLabel#EventRowTitle {{ color: {text}; font-weight: 650; }}
-QDialog#HomeDashboardSettings QLabel#EventRowMeta {{ color: {secondary}; }}
-QDialog#HomeDashboardSettings QPushButton#EventOverflowButton {{ background: transparent; border: 0; min-height: 32px; max-height: 32px; min-width: 32px; max-width: 32px; padding: 0; }}
-QDialog#HomeDashboardSettings QWidget#VerseRow {{ background: {base}; border: 1px solid {border}; border-radius: 7px; }}
-QDialog#HomeDashboardSettings QWidget#VerseRow[selected="true"] {{ background: {alternate}; border: 1px solid {highlight}; }}
-QDialog#HomeDashboardSettings QLabel#VerseRowReference {{ color: {text}; font-weight: 650; }}
-QDialog#HomeDashboardSettings QLabel#VerseRowExcerpt {{ color: {secondary}; }}
-QDialog#HomeDashboardSettings QPushButton#VerseOverflowButton {{ background: transparent; border: 0; min-height: 32px; max-height: 32px; min-width: 32px; max-width: 32px; padding: 0; }}
-QDialog#HomeDashboardSettings QCheckBox {{ min-height: {visual_chrome}px; margin: {focus_offset}px 0; }}
-QDialog#HomeDashboardSettings QCheckBox:focus {{ border: {focus_ring}px solid {focus}; border-radius: 6px; }}
-QDialog#HomeDashboardSettings QSlider:focus {{ border: {focus_ring}px solid {focus}; border-radius: 6px; }}
-QDialog#HomeDashboardSettings QSlider::groove:horizontal {{ background: {alternate}; border: 1px solid {border}; border-radius: 3px; height: 5px; }}
-QDialog#HomeDashboardSettings QSlider::handle:horizontal {{ background: {highlight}; border: 2px solid {base}; border-radius: 8px; height: 14px; margin: -6px 0; width: 14px; }}
-QDialog#HomeDashboardSettings QPushButton {{ background: {button}; border: 1px solid {border}; border-radius: 7px; color: {button_text}; min-height: 32px; margin: {focus_offset}px 0; padding: 0 12px; font-weight: 600; }}
-QDialog#HomeDashboardSettings QPushButton:hover {{ border-color: {highlight}; background: {hover}; }}
-QDialog#HomeDashboardSettings QPushButton:focus {{ border: {focus_ring}px solid {focus}; }}
-QDialog#HomeDashboardSettings QPushButton#PrimaryButton {{ background: {highlight}; border-color: {highlight}; color: {highlight_text}; font-weight: 750; }}
-QDialog#HomeDashboardSettings QPushButton#PrimaryButton:disabled {{ background: {alternate}; border-color: {border}; color: {disabled}; }}
-QDialog#HomeDashboardSettings QPushButton#DangerButton {{ background: {danger_bg}; border-color: {danger}; color: {danger}; font-weight: 650; }}
-QDialog#HomeDashboardSettings QPushButton#DangerButton:disabled {{ background: {alternate}; border-color: {border}; color: {disabled}; }}
-QDialog#HomeDashboardSettings QWidget#EmptyState {{ background: transparent; border: 0; }}
-QDialog#HomeDashboardSettings QLabel#EmptyStateTitle {{ color: {text}; font-size: 17px; font-weight: 750; }}
-QDialog#HomeDashboardSettings QLabel#EmptyStateCopy {{ color: {muted}; }}
-QDialog#HomeDashboardSettings QLabel#EmptyState {{ background: {alternate}; border: 1px solid {border}; border-radius: 7px; color: {text}; padding: 8px 10px; }}
-QDialog#HomeDashboardSettings QLabel#SelectedVerseCard {{ background: {base}; border: 1px solid {border}; border-radius: 9px; color: {text}; padding: 11px 12px; }}
-QDialog#HomeDashboardSettings QPushButton#DisclosureButton {{ background: transparent; border: 0; border-top: 1px solid {border}; border-radius: 0; color: {text}; font-weight: 650; min-height: 38px; padding: 0 2px; text-align: left; }}
-QDialog#HomeDashboardSettings QTabWidget#EventTabs::pane {{ border: 0; border-top: 1px solid {border}; background: transparent; top: -1px; }}
-QDialog#HomeDashboardSettings QTabWidget#EventTabs QTabBar::tab {{ background: transparent; border: 0; border-bottom: 2px solid transparent; color: {secondary}; min-height: 30px; padding: 0 12px; }}
-QDialog#HomeDashboardSettings QTabWidget#EventTabs QTabBar::tab:selected {{ background: {alternate}; border-bottom-color: {highlight}; color: {text}; font-weight: 650; }}
-QDialog#HomeDashboardSettings QWidget:disabled,
-QDialog#HomeDashboardSettings QPushButton:disabled {{ background: {alternate}; color: {disabled}; border-color: {border}; }}
+QWidget#HomeDashboardSettings QLineEdit:focus,
+QWidget#HomeDashboardSettings QComboBox:focus,
+QWidget#HomeDashboardSettings QSpinBox:focus,
+QWidget#HomeDashboardSettings QDoubleSpinBox:focus,
+QWidget#HomeDashboardSettings QDateEdit:focus,
+QWidget#HomeDashboardSettings QPlainTextEdit:focus,
+QWidget#HomeDashboardSettings QListWidget#ManagerList:focus,
+QWidget#HomeDashboardSettings QTreeWidget#ManagerTree:focus {{ border: {focus_ring}px solid {focus}; }}
+QWidget#HomeDashboardSettings QComboBox QAbstractItemView,
+QWidget#HomeDashboardSettings QTreeWidget#ManagerTree::item {{ background: {base}; border-bottom: 1px solid {alternate}; color: {text}; padding: 4px 5px; }}
+QWidget#HomeDashboardSettings QTreeWidget#ManagerTree QHeaderView::section {{ background: {alternate}; border: 0; border-bottom: 1px solid {border}; color: {text}; font-weight: 700; padding: 4px 6px; }}
+QWidget#HomeDashboardSettings QComboBox QAbstractItemView {{ selection-background-color: {highlight}; selection-color: {highlight_text}; }}
+QWidget#HomeDashboardSettings QComboBox::drop-down {{ border: 0; width: 24px; }}
+QWidget#HomeDashboardSettings QComboBox::down-arrow {{ image: none; height: 0; width: 0; }}
+QWidget#HomeDashboardSettings QSpinBox::up-button,
+QWidget#HomeDashboardSettings QSpinBox::down-button {{ width: 30px; }}
+QWidget#HomeDashboardSettings QTreeWidget#ManagerTree::item:selected {{ background: transparent; color: {text}; }}
+QWidget#HomeDashboardSettings QWidget#EventRow {{ background: {base}; border: 0; border-bottom: 1px solid {border}; border-radius: 0; }}
+QWidget#HomeDashboardSettings QWidget#EventRow:hover {{ background: {hover}; }}
+QWidget#HomeDashboardSettings QWidget#EventRow[pressed="true"] {{ background: {accent_soft}; }}
+QWidget#HomeDashboardSettings QLabel#EventRowTitle {{ color: {text}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QLabel#EventRowMeta {{ color: {secondary}; }}
+QWidget#HomeDashboardSettings QPushButton#EventOverflowButton {{ background: transparent; border: 0; min-height: 32px; max-height: 32px; min-width: 32px; max-width: 32px; padding: 0; }}
+QWidget#HomeDashboardSettings QListView#VerseLibraryView {{ background: {base}; border: 1px solid {border}; border-radius: 7px; color: {text}; }}
+QWidget#HomeDashboardSettings QListView#VerseLibraryView::item {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QCheckBox {{ min-height: {visual_chrome}px; margin: {focus_offset}px 0; }}
+QWidget#HomeDashboardSettings QCheckBox:focus {{ border: {focus_ring}px solid {focus}; border-radius: 6px; }}
+QWidget#HomeDashboardSettings QSlider:focus {{ border: {focus_ring}px solid {focus}; border-radius: 6px; }}
+QWidget#HomeDashboardSettings QSlider::groove:horizontal {{ background: {alternate}; border: 1px solid {border}; border-radius: 3px; height: 5px; }}
+QWidget#HomeDashboardSettings QSlider::handle:horizontal {{ background: {highlight}; border: 2px solid {base}; border-radius: 8px; height: 14px; margin: -6px 0; width: 14px; }}
+QWidget#HomeDashboardSettings QPushButton {{ background: {button}; border: 1px solid {border}; border-radius: 6px; color: {button_text}; min-height: 36px; margin: {focus_offset}px 0; padding: 0 12px; font-weight: 600; }}
+QWidget#HomeDashboardSettings QPushButton:hover {{ border-color: {highlight}; background: {hover}; }}
+QWidget#HomeDashboardSettings QPushButton:pressed {{ background: {highlight_pressed}; border-color: {highlight_pressed}; color: {highlight_text}; }}
+QWidget#HomeDashboardSettings QPushButton:focus {{ border: {focus_ring}px solid {focus}; }}
+QWidget#HomeDashboardSettings QPushButton#PrimaryButton {{ background: {highlight}; border-color: {highlight}; color: {highlight_text}; font-weight: 750; }}
+QWidget#HomeDashboardSettings QPushButton#PrimaryButton:disabled {{ background: {alternate}; border-color: {border}; color: {disabled}; }}
+QWidget#HomeDashboardSettings QPushButton#DangerButton {{ background: {danger_bg}; border-color: {danger}; color: {danger}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QPushButton#DangerButton:disabled {{ background: {alternate}; border-color: {border}; color: {disabled}; }}
+QWidget#HomeDashboardSettings QWidget#EmptyState {{ background: transparent; border: 0; }}
+QWidget#HomeDashboardSettings QLabel#EmptyStateTitle {{ color: {text}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QLabel#EmptyStateCopy {{ color: {muted}; }}
+QWidget#HomeDashboardSettings QLabel#EmptyState {{ background: {alternate}; border: 1px solid {border}; border-radius: 7px; color: {text}; padding: 8px 10px; }}
+QWidget#HomeDashboardSettings QLabel#SelectedVerseCard {{ background: {base}; border: 1px solid {border}; border-radius: 9px; color: {text}; padding: 11px 12px; }}
+QWidget#HomeDashboardSettings QPushButton#DisclosureButton {{ background: transparent; border: 0; border-top: 1px solid {border}; border-radius: 0; color: {text}; font-weight: 650; min-height: 40px; padding: 0 4px; text-align: left; }}
+QWidget#HomeDashboardSettings QPushButton#DisclosureButton:hover {{ background: {hover}; border-top-color: {border}; }}
+QWidget#HomeDashboardSettings QPushButton#DisclosureButton:pressed {{ background: {accent_soft}; border-top-color: {border_strong}; color: {text}; }}
+QWidget#HomeDashboardSettings QWidget#EventTabs {{ background: {base}; border: 1px solid {border}; border-radius: 7px; }}
+QWidget#HomeDashboardSettings QTabBar#EventTabsBar {{ background: {alternate}; border: 0; border-bottom: 1px solid {border}; }}
+QWidget#HomeDashboardSettings QTabBar#EventTabsBar::tab {{ background: {alternate}; border: 1px solid {border}; border-bottom: 3px solid transparent; color: {secondary}; min-height: 36px; padding: 0 14px; }}
+QWidget#HomeDashboardSettings QTabBar#EventTabsBar::tab:selected {{ background: {accent_soft}; border-color: {border_strong}; border-bottom-color: {highlight}; color: {text}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QWidget:disabled,
+QWidget#HomeDashboardSettings QPushButton:disabled {{ background: {alternate}; color: {disabled}; border-color: {border}; }}
 """.format(**values)
 
 
@@ -341,7 +395,7 @@ def _editor_style(tokens: Optional[Mapping[str, str]] = None) -> str:
 QDialog#HomeDashboardEditor {{ background: {window}; color: {text}; }}
 QDialog#HomeDashboardEditor QLabel {{ color: {text}; }}
 QDialog#HomeDashboardEditor QLabel#EditorHelp {{ color: {muted}; }}
-QDialog#HomeDashboardEditor QLabel#PageTitle {{ color: {text}; font-size: 18px; font-weight: 750; }}
+QDialog#HomeDashboardEditor QLabel#PageTitle {{ color: {text}; font-weight: 750; }}
 QDialog#HomeDashboardEditor QLineEdit,
 QDialog#HomeDashboardEditor QDateEdit {{ background: {base}; border: 1px solid {border}; border-radius: 7px; color: {text}; min-height: {visual_chrome}px; margin: {focus_offset}px 0; padding: 0 7px; }}
 QDialog#HomeDashboardEditor QPlainTextEdit {{ background: {base}; border: 1px solid {border}; border-radius: 7px; color: {text}; padding: 5px 7px; }}
@@ -349,6 +403,8 @@ QDialog#HomeDashboardEditor QLineEdit:focus,
 QDialog#HomeDashboardEditor QDateEdit:focus,
 QDialog#HomeDashboardEditor QPlainTextEdit:focus {{ border: {focus_ring}px solid {focus}; }}
 QDialog#HomeDashboardEditor QPushButton {{ background: {button}; border: 1px solid {border}; border-radius: 7px; color: {button_text}; min-height: {visual_chrome}px; margin: {focus_offset}px 0; padding: 0 11px; }}
+QDialog#HomeDashboardEditor QPushButton:hover {{ background: {hover}; border-color: {highlight}; }}
+QDialog#HomeDashboardEditor QPushButton:pressed {{ background: {highlight_pressed}; border-color: {highlight_pressed}; color: {highlight_text}; }}
 QDialog#HomeDashboardEditor QPushButton:focus {{ border: {focus_ring}px solid {focus}; }}
 QDialog#HomeDashboardEditor QPushButton#PrimaryButton {{ background: {highlight}; border-color: {highlight}; color: {highlight_text}; font-weight: 750; }}
 QDialog#HomeDashboardEditor QPushButton:disabled {{ background: {alternate}; color: {disabled}; }}
@@ -391,8 +447,14 @@ def _queue_palette_style(
             changed = _reapply_palette_style(widget, factory)
             if changed and after_change is not None:
                 after_change()
+        except RuntimeError:
+            # A queued palette event can outlive a dialog that has just closed.
+            return
         finally:
-            widget._hdo_palette_style_pending = False
+            try:
+                widget._hdo_palette_style_pending = False
+            except RuntimeError:
+                pass
 
     QTimer.singleShot(0, apply)
 
@@ -407,25 +469,165 @@ def _install_palette_watcher(
     timer.setInterval(250)
 
     def poll() -> None:
-        changed = _reapply_palette_style(widget, factory)
-        if changed and after_change is not None:
-            after_change()
+        try:
+            changed = _reapply_palette_style(widget, factory)
+            if changed and after_change is not None:
+                after_change()
+        except RuntimeError:
+            # The parented timer may deliver one queued timeout during teardown.
+            return
 
     timer.timeout.connect(poll)
     timer.start()
     widget._hdo_palette_watcher = timer
 
 
+def _apply_role_fonts(root: QWidget) -> None:
+    """Scale semantic Settings roles from Anki's live application font."""
+
+    application = QApplication.instance()
+    base = application.font() if application is not None else root.font()
+
+    def role_font(pixel_target: float, weight: Optional[QFont.Weight] = None) -> QFont:
+        font = QFont(base)
+        factor = pixel_target / 13.0
+        if font.pixelSize() > 0:
+            font.setPixelSize(max(1, round(font.pixelSize() * factor)))
+        elif font.pointSizeF() > 0:
+            font.setPointSizeF(max(1.0, font.pointSizeF() * factor))
+        if weight is not None:
+            font.setWeight(weight)
+        return font
+
+    roles = {
+        "GlobalTitle": role_font(16, QFont.Weight.DemiBold),
+        "PageTitle": role_font(20, QFont.Weight.DemiBold),
+        "CardTitle": role_font(14, QFont.Weight.DemiBold),
+        "SectionTitle": role_font(14, QFont.Weight.DemiBold),
+        "EmptyStateTitle": role_font(14, QFont.Weight.DemiBold),
+        "SettingsPromptTitle": role_font(17.5, QFont.Weight.DemiBold),
+        "SettingsPromptMessage": role_font(13),
+        "PageHelp": role_font(12),
+        "FieldHelp": role_font(12),
+        "EventRowMeta": role_font(12),
+        "FooterStatus": role_font(12.5, QFont.Weight.Medium),
+    }
+    for object_name, font in roles.items():
+        for widget in root.findChildren(QWidget, object_name):
+            widget.setFont(font)
+
+
+class DisclosureChevron(QWidget):
+    """Font-independent disclosure indicator owned by a parented header."""
+
+    def __init__(self, header: "DisclosureHeader") -> None:
+        super().__init__(header)
+        self.header = header
+        self.setFixedSize(18, 18)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+
+    def paintEvent(self, event: Any) -> None:
+        del event
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        pen = QPen(QColor(_palette_tokens()["secondary"]))
+        pen.setWidthF(1.8)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        painter.setPen(pen)
+        if self.header.isChecked():
+            painter.drawLine(4, 11, 9, 6)
+            painter.drawLine(9, 6, 14, 11)
+        else:
+            painter.drawLine(6, 4, 11, 9)
+            painter.drawLine(11, 9, 6, 14)
+
+
+class DisclosureHeader(QPushButton):
+    """Reusable full-row disclosure with a painted, rotating chevron."""
+
+    def __init__(
+        self,
+        title: str,
+        content: Optional[QWidget] = None,
+        description: str = "",
+        parent: Optional[QWidget] = None,
+    ) -> None:
+        super().__init__("", parent)
+        self.setObjectName("DisclosureButton")
+        self.setCheckable(True)
+        self.setAccessibleName(title)
+        self.setAccessibleDescription(description)
+        self._content: Optional[QWidget] = None
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 0, 6, 0)
+        layout.setSpacing(8)
+        self.label = QLabel(title, self)
+        self.label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        layout.addWidget(self.label, 1)
+        self.chevron = DisclosureChevron(self)
+        layout.addWidget(self.chevron)
+        self.toggled.connect(self._expanded_changed)
+        if content is not None:
+            self.set_content(content)
+
+    def set_content(self, content: QWidget) -> None:
+        self._content = content
+        content.setVisible(self.isChecked())
+
+    def _expanded_changed(self, expanded: bool) -> None:
+        if self._content is not None:
+            self._content.setVisible(expanded)
+        self.chevron.update()
+
+
+def _external_link_icon() -> QIcon:
+    pixmap = QPixmap(14, 14)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+    pen = QPen(QColor(_palette_tokens()["highlight"]), 1.6)
+    pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+    pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+    painter.setPen(pen)
+    painter.drawLine(3, 6, 3, 11)
+    painter.drawLine(3, 11, 9, 11)
+    painter.drawLine(7, 3, 11, 3)
+    painter.drawLine(11, 3, 11, 7)
+    painter.drawLine(6, 8, 11, 3)
+    painter.end()
+    return QIcon(pixmap)
+
+
+class ExternalLinkButton(QPushButton):
+    """Local vector-icon link; no remote icon or browser dependency is added."""
+
+    def __init__(self, label: str, url: str, parent: Optional[QWidget] = None) -> None:
+        super().__init__(label, parent)
+        self._url = url
+        self.setObjectName("LinkButton")
+        self.setIcon(_external_link_icon())
+        self.setAccessibleName(label)
+        self.clicked.connect(
+            lambda: QDesktopServices.openUrl(QUrl(self._url))
+        )
+
+
 def _page(title: str, help_text: str) -> tuple[QWidget, QVBoxLayout, QFormLayout]:
     page = QWidget()
     page.setObjectName("SettingsPage")
     page.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+    page.setMinimumWidth(0)
     layout = QVBoxLayout(page)
-    layout.setContentsMargins(2, 2, 8, 20)
-    layout.setSpacing(10)
+    layout.setContentsMargins(28, 24, 28, 36)
+    layout.setSpacing(16)
     layout.setAlignment(Qt.AlignmentFlag.AlignTop)
     header = QWidget()
-    header_layout = QHBoxLayout(header)
+    header.setObjectName("SettingsPageHeader")
+    header_outer = QVBoxLayout(header)
+    header_outer.setContentsMargins(28, 10, 28, 10)
+    header_outer.setSpacing(2)
+    header_layout = QHBoxLayout()
     header_layout.setContentsMargins(0, 0, 0, 0)
     header_layout.setSpacing(8)
     heading = QLabel(title)
@@ -436,12 +638,13 @@ def _page(title: str, help_text: str) -> tuple[QWidget, QVBoxLayout, QFormLayout
     header_actions.setContentsMargins(0, 0, 0, 0)
     header_actions.setSpacing(6)
     header_layout.addLayout(header_actions)
+    header_outer.addLayout(header_layout)
     page._hdo_header_actions = header_actions
     help_label = QLabel(help_text)
     help_label.setObjectName("PageHelp")
     help_label.setWordWrap(True)
-    layout.addWidget(header)
-    layout.addWidget(help_label)
+    header_outer.addWidget(help_label)
+    page._hdo_page_header = header
     form = QFormLayout()
     form.setVerticalSpacing(12)
     form.setHorizontalSpacing(18)
@@ -465,6 +668,9 @@ class WrappingFieldLabel(QWidget):
 
     def __init__(self, title: str, description: str) -> None:
         super().__init__()
+        self._resync_timer = QTimer(self)
+        self._resync_timer.setSingleShot(True)
+        self._resync_timer.timeout.connect(self._resync_minimum_height)
         self._name = QLabel(title)
         self._name.setWordWrap(True)
         self._name.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
@@ -513,7 +719,7 @@ class WrappingFieldLabel(QWidget):
         return QSize(width, self.heightForWidth(width))
 
     def minimumSizeHint(self) -> QSize:
-        width = 180
+        width = 0
         return QSize(width, self.heightForWidth(width))
 
     def _sync_minimum_height(self, width: int) -> None:
@@ -525,6 +731,9 @@ class WrappingFieldLabel(QWidget):
             self.setMinimumHeight(target)
             self.updateGeometry()
 
+    def _resync_minimum_height(self) -> None:
+        self._sync_minimum_height(self.width())
+
     def resizeEvent(self, event: Any) -> None:
         self._sync_minimum_height(event.size().width())
         super().resizeEvent(event)
@@ -534,7 +743,7 @@ class WrappingFieldLabel(QWidget):
             getattr(QEvent.Type, "FontChange", None),
             getattr(QEvent.Type, "StyleChange", None),
         }:
-            QTimer.singleShot(0, lambda: self._sync_minimum_height(self.width()))
+            self._resync_timer.start(0)
         super().changeEvent(event)
 
 
@@ -547,6 +756,7 @@ def _stacked_field(title: str, description: str, field: QWidget) -> QWidget:
 
     wrap = QWidget()
     wrap.setObjectName("SettingsRow")
+    wrap.setMinimumWidth(0)
     layout = QVBoxLayout(wrap)
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(6)
@@ -560,6 +770,7 @@ def _description_checkbox(title: str, description: str, checked: bool) -> tuple[
 
     wrap = QWidget()
     wrap.setObjectName("SettingsRow")
+    wrap.setMinimumWidth(0)
     layout = QVBoxLayout(wrap)
     layout.setContentsMargins(0, 0, 0, 4)
     layout.setSpacing(1)
@@ -582,17 +793,18 @@ def _paired_slider(
     suffix: str,
 ) -> tuple[QWidget, QSlider, QSpinBox]:
     wrap = QWidget()
+    wrap.setMinimumWidth(0)
     layout = QHBoxLayout(wrap)
     layout.setContentsMargins(0, 0, 0, 0)
     slider = QSlider(Qt.Orientation.Horizontal)
     slider.setRange(minimum, maximum)
     slider.setValue(value)
-    slider.setMaximumWidth(660)
     spin = QSpinBox()
     spin.setRange(minimum, maximum)
     spin.setSuffix(suffix)
     spin.setValue(value)
-    spin.setMinimumWidth(86)
+    spin.setMinimumWidth(72)
+    spin.setMaximumWidth(92)
     slider.valueChanged.connect(spin.setValue)
     spin.valueChanged.connect(slider.setValue)
     layout.addWidget(slider, 1)
@@ -612,7 +824,6 @@ class SelectChevron(QWidget):
         combo.installEventFilter(self)
         self._place()
         self.show()
-        self.raise_()
 
     def _place(self) -> None:
         size = 16
@@ -633,7 +844,6 @@ class SelectChevron(QWidget):
             getattr(QEvent.Type, "StyleChange", None),
         }:
             self._place()
-            self.raise_()
             self.update()
         return False
 
@@ -693,7 +903,7 @@ class SegmentedControl(QWidget):
         self.button_group = QButtonGroup(self)
         self.button_group.setExclusive(True)
         self._buttons: Dict[str, QPushButton] = {}
-        self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -705,7 +915,7 @@ class SegmentedControl(QWidget):
             button.setAccessibleName("{}: {}".format(accessible_name, label))
             self.button_group.addButton(button)
             self._buttons[value] = button
-            layout.addWidget(button)
+            layout.addWidget(button, 1)
         self.setValue(current)
 
     def set_option_width(self, width: int) -> None:
@@ -748,7 +958,7 @@ class SettingsSwitch(QPushButton):
         self.setObjectName("SettingsSwitch")
         self.setCheckable(True)
         self.setChecked(checked)
-        self.setFixedSize(34, 20)
+        self.setFixedSize(44, 36)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.toggled.connect(lambda _state: self.update())
 
@@ -767,16 +977,16 @@ class SettingsSwitch(QPushButton):
             knob = QColor(tokens["highlight_text"] if self.isChecked() else tokens["text"])
         painter.setPen(QPen(border, 1.2))
         painter.setBrush(QBrush(track))
-        painter.drawRoundedRect(1, 2, 32, 16, 8, 8)
+        painter.drawRoundedRect(5, 9, 34, 18, 9, 9)
         painter.setPen(QPen(Qt.PenStyle.NoPen))
         painter.setBrush(QBrush(knob))
-        knob_x = 18 if self.isChecked() else 3
-        painter.drawEllipse(knob_x, 3, 14, 14)
+        knob_x = 22 if self.isChecked() else 7
+        painter.drawEllipse(knob_x, 11, 14, 14)
         if self.hasFocus():
             focus_pen = QPen(QColor(tokens["focus"]), FOCUS_RING_PX)
             painter.setPen(focus_pen)
             painter.setBrush(QBrush(Qt.BrushStyle.NoBrush))
-            painter.drawRoundedRect(1, 1, 32, 18, 7, 7)
+            painter.drawRoundedRect(2, 2, 40, 32, 7, 7)
 
 
 class SettingsCard(QWidget):
@@ -784,7 +994,7 @@ class SettingsCard(QWidget):
 
     def __init__(
         self,
-        title: str,
+        title: str = "",
         description: str = "",
         reset_text: str = "",
         parent: Optional[QWidget] = None,
@@ -793,23 +1003,27 @@ class SettingsCard(QWidget):
         self.setObjectName("SettingsCard")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+        self.setMinimumWidth(0)
         self.outer = QVBoxLayout(self)
-        self.outer.setContentsMargins(16, 14, 16, 16)
-        self.outer.setSpacing(10)
-        header = QHBoxLayout()
+        self.outer.setContentsMargins(18, 16, 18, 18)
+        self.outer.setSpacing(12)
         self.heading = QLabel(title)
         self.heading.setObjectName("CardTitle")
         self.heading.setAccessibleName(title)
         self.heading.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
-        header.addWidget(self.heading)
-        header.addStretch()
         self.reset_button: Optional[QPushButton] = None
-        if reset_text:
-            self.reset_button = QPushButton(reset_text)
-            self.reset_button.setObjectName("LinkButton")
-            self.reset_button.setAccessibleName(reset_text)
-            header.addWidget(self.reset_button)
-        self.outer.addLayout(header)
+        if title or reset_text:
+            header = QHBoxLayout()
+            if title:
+                header.addWidget(self.heading)
+            header.addStretch()
+            if reset_text:
+                self.reset_button = QPushButton(reset_text)
+                self.reset_button.setObjectName("LinkButton")
+                self.reset_button.setAccessibleName(reset_text)
+                self.reset_button.hide()
+                header.addWidget(self.reset_button)
+            self.outer.addLayout(header)
         if description:
             help_label = QLabel(description)
             help_label.setObjectName("PageHelp")
@@ -840,6 +1054,7 @@ def _switch_row(
 ) -> tuple[QWidget, SettingsSwitch]:
     row = QWidget()
     row.setObjectName("SettingsRow")
+    row.setMinimumWidth(0)
     layout = QHBoxLayout(row)
     layout.setContentsMargins(0, 2, 0, 2)
     layout.setSpacing(12)
@@ -857,7 +1072,7 @@ def _switch_row(
     switch.setToolTip("On" if checked else "Off")
     switch.toggled.connect(lambda state: switch.setToolTip("On" if state else "Off"))
     layout.addLayout(copy, 1)
-    layout.addWidget(switch, 0, Qt.AlignmentFlag.AlignVCenter)
+    layout.addWidget(switch, 0, Qt.AlignmentFlag.AlignTop)
     return row, switch
 
 
@@ -880,7 +1095,7 @@ def _form_control(widget: QWidget) -> QWidget:
         _install_select_chevron(widget)
     if isinstance(widget, SettingsSwitch):
         return widget
-    target = max(34, INTERACTION_TARGET_MIN_PX, widget.fontMetrics().lineSpacing() + 10)
+    target = max(INTERACTION_TARGET_MIN_PX, widget.fontMetrics().lineSpacing() + 10)
     widget.setMinimumHeight(target)
     return widget
 
@@ -987,7 +1202,7 @@ def _apply_view_row_targets(view: QAbstractItemView) -> None:
                 item.setData(0, SETTINGS_ROW_TARGET_ROLE, target)
                 row_widget = view.itemWidget(item, 0)
                 item_target = (
-                    max(56, (2 * view.fontMetrics().lineSpacing()) + 20)
+                    54
                     if row_widget is not None and row_widget.objectName() == "EventRow"
                     else target
                 )
@@ -1027,7 +1242,7 @@ def _set_accessibility(widget: QWidget, name: str, description: str = "") -> Non
 
 
 class SettingsSidebar(QListWidget):
-    """Shared section rail whose width follows its live label metrics."""
+    """Stable desktop rail; compact navigation takes over before wrapping."""
 
     _ITEM_HORIZONTAL_INSET = 24
     _ITEM_VERTICAL_INSET = 12
@@ -1039,34 +1254,21 @@ class SettingsSidebar(QListWidget):
         self.setAccessibleName("Settings sections")
         self.setAccessibleDescription("Choose a Home Screen Dashboard settings section")
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setWordWrap(True)
+        self.setWordWrap(False)
         self.setTextElideMode(Qt.TextElideMode.ElideNone)
         self.setUniformItemSizes(False)
-        self.setFixedWidth(152)
+        self.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
 
     def refresh_item_sizes(self) -> None:
-        """Give wrapped navigation labels enough height at large app fonts."""
-
+        """Keep one consistent row height without wrapping or elision."""
         metrics = self.fontMetrics()
-        available_width = max(1, self.width() - self._ITEM_HORIZONTAL_INSET)
-        space_width = metrics.horizontalAdvance(" ")
         for row in range(self.count()):
             item = self.item(row)
             if item is None:
                 continue
-            lines = 1
-            line_width = 0
-            for word in item.text().split():
-                word_width = metrics.horizontalAdvance(word)
-                candidate = word_width if not line_width else line_width + space_width + word_width
-                if line_width and candidate > available_width:
-                    lines += 1
-                    line_width = word_width
-                else:
-                    line_width = candidate
             item.setSizeHint(
-                QSize(0, max(34, lines * metrics.lineSpacing() + self._ITEM_VERTICAL_INSET))
+                QSize(0, max(36, metrics.lineSpacing() + self._ITEM_VERTICAL_INSET))
             )
 
     def changeEvent(self, event: QEvent) -> None:
@@ -1075,36 +1277,143 @@ class SettingsSidebar(QListWidget):
             self.refresh_item_sizes()
 
     def measured_width(self) -> int:
-        font_metrics = self.fontMetrics()
-        content = max(
-            self.sizeHintForColumn(0),
-            font_metrics.horizontalAdvance("About & support"),
-            font_metrics.horizontalAdvance("Bible verse"),
+        return SETTINGS_SIDEBAR_WIDTH
+
+    def labels_fit(self) -> bool:
+        available = max(1, self.width() - self._ITEM_HORIZONTAL_INSET)
+        metrics = self.fontMetrics()
+        return all(
+            metrics.horizontalAdvance(self.item(row).text()) <= available
+            for row in range(self.count())
+            if self.item(row) is not None
         )
-        return 152
+
+
+class NeutralSettingsTabBar(QTabBar):
+    """Paint the unused tab-strip remainder with the Settings surface token."""
+
+    def paintEvent(self, event: Any) -> None:
+        super().paintEvent(event)
+        last_right = self.tabRect(self.count() - 1).right() + 1 if self.count() else 0
+        if last_right >= self.width():
+            return
+        tokens = getattr(self.window(), "_hdo_theme_tokens", _palette_tokens())
+        painter = QPainter(self)
+        painter.fillRect(
+            QRect(last_right, 0, self.width() - last_right, self.height()),
+            QColor(tokens["alternate"]),
+        )
+        painter.setPen(QColor(tokens["border"]))
+        painter.drawLine(last_right, self.height() - 1, self.width(), self.height() - 1)
+
+
+class SettingsTabPanel(QWidget):
+    """Neutral tab strip plus stacked pages without native tab-pane tinting."""
+
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        super().__init__(parent)
+        self.setObjectName("EventTabs")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self._tab_bar = NeutralSettingsTabBar(self)
+        self._tab_bar.setObjectName("EventTabsBar")
+        self._tab_bar.setDocumentMode(True)
+        self._tab_bar.setExpanding(False)
+        self._tab_bar.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
+        self._pages = QStackedWidget(self)
+        self._pages.setObjectName("EventTabPages")
+        self._pages.setMinimumWidth(0)
+        layout.addWidget(self._tab_bar)
+        layout.addWidget(self._pages, 1)
+        self._tab_bar.currentChanged.connect(self._pages.setCurrentIndex)
+
+    def addTab(self, widget: QWidget, label: str) -> int:
+        page_index = self._pages.addWidget(widget)
+        tab_index = self._tab_bar.addTab(label)
+        if self._tab_bar.count() == 1:
+            self._tab_bar.setCurrentIndex(0)
+            self._pages.setCurrentIndex(0)
+        return min(page_index, tab_index)
+
+    def tabBar(self) -> QTabBar:
+        return self._tab_bar
+
+    def currentIndex(self) -> int:
+        return self._tab_bar.currentIndex()
+
+    def setCurrentIndex(self, index: int) -> None:
+        self._tab_bar.setCurrentIndex(index)
+
+    def setTabText(self, index: int, text: str) -> None:
+        self._tab_bar.setTabText(index, text)
 
 
 class SettingsFooter(QWidget):
-    """Normal-grid action footer; it never overlays the scrolling content."""
+    """Sticky action-local feedback footer; it never overlays page content."""
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setProperty("hdoPrimitive", _settings_primitive("settings-footer"))
         self.setObjectName("ActionBar")
-        self.grid = QGridLayout(self)
-        self.grid.setContentsMargins(9, 7, 9, 7)
+        self.outer = QVBoxLayout(self)
+        self.outer.setContentsMargins(16, 8, 16, 8)
+        self.outer.setSpacing(8)
+        self.error_panel = QWidget(self)
+        self.error_panel.setObjectName("SaveErrorPanel")
+        error_layout = QGridLayout(self.error_panel)
+        error_layout.setContentsMargins(0, 0, 0, 0)
+        error_layout.setHorizontalSpacing(8)
+        error_layout.setVerticalSpacing(4)
+        self.error_label = QLabel("")
+        self.error_label.setObjectName("InlineSaveError")
+        self.error_label.setWordWrap(False)
+        self.error_label.setProperty("hdoLiveRegion", "assertive")
+        self.details_button = QPushButton("View details")
+        self.details_button.setObjectName("LinkButton")
+        self.details_text = QLabel("")
+        self.details_text.setObjectName("FieldHelp")
+        self.details_text.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        self.details_text.setWordWrap(True)
+        self.details_text.hide()
+        self._details_callback: Optional[Callable[[], None]] = None
+        self.details_button.clicked.connect(self._show_details)
+        error_layout.addWidget(self.error_label, 0, 0)
+        error_layout.addWidget(self.details_button, 0, 1, Qt.AlignmentFlag.AlignLeft)
+        error_layout.setColumnStretch(0, 1)
+        self.error_panel.hide()
+
+        self.grid = QGridLayout()
+        self.grid.setContentsMargins(0, 0, 0, 0)
         self.grid.setHorizontalSpacing(8)
-        self.grid.setVerticalSpacing(4)
+        self.grid.setVerticalSpacing(6)
+        self.status_label = QLabel("")
+        self.status_label.setObjectName("FooterStatus")
+        self.status_label.setAccessibleName("Settings save status")
+        self.status_label.setProperty("hdoLiveRegion", "polite")
+        self.status_label.hide()
         self.left_actions = QHBoxLayout()
         self.left_actions.setContentsMargins(0, 0, 0, 0)
         self.left_actions.setSpacing(8)
-        self.grid.addLayout(self.left_actions, 0, 0)
+        self.left_container = QWidget(self)
+        self.left_container.setLayout(self.left_actions)
         self.buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
         )
-        self.grid.addWidget(self.buttons, 0, 1, Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.error_panel, 0, 0)
+        self.grid.addWidget(self.status_label, 0, 0)
+        self.grid.addWidget(self.left_container, 0, 1)
+        self.grid.addWidget(self.buttons, 0, 2, Qt.AlignmentFlag.AlignRight)
         self.grid.setColumnStretch(0, 1)
+        self.outer.addLayout(self.grid)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setFixedHeight(SETTINGS_FOOTER_MIN_HEIGHT)
+        self._compact = False
 
     def inline_width_hint(self) -> int:
         margins = self.grid.contentsMargins()
@@ -1112,6 +1421,40 @@ class SettingsFooter(QWidget):
 
     def add_left_widget(self, widget: QWidget, stretch: int = 0) -> None:
         self.left_actions.addWidget(widget, stretch)
+
+    def set_compact(self, compact: bool) -> None:
+        # The action bar remains a single fixed row in both navigation modes.
+        self._compact = bool(compact)
+
+    def set_details_callback(self, callback: Callable[[], None]) -> None:
+        self._details_callback = callback
+
+    def _show_details(self) -> None:
+        if self._details_callback is not None:
+            self._details_callback()
+
+    def set_error(self, message: str = "", details: str = "") -> None:
+        self.error_label.setText(message)
+        self.details_text.setText(details)
+        self.details_button.setVisible(bool(details))
+        self.error_panel.setVisible(bool(message))
+        self.status_label.setVisible(bool(self.status_label.text()) and not bool(message))
+
+
+class SettingsFooterShell(QWidget):
+    """Report final footer-shell geometry without installing dialog filters."""
+
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        super().__init__(parent)
+        self._geometry_callback: Optional[Callable[[], None]] = None
+
+    def set_geometry_callback(self, callback: Callable[[], None]) -> None:
+        self._geometry_callback = callback
+
+    def resizeEvent(self, event: Any) -> None:
+        super().resizeEvent(event)
+        if self._geometry_callback is not None:
+            self._geometry_callback()
 
 
 class SettingsListRow(QListWidgetItem):
@@ -1180,6 +1523,31 @@ class SettingsTableRow(QTreeWidgetItem):
                 self.setToolTip(column, tooltip)
 
 
+class ElidingLabel(QLabel):
+    """Intentional single-line elision used only for approved row titles."""
+
+    def __init__(self, text: str, parent: Optional[QWidget] = None) -> None:
+        super().__init__("", parent)
+        self._full_text = str(text)
+        self.setTextFormat(Qt.TextFormat.PlainText)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        self._update_text()
+
+    def _update_text(self) -> None:
+        available = max(1, self.width())
+        visible = self.fontMetrics().elidedText(
+            self._full_text,
+            Qt.TextElideMode.ElideRight,
+            available,
+        )
+        super().setText(visible)
+        self.setToolTip(self._full_text if visible != self._full_text else "")
+
+    def resizeEvent(self, event: Any) -> None:
+        self._update_text()
+        super().resizeEvent(event)
+
+
 class EventRowWidget(QWidget):
     """Shared legible two-line event row with one compact overflow action."""
 
@@ -1189,19 +1557,21 @@ class EventRowWidget(QWidget):
         item: QTreeWidgetItem,
         title: str,
         metadata: str,
+        activate: Optional[Callable[[], None]] = None,
     ) -> None:
         super().__init__(tree)
         self.tree = tree
         self.item = item
+        self._activate = activate
         self.setObjectName("EventRow")
-        self.setProperty("selected", False)
+        self.setProperty("pressed", False)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 6, 6, 6)
         layout.setSpacing(8)
         copy = QVBoxLayout()
         copy.setContentsMargins(0, 0, 0, 0)
         copy.setSpacing(1)
-        self.title = QLabel(title)
+        self.title = ElidingLabel(title)
         self.title.setObjectName("EventRowTitle")
         self.metadata = QLabel(metadata)
         self.metadata.setObjectName("EventRowMeta")
@@ -1211,81 +1581,235 @@ class EventRowWidget(QWidget):
         copy.addWidget(self.title)
         copy.addWidget(self.metadata)
         layout.addLayout(copy, 1)
-        self.overflow = QPushButton("•••")
+        self.overflow = QPushButton("…")
         self.overflow.setObjectName("EventOverflowButton")
         self.overflow.setFixedSize(32, 32)
         layout.addWidget(self.overflow, 0, Qt.AlignmentFlag.AlignVCenter)
 
-    def set_selected(self, selected: bool) -> None:
-        self.setProperty("selected", bool(selected))
-        self.style().unpolish(self)
-        self.style().polish(self)
-
     def mousePressEvent(self, event: Any) -> None:
         self.tree.setCurrentItem(self.item)
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._set_pressed(True)
         super().mousePressEvent(event)
 
+    def mouseReleaseEvent(self, event: Any) -> None:
+        self._set_pressed(False)
+        if event.button() == Qt.MouseButton.LeftButton and self._activate is not None:
+            self._activate()
+        super().mouseReleaseEvent(event)
 
-class VerseRowWidget(QWidget):
-    """Reference-first verse row with current/selection state and one menu."""
+    def leaveEvent(self, event: Any) -> None:
+        self._set_pressed(False)
+        super().leaveEvent(event)
 
-    def __init__(
-        self,
-        owner: QListWidget,
-        item: QListWidgetItem,
-        reference: str,
-        excerpt: str,
-        current: bool,
-    ) -> None:
-        super().__init__(owner)
-        self.owner = owner
-        self.item = item
-        self.setObjectName("VerseRow")
-        self.setProperty("selected", False)
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 6, 6, 6)
-        layout.setSpacing(8)
-        copy = QVBoxLayout()
-        copy.setContentsMargins(0, 0, 0, 0)
-        copy.setSpacing(1)
-        heading = QHBoxLayout()
-        heading.setContentsMargins(0, 0, 0, 0)
-        heading.setSpacing(6)
-        self.reference = QLabel(reference or "Verse")
-        self.reference.setObjectName("VerseRowReference")
-        self.reference.setTextFormat(Qt.TextFormat.PlainText)
-        heading.addWidget(self.reference)
-        self.current_badge = QLabel("Current")
-        self.current_badge.setObjectName("DataBadge")
-        self.current_badge.setVisible(current)
-        heading.addWidget(self.current_badge)
-        self.selected_badge = QLabel("Selected")
-        self.selected_badge.setObjectName("DataBadge")
-        self.selected_badge.hide()
-        heading.addWidget(self.selected_badge)
-        heading.addStretch()
-        self.excerpt = QLabel(excerpt)
-        self.excerpt.setObjectName("VerseRowExcerpt")
-        self.excerpt.setTextFormat(Qt.TextFormat.PlainText)
-        self.excerpt.setWordWrap(False)
-        for label in (self.reference, self.current_badge, self.selected_badge, self.excerpt):
-            label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-        copy.addLayout(heading)
-        copy.addWidget(self.excerpt)
-        layout.addLayout(copy, 1)
-        self.overflow = QPushButton("•••")
-        self.overflow.setObjectName("VerseOverflowButton")
-        self.overflow.setFixedSize(32, 32)
-        layout.addWidget(self.overflow, 0, Qt.AlignmentFlag.AlignVCenter)
-
-    def set_selected(self, selected: bool) -> None:
-        self.setProperty("selected", bool(selected))
-        self.selected_badge.setVisible(bool(selected) and not self.current_badge.isVisible())
+    def _set_pressed(self, pressed: bool) -> None:
+        if bool(self.property("pressed")) == bool(pressed):
+            return
+        self.setProperty("pressed", bool(pressed))
         self.style().unpolish(self)
         self.style().polish(self)
+        self.update()
+
+
+class VerseLibraryModel(QAbstractListModel):
+    """Complete filtered verse model; rendering never truncates the library."""
+
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        super().__init__(parent)
+        self._quotes: List[str] = []
+        self._rows: List[tuple[int, str, str]] = []
+        self._filter = ""
+        self._current = ""
+        self._pending = ""
+
+    def set_source(
+        self,
+        quotes: List[str],
+        filter_text: str = "",
+        current: str = "",
+        pending: str = "",
+    ) -> None:
+        self.beginResetModel()
+        self._quotes = list(quotes)
+        self._filter = str(filter_text or "").strip().casefold()
+        self._current = current
+        self._pending = pending
+        self._rows = []
+        for source_index, quote in enumerate(self._quotes):
+            body_value, reference_value = split_quote_reference(quote)
+            body = html_module.unescape(re.sub(r"<[^>]+>", "", body_value)).strip()
+            reference = html_module.unescape(
+                re.sub(r"<[^>]+>", "", reference_value)
+            ).strip() or "Verse"
+            excerpt = re.sub(r"\s+", " ", body).strip()
+            searchable = "{} {}".format(reference, excerpt).casefold()
+            if self._filter and self._filter not in searchable:
+                continue
+            self._rows.append((source_index, reference, excerpt))
+        self.endResetModel()
+
+    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
+        return 0 if parent.isValid() else len(self._rows)
+
+    def data(self, index: QModelIndex, role: int = int(Qt.ItemDataRole.DisplayRole)) -> Any:
+        if not index.isValid() or not 0 <= index.row() < len(self._rows):
+            return None
+        source_index, reference, excerpt = self._rows[index.row()]
+        quote = self._quotes[source_index]
+        if role == Qt.ItemDataRole.DisplayRole:
+            return "{} — {}".format(reference, excerpt)
+        if role == Qt.ItemDataRole.ToolTipRole:
+            return "{}\n{}".format(reference, excerpt)
+        if role == VERSE_SOURCE_INDEX_ROLE:
+            return source_index
+        if role == VERSE_REFERENCE_ROLE:
+            return reference
+        if role == VERSE_EXCERPT_ROLE:
+            return excerpt
+        if role == VERSE_CURRENT_ROLE:
+            return quote == self._current
+        if role == VERSE_PENDING_ROLE:
+            return bool(self._pending) and quote == self._pending
+        return None
+
+    def source_index(self, index: QModelIndex) -> Optional[int]:
+        value = self.data(index, VERSE_SOURCE_INDEX_ROLE)
+        return int(value) if isinstance(value, int) else None
+
+    def model_index_for_source(self, source_index: object) -> QModelIndex:
+        try:
+            target = int(source_index)
+        except (TypeError, ValueError):
+            return QModelIndex()
+        for row, (candidate, _reference, _excerpt) in enumerate(self._rows):
+            if candidate == target:
+                return self.index(row, 0)
+        return QModelIndex()
+
+    @property
+    def matching_count(self) -> int:
+        return len(self._rows)
+
+
+def _two_line_excerpt(text: str, metrics: QFontMetrics, width: int) -> str:
+    """Wrap plain text to two lines and elide only the second line."""
+
+    words = str(text or "").split()
+    if not words:
+        return ""
+    lines: List[str] = []
+    remaining = words
+    for _line in range(2):
+        current: List[str] = []
+        while remaining:
+            candidate = " ".join(current + [remaining[0]])
+            if current and metrics.horizontalAdvance(candidate) > width:
+                break
+            current.append(remaining.pop(0))
+        lines.append(" ".join(current))
+        if not remaining:
+            break
+    if remaining and lines:
+        lines[-1] = metrics.elidedText(
+            "{} {}".format(lines[-1], " ".join(remaining)).strip(),
+            Qt.TextElideMode.ElideRight,
+            max(1, width),
+        )
+    return "\n".join(lines)
+
+
+class VerseLibraryDelegate(QStyledItemDelegate):
+    """Two-line, token-painted rows for the complete verse list model."""
+
+    def sizeHint(self, option: Any, index: QModelIndex) -> QSize:
+        del index
+        metrics = QFontMetrics(option.font)
+        return QSize(max(1, option.rect.width()), max(68, metrics.lineSpacing() * 3 + 20))
+
+    def paint(self, painter: QPainter, option: Any, index: QModelIndex) -> None:
+        painter.save()
+        tokens = _palette_tokens()
+        rect = option.rect
+        selected = bool(option.state & QStyle.StateFlag.State_Selected)
+        semantic = bool(index.data(VERSE_CURRENT_ROLE) or index.data(VERSE_PENDING_ROLE))
+        painter.fillRect(rect, QColor(tokens["accent_soft"] if selected or semantic else tokens["base"]))
+        if selected or semantic:
+            painter.fillRect(QRect(rect.left(), rect.top(), 3, rect.height()), QColor(tokens["highlight"]))
+        painter.setPen(QPen(QColor(tokens["border"]), 1))
+        painter.drawLine(rect.bottomLeft(), rect.bottomRight())
+
+        content = rect.adjusted(12, 8, -48, -8)
+        reference = str(index.data(VERSE_REFERENCE_ROLE) or "Verse")
+        excerpt = str(index.data(VERSE_EXCERPT_ROLE) or "")
+        reference_font = QFont(option.font)
+        reference_font.setWeight(QFont.Weight.DemiBold)
+        painter.setFont(reference_font)
+        reference_metrics = QFontMetrics(reference_font)
+        first_line = reference_metrics.elidedText(
+            reference,
+            Qt.TextElideMode.ElideRight,
+            max(1, content.width() - (22 if semantic else 0)),
+        )
+        painter.setPen(QColor(tokens["text"]))
+        painter.drawText(
+            QRect(content.left(), content.top(), content.width(), reference_metrics.lineSpacing()),
+            int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter),
+            ("✓ " if semantic else "") + first_line,
+        )
+
+        excerpt_font = QFont(option.font)
+        painter.setFont(excerpt_font)
+        excerpt_metrics = QFontMetrics(excerpt_font)
+        excerpt_top = content.top() + reference_metrics.lineSpacing() + 3
+        excerpt_rect = QRect(
+            content.left(),
+            excerpt_top,
+            content.width(),
+            excerpt_metrics.lineSpacing() * 2,
+        )
+        painter.setPen(QColor(tokens["secondary"]))
+        painter.drawText(
+            excerpt_rect,
+            int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop),
+            _two_line_excerpt(excerpt, excerpt_metrics, excerpt_rect.width()),
+        )
+        menu_rect = QRect(rect.right() - 39, rect.center().y() - 16, 32, 32)
+        painter.setPen(QColor(tokens["secondary"]))
+        painter.drawText(menu_rect, int(Qt.AlignmentFlag.AlignCenter), "…")
+        painter.restore()
+
+
+class VerseLibraryView(QListView):
+    """Virtualized list with a real 32 px trailing action target per row."""
+
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        super().__init__(parent)
+        self.setObjectName("VerseLibraryView")
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.setItemDelegate(VerseLibraryDelegate(self))
+        self.setMinimumHeight(260)
+        self.setMaximumHeight(16777215)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self._menu_callback: Optional[Callable[[QModelIndex, QPoint], None]] = None
+
+    def set_menu_callback(
+        self,
+        callback: Callable[[QModelIndex, QPoint], None],
+    ) -> None:
+        self._menu_callback = callback
 
     def mousePressEvent(self, event: Any) -> None:
-        self.owner.setCurrentItem(self.item)
+        point = event.position().toPoint() if hasattr(event, "position") else event.pos()
+        index = self.indexAt(point)
+        if index.isValid() and point.x() >= self.viewport().width() - 44:
+            self.setCurrentIndex(index)
+            if self._menu_callback is not None:
+                self._menu_callback(index, self.viewport().mapToGlobal(point))
+            event.accept()
+            return
         super().mousePressEvent(event)
 
 
@@ -1299,6 +1823,7 @@ class ContextualActionGroup(QWidget):
     ) -> None:
         super().__init__(parent)
         self.setObjectName("ContextualActionGroup")
+        self.setMinimumWidth(0)
         self.setProperty(
             "hdoPrimitive",
             _settings_primitive("contextual-action-group"),
@@ -1319,6 +1844,7 @@ class WrappingActionGroup(QWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setObjectName("ContextualActionGroup")
+        self.setMinimumWidth(0)
         self.setProperty(
             "hdoPrimitive",
             _settings_primitive("contextual-action-group"),
@@ -1357,6 +1883,7 @@ class SettingsEditorDialog(QDialog):
         title = QLabel(heading)
         title.setObjectName("PageTitle")
         self.body_layout.addWidget(title)
+        _apply_role_fonts(self)
 
     def _fit_editor(
         self,
@@ -1425,9 +1952,13 @@ def _anki_version_label(point_version: object) -> str:
 def _manifest_compatibility(manifest: Mapping[str, Any]) -> str:
     minimum = _anki_version_label(manifest.get("min_point_version"))
     maximum = _anki_version_label(manifest.get("max_point_version"))
-    if maximum not in {"Unknown", minimum}:
-        return "{}–{}".format(minimum, maximum)
-    return minimum
+    if minimum == "Unknown":
+        return "Anki Desktop compatibility unknown"
+    if maximum == minimum:
+        return "Supports Anki Desktop {}".format(minimum)
+    if maximum != "Unknown":
+        return "Supports Anki Desktop {}–{}".format(minimum, maximum)
+    return "Requires Anki {} or later".format(minimum)
 
 
 def _editor_tokens(parent: QWidget) -> Dict[str, str]:
@@ -1599,6 +2130,12 @@ class EventEditDialog(SettingsEditorDialog):
         self.body_layout.addWidget(buttons)
         self._update_name_count(self.name.text())
         self._fit_editor(78, 50, 16, 12)
+        screen = self.screen()
+        available = screen.availableGeometry() if screen is not None else QRect(0, 0, 560, 320)
+        width = max(320, min(560, available.width() - 96))
+        height = max(240, min(320, available.height() - 96))
+        self.setMinimumSize(min(560, width), min(320, height))
+        self.resize(width, height)
 
     def _update_name_count(self, value: str) -> None:
         self.name_count.setText("{} of 160 characters.".format(len(value)))
@@ -1613,18 +2150,98 @@ class EventEditDialog(SettingsEditorDialog):
         return self.name.text().strip(), self.date.date().toString("yyyy-MM-dd")
 
 
+class SettingsPromptPage(QWidget):
+    """Layout-managed confirmation page that never creates or stacks a window."""
+
+    def __init__(
+        self,
+        parent: QWidget,
+        owner: "SettingsDialog",
+        title: str,
+        message: str,
+        actions: List[tuple[str, str, Callable[[], None]]],
+        dismiss: Callable[[], None],
+    ) -> None:
+        super().__init__(parent)
+        self.owner = owner
+        self.setObjectName("SettingsPromptPage")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self._dismiss_callback = dismiss
+        tokens = _palette_tokens()
+        self.setStyleSheet(
+            """
+QWidget#SettingsPromptPage {{ background: {overlay}; }}
+QFrame#SettingsPromptCard {{ background: {window}; border: 1px solid {border}; border-radius: 10px; }}
+QLabel#SettingsPromptTitle {{ color: {text}; font-weight: 750; }}
+QLabel#SettingsPromptMessage {{ color: {secondary}; }}
+QPushButton {{ background: {button}; border: 1px solid {border}; border-radius: 7px; color: {button_text}; min-height: 36px; padding: 0 12px; font-weight: 600; }}
+QPushButton#PrimaryButton {{ background: {highlight}; border-color: {highlight}; color: {highlight_text}; font-weight: 750; }}
+QPushButton#DangerButton {{ background: {danger_bg}; border-color: {danger}; color: {danger}; font-weight: 650; }}
+""".format(**tokens)
+        )
+        layout = QGridLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        card = QFrame(self)
+        card.setObjectName("SettingsPromptCard")
+        card.setMinimumSize(420, 190)
+        card.setMaximumWidth(460)
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(20, 18, 20, 18)
+        card_layout.setSpacing(12)
+        heading = QLabel(title)
+        heading.setObjectName("SettingsPromptTitle")
+        heading.setWordWrap(True)
+        copy = QLabel(message)
+        copy.setObjectName("SettingsPromptMessage")
+        copy.setTextFormat(Qt.TextFormat.PlainText)
+        copy.setWordWrap(True)
+        card_layout.addWidget(heading)
+        card_layout.addWidget(copy)
+        buttons = QHBoxLayout()
+        buttons.setContentsMargins(0, 4, 0, 0)
+        buttons.setSpacing(8)
+        buttons.addStretch(1)
+        for label, role, callback in actions:
+            button = QPushButton(label)
+            if role == "primary":
+                button.setObjectName("PrimaryButton")
+            elif role == "danger":
+                button.setObjectName("DangerButton")
+            button.clicked.connect(
+                lambda _checked=False, selected=callback: self._choose(selected)
+            )
+            buttons.addWidget(button)
+        card_layout.addLayout(buttons)
+        layout.addWidget(card, 0, 0, Qt.AlignmentFlag.AlignCenter)
+        self.escape_action = QAction("Dismiss confirmation", self)
+        self.escape_action.setShortcut(QKeySequence("Esc"))
+        self.escape_action.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.escape_action.triggered.connect(self.dismiss)
+        self.addAction(self.escape_action)
+
+    def dismiss(self) -> None:
+        self._finish(self._dismiss_callback)
+
+    def dismiss_without_callback(self) -> None:
+        self._finish(None)
+
+    def _choose(self, callback: Callable[[], None]) -> None:
+        self._finish(callback)
+
+    def _finish(self, callback: Optional[Callable[[], None]]) -> None:
+        self.owner._finish_prompt(self, callback)
+
+
 class SettingsDialog(QDialog):
     def __init__(
         self,
+        parent: QWidget,
         controller: Any,
         initial_page: str = "",
         selected_event_date: str = "",
         selected_event_id: str = "",
     ) -> None:
-        # Match Anki's conventional add-on Settings lifecycle: an ordinary
-        # parented QDialog with default window flags, opened synchronously by
-        # the controller. Qt owns placement and native-window behavior.
-        super().__init__(mw)
+        super().__init__(parent)
         self.controller = controller
         self.draft = SettingsDraft(controller.config)
         self.staged = deepcopy(self.draft.values)
@@ -1653,120 +2270,119 @@ class SettingsDialog(QDialog):
         self.selected_event_id = selected_event_id
         self.current_section = "dashboard"
         self._requested_dashboard_anchor = ""
-        self._initial_scroll_settled = False
         self._building = True
         self._allow_close = False
         self._saving = False
+        self._active_prompt: Optional[SettingsPromptPage] = None
         self._last_save_error = ""
+        self._last_save_error_detail = ""
         self._reset_undo_values: Optional[Dict[str, Any]] = None
         self._undo_event_status_id = ""
         self._settings_scroll_base_margins: Dict[
             QScrollArea, tuple[int, int, int, int]
         ] = {}
+        self._compact_layout = False
+        self._screen_compact_fallback = False
+        self._syncing_navigation = False
+        self._geometry_settings = QSettings()
         self.setObjectName("HomeDashboardSettings")
-        self.setWindowTitle("Home Screen Dashboard settings")
-        parent = self.parentWidget()
-        screen = parent.screen() if parent is not None else None
-        screen = screen or self.screen() or QApplication.primaryScreen()
-        if screen is not None:
-            available = screen.availableGeometry()
-            width, height = clamp_window_size(
-                None,
-                (available.width(), available.height()),
-            )
-            self.setMinimumSize(min(1040, width), min(700, height))
-            self.resize(width, height)
-        else:
-            self.setMinimumSize(1040, 700)
-            self.resize(1200, 800)
+        self.setWindowTitle("Home Screen Dashboard Settings")
+        self._apply_initial_window_geometry(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self._hdo_theme_tokens = _theme_tokens(self.staged, self.controller.is_dark())
         self.setStyleSheet(_settings_style(self.staged, self.controller.is_dark()))
         dialog_layout = QHBoxLayout(self)
         dialog_layout.setContentsMargins(0, 0, 0, 0)
         self._dialog_layout = dialog_layout
+        self._content_stack = QStackedWidget(self)
+        self._content_stack.setObjectName("SettingsContentStack")
+        self._content_stack.setMinimumWidth(0)
+        dialog_layout.addWidget(self._content_stack, 1)
         self.settings_shell = QWidget()
-        self.settings_shell.setMaximumWidth(1240)
+        self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)
+        self.settings_shell.setMinimumWidth(0)
         self.settings_shell.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Expanding,
         )
-        dialog_layout.addWidget(self.settings_shell, 1)
+        self._content_stack.addWidget(self.settings_shell)
+        self._content_stack.setCurrentWidget(self.settings_shell)
         self._update_settings_shell_margins()
         outer = QGridLayout(self.settings_shell)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setHorizontalSpacing(0)
-        outer.setVerticalSpacing(8)
+        outer.setVerticalSpacing(0)
         outer.setRowStretch(0, 0)
         outer.setRowStretch(1, 1)
         outer.setRowStretch(2, 0)
+        outer.setColumnStretch(0, 0)
+        outer.setColumnStretch(1, 1)
+
+        self.sidebar_panel = QWidget(self.settings_shell)
+        self.sidebar_panel.setObjectName("SettingsSidebarPanel")
+        self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)
+        sidebar_layout = QVBoxLayout(self.sidebar_panel)
+        sidebar_layout.setContentsMargins(16, 18, 16, 16)
+        sidebar_layout.setSpacing(8)
+        self.sidebar_title = QLabel("Home Screen Dashboard")
+        self.sidebar_title.setObjectName("GlobalTitle")
+        self.sidebar_title.setWordWrap(True)
+        self.sidebar_version = QLabel(
+            "Version {}".format(_manifest_metadata().get("human_version", "1.8.7"))
+        )
+        self.sidebar_version.setObjectName("SidebarVersion")
+        sidebar_layout.addWidget(self.sidebar_title)
+        sidebar_layout.addWidget(self.sidebar_version)
+        sidebar_layout.addSpacing(12)
+        self.nav = SettingsSidebar(self.sidebar_panel)
+        sidebar_layout.addWidget(self.nav, 1)
+        outer.addWidget(self.sidebar_panel, 0, 0, 3, 1)
 
         self.header_shell = QWidget()
         self.header_shell.setObjectName("SettingsHeader")
         header_shell_layout = QVBoxLayout(self.header_shell)
-        header_shell_layout.setContentsMargins(20, 16, 20, 8)
-        header_shell_layout.setSpacing(8)
-        self.header_grid = QGridLayout()
-        self.header_grid.setContentsMargins(0, 0, 0, 0)
-        self.header_grid.setHorizontalSpacing(12)
-        self.header_grid.setVerticalSpacing(4)
-        header_text = QVBoxLayout()
-        header_text.setSpacing(2)
-        self.header_title = QLabel("Home Screen Dashboard")
-        self.header_title.setObjectName("GlobalTitle")
-        self.header_subtitle = QLabel("Changes stay staged until you save them.")
-        self.header_subtitle.setObjectName("PageHelp")
-        self.header_subtitle.setWordWrap(True)
-        header_text.addWidget(self.header_title)
-        header_text.addWidget(self.header_subtitle)
-        self.header_grid.addLayout(header_text, 0, 0)
-        self.header_grid.setColumnStretch(0, 1)
-        self.dirty_badge = QLabel("")
-        self.dirty_badge.setObjectName("DirtyBadge")
-        self.dirty_badge.setAccessibleName("Settings save status")
-        self.dirty_badge.setProperty("hdoLiveRegion", "polite")
-        self.dirty_badge.hide()
-        self.header_grid.addWidget(
-            self.dirty_badge,
-            0,
-            1,
-            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight,
-        )
-        header_shell_layout.addLayout(self.header_grid)
-        outer.addWidget(self.header_shell, 0, 0)
+        header_shell_layout.setContentsMargins(0, 0, 0, 0)
+        header_shell_layout.setSpacing(0)
+        self.header_stack = QStackedWidget(self.header_shell)
+        self.header_stack.setFixedHeight(SETTINGS_HEADER_HEIGHT)
+        header_shell_layout.addWidget(self.header_stack)
+        self.compact_nav = QTabBar(self.header_shell)
+        self.compact_nav.setObjectName("CompactSettingsNav")
+        self.compact_nav.setAccessibleName("Settings sections")
+        self.compact_nav.setDrawBase(False)
+        self.compact_nav.setDocumentMode(True)
+        self.compact_nav.setExpanding(True)
+        self.compact_nav.setUsesScrollButtons(True)
+        self.compact_nav.setElideMode(Qt.TextElideMode.ElideNone)
+        self.compact_nav.hide()
+        header_shell_layout.addWidget(self.compact_nav)
+        outer.addWidget(self.header_shell, 0, 1)
 
         self.body_shell = QWidget()
-        self.body_grid = QGridLayout(self.body_shell)
-        self.body_grid.setContentsMargins(20, 0, 20, 0)
-        self.body_grid.setHorizontalSpacing(16)
-        self.body_grid.setVerticalSpacing(0)
-        self.body_grid.setRowStretch(0, 1)
-        self.nav = SettingsSidebar()
+        body_layout = QVBoxLayout(self.body_shell)
+        body_layout.setContentsMargins(0, 0, 0, 0)
+        body_layout.setSpacing(0)
         self.stack = QStackedWidget()
         self.stack.setMinimumWidth(0)
-        self.body_grid.addWidget(self.nav, 0, 0)
-        self.body_grid.addWidget(self.stack, 0, 1)
-        self.body_grid.setColumnStretch(0, 0)
-        self.body_grid.setColumnStretch(1, 1)
-        outer.addWidget(self.body_shell, 1, 0)
+        body_layout.addWidget(self.stack, 1)
+        outer.addWidget(self.body_shell, 1, 1)
 
         self._build_dashboard_page()
         self._build_events_page()
         self._build_bible_page()
         self._build_about_page()
         self.nav.currentRowChanged.connect(self._nav_changed)
+        self.compact_nav.currentChanged.connect(self._compact_nav_changed)
 
         self.footer = SettingsFooter()
-        self.revert_button = QPushButton("Revert changes")
+        self.footer.set_details_callback(self._show_save_error_details)
+        self.revert_button = QPushButton("Discard changes")
         self.revert_button.setObjectName("LinkButton")
         self.revert_button.clicked.connect(self._revert_changes)
         self.revert_button.hide()
-        self.save_error = QLabel("")
-        self.save_error.setObjectName("InlineSaveError")
-        self.save_error.setWordWrap(True)
-        self.save_error.setProperty("hdoLiveRegion", "assertive")
-        self.save_error.hide()
         self.footer.add_left_widget(self.revert_button)
-        self.footer.add_left_widget(self.save_error, 1)
+        self.save_error = self.footer.error_label
+        self.status_label = self.footer.status_label
         self.buttons = self.footer.buttons
         self.save_button = self.buttons.button(QDialogButtonBox.StandardButton.Save)
         if self.save_button is not None:
@@ -1777,14 +2393,14 @@ class SettingsDialog(QDialog):
             _set_accessibility(
                 self.save_button,
                 "Save changes",
-                "Apply all staged changes without closing Settings.",
+                "Apply all changes without closing Settings.",
             )
         self.close_button = self.buttons.button(QDialogButtonBox.StandardButton.Cancel)
         if self.close_button is not None:
             self.close_button.setText("Close")
-            _set_accessibility(self.close_button, "Close", "Close Settings when clean, or discard staged changes after confirmation.")
+            _set_accessibility(self.close_button, "Close", "Close Settings, confirming before discarding unsaved changes.")
         self.buttons.accepted.connect(self._save)
-        self.buttons.rejected.connect(self.reject)
+        self.buttons.rejected.connect(self.request_close)
 
         self.undo_toast = QWidget()
         self.undo_toast.setObjectName("UndoToast")
@@ -1806,19 +2422,37 @@ class SettingsDialog(QDialog):
         self.saved_status_timer.setSingleShot(True)
         self.saved_status_timer.setInterval(2000)
         self.saved_status_timer.timeout.connect(self._clear_saved_status)
-        self.footer_shell = QWidget()
+        self.footer_shell = SettingsFooterShell()
         footer_shell_layout = QVBoxLayout(self.footer_shell)
         footer_shell_layout.setContentsMargins(0, 0, 0, 0)
         footer_shell_layout.setSpacing(4)
         footer_shell_layout.addWidget(self.undo_toast)
         footer_shell_layout.addWidget(self.footer)
-        outer.addWidget(self.footer_shell, 2, 0)
+        outer.addWidget(self.footer_shell, 2, 1)
+        self._footer_clearance_timer = QTimer(self)
+        self._footer_clearance_timer.setSingleShot(True)
+        self._footer_clearance_timer.timeout.connect(
+            self._apply_settings_footer_clearance
+        )
+        self.footer_shell.set_geometry_callback(
+            self._schedule_settings_footer_clearance
+        )
 
         self.save_shortcut = QAction("Save changes", self)
         self.save_shortcut.setShortcut(QKeySequence.StandardKey.Save)
         self.save_shortcut.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         self.save_shortcut.triggered.connect(self._save)
         self.addAction(self.save_shortcut)
+        self.close_shortcut = QAction("Close Settings", self)
+        self.close_shortcut.setShortcut(QKeySequence.StandardKey.Close)
+        self.close_shortcut.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.close_shortcut.triggered.connect(self.request_close)
+        self.addAction(self.close_shortcut)
+        self.escape_shortcut = QAction("Close Settings", self)
+        self.escape_shortcut.setShortcut(QKeySequence("Esc"))
+        self.escape_shortcut.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.escape_shortcut.triggered.connect(self.request_close)
+        self.addAction(self.escape_shortcut)
 
         self._connect_change_signals()
         self._refresh_event_lists()
@@ -1827,32 +2461,158 @@ class SettingsDialog(QDialog):
         self.open_page(initial_page, selected_event_date, selected_event_id)
         self._sync_draft()
         _apply_control_targets(self)
+        _apply_role_fonts(self)
         self._apply_canonical_layout()
+        self._apply_settings_footer_clearance()
+        if not self._requested_dashboard_anchor:
+            self._settle_initial_scroll_top()
         _install_palette_watcher(self, self._current_stylesheet)
+
+    @staticmethod
+    def _active_screen(parent: QWidget) -> Any:
+        """Resolve the logical active screen without realizing a new window."""
+
+        application = QApplication.instance()
+        screen = None
+        try:
+            handle = parent.windowHandle()
+            screen = handle.screen() if handle is not None else None
+        except Exception:
+            screen = None
+        if screen is None and application is not None:
+            try:
+                screen = application.screenAt(parent.frameGeometry().center())
+            except Exception:
+                screen = None
+        if screen is None and application is not None:
+            screen = application.primaryScreen()
+        return screen
+
+    @staticmethod
+    def _rect_tuple(rect: Any) -> Optional[tuple[int, int, int, int]]:
+        if isinstance(rect, QRect):
+            return rect.x(), rect.y(), rect.width(), rect.height()
+        if isinstance(rect, (list, tuple)) and len(rect) >= 4:
+            try:
+                return tuple(int(rect[index]) for index in range(4))  # type: ignore[return-value]
+            except (TypeError, ValueError):
+                return None
+        return None
+
+    @staticmethod
+    def _screen_name(screen: Any) -> str:
+        try:
+            return str(screen.name() or "")
+        except Exception:
+            return ""
+
+    @classmethod
+    def _connected_screens(
+        cls,
+    ) -> List[tuple[Any, str, tuple[int, int, int, int]]]:
+        application = QApplication.instance()
+        records: List[tuple[Any, str, tuple[int, int, int, int]]] = []
+        if application is None:
+            return records
+        try:
+            screens = application.screens()
+        except Exception:
+            screens = []
+        for screen in screens:
+            try:
+                available = cls._rect_tuple(screen.availableGeometry())
+            except Exception:
+                available = None
+            if available is not None:
+                records.append((screen, cls._screen_name(screen), available))
+        return records
+
+    def _apply_initial_window_geometry(self, parent: QWidget) -> None:
+        active_screen = self._active_screen(parent)
+        available_rect = active_screen.availableGeometry() if active_screen is not None else QRect(
+            0, 0, SETTINGS_DEFAULT_SIZE[0], SETTINGS_DEFAULT_SIZE[1]
+        )
+        active_available = self._rect_tuple(available_rect) or (
+            0, 0, SETTINGS_DEFAULT_SIZE[0], SETTINGS_DEFAULT_SIZE[1]
+        )
+        connected = self._connected_screens()
+        connected_geometries = [record[2] for record in connected] or [active_available]
+        parent_rect = self._rect_tuple(parent.frameGeometry())
+        saved = self._rect_tuple(self._geometry_settings.value(SETTINGS_GEOMETRY_KEY))
+        saved_screen_name = str(
+            self._geometry_settings.value(SETTINGS_GEOMETRY_SCREEN_KEY, "") or ""
+        )
+        saved_record = next(
+            (record for record in connected if record[1] == saved_screen_name),
+            None,
+        )
+        saved_valid = saved_window_geometry_is_valid(
+            saved,
+            connected_geometries,
+            saved_screen_exists=saved_record is not None,
+        )
+        target_available = saved_record[2] if saved_valid and saved_record is not None else active_available
+        self._screen_compact_fallback = settings_screen_uses_compact_fallback(
+            (target_available[2], target_available[3])
+        )
+        if self._screen_compact_fallback:
+            fallback_width = max(1, target_available[2] - (2 * SETTINGS_SMALL_SCREEN_MARGIN))
+            fallback_height = max(1, target_available[3] - (2 * SETTINGS_SMALL_SCREEN_MARGIN))
+            self.setMinimumSize(
+                min(SETTINGS_MINIMUM_SIZE[0], fallback_width),
+                min(SETTINGS_MINIMUM_SIZE[1], fallback_height),
+            )
+        else:
+            self.setMinimumSize(*SETTINGS_MINIMUM_SIZE)
+        geometry = clamp_window_geometry(
+            saved if saved_valid else None,
+            target_available,
+            parent=parent_rect,
+        )
+        self.setGeometry(QRect(*geometry))
+
+    def _persist_window_geometry(self) -> None:
+        if (
+            self._screen_compact_fallback
+            or self._compact_layout
+            or self.isMaximized()
+            or self.isFullScreen()
+        ):
+            return
+        rect = self.geometry()
+        logical = self._rect_tuple(rect)
+        connected = self._connected_screens()
+        if logical is None or logical[2] < SETTINGS_MINIMUM_SIZE[0] or logical[3] < SETTINGS_MINIMUM_SIZE[1]:
+            return
+        if not saved_window_geometry_is_valid(
+            logical,
+            [record[2] for record in connected],
+        ):
+            return
+        application = QApplication.instance()
+        screen = None
+        if application is not None:
+            try:
+                screen = application.screenAt(rect.center())
+            except Exception:
+                screen = None
+        if screen is None:
+            screen = self._active_screen(self.parentWidget())
+        screen_name = self._screen_name(screen)
+        if not screen_name:
+            return
+        self._geometry_settings.setValue(SETTINGS_GEOMETRY_KEY, QRect(rect))
+        self._geometry_settings.setValue(SETTINGS_GEOMETRY_SCREEN_KEY, screen_name)
+        self._geometry_settings.sync()
 
     def resizeEvent(self, event: Any) -> None:
         super().resizeEvent(event)
         if hasattr(self, "_dialog_layout"):
             self._update_settings_shell_margins()
-        if hasattr(self, "heatmap_preset_grid"):
-            QTimer.singleShot(0, self._reflow_heatmap_grid)
         if hasattr(self, "appearance_grid"):
             QTimer.singleShot(0, self._reflow_compact_grids)
-
-    def showEvent(self, event: Any) -> None:
-        super().showEvent(event)
-        if self._initial_scroll_settled:
-            return
-        self._initial_scroll_settled = True
-        # A focusable card heading can become Qt's provisional focus target
-        # while the native dialog is being shown. QScrollArea then scrolls the
-        # page header out of view to reveal that heading. Keep initial focus in
-        # the rail and explicitly settle a normal route at the top. Legacy
-        # dashboard anchors retain their separately scheduled destination.
-        self.nav.setFocus(Qt.FocusReason.OtherFocusReason)
-        if not self._requested_dashboard_anchor:
-            QTimer.singleShot(0, self._settle_initial_scroll_top)
-            QTimer.singleShot(80, self._settle_initial_scroll_top)
+        if hasattr(self, "body_shell"):
+            QTimer.singleShot(0, self._apply_responsive_layout)
 
     def _settle_initial_scroll_top(self) -> None:
         scroll = self.stack.currentWidget() if hasattr(self, "stack") else None
@@ -1860,9 +2620,9 @@ class SettingsDialog(QDialog):
             scroll.verticalScrollBar().setValue(0)
 
     def _update_settings_shell_margins(self) -> None:
-        """Fill the dialog through 1240px, then center the capped shell."""
+        """Center the bounded shell without stretching forms across a monitor."""
 
-        inset = max(0, (self.width() - 1240) // 2)
+        inset = max(0, (self.width() - SETTINGS_SHELL_MAX_WIDTH) // 2)
         self._dialog_layout.setContentsMargins(inset, 0, inset, 0)
 
     def changeEvent(self, event: Any) -> None:
@@ -1873,6 +2633,7 @@ class SettingsDialog(QDialog):
             getattr(QEvent.Type, "ApplicationFontChange", None),
         }:
             _apply_control_targets(self)
+            _apply_role_fonts(self)
             QTimer.singleShot(0, self._apply_canonical_layout)
         super().changeEvent(event)
 
@@ -1885,10 +2646,15 @@ class SettingsDialog(QDialog):
         item.setData(Qt.ItemDataRole.UserRole, section_id)
         item.setData(Qt.ItemDataRole.AccessibleTextRole, name)
         self.nav.addItem(item)
+        self.compact_nav.addTab(name)
         self.nav.refresh_item_sizes()
         self.nav_rows[section_id] = self.nav.count() - 1
         self.page_indices[section_id] = self.stack.count()
         page.setAccessibleName("{} settings".format(name))
+        header = getattr(page, "_hdo_page_header", None)
+        if isinstance(header, QWidget):
+            header.setAccessibleName("{} settings header".format(name))
+            self.header_stack.addWidget(header)
         scroll = QScrollArea()
         scroll.setObjectName("SettingsScrollBody")
         scroll.setAccessibleName("{} settings content".format(name))
@@ -1928,22 +2694,48 @@ class SettingsDialog(QDialog):
             QTimer.singleShot(0, self._edit_event)
 
     def _nav_changed(self, row: int) -> None:
+        if self._syncing_navigation:
+            return
         item = self.nav.item(row)
         section_id = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
         if not isinstance(section_id, str) or section_id not in self.page_indices:
             return
         self._show_section(section_id, source="nav")
 
+    def _compact_nav_changed(self, row: int) -> None:
+        if self._syncing_navigation or row < 0:
+            return
+        item = self.nav.item(row)
+        section_id = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
+        if isinstance(section_id, str) and section_id in self.page_indices:
+            self._show_section(section_id, source="compact-nav")
+
     def _show_section(self, section_id: str, source: str = "") -> None:
         self.current_section = section_id
-        self.stack.setCurrentIndex(self.page_indices[section_id])
-        if source != "nav":
-            self.nav.setCurrentRow(self.nav_rows[section_id])
+        page_index = self.page_indices[section_id]
+        self.stack.setCurrentIndex(page_index)
+        self.header_stack.setCurrentIndex(page_index)
+        row = self.nav_rows[section_id]
+        self._syncing_navigation = True
+        try:
+            if self.nav.currentRow() != row:
+                self.nav.setCurrentRow(row)
+            if self.compact_nav.currentIndex() != row:
+                self.compact_nav.setCurrentIndex(row)
+        finally:
+            self._syncing_navigation = False
+        if source in {"nav", "compact-nav"}:
+            self._settle_initial_scroll_top()
 
     def _schedule_dashboard_anchor(self, anchor: str) -> None:
         """Resolve a legacy anchor after the canonical page layout settles."""
 
         self._requested_dashboard_anchor = anchor
+        if anchor == "calendar" and hasattr(self, "calendar_display_disclosure"):
+            self.calendar_display_disclosure.setChecked(True)
+        scroll = self.stack.currentWidget() if hasattr(self, "stack") else None
+        if isinstance(scroll, QScrollArea):
+            scroll.verticalScrollBar().setValue(0)
         QTimer.singleShot(0, lambda: self._settle_dashboard_anchor(anchor, -1, 0))
 
     def _settle_dashboard_anchor(
@@ -1990,44 +2782,31 @@ class SettingsDialog(QDialog):
         value = max(0, target_y - 2)
         scroll.verticalScrollBar().setValue(value)
         target.setProperty("hdoScrollMarginTop", 16)
-        heading = getattr(target, "heading", None)
-        if isinstance(heading, QLabel):
-            # Focusing the anchor must not enqueue the generic focus-visibility
-            # adjustment: QScrollArea can otherwise move a final tall card to
-            # its bottom edge after this method returns and clip the heading.
-            self._dashboard_anchor_focus_active = True
-            try:
-                heading.setFocus(Qt.FocusReason.OtherFocusReason)
-            finally:
-                self._dashboard_anchor_focus_active = False
-            scroll.verticalScrollBar().setValue(value)
 
     def _apply_canonical_layout(self) -> None:
         """Apply size hints without changing the single Settings composition."""
 
-        self.nav.setFixedWidth(152)
-        self.nav.show()
+        self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)
         for index in range(self.stack.count()):
             scroll = self.stack.widget(index)
             if not isinstance(scroll, QScrollArea):
                 continue
             page = scroll.widget()
             if page is not None:
-                page.setMaximumWidth(860)
+                page.setMaximumWidth(SETTINGS_PAGE_MAX_WIDTH)
+                page.setMinimumWidth(0)
             scroll.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         for combo in self.findChildren(QComboBox):
             if combo is getattr(self, "event_sort", None):
                 combo.setMaximumWidth(160)
             elif isinstance(combo, QFontComboBox):
-                combo.setMaximumWidth(260)
+                combo.setMaximumWidth(320)
             else:
-                combo.setMaximumWidth(260)
+                combo.setMaximumWidth(420)
         for spin in self.findChildren(QSpinBox):
-            spin.setMaximumWidth(92)
+            spin.setMaximumWidth(120)
         for form in self.findChildren(QFormLayout):
             form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
-        if hasattr(self, "heatmap_preset_grid"):
-            self._reflow_heatmap_grid()
         if hasattr(self, "appearance_grid"):
             self._reflow_compact_grids()
         if hasattr(self, "active_events"):
@@ -2037,23 +2816,57 @@ class SettingsDialog(QDialog):
             self._fit_quote_list()
         if hasattr(self, "deck_tree"):
             self._fit_deck_tree()
+        self._apply_responsive_layout()
         if self.current_section == "dashboard" and self._requested_dashboard_anchor:
             anchor = self._requested_dashboard_anchor
             QTimer.singleShot(0, lambda: self._settle_dashboard_anchor(anchor, -1, 0))
 
     def _apply_settings_footer_clearance(self) -> int:
-        """The footer is a normal grid row, so no overlay clearance is needed."""
+        """Keep normal page padding; the footer owns a separate grid row."""
+
+        clearance = 36
         for scroll, base in self._settings_scroll_base_margins.items():
             page = scroll.widget()
             page_layout = page.layout() if page is not None else None
             if page_layout is not None:
-                page_layout.setContentsMargins(*base)
-        return 0
+                page_layout.setContentsMargins(base[0], base[1], base[2], clearance)
+        return clearance
+
+    def _schedule_settings_footer_clearance(self) -> None:
+        if hasattr(self, "_footer_clearance_timer"):
+            self._footer_clearance_timer.start(0)
+
+    def _apply_responsive_layout(self) -> None:
+        if not hasattr(self, "body_shell"):
+            return
+        shell_width = max(0, self.settings_shell.width())
+        compact = self._screen_compact_fallback or shell_width < SETTINGS_COMPACT_BODY_WIDTH
+        self._compact_layout = compact
+        self.sidebar_panel.setVisible(not compact)
+        self.compact_nav.setVisible(compact)
+        self.footer.set_compact(compact)
+        page_padding = 18 if compact else 28
+        for scroll, base in self._settings_scroll_base_margins.items():
+            page = scroll.widget()
+            page_layout = page.layout() if page is not None else None
+            if page_layout is not None:
+                page_layout.setContentsMargins(
+                    page_padding,
+                    base[1],
+                    page_padding,
+                    36,
+                )
+        if hasattr(self, "event_toolbar_grid"):
+            self._reflow_event_toolbar()
+        if hasattr(self, "quote_toolbar_grid"):
+            self._reflow_quote_toolbar()
+        self._apply_settings_footer_clearance()
+        self._schedule_settings_footer_clearance()
 
     def _create_appearance_card(self) -> SettingsCard:
         card = SettingsCard(
             "Appearance",
-            "Choose the dashboard theme, color mode, and scale.",
+            "",
             "Reset",
         )
         self.appearance_card = card
@@ -2068,16 +2881,6 @@ class SettingsDialog(QDialog):
             "Theme",
             "Choose one of four fully audited dashboard palettes.",
         )
-        preset_wrap = QWidget()
-        preset_layout = QHBoxLayout(preset_wrap)
-        preset_layout.setContentsMargins(0, 0, 0, 0)
-        preset_layout.setSpacing(6)
-        self.preset_swatch = QLabel()
-        self.preset_swatch.setObjectName("DataBadge")
-        self.preset_swatch.setTextFormat(Qt.TextFormat.RichText)
-        self.preset_swatch.setAccessibleName("Selected preset colors")
-        preset_layout.addWidget(self.preset, 1)
-        preset_layout.addWidget(self.preset_swatch, 0)
         self.mode = SegmentedControl(
             [("Follow Anki", "auto"), ("Light", "light"), ("Dark", "dark")],
             appearance["mode"],
@@ -2091,7 +2894,7 @@ class SettingsDialog(QDialog):
             "Follow Anki automatically, or keep the dashboard in light or dark mode.",
         )
         self.preset.currentIndexChanged.connect(self._dashboard_theme_changed)
-        self.mode.connect_changed(self._refresh_heatmap_preset_cards)
+        self.mode.connect_changed(self._refresh_heatmap_preset_options)
         opacity_row, self.opacity_slider, self.opacity = _paired_slider(
             94, 100, appearance["opacity"], " %"
         )
@@ -2114,7 +2917,7 @@ class SettingsDialog(QDialog):
             _stacked_field(
                 "Theme",
                 "",
-                preset_wrap,
+                self.preset,
             ),
             _stacked_field(
                 "Color mode",
@@ -2132,18 +2935,10 @@ class SettingsDialog(QDialog):
             "Affects dashboard cards only.",
             opacity_row,
         )
-        self.appearance_fields.insert(2, self.opacity_field)
         self.appearance_grid = QGridLayout()
         self.appearance_grid.setContentsMargins(0, 0, 0, 0)
         self.appearance_grid.setHorizontalSpacing(14)
         self.appearance_grid.setVerticalSpacing(10)
-        card.add_layout(self.appearance_grid)
-        self.appearance_advanced_button = QPushButton("More appearance options  ›")
-        self.appearance_advanced_button.setCheckable(True)
-        self.appearance_advanced_button.setObjectName("DisclosureButton")
-        self.appearance_advanced_button.setAccessibleDescription(
-            "Show blur and add-on panel placement controls."
-        )
         self.appearance_advanced = QWidget()
         advanced_form = QFormLayout(self.appearance_advanced)
         advanced_form.setContentsMargins(0, 0, 0, 0)
@@ -2167,29 +2962,33 @@ class SettingsDialog(QDialog):
             "Affects Sapphire Glass cards only.",
         )
         self.blur_field = blur_row
+        advanced_form.addRow(self.opacity_field)
         advanced_form.addRow(self.blur_field_label, self.blur_field)
         advanced_form.addRow(
             _field_label("Panel placement", "Anki’s deck list remains above injected add-on panels."),
             self.home_screen_position,
         )
-        self.appearance_advanced.hide()
-        self.appearance_advanced_button.toggled.connect(self.appearance_advanced.setVisible)
-        self.appearance_advanced_button.toggled.connect(
-            lambda expanded: self.appearance_advanced_button.setText(
-                "More appearance options  ⌄" if expanded else "More appearance options  ›"
-            )
+        self.appearance_advanced_button = DisclosureHeader(
+            "Advanced appearance",
+            self.appearance_advanced,
+            "Show opacity, blur, and add-on panel placement controls.",
         )
-        card.add_widget(self.appearance_advanced_button)
-        card.add_widget(self.appearance_advanced)
+        self.appearance_controls = QWidget()
+        appearance_controls_layout = QVBoxLayout(self.appearance_controls)
+        appearance_controls_layout.setContentsMargins(0, 0, 0, 0)
+        appearance_controls_layout.setSpacing(10)
+        appearance_controls_layout.addLayout(self.appearance_grid)
+        appearance_controls_layout.addWidget(self.appearance_advanced_button)
+        appearance_controls_layout.addWidget(self.appearance_advanced)
+        card.add_widget(self.appearance_controls)
         self._reflow_compact_grids()
-        self._update_preset_swatch()
         self._update_glass_controls()
         return card
 
     def _build_dashboard_page(self) -> None:
         page, layout, form = _page(
             "Dashboard",
-            "Choose the dashboard appearance, content, and calendar behavior.",
+            "Customize appearance, sections, metrics, and calendar.",
         )
         # The page root never owns fields; each group has a quiet, resettable
         # card. Remove the empty compatibility form inserted by ``_page``.
@@ -2202,11 +3001,14 @@ class SettingsDialog(QDialog):
 
         sections_card = SettingsCard(
             "Dashboard sections",
+            "",
+            "Reset",
         )
         if sections_card.reset_button is not None:
             sections_card.reset_button.clicked.connect(
-                lambda: self._reset_card("dashboard_sections", "Content & study metrics")
+                lambda: self._reset_card("dashboard_sections", "Dashboard sections")
             )
+        self.dashboard_sections_card = sections_card
         sections_card.setProperty("hdoAnchor", "content")
         self.dashboard_anchors["content"] = sections_card
         self.dashboard_anchors["dashboard_sections"] = sections_card
@@ -2223,7 +3025,7 @@ class SettingsDialog(QDialog):
         add_visibility(
             "heatmap",
             "Study calendar",
-            "Study history, due load, and events.",
+            "History, due load, and events.",
         )
         add_visibility(
             "remaining",
@@ -2238,7 +3040,7 @@ class SettingsDialog(QDialog):
         add_visibility(
             "heatmap_metrics",
             "Recent and lifetime",
-            "Seven-day and lifetime totals.",
+            "7-day and lifetime totals.",
         )
         bible_row, bible_switch = _switch_row(
             "Bible verse",
@@ -2246,31 +3048,28 @@ class SettingsDialog(QDialog):
             visibility["bible"],
         )
         self.visibility["bible"] = bible_switch
-        configure_bible = QPushButton("Configure")
-        configure_bible.setObjectName("LinkButton")
+        configure_bible = QPushButton("Configure verse")
         configure_bible.clicked.connect(lambda: self._show_section("bible_verse"))
         bible_row.layout().insertWidget(1, configure_bible, 0, Qt.AlignmentFlag.AlignVCenter)
         sections_layout.addWidget(bible_row)
         sections_card.add_layout(sections_layout)
         layout.addWidget(sections_card)
 
-        study_card = SettingsCard("Study calculations")
+        study_card = SettingsCard("Study metrics", "", "Reset")
+        self.study_metrics_card = study_card
+        if study_card.reset_button is not None:
+            study_card.reset_button.clicked.connect(
+                lambda: self._reset_card("study_metrics", "Study metrics")
+            )
 
-        dependent_form = QFormLayout()
-        dependent_form.setVerticalSpacing(10)
-        dependent_form.setHorizontalSpacing(18)
         self.pace_unit = _combo(
             [("Seconds per card", "seconds_per_card"), ("Cards per minute", "cards_per_minute")],
             self.staged["study"]["pace_unit"],
         )
         _set_accessibility(
             self.pace_unit,
-            "Pace display",
-            "Display only. Study history is unchanged.",
-        )
-        dependent_form.addRow(
-            _field_label("Pace display", "Display only. Study history is unchanged."),
-            self.pace_unit,
+            "Pace format",
+            "Changes how pace is displayed.",
         )
         self.retention_target = QSpinBox()
         self.retention_target.setRange(50, 100)
@@ -2278,20 +3077,36 @@ class SettingsDialog(QDialog):
         self.retention_target.setValue(int(self.staged["study"].get("retention_target", 80)))
         _set_accessibility(
             self.retention_target,
-            "Retention target",
-            "Used for status colors only.",
-        )
-        dependent_form.addRow(
-            _field_label("Retention target", "Used for status colors only."),
-            self.retention_target,
+            "Retention goal",
+            "Used to color retention status.",
         )
         new_row, self.include_rescheduled = _switch_row(
-            "Count rescheduled cards as new",
+            "Count manually rescheduled cards as new",
             "Counts the first qualifying answer after a manual reschedule.",
             self.staged["new_cards"]["include_rescheduled"],
         )
-        dependent_form.addRow(new_row)
-        study_card.add_layout(dependent_form)
+        self.study_metric_fields = [
+            _stacked_field(
+                "Pace format",
+                "Changes how pace is displayed.",
+                self.pace_unit,
+            ),
+            _stacked_field(
+                "Retention goal",
+                "Used to color retention status.",
+                self.retention_target,
+            ),
+        ]
+        self.study_metrics_grid = QGridLayout()
+        self.study_metrics_grid.setContentsMargins(0, 0, 0, 0)
+        self.study_metrics_grid.setHorizontalSpacing(18)
+        self.study_metrics_grid.setVerticalSpacing(12)
+        self.study_metrics_grid.addWidget(self.study_metric_fields[0], 0, 0)
+        self.study_metrics_grid.addWidget(self.study_metric_fields[1], 0, 1)
+        self.study_metrics_grid.addWidget(new_row, 1, 0, 1, 2)
+        self.study_metrics_grid.setColumnStretch(0, 1)
+        self.study_metrics_grid.setColumnStretch(1, 1)
+        study_card.add_layout(self.study_metrics_grid)
         layout.addWidget(study_card)
 
         calendar_cards = self._create_calendar_cards()
@@ -2302,8 +3117,13 @@ class SettingsDialog(QDialog):
         layout.addStretch()
         self._add_page("dashboard", page)
 
-    def _create_calendar_cards(self) -> tuple[SettingsCard, SettingsCard, SettingsCard]:
-        display_card = SettingsCard("Calendar display")
+    def _create_calendar_cards(self) -> tuple[SettingsCard, SettingsCard]:
+        display_card = SettingsCard("Calendar view", "", "Reset")
+        self.calendar_display_card = display_card
+        if display_card.reset_button is not None:
+            display_card.reset_button.clicked.connect(
+                lambda: self._reset_card("calendar_display", "Calendar view")
+            )
         form = display_card.add_form()
         heatmap = self.staged["heatmap"]
 
@@ -2358,22 +3178,26 @@ class SettingsDialog(QDialog):
         self.events_dependency.setBuddy(event_switch)
         form.addRow(self.events_dependency)
 
-        self.heatmap_preset_wrap = QWidget()
-        self.heatmap_preset_grid = QGridLayout(self.heatmap_preset_wrap)
-        self.heatmap_preset_grid.setContentsMargins(0, 0, 0, 0)
-        self.heatmap_preset_grid.setHorizontalSpacing(8)
-        self.heatmap_preset_grid.setVerticalSpacing(8)
-        self.heatmap_preset_buttons: Dict[str, QPushButton] = {}
-        self._refresh_heatmap_preset_cards()
+        self.heatmap_preset = QComboBox()
+        self.heatmap_preset.setAccessibleName("Heatmap palette")
+        self.heatmap_preset.setAccessibleDescription(
+            "Choose the named calendar heatmap colors for the selected theme."
+        )
+        self._refresh_heatmap_preset_options()
+        self.heatmap_preset.currentIndexChanged.connect(
+            self._heatmap_preset_changed
+        )
         form.addRow(
-            _stacked_field(
-                "Heatmap palette",
-                "Choose the calendar heatmap colors.",
-                self.heatmap_preset_wrap,
-            )
+            _field_label("Heatmap palette", "Choose the calendar heatmap colors."),
+            self.heatmap_preset,
         )
 
-        range_card = SettingsCard("Calendar range")
+        range_card = SettingsCard("Calendar range", "", "Reset")
+        self.calendar_range_card = range_card
+        if range_card.reset_button is not None:
+            range_card.reset_button.clicked.connect(
+                lambda: self._reset_card("calendar_range", "Calendar range")
+            )
         range_card.add_widget(collection_info)
         form = range_card.add_form()
 
@@ -2418,38 +3242,26 @@ class SettingsDialog(QDialog):
         )
         form.addRow(self.forecast_range_label, self.forecast_days)
 
-        data_card = SettingsCard("Data and reset", "", "Reset calendar settings")
+        data_card = SettingsCard("Filters and deck exclusions", "", "Reset")
+        self.local_data_card = data_card
         if data_card.reset_button is not None:
             data_card.reset_button.clicked.connect(
-                lambda: self._reset_card("calendar", "Calendar settings")
+                lambda: self._reset_card("local_data", "Local data")
             )
         form = data_card.add_form()
-        semantics = QPushButton("Date calculation  ›")
-        semantics.setCheckable(True)
-        semantics.setObjectName("DisclosureButton")
-        semantics.setAccessibleDescription("Show the date and rollover rules.")
         semantics_copy = QLabel(
             "Study counts and due forecasts follow Anki’s configured rollover, not calendar midnight. Events use their civil-calendar date."
         )
         semantics_copy.setObjectName("FieldHelp")
         semantics_copy.setWordWrap(True)
-        semantics_copy.hide()
-        semantics.toggled.connect(semantics_copy.setVisible)
-        semantics.toggled.connect(
-            lambda expanded: semantics.setText(
-                "Date calculation  ⌄" if expanded else "Date calculation  ›"
-            )
+        semantics = DisclosureHeader(
+            "Date calculation",
+            semantics_copy,
+            "Show the date and rollover rules.",
         )
         form.addRow(semantics)
         form.addRow(semantics_copy)
 
-        self.calendar_advanced_button = QPushButton("Deck exclusions and filters  ›")
-        self.calendar_advanced_button.setCheckable(True)
-        self.calendar_advanced_button.setObjectName("DisclosureButton")
-        self.calendar_advanced_button.setAccessibleDescription(
-            "Show custom history rules and deck exclusions."
-        )
-        data_card.add_widget(self.calendar_advanced_button)
         self.calendar_advanced = QWidget()
         advanced_form = QFormLayout(self.calendar_advanced)
         advanced_form.setContentsMargins(0, 0, 0, 0)
@@ -2517,24 +3329,50 @@ class SettingsDialog(QDialog):
             _field_label("Excluded decks", "A checked parent excludes its descendants across dashboard study data; full deck paths are retained."),
             deck_wrap,
         )
-        self.calendar_advanced.hide()
-        self.calendar_advanced_button.toggled.connect(self.calendar_advanced.setVisible)
-        self.calendar_advanced_button.toggled.connect(
-            lambda expanded: self.calendar_advanced_button.setText(
-                "Deck exclusions and filters  ⌄" if expanded else "Deck exclusions and filters  ›"
-            )
+        self.calendar_advanced_button = DisclosureHeader(
+            "Deck exclusions and filters",
+            self.calendar_advanced,
+            "Show custom history rules and deck exclusions.",
         )
+        data_card.add_widget(self.calendar_advanced_button)
         data_card.add_widget(self.calendar_advanced)
         self.show_forecast.toggled.connect(self._update_forecast_range_visibility)
         self.history_range.currentIndexChanged.connect(self._update_history_range_visibility)
         self._update_forecast_range_visibility()
         self._update_history_range_visibility()
-        return display_card, range_card, data_card
+        calendar_content = QWidget()
+        calendar_content_layout = QVBoxLayout(calendar_content)
+        calendar_content_layout.setContentsMargins(0, 0, 0, 0)
+        calendar_content_layout.setSpacing(12)
+        calendar_content_layout.addWidget(display_card)
+        calendar_content_layout.addWidget(range_card)
+        calendar_wrapper = SettingsCard()
+        self.calendar_display_disclosure = DisclosureHeader(
+            "Calendar display",
+            calendar_content,
+            "Show calendar view and range settings.",
+        )
+        calendar_wrapper.add_widget(self.calendar_display_disclosure)
+        calendar_wrapper.add_widget(calendar_content)
+
+        local_content = QWidget()
+        local_layout = QVBoxLayout(local_content)
+        local_layout.setContentsMargins(0, 0, 0, 0)
+        local_layout.addWidget(data_card)
+        local_wrapper = SettingsCard()
+        self.local_data_disclosure = DisclosureHeader(
+            "Local data",
+            local_content,
+            "Show date semantics, filters, and deck exclusions.",
+        )
+        local_wrapper.add_widget(self.local_data_disclosure)
+        local_wrapper.add_widget(local_content)
+        return calendar_wrapper, local_wrapper
 
     def _build_events_page(self) -> None:
         page, layout, form = _page(
             "Events",
-            "Create and manage calendar events.",
+            "Add, edit, and archive calendar events.",
         )
         layout.removeItem(form)
         self.event_add = QPushButton("Add event")
@@ -2548,20 +3386,33 @@ class SettingsDialog(QDialog):
         self.event_date_context.setObjectName("PageHelp")
         self.event_date_context.setAccessibleName("Selected calendar date")
         self.event_date_context.hide()
-        layout.addWidget(self.event_date_context)
-        self.event_tabs = QTabWidget()
-        self.event_tabs.setObjectName("EventTabs")
-        self.event_tabs.setDocumentMode(True)
-        self.event_tabs.tabBar().setExpanding(False)
+        self.event_surface = SettingsCard()
+        self.event_surface.setMinimumHeight(360)
+        self.event_surface.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding,
+        )
+        self.event_surface.add_widget(self.event_date_context)
+        self.event_tabs = SettingsTabPanel()
         _set_accessibility(self.event_tabs, "Active and archived events", "Switch between active and archived local events.")
         self.active_events = self._event_tree("Active calendar events")
         self.archived_events = self._event_tree("Archived calendar events")
         self.event_tabs.addTab(self.active_events, "Active (0)")
         self.event_tabs.addTab(self.archived_events, "Archived (0)")
 
-        event_toolbar = QHBoxLayout()
         self.event_search = QLineEdit(); self.event_search.setPlaceholderText("Search events")
         _set_accessibility(self.event_search, "Search events", "Search by event name or date.")
+        self.event_search_clear = QPushButton("Clear")
+        self.event_search_clear.setObjectName("LinkButton")
+        self.event_search_clear.clicked.connect(self.event_search.clear)
+        self.event_search_clear.hide()
+        _set_accessibility(self.event_search_clear, "Clear event search")
+        search_control = QWidget()
+        search_control_layout = QHBoxLayout(search_control)
+        search_control_layout.setContentsMargins(0, 0, 0, 0)
+        search_control_layout.setSpacing(4)
+        search_control_layout.addWidget(self.event_search, 1)
+        search_control_layout.addWidget(self.event_search_clear)
         self.event_sort = _combo(
             [
                 ("Soonest first", "ascending"),
@@ -2574,19 +3425,32 @@ class SettingsDialog(QDialog):
         self.event_sort.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         self.event_sort.setMaximumWidth(160)
         _set_accessibility(self.event_sort, "Event sort order", "Sort active and archived events by date or name.")
-        event_toolbar.addWidget(self.event_search, 1)
-        event_toolbar.addWidget(self.event_sort, 0)
+        self.event_toolbar_fields = [
+            _stacked_field("Search", "", search_control),
+            _stacked_field("Sort by", "", self.event_sort),
+        ]
         self.event_toolbar_wrap = QWidget()
-        self.event_toolbar_wrap.setLayout(event_toolbar)
-        layout.addWidget(self.event_toolbar_wrap)
+        self.event_toolbar_grid = QGridLayout(self.event_toolbar_wrap)
+        self.event_toolbar_grid.setContentsMargins(0, 0, 0, 0)
+        self.event_toolbar_grid.setHorizontalSpacing(12)
+        self.event_toolbar_grid.setVerticalSpacing(8)
+        self._reflow_event_toolbar()
+        self.event_surface.add_widget(self.event_toolbar_wrap)
+        self.event_result_summary = QLabel("")
+        self.event_result_summary.setObjectName("PageHelp")
+        self.event_surface.add_widget(self.event_result_summary)
         self.event_tabs.setSizePolicy(
             QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.Expanding,
         )
-        layout.addWidget(self.event_tabs)
+        self.event_surface.add_widget(self.event_tabs, 1)
         self.event_empty_state = QWidget()
         self.event_empty_state.setObjectName("EmptyState")
-        self.event_empty_state.setFixedHeight(180)
+        self.event_empty_state.setMinimumHeight(180)
+        self.event_empty_state.setSizePolicy(
+            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.Minimum,
+        )
         self.event_empty_state.setMaximumWidth(360)
         empty_layout = QVBoxLayout(self.event_empty_state)
         empty_layout.setContentsMargins(24, 20, 24, 20)
@@ -2596,36 +3460,35 @@ class SettingsDialog(QDialog):
         self.event_empty_title.setObjectName("EmptyStateTitle")
         self.event_empty_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.event_empty_copy = QLabel(
-            "Add an event to place a marker on the calendar."
+            "Add an event to show it on the calendar."
         )
         self.event_empty_copy.setObjectName("EmptyStateCopy")
         self.event_empty_copy.setWordWrap(True)
         self.event_empty_copy.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.event_empty_copy.setMaximumWidth(360)
-        self.event_empty_add = QPushButton("Add event")
-        self.event_empty_add.setObjectName("PrimaryButton")
-        self.event_empty_add.clicked.connect(self._add_event)
-        _set_accessibility(self.event_empty_add, "Add event", "Open the local event editor.")
         empty_layout.addWidget(self.event_empty_title, 0, Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(self.event_empty_copy, 0, Qt.AlignmentFlag.AlignCenter)
-        empty_layout.addWidget(self.event_empty_add, 0, Qt.AlignmentFlag.AlignCenter)
+        self.event_empty_clear = QPushButton("Clear search")
+        self.event_empty_clear.setObjectName("LinkButton")
+        self.event_empty_clear.clicked.connect(self.event_search.clear)
+        self.event_empty_clear.hide()
+        empty_layout.addWidget(self.event_empty_clear, 0, Qt.AlignmentFlag.AlignCenter)
         self.event_empty_state.hide()
-        layout.addWidget(self.event_empty_state, 0, Qt.AlignmentFlag.AlignHCenter)
+        self.event_surface.add_widget(self.event_empty_state, 0)
         self.event_action_feedback = QLabel("")
         self.event_action_feedback.setTextFormat(Qt.TextFormat.PlainText)
         self.event_action_feedback.setObjectName("PageHelp")
         self.event_action_feedback.setAccessibleName("Event action confirmation")
         self.event_action_feedback.setProperty("hdoLiveRegion", "polite")
         self.event_action_feedback.setWordWrap(True)
-        layout.addWidget(self.event_action_feedback)
+        self.event_surface.add_widget(self.event_action_feedback)
+        layout.addWidget(self.event_surface, 1)
         self.event_search.textChanged.connect(self._refresh_event_lists)
+        self.event_search.textChanged.connect(
+            lambda value: self.event_search_clear.setVisible(bool(value.strip()))
+        )
         self.event_sort.currentIndexChanged.connect(self._refresh_event_lists)
-        self.event_tabs.currentChanged.connect(self._update_event_actions)
-        self.active_events.itemDoubleClicked.connect(lambda *_args: self._edit_event())
-        self.archived_events.itemDoubleClicked.connect(lambda *_args: self._edit_event())
-        self.active_events.itemSelectionChanged.connect(self._event_selection_changed)
-        self.archived_events.itemSelectionChanged.connect(self._event_selection_changed)
-        layout.addStretch()
+        self.event_tabs.tabBar().currentChanged.connect(self._update_event_actions)
         self._add_page("events", page)
 
     def _event_tree(self, accessible_name: str) -> QTreeWidget:
@@ -2642,26 +3505,31 @@ class SettingsDialog(QDialog):
         tree.setAlternatingRowColors(False)
         tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         tree.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        tree.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        tree.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         tree.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         _install_settings_row_delegate(tree)
         tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        tree.setMinimumHeight(0)
-        tree.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        tree.setMinimumHeight(260)
+        tree.setMaximumHeight(16777215)
+        tree.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         return tree
 
     def _fit_event_tree(self, tree: QTreeWidget) -> None:
-        row_height = max(56, (2 * tree.fontMetrics().lineSpacing()) + 20)
-        tree.setFixedHeight(max(2, tree.topLevelItemCount() * row_height + 8))
+        tree.setMinimumHeight(260)
+        tree.setMaximumHeight(16777215)
+        tree.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
     def _event_selection_changed(self) -> None:
         for tree in (self.active_events, self.archived_events):
-            current = tree.currentItem()
-            for row in range(tree.topLevelItemCount()):
-                item = tree.topLevelItem(row)
-                widget = tree.itemWidget(item, 0)
-                if isinstance(widget, EventRowWidget):
-                    widget.set_selected(item is current and tree is self.event_tabs.currentWidget())
+            tree.viewport().update()
+
+    def _event_row_clicked(self, item: QTreeWidgetItem, _column: int) -> None:
+        tree = self.sender()
+        if isinstance(tree, QTreeWidget):
+            tree.setCurrentItem(item)
+        self._edit_event()
+        if isinstance(tree, QTreeWidget):
+            tree.clearSelection()
 
     def _build_bible_page(self) -> None:
         page, layout, root_form = _page(
@@ -2672,7 +3540,7 @@ class SettingsDialog(QDialog):
         bible = self.staged["bible"]
         display_card = SettingsCard(
             "Verse appearance",
-            "These settings affect the verse card only.",
+            "",
             "Reset",
         )
         self.bible_display_card = display_card
@@ -2691,7 +3559,7 @@ class SettingsDialog(QDialog):
         self.font_color.textChanged.connect(self._font_color_text_changed)
         self.font_color.editingFinished.connect(self._font_color_edited)
         self.font_color_swatch = QPushButton("")
-        self.font_color_swatch.setFixedSize(38, 38)
+        self.font_color_swatch.setFixedSize(36, 36)
         self.font_color_swatch.clicked.connect(self._choose_font_color)
         self.font_color_swatch.setAccessibleName("Choose custom verse color")
         color_row = QWidget()
@@ -2735,8 +3603,12 @@ class SettingsDialog(QDialog):
         self.bible_display_grid.setContentsMargins(0, 0, 0, 0)
         self.bible_display_grid.setHorizontalSpacing(14)
         self.bible_display_grid.setVerticalSpacing(10)
-        display_card.add_layout(self.bible_display_grid)
-        display_card.add_widget(
+        self.bible_controls = QWidget()
+        bible_controls_layout = QVBoxLayout(self.bible_controls)
+        bible_controls_layout.setContentsMargins(0, 0, 0, 0)
+        bible_controls_layout.setSpacing(10)
+        bible_controls_layout.addLayout(self.bible_display_grid)
+        bible_controls_layout.addWidget(
             _stacked_field(
                 "Text color",
                 "",
@@ -2749,21 +3621,23 @@ class SettingsDialog(QDialog):
             color_row,
         )
         self.font_color_warning = QLabel("")
-        self.font_color_warning.setObjectName("FieldHelp")
+        self.font_color_warning.setObjectName("WarningText")
         self.font_color_warning.setWordWrap(True)
         self.font_color_warning.setAccessibleName("Custom verse color contrast")
         custom_layout = self.custom_color_container.layout()
         if custom_layout is not None:
             custom_layout.addWidget(self.font_color_warning)
-        display_card.add_widget(self.custom_color_container)
+        bible_controls_layout.addWidget(self.custom_color_container)
+        display_card.add_widget(self.bible_controls)
         self._reflow_compact_grids()
         layout.addWidget(display_card)
 
         rotation_card = SettingsCard(
             "Rotation",
-            "Choose when the dashboard selects a new verse.",
+            "Choose when a new verse is selected.",
             "Reset",
         )
+        self.bible_rotation_card = rotation_card
         if rotation_card.reset_button is not None:
             rotation_card.reset_button.clicked.connect(
                 lambda: self._reset_card("bible_rotation", "Verse rotation")
@@ -2784,25 +3658,36 @@ class SettingsDialog(QDialog):
         )
         self.quote_search = QLineEdit(); self.quote_search.setPlaceholderText("Search verses")
         _set_accessibility(self.quote_search, "Search verse library", "Filter staged verses by their displayed text or reference.")
+        self.quote_search_clear = QPushButton("Clear")
+        self.quote_search_clear.setObjectName("LinkButton")
+        self.quote_search_clear.clicked.connect(self.quote_search.clear)
+        self.quote_search_clear.hide()
+        quote_search_control = QWidget()
+        quote_search_control_layout = QHBoxLayout(quote_search_control)
+        quote_search_control_layout.setContentsMargins(0, 0, 0, 0)
+        quote_search_control_layout.setSpacing(4)
+        quote_search_control_layout.addWidget(self.quote_search, 1)
+        quote_search_control_layout.addWidget(self.quote_search_clear)
         self.quote_count = QLabel(); self.quote_count.setObjectName("PageHelp")
-        search_row = QHBoxLayout()
-        search_row.setContentsMargins(0, 0, 0, 0)
-        search_row.setSpacing(8)
-        search_row.addWidget(self.quote_search, 1)
         self.quote_add = QPushButton("Add verse")
+        self.quote_add.setObjectName("PrimaryButton")
         self.quote_add.clicked.connect(self._add_quote)
         _set_accessibility(self.quote_add, "Add verse", "Add a verse to the library.")
-        search_row.addWidget(self.quote_add)
-        library_card.add_layout(search_row)
-        self.quote_list = QListWidget(); self.quote_list.setObjectName("ManagerList"); self.quote_list.setTextElideMode(Qt.TextElideMode.ElideRight); self.quote_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff); self.quote_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff); _install_settings_row_delegate(self.quote_list)
+        self.quote_toolbar_wrap = QWidget()
+        self.quote_toolbar_grid = QGridLayout(self.quote_toolbar_wrap)
+        self.quote_toolbar_grid.setContentsMargins(0, 0, 0, 0)
+        self.quote_toolbar_grid.setHorizontalSpacing(8)
+        self.quote_toolbar_grid.setVerticalSpacing(8)
+        self.quote_toolbar_fields = [quote_search_control, self.quote_add]
+        self._reflow_quote_toolbar()
+        library_card.add_widget(self.quote_toolbar_wrap)
+        self.quote_model = VerseLibraryModel(self)
+        self.quote_list = VerseLibraryView()
+        self.quote_list.setModel(self.quote_model)
+        self.quote_list.set_menu_callback(self._open_quote_menu_for_model)
         _set_accessibility(self.quote_list, "Verse library", "Choose a staged verse to read, edit, duplicate, delete, or select.")
         library_card.add_widget(self.quote_count)
         library_card.add_widget(self.quote_list, 1)
-        self._quote_render_limit = 100
-        self.quote_load_more = QPushButton("Load more")
-        self.quote_load_more.clicked.connect(self._load_more_quotes)
-        self.quote_load_more.hide()
-        library_card.add_widget(self.quote_load_more)
         self.quote_current_actions = ContextualActionGroup()
         self.quote_use_current = QPushButton("Use this verse")
         self.quote_use_current.setObjectName("PrimaryButton")
@@ -2850,7 +3735,7 @@ class SettingsDialog(QDialog):
     def _build_about_page(self) -> None:
         page, layout, root_form = _page(
             "About & support",
-            "Version, help, privacy, and recovery.",
+            "Version, support, privacy, and backups.",
         )
         layout.removeItem(root_form)
         manifest = _manifest_metadata()
@@ -2866,76 +3751,54 @@ class SettingsDialog(QDialog):
             label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
             return label
 
-        version_card = SettingsCard("Version & compatibility")
+        version_card = SettingsCard("Version and support")
         version_form = version_card.add_form()
         version_form.addRow("Version", QLabel(version))
-        version_form.addRow("Anki compatibility", QLabel("Anki Desktop {}".format(compatibility)))
-        copy_diagnostics = QPushButton("Copy diagnostics")
-        copy_diagnostics.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
-        diagnostics = "{} {} | Anki Desktop {} | schema {}".format(
+        version_form.addRow("Compatibility", QLabel(compatibility))
+        self.copy_diagnostics = QPushButton("Copy diagnostics")
+        self.copy_diagnostics.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
+        diagnostics = "{} {} | {} | schema {}".format(
             product_name,
             version,
             compatibility,
             self.staged.get("schema_version", "Unknown"),
         )
-        copy_feedback = QLabel("")
-        copy_feedback.setObjectName("PageHelp")
-        copy_feedback.setProperty("hdoLiveRegion", "polite")
+        self.copy_diagnostics_timer = QTimer(self.copy_diagnostics)
+        self.copy_diagnostics_timer.setSingleShot(True)
+        self.copy_diagnostics_timer.setInterval(2000)
+        self.copy_diagnostics_timer.timeout.connect(
+            lambda: self.copy_diagnostics.setText("Copy diagnostics")
+        )
 
         def copy_about_diagnostics() -> None:
             QApplication.clipboard().setText(diagnostics)
-            copy_feedback.setText("Diagnostics copied")
+            self.copy_diagnostics.setText("Copied")
+            self.copy_diagnostics_timer.start()
 
-        copy_diagnostics.clicked.connect(copy_about_diagnostics)
-        version_card.add_widget(copy_diagnostics)
-        version_card.add_widget(copy_feedback)
-        help_card = SettingsCard("Help")
-        help_card.add_widget(
-            rich_label(
-                '<a href="{}">Documentation ↗</a>&nbsp;&nbsp;&nbsp;'
-                '<a href="{}">Report an issue ↗</a>'.format(
-                    html_module.escape(PROJECT_URL, quote=True),
-                    html_module.escape(ISSUES_URL, quote=True),
-                )
-            )
-        )
-        # The two lead cards share one visual row. Allow the shorter Help card
-        # to accept the row height instead of leaving a ragged lower edge.
-        for card in (version_card, help_card):
-            card.setSizePolicy(
-                QSizePolicy.Policy.Expanding,
-                QSizePolicy.Policy.Preferred,
-            )
-        top_cards = QGridLayout()
-        top_cards.setContentsMargins(0, 0, 0, 0)
-        top_cards.setHorizontalSpacing(12)
-        top_cards.setVerticalSpacing(12)
-        top_cards.addWidget(version_card, 0, 0)
-        top_cards.addWidget(help_card, 0, 1)
-        top_cards.setColumnStretch(0, 1)
-        top_cards.setColumnStretch(1, 1)
-        layout.addLayout(top_cards)
+        self.copy_diagnostics.clicked.connect(copy_about_diagnostics)
+        support_actions = QWidget()
+        support_actions_layout = QHBoxLayout(support_actions)
+        support_actions_layout.setContentsMargins(0, 0, 0, 0)
+        support_actions_layout.setSpacing(8)
+        support_actions_layout.addWidget(self.copy_diagnostics)
+        support_actions_layout.addWidget(ExternalLinkButton("Documentation", PROJECT_URL))
+        support_actions_layout.addWidget(ExternalLinkButton("Report an issue", ISSUES_URL))
+        support_actions_layout.addStretch()
+        version_card.add_widget(support_actions)
+        self.about_version_card = version_card
+        layout.addWidget(version_card)
 
-        privacy_card = SettingsCard("Privacy & legal")
+        privacy_card = SettingsCard("Privacy and legal")
         privacy_card.setMaximumWidth(880)
         privacy_callout = QLabel(
-            "Your study data stays local. This add-on does not send dashboard data to external services."
+            "Dashboard data stays on this device and is not sent to external services."
         )
         privacy_callout.setObjectName("EmptyState")
         privacy_callout.setWordWrap(True)
         privacy_card.add_widget(privacy_callout)
         def add_about_disclosure(title: str, copy: str) -> None:
-            button = QPushButton("{}  ›".format(title))
-            button.setObjectName("DisclosureButton")
-            button.setCheckable(True)
             detail = rich_label(copy)
-            detail.hide()
-            button.toggled.connect(detail.setVisible)
-            button.toggled.connect(
-                lambda expanded, control=button, label=title: control.setText(
-                    "{}  {}".format(label, "⌄" if expanded else "›")
-                )
-            )
+            button = DisclosureHeader(title, detail)
             privacy_card.add_widget(button)
             privacy_card.add_widget(detail)
 
@@ -2958,16 +3821,16 @@ class SettingsDialog(QDialog):
         recovery_card = SettingsCard("Backup and recovery")
         recovery_card.setMaximumWidth(880)
         recovery = QLabel(
-            "Export edited verse entries before changing versions. For full recovery, back up Anki’s add-on data with Anki closed. Dashboard settings do not change collection cards or review history."
+            "Export verse edits before updating or reinstalling the add-on. For a complete backup, close Anki and back up the add-on data folder. Dashboard settings do not alter cards or review history."
         )
         recovery.setWordWrap(True)
         recovery_card.add_widget(recovery)
-        recovery_export = QPushButton("Export edited verse entries")
+        recovery_export = QPushButton("Export verse edits")
         recovery_export.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         recovery_export.clicked.connect(self._export_quotes)
         _set_accessibility(
             recovery_export,
-            "Export edited verse entries",
+            "Export verse edits",
             "Export the current verse library as JSON.",
         )
         recovery_card.add_widget(recovery_export)
@@ -3011,7 +3874,10 @@ class SettingsDialog(QDialog):
         self.ignore_before.dateChanged.connect(self._settings_changed)
         self.font_family.currentFontChanged.connect(self._font_family_changed)
         self.quote_search.textChanged.connect(self._quote_search_changed)
-        self.quote_list.currentRowChanged.connect(self._update_quote_detail)
+        self.quote_search.textChanged.connect(
+            lambda value: self.quote_search_clear.setVisible(bool(value.strip()))
+        )
+        self.quote_list.selectionModel().currentChanged.connect(self._update_quote_detail)
         self.rotation.connect_changed(self._update_quote_actions)
 
     @staticmethod
@@ -3022,11 +3888,27 @@ class SettingsDialog(QDialog):
     ) -> None:
         while grid.count():
             grid.takeAt(0)
-        widgets = [widget for widget in widgets if not widget.isHidden()]
+        host = grid.parentWidget()
+        visible_widgets: List[QWidget] = []
+        for widget in widgets:
+            # A newly-created QWidget is hidden and parentless until a layout
+            # adopts it. Filtering on isHidden() first left every initial field
+            # parentless. A later setVisible(True) could therefore realize that
+            # field as a temporary top-level native window, which moves macOS
+            # out of Anki's full-screen Space. Mount new fields as children
+            # before showing or filtering them. Already-parented fields retain
+            # any intentional hidden state across subsequent reflows.
+            if widget.parentWidget() is None:
+                if host is None:
+                    continue
+                widget.setParent(host)
+                widget.show()
+            if not widget.isHidden():
+                visible_widgets.append(widget)
         columns = max(1, columns)
-        for index, widget in enumerate(widgets):
+        for index, widget in enumerate(visible_widgets):
             grid.addWidget(widget, index // columns, index % columns)
-        for column in range(2):
+        for column in range(max(4, columns)):
             grid.setColumnStretch(column, 1 if column < columns else 0)
         grid.invalidate()
 
@@ -3034,64 +3916,64 @@ class SettingsDialog(QDialog):
         large_text = self.fontMetrics().lineSpacing() >= 22
         if hasattr(self, "appearance_grid"):
             width = self.appearance_card.width() if hasattr(self, "appearance_card") else 0
-            columns = 1 if large_text or width < 520 else 2
-            self._place_grid_widgets(self.appearance_grid, self.appearance_fields, columns)
+            while self.appearance_grid.count():
+                self.appearance_grid.takeAt(0)
+            host = self.appearance_grid.parentWidget()
+            for field in self.appearance_fields:
+                if field.parentWidget() is None and host is not None:
+                    field.setParent(host)
+                    field.show()
+            if large_text or width < 620:
+                for row, field in enumerate(self.appearance_fields):
+                    self.appearance_grid.addWidget(field, row, 0)
+                self.appearance_grid.setColumnStretch(0, 1)
+                self.appearance_grid.setColumnStretch(1, 0)
+            else:
+                self.appearance_grid.addWidget(self.appearance_fields[0], 0, 0)
+                self.appearance_grid.addWidget(self.appearance_fields[1], 0, 1)
+                self.appearance_grid.addWidget(self.appearance_fields[2], 1, 0, 1, 2)
+                self.appearance_grid.setColumnStretch(0, 2)
+                self.appearance_grid.setColumnStretch(1, 3)
+            self.appearance_grid.invalidate()
         if hasattr(self, "bible_display_grid"):
             width = self.bible_display_card.width()
             columns = 1 if large_text or width < 520 else 2
             self._place_grid_widgets(self.bible_display_grid, self.bible_display_fields, columns)
 
-    def _reflow_heatmap_grid(self) -> None:
-        if not hasattr(self, "heatmap_preset_grid"):
+    def _reflow_event_toolbar(self) -> None:
+        if not hasattr(self, "event_toolbar_grid"):
             return
-        buttons = list(self.heatmap_preset_buttons.values())
-        self._place_grid_widgets(self.heatmap_preset_grid, buttons, 2)
+        large_text = self.fontMetrics().lineSpacing() >= 22
+        width = self.event_surface.width() if hasattr(self, "event_surface") else 0
+        columns = 1 if large_text or width < 560 else 2
+        self._place_grid_widgets(
+            self.event_toolbar_grid,
+            self.event_toolbar_fields,
+            columns,
+        )
 
-    def _update_preset_swatch(self) -> None:
-        name = _combo_value(self.preset, "Sapphire Glass")
-        mode = _combo_value(self.mode, "auto")
-        heatmap_name = self._heatmap_preset_preferences.get(
-            name,
-            DEFAULT_HEATMAP_PRESETS[name],
-        )
-        tokens = resolve_theme(name, mode, self.controller.is_dark(), heatmap_name)
-        samples = [
-            ("canvas", tokens["ui_canvas"], ""),
-            ("surface", tokens["ui_surface_1"], ""),
-            ("accent", tokens["ui_accent"], ""),
-            ("high completion", tokens["heat_complete_5"], ""),
-            ("Reviews Due", tokens["heat_due_bg_3"], tokens["heat_due_mark_3"]),
-        ]
-        squares = " ".join(
-            '<span style="background:{}; border:1px solid {}; border-bottom:{} solid {}; color:{};">&nbsp;&nbsp;&nbsp;&nbsp;</span>'.format(
-                color,
-                tokens["ui_border_default"],
-                "4px" if marker else "1px",
-                marker or tokens["ui_border_default"],
-                color,
-            )
-            for _label, color, marker in samples
-        )
-        self.preset_swatch.setText(squares)
-        self.preset_swatch.setAccessibleDescription(
-            "{} palette: {}.".format(
-                name,
-                "; ".join(
-                    "{} {}{}".format(
-                        label,
-                        color,
-                        " with bottom marker {}".format(marker) if marker else "",
-                    )
-                    for label, color, marker in samples
-                ),
-            )
-        )
+    def _reflow_quote_toolbar(self) -> None:
+        if not hasattr(self, "quote_toolbar_grid"):
+            return
+        for widget in self.quote_toolbar_fields:
+            self.quote_toolbar_grid.removeWidget(widget)
+        width = self.quote_toolbar_wrap.width()
+        compact = self.fontMetrics().lineSpacing() >= 22 or width < 520
+        search, add = self.quote_toolbar_fields
+        if compact:
+            self.quote_toolbar_grid.addWidget(search, 0, 0)
+            self.quote_toolbar_grid.addWidget(add, 1, 0, Qt.AlignmentFlag.AlignLeft)
+        else:
+            self.quote_toolbar_grid.addWidget(search, 0, 0)
+            self.quote_toolbar_grid.addWidget(add, 0, 1, Qt.AlignmentFlag.AlignRight)
+        self.quote_toolbar_grid.setColumnStretch(0, 1)
+        self.quote_toolbar_grid.setColumnStretch(1, 0)
 
     def _dashboard_theme_changed(self, *_args: object) -> None:
         next_theme = _combo_value(self.preset, "Sapphire Glass")
         self._heatmap_theme = next_theme
         self._update_glass_controls()
-        self._refresh_heatmap_preset_cards()
+        self._refresh_heatmap_preset_options()
 
     def _update_glass_controls(self) -> None:
         if not all(hasattr(self, name) for name in ("preset", "opacity_slider", "opacity", "blur_slider", "blur")):
@@ -3112,27 +3994,29 @@ class SettingsDialog(QDialog):
         if preset_name not in HEATMAP_PRESETS[theme_name]:
             preset_name = DEFAULT_HEATMAP_PRESETS[theme_name]
         self._heatmap_preset_preferences[theme_name] = preset_name
-        for name, button in self.heatmap_preset_buttons.items():
-            active = name == preset_name
-            button.setChecked(active)
-            button.setProperty("active", active)
-            indicator = getattr(self, "heatmap_preset_indicators", {}).get(name)
-            if indicator is not None:
-                indicator.setVisible(active)
-            button.style().unpolish(button)
-            button.style().polish(button)
+        if hasattr(self, "heatmap_preset"):
+            index = self.heatmap_preset.findData(preset_name)
+            if index >= 0 and self.heatmap_preset.currentIndex() != index:
+                blocked = self.heatmap_preset.blockSignals(True)
+                self.heatmap_preset.setCurrentIndex(index)
+                self.heatmap_preset.blockSignals(blocked)
         self._settings_changed()
 
-    def _refresh_heatmap_preset_cards(self, *_args: object) -> None:
-        if not hasattr(self, "heatmap_preset_grid"):
+    def _heatmap_preset_changed(self, *_args: object) -> None:
+        if not hasattr(self, "heatmap_preset"):
             return
-        while self.heatmap_preset_grid.count():
-            item = self.heatmap_preset_grid.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
-        self.heatmap_preset_buttons = {}
-        self.heatmap_preset_indicators: Dict[str, QLabel] = {}
+        theme_name = _combo_value(self.preset, "Sapphire Glass")
+        selected = _combo_value(
+            self.heatmap_preset,
+            DEFAULT_HEATMAP_PRESETS[theme_name],
+        )
+        if selected in HEATMAP_PRESETS[theme_name]:
+            self._heatmap_preset_preferences[theme_name] = selected
+        self._settings_changed()
+
+    def _refresh_heatmap_preset_options(self, *_args: object) -> None:
+        if not hasattr(self, "heatmap_preset"):
+            return
         theme_name = _combo_value(self.preset, "Sapphire Glass")
         self._heatmap_theme = theme_name
         selected = self._heatmap_preset_preferences.get(
@@ -3142,53 +4026,13 @@ class SettingsDialog(QDialog):
         if selected not in HEATMAP_PRESETS[theme_name]:
             selected = DEFAULT_HEATMAP_PRESETS[theme_name]
             self._heatmap_preset_preferences[theme_name] = selected
-        requested_mode = _combo_value(self.mode, "auto") if hasattr(self, "mode") else "auto"
-        variant = "dark" if (
-            requested_mode == "dark"
-            or (requested_mode == "auto" and self.controller.is_dark())
-        ) else "light"
-        for preset_name, variants in HEATMAP_PRESETS[theme_name].items():
-            button = QPushButton("")
-            button.setObjectName("HeatmapPresetCard")
-            button.setCheckable(True)
-            button.setChecked(preset_name == selected)
-            button.setProperty("active", preset_name == selected)
-            card_layout = QVBoxLayout(button)
-            card_layout.setContentsMargins(4, 3, 4, 3)
-            card_layout.setSpacing(6)
-            swatches = QHBoxLayout()
-            swatches.setSpacing(2)
-            tokens = variants[variant]
-            for token in ("heat_complete_0", "heat_complete_1", "heat_complete_2", "heat_complete_3", "heat_complete_4", "heat_complete_5"):
-                swatch = QLabel()
-                swatch.setFixedSize(22, 18)
-                swatch.setStyleSheet(
-                    "background: {}; border: 1px solid {}; border-radius: 3px;".format(
-                        tokens[token],
-                        self._hdo_theme_tokens["border"],
-                    )
-                )
-                swatches.addWidget(swatch)
-            swatches.addStretch()
-            selected_indicator = QLabel("✓")
-            selected_indicator.setAccessibleName("Selected")
-            selected_indicator.setVisible(preset_name == selected)
-            swatches.addWidget(selected_indicator)
-            button.clicked.connect(
-                lambda _checked=False, name=preset_name: self._select_heatmap_preset(name)
-            )
-            _set_accessibility(
-                button,
-                "{} heat map colors".format(preset_name),
-                "Select the {} heatmap palette for {}.".format(preset_name, theme_name),
-            )
-            card_layout.addLayout(swatches)
-            name_label = QLabel(preset_name)
-            name_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-            card_layout.addWidget(name_label)
-            self.heatmap_preset_buttons[preset_name] = button
-            self.heatmap_preset_indicators[preset_name] = selected_indicator
-        self._reflow_heatmap_grid()
+        blocked = self.heatmap_preset.blockSignals(True)
+        self.heatmap_preset.clear()
+        for preset_name in HEATMAP_PRESETS[theme_name]:
+            self.heatmap_preset.addItem(preset_name, preset_name)
+        index = self.heatmap_preset.findData(selected)
+        self.heatmap_preset.setCurrentIndex(max(0, index))
+        self.heatmap_preset.blockSignals(blocked)
 
     def _update_color_swatch(self) -> None:
         if not hasattr(self, "font_color_swatch"):
@@ -3213,19 +4057,25 @@ class SettingsDialog(QDialog):
         )
         if hasattr(self, "font_color_warning"):
             if self._font_color_invalid and custom_enabled:
+                self.font_color_warning.setProperty("state", "error")
                 self.font_color_warning.setVisible(True)
                 self.font_color_warning.setText(
-                    "Enter a color in #RRGGBB format before saving."
+                    "Enter a valid #RRGGBB color."
                 )
             else:
+                self.font_color_warning.setProperty("state", "warning")
                 self.font_color_warning.setVisible(custom_enabled and ratio < 4.5)
                 self.font_color_warning.setText(
-                    "Low contrast ({:.1f}:1) against the current verse card. Choose a darker or lighter color, or use theme-aware text color.".format(
+                    "Low contrast against the current verse card ({:.1f}:1). Choose a lighter or darker color.".format(
                         ratio
                     )
                     if custom_enabled and ratio < 4.5
                     else ""
                 )
+            style = self.font_color_warning.style()
+            style.unpolish(self.font_color_warning)
+            style.polish(self.font_color_warning)
+            self.font_color_warning.update()
         self.font_color_swatch.setAccessibleDescription(
             "Current custom verse color {}. Contrast against the verse card is {:.1f} to 1.".format(
                 self.font_color_value.upper(), ratio
@@ -3238,27 +4088,25 @@ class SettingsDialog(QDialog):
         stylesheet = _settings_style(config, self.controller.is_dark())
         if self.styleSheet() != stylesheet:
             self.setStyleSheet(stylesheet)
-        self._update_preset_swatch()
-        self._refresh_heatmap_preset_cards()
+        _apply_role_fonts(self)
         self._update_color_swatch()
 
     def _update_forecast_range_visibility(self, *_args: object) -> None:
-        """Expose the forecast range only while its parent feature is on."""
+        """Keep the forecast range stable while reflecting its dependency."""
 
-        visible = self.show_forecast.isChecked()
         self.forecast_days.setEnabled(self.show_forecast.isChecked())
-        self.forecast_days.setVisible(visible)
-        self.forecast_range_label.setVisible(visible)
+        self.forecast_days.setVisible(True)
+        self.forecast_range_label.setVisible(True)
 
     def _update_rotation_help(self, *_args: object) -> None:
         if not hasattr(self, "rotation_help"):
             return
         self.rotation_help.setText(
             {
-                "daily": "Changes once each day.",
-                "every render": "May change whenever the dashboard reloads.",
-                "manual": "Uses the selected verse until you change it.",
-            }.get(_combo_value(self.rotation, "daily"), "Changes once each day.")
+                "daily": "Selects one new verse each day.",
+                "every render": "Selects a new verse when the dashboard refreshes.",
+                "manual": "Changes only when another verse is selected.",
+            }.get(_combo_value(self.rotation, "daily"), "Selects one new verse each day.")
         )
 
     def _update_history_range_visibility(self, *_args: object) -> None:
@@ -3316,40 +4164,61 @@ class SettingsDialog(QDialog):
             self.save_shortcut.setEnabled(dirty and not self._font_color_invalid)
         if hasattr(self, "revert_button"):
             self.revert_button.setVisible(dirty)
-        if hasattr(self, "save_error"):
-            if self._font_color_invalid:
-                self.save_error.setText("Enter a valid #RRGGBB color.")
-                self.save_error.show()
-            elif self._last_save_error:
-                self.save_error.setText(self._last_save_error)
-                self.save_error.show()
-            else:
-                self.save_error.hide()
+        if self._last_save_error:
+            self.footer.set_error(
+                self._last_save_error,
+                self._last_save_error_detail,
+            )
+        else:
+            self.footer.set_error()
         if dirty:
             if self._font_color_invalid:
                 count = max(1, self.draft.changed_leaf_count)
+                self._set_status("validation-error", "Fix 1 error to save")
             else:
                 count = self.draft.changed_leaf_count + (1 if manual_quote_dirty else 0)
-            self._set_status(
-                "dirty",
-                "● {} unsaved change{}".format(count, "" if count == 1 else "s"),
-            )
+                self._set_status(
+                    "dirty",
+                    "● {} unsaved change{}".format(count, "" if count == 1 else "s"),
+                )
         else:
-            self.dirty_badge.hide()
+            self._set_status("clean", "")
+        self._update_reset_visibility()
 
     def _set_status(self, state: str, text: str) -> None:
-        self.dirty_badge.setProperty("state", state)
-        self.dirty_badge.setText(text)
-        self.dirty_badge.setAccessibleDescription(text)
-        self.dirty_badge.show()
-        self.dirty_badge.style().unpolish(self.dirty_badge)
-        self.dirty_badge.style().polish(self.dirty_badge)
+        self.status_label.setProperty("state", state)
+        self.status_label.setText(text)
+        self.status_label.setAccessibleDescription(text)
+        # QWidget.isVisible() is false while an otherwise-visible dialog is still
+        # hidden during setup.  Use the panel's explicit hidden state so a save
+        # error and the dirty indicator cannot both become visible on first show.
+        self.status_label.setVisible(bool(text) and self.footer.error_panel.isHidden())
+        self.status_label.style().unpolish(self.status_label)
+        self.status_label.style().polish(self.status_label)
+        self._schedule_settings_footer_clearance()
 
     def _clear_saved_status(self) -> None:
         """Clear transient save feedback while this dialog still owns the timer."""
 
-        if self.dirty_badge.property("state") == "saved":
-            self.dirty_badge.hide()
+        if self.status_label.property("state") == "saved":
+            self._set_status("clean", "")
+
+    def _update_reset_visibility(self) -> None:
+        scoped_cards = (
+            (getattr(self, "appearance_card", None), "appearance"),
+            (getattr(self, "dashboard_sections_card", None), "dashboard_sections"),
+            (getattr(self, "study_metrics_card", None), "study_metrics"),
+            (getattr(self, "calendar_display_card", None), "calendar_display"),
+            (getattr(self, "calendar_range_card", None), "calendar_range"),
+            (getattr(self, "local_data_card", None), "local_data"),
+            (getattr(self, "bible_display_card", None), "bible_appearance"),
+            (getattr(self, "bible_rotation_card", None), "bible_rotation"),
+        )
+        for card, scope in scoped_cards:
+            if isinstance(card, SettingsCard) and card.reset_button is not None:
+                card.reset_button.setVisible(
+                    self.draft.scope_differs_from_defaults(scope)
+                )
 
     def _revert_changes(self) -> None:
         if self._saving:
@@ -3459,7 +4328,7 @@ class SettingsDialog(QDialog):
             self.exclude_reschedules.setChecked(bool(heatmap["exclude_manual_reschedules"]))
             self.exclude_deleted.setChecked(bool(heatmap["exclude_deleted_cards"]))
             self._apply_deck_exclusions(heatmap["excluded_deck_ids"])
-            self._refresh_heatmap_preset_cards()
+            self._refresh_heatmap_preset_options()
             self._set_combo_data(self.event_sort, config["events"]["sort"])
             bible = config["bible"]
             family_name = str(bible["font_family"]).split(",", 1)[0].strip().strip('"\'')
@@ -3482,7 +4351,6 @@ class SettingsDialog(QDialog):
             self._update_deck_exclusion_summary()
         finally:
             self._building = previous_building
-        self._update_preset_swatch()
         self._update_color_swatch()
 
     def _walk_deck_items(self) -> List[QTreeWidgetItem]:
@@ -3827,8 +4695,7 @@ class SettingsDialog(QDialog):
             self._settings_changed()
         else:
             self._font_color_invalid = True
-            self.font_color_warning.setVisible(True)
-            self.font_color_warning.setText("Enter a color in #RRGGBB format before saving.")
+            self._update_color_swatch()
             self._update_dirty_state()
 
     def _font_color_text_changed(self, value: str) -> None:
@@ -3836,6 +4703,7 @@ class SettingsDialog(QDialog):
             return
         if not re.fullmatch(r"#[0-9A-Fa-f]{6}", value.strip()):
             self._font_color_invalid = self.theme_color.value("theme") == "custom"
+            self._update_color_swatch()
             self._update_dirty_state()
             return
         self._font_color_invalid = False
@@ -3979,17 +4847,25 @@ class SettingsDialog(QDialog):
                 _display_date(event["date"]),
                 " · {}".format(status) if status else "",
             )
-            row_widget = EventRowWidget(tree, item, str(event["name"]), metadata)
+            row_widget = EventRowWidget(
+                tree,
+                item,
+                str(event["name"]),
+                metadata,
+                lambda event_key=event_id, is_archived=bool(event.get("archived")): self._invoke_event_action(
+                    event_key, is_archived, "edit"
+                ),
+            )
             item.setSizeHint(
                 0,
-                QSize(max(1, tree.viewport().width()), max(56, (2 * tree.fontMetrics().lineSpacing()) + 20)),
+                QSize(max(1, tree.viewport().width()), 54),
             )
             tree.setItemWidget(item, 0, row_widget)
             self._attach_event_menu(tree, item, row_widget, event_id, bool(event.get("archived")))
         _apply_view_row_targets(self.active_events)
         _apply_view_row_targets(self.archived_events)
-        self.event_tabs.setTabText(0, "Active ({})".format(self.active_events.topLevelItemCount()))
-        self.event_tabs.setTabText(1, "Archived ({})".format(self.archived_events.topLevelItemCount()))
+        self.event_tabs.setTabText(0, "Active  {}".format(self.active_events.topLevelItemCount()))
+        self.event_tabs.setTabText(1, "Archived  {}".format(self.archived_events.topLevelItemCount()))
         if hasattr(self, "event_toolbar_wrap"):
             self.event_toolbar_wrap.setVisible(bool(self.staged["events"]["items"]))
         if select_event_id is not None:
@@ -4008,6 +4884,7 @@ class SettingsDialog(QDialog):
         archived: bool,
     ) -> None:
         button = row_widget.overflow
+        button.setToolTip("Event actions")
         _set_accessibility(
             button,
             "Actions for {}".format(item.data(0, EVENT_NAME_ROLE)),
@@ -4061,33 +4938,39 @@ class SettingsDialog(QDialog):
         row_count = current_tree.topLevelItemCount()
         current_tree.setVisible(row_count > 0)
         tab_height = self.event_tabs.tabBar().sizeHint().height()
-        table_height = current_tree.height() if row_count else 2
-        self.event_tabs.setMaximumHeight(tab_height + table_height)
+        self.event_tabs.setMinimumHeight(tab_height + (260 if row_count else 2))
+        self.event_tabs.setMaximumHeight(16777215)
+        query = self.event_search.text().strip()
+        if query:
+            self.event_result_summary.setText(
+                "{} matching event{}".format(row_count, "" if row_count == 1 else "s")
+            )
+        else:
+            self.event_result_summary.clear()
         if row_count == 0:
             kind = "archived" if archived else "active"
-            if self.event_search.text().strip():
-                self.event_empty_title.setText("No matching events")
+            if query:
+                self.event_empty_title.setText("No events match “{}”.".format(query))
                 self.event_empty_copy.setText(
-                    "No {} events match this search. Clear the search to see all events.".format(kind)
+                    "Clear the search or try another term."
                 )
-                self.event_empty_add.hide()
+                self.event_empty_clear.show()
             elif not self.staged["events"]["items"]:
                 self.event_empty_title.setText("No events yet")
                 self.event_empty_copy.setText(
-                    "Add an event to place a marker on the calendar."
+                    "Add an event to show it on the calendar."
                 )
-                self.event_empty_add.show()
+                self.event_empty_clear.hide()
             else:
                 self.event_empty_title.setText("No {} events".format(kind))
                 self.event_empty_copy.setText(
                     "{} events will appear here.".format(kind.capitalize())
                 )
-                self.event_empty_add.hide()
+                self.event_empty_clear.hide()
             self.event_empty_state.show()
         else:
             self.event_empty_state.hide()
-        empty_library = not bool(self.staged["events"]["items"])
-        self.event_add.setVisible(not empty_library)
+        self.event_add.show()
         self._event_selection_changed()
 
     def _select_event_date(self, selected_date: str) -> None:
@@ -4155,7 +5038,7 @@ class SettingsDialog(QDialog):
         if QMessageBox.question(
             self,
             "Delete event?",
-            "Delete ‘{}’? This destructive change remains staged until you choose Save changes.".format(event["name"]),
+            "Delete ‘{}’? This change is applied when you save.".format(event["name"]),
         ) != QMessageBox.StandardButton.Yes:
             return
         name = event["name"]
@@ -4168,24 +5051,13 @@ class SettingsDialog(QDialog):
         self.event_action_feedback.setAccessibleDescription(message)
 
     def _selected_quote_index(self) -> Optional[int]:
-        item = self.quote_list.currentItem()
-        value = item.data(Qt.ItemDataRole.UserRole) if item else None
-        return int(value) if isinstance(value, int) and 0 <= value < len(self.quotes) else None
+        value = self.quote_model.source_index(self.quote_list.currentIndex())
+        return value if value is not None and 0 <= value < len(self.quotes) else None
 
     def _update_quote_detail(self, *_args: object) -> None:
-        index = self._selected_quote_index()
-        for row in range(self.quote_list.count()):
-            item = self.quote_list.item(row)
-            widget = self.quote_list.itemWidget(item)
-            if isinstance(widget, VerseRowWidget):
-                widget.set_selected(item.data(Qt.ItemDataRole.UserRole) == index)
+        self.quote_list.viewport().update()
 
     def _quote_search_changed(self, *_args: object) -> None:
-        self._quote_render_limit = 100
-        self._refresh_quote_list()
-
-    def _load_more_quotes(self) -> None:
-        self._quote_render_limit += 100
         self._refresh_quote_list()
 
     def _refresh_quote_list(self, *_args: object) -> None:
@@ -4194,74 +5066,43 @@ class SettingsDialog(QDialog):
             if not self._building:
                 self._update_dirty_state()
         selected = self._selected_quote_index()
-        needle = self.quote_search.text().strip().casefold() if hasattr(self, "quote_search") else ""
-        self.quote_list.clear()
-        selected_row = -1
-        matches: List[tuple[int, str, str, str]] = []
-        for index, quote in enumerate(self.quotes):
-            if needle and needle not in quote.casefold(): continue
-            body_value, reference_value = split_quote_reference(quote)
-            body = html_module.unescape(re.sub(r"<[^>]+>", "", body_value)).strip()
-            reference = html_module.unescape(re.sub(r"<[^>]+>", "", reference_value)).strip()
-            if not reference:
-                reference = "Verse"
-            excerpt = body.replace("\n", " ").strip()
-            plain = "{} — {}".format(reference, excerpt)
-            matches.append((index, reference, excerpt, plain))
-        for index, reference, excerpt, plain in matches[:self._quote_render_limit]:
-            item = SettingsListRow("", index, plain)
-            item.setSizeHint(
-                QSize(
-                    max(1, self.quote_list.viewport().width()),
-                    max(56, (2 * self.quote_list.fontMetrics().lineSpacing()) + 20),
-                )
-            )
-            self.quote_list.addItem(item)
-            row_widget = VerseRowWidget(
-                self.quote_list,
-                item,
-                reference,
-                excerpt[:160] + ("…" if len(excerpt) > 160 else ""),
-                self.quotes[index] == self._saved_current_quote,
-            )
-            self.quote_list.setItemWidget(item, row_widget)
-            self._attach_quote_menu(item, row_widget)
-            if index == selected: selected_row = self.quote_list.count() - 1
-        _apply_view_row_targets(self.quote_list)
-        if selected_row >= 0: self.quote_list.setCurrentRow(selected_row)
-        elif self.quote_list.count(): self.quote_list.setCurrentRow(0)
-        rendered = self.quote_list.count()
-        total = len(matches)
-        self._fit_quote_list()
-        self.quote_count.setVisible(bool(needle) or rendered < total)
-        self.quote_count.setText(
-            "Showing {} of {} matching verses".format(rendered, total)
-            if needle
-            else "Showing {} of {} verses".format(rendered, total)
+        needle = self.quote_search.text().strip() if hasattr(self, "quote_search") else ""
+        self.quote_model.set_source(
+            self.quotes,
+            needle,
+            self._saved_current_quote,
+            self.pending_manual_quote or "",
         )
-        self.quote_load_more.setVisible(rendered < total)
+        target = self.quote_model.model_index_for_source(selected)
+        if not target.isValid() and self.quote_model.rowCount() > 0:
+            target = self.quote_model.index(0, 0)
+        self.quote_list.setCurrentIndex(target)
+        total = self.quote_model.matching_count
+        self.quote_count.setText(
+            "{} matching verse{}".format(total, "" if total == 1 else "s")
+            if needle
+            else "{} verses".format(len(self.quotes))
+        )
         self._update_quote_detail()
         self._update_quote_actions()
         self._settings_changed()
 
     def _fit_quote_list(self) -> None:
-        row_height = max(56, (2 * self.quote_list.fontMetrics().lineSpacing()) + 20)
-        self.quote_list.setFixedHeight(max(2, self.quote_list.count() * row_height + 8))
-
-    def _attach_quote_menu(
-        self,
-        item: QListWidgetItem,
-        row_widget: VerseRowWidget,
-    ) -> None:
-        index = item.data(Qt.ItemDataRole.UserRole)
-        _set_accessibility(
-            row_widget.overflow,
-            "Verse actions",
-            "Edit, duplicate, select, or delete this verse.",
+        self.quote_list.setMinimumHeight(260)
+        self.quote_list.setMaximumHeight(16777215)
+        self.quote_list.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding,
         )
 
+    def _open_quote_menu_for_model(
+        self,
+        index: QModelIndex,
+        global_point: QPoint,
+    ) -> None:
+        self.quote_list.setCurrentIndex(index)
+
         def invoke(action: str) -> None:
-            self.quote_list.setCurrentItem(item)
             if action == "current":
                 self._stage_selected_manual_quote()
             elif action == "edit":
@@ -4271,22 +5112,19 @@ class SettingsDialog(QDialog):
             elif action == "delete":
                 self._delete_quote()
 
-        def open_menu() -> None:
-            self.quote_list.setCurrentItem(item)
-            menu = QMenu(row_widget.overflow)
-            current_action = menu.addAction("Use as current")
-            current_action.setEnabled(_combo_value(self.rotation, "daily") == "manual")
-            edit_action = menu.addAction("Edit")
-            duplicate_action = menu.addAction("Duplicate")
-            menu.addSeparator()
-            delete_action = menu.addAction("Delete")
-            current_action.triggered.connect(lambda: invoke("current"))
-            edit_action.triggered.connect(lambda: invoke("edit"))
-            duplicate_action.triggered.connect(lambda: invoke("duplicate"))
-            delete_action.triggered.connect(lambda: invoke("delete"))
-            menu.exec(row_widget.overflow.mapToGlobal(QPoint(0, row_widget.overflow.height())))
-
-        row_widget.overflow.clicked.connect(open_menu)
+        menu = QMenu(self.quote_list)
+        menu.setAccessibleName("Verse actions")
+        current_action = menu.addAction("Use as current")
+        current_action.setEnabled(_combo_value(self.rotation, "daily") == "manual")
+        edit_action = menu.addAction("Edit")
+        duplicate_action = menu.addAction("Duplicate")
+        menu.addSeparator()
+        delete_action = menu.addAction("Delete")
+        current_action.triggered.connect(lambda: invoke("current"))
+        edit_action.triggered.connect(lambda: invoke("edit"))
+        duplicate_action.triggered.connect(lambda: invoke("duplicate"))
+        delete_action.triggered.connect(lambda: invoke("delete"))
+        menu.exec(global_point)
 
     def _update_quote_actions(self) -> None:
         selected = self._selected_quote_index() is not None
@@ -4298,7 +5136,17 @@ class SettingsDialog(QDialog):
         self.quote_export.setEnabled(bool(self.quotes))
         manual = _combo_value(self.rotation, "daily") == "manual"
         if not manual and self.pending_manual_quote is not None:
+            selected_index = self._selected_quote_index()
             self.pending_manual_quote = None
+            self.quote_model.set_source(
+                self.quotes,
+                self.quote_search.text().strip(),
+                self._saved_current_quote,
+                "",
+            )
+            self.quote_list.setCurrentIndex(
+                self.quote_model.model_index_for_source(selected_index)
+            )
             if not self._building:
                 self._update_dirty_state()
         self.quote_use_current.setEnabled(selected and manual)
@@ -4319,9 +5167,7 @@ class SettingsDialog(QDialog):
         self.pending_manual_quote = (
             None if selected_quote == self._saved_current_quote else selected_quote
         )
-        self._update_quote_actions()
-        self._update_quote_detail()
-        self._sync_draft()
+        self._refresh_quote_list()
 
     def _add_quote(self) -> None:
         dialog = TextEditDialog("Add Bible verse", "", self)
@@ -4347,8 +5193,8 @@ class SettingsDialog(QDialog):
         if len(self.quotes) <= 1: QMessageBox.warning(self, "Verse required", "Keep at least one Bible verse in the library."); return
         if QMessageBox.question(
             self,
-            "Stage verse deletion?",
-            "Remove the selected verse from the staged library? The deletion occurs only after you choose Save changes; Cancel keeps the saved verse.",
+            "Delete verse?",
+            "Remove the selected verse? This change is applied when you save.",
         ) == QMessageBox.StandardButton.Yes:
             self.quotes.pop(index)
             self._refresh_quote_list()
@@ -4400,9 +5246,7 @@ class SettingsDialog(QDialog):
             return
         self._sync_draft()
         if self._font_color_invalid:
-            self._last_save_error = "Enter a valid #RRGGBB color."
             self._update_dirty_state()
-            self.font_color.setFocus(Qt.FocusReason.OtherFocusReason)
             return
         manual_quote_dirty = (
             self.pending_manual_quote is not None
@@ -4411,13 +5255,18 @@ class SettingsDialog(QDialog):
         if not self.draft.dirty and not manual_quote_dirty:
             return
         self._last_save_error = ""
+        self._last_save_error_detail = ""
+        self.footer.set_error()
         self._saving = True
         self._set_status("saving", "Saving…")
         if self.save_button is not None:
+            self.save_button.setText("Saving…")
             self.save_button.setEnabled(False)
         if self.close_button is not None:
             self.close_button.setEnabled(False)
         self.save_shortcut.setEnabled(False)
+        self.close_shortcut.setEnabled(False)
+        self.escape_shortcut.setEnabled(False)
         original_baseline = deepcopy(self.draft.baseline)
         original_values = deepcopy(self.draft.values)
         latest = self._latest_stored_config()
@@ -4426,121 +5275,215 @@ class SettingsDialog(QDialog):
             names = "\n".join("• {}".format(conflict.label) for conflict in conflicts[:6])
             if len(conflicts) > 6:
                 names += "\n• …and {} more".format(len(conflicts) - 6)
-            message = QMessageBox(self)
-            message.setIcon(QMessageBox.Icon.Warning)
-            message.setWindowTitle("Settings changed elsewhere")
-            message.setText("Some settings changed here and outside this editor.")
-            message.setInformativeText(
-                "Choose which value to use for these conflicts:\n\n{}\n\nUntouched external changes were merged automatically.".format(
-                    names
-                )
+            preferred_verse = self.pending_manual_quote
+            self._show_prompt(
+                "Settings changed elsewhere",
+                "Some settings changed here and outside this editor. Choose which value to use for these conflicts:\n\n{}\n\nUntouched external changes were merged automatically.".format(names),
+                [
+                    (
+                        "Reload latest",
+                        "secondary",
+                        lambda: self._reload_after_conflict(latest),
+                    ),
+                    (
+                        "Keep my changes",
+                        "primary",
+                        lambda: self._commit_save(
+                            preferred_verse,
+                            original_baseline,
+                            original_values,
+                        ),
+                    ),
+                    (
+                        "Cancel",
+                        "secondary",
+                        lambda: self._cancel_conflict(original_baseline, original_values),
+                    ),
+                ],
+                lambda: self._cancel_conflict(original_baseline, original_values),
             )
-            reload_button = message.addButton("Reload latest", QMessageBox.ButtonRole.ResetRole)
-            keep_button = message.addButton(
-                "Keep my staged value", QMessageBox.ButtonRole.AcceptRole
-            )
-            message.addButton(QMessageBox.StandardButton.Cancel)
-            message.exec()
-            clicked = message.clickedButton()
-            if clicked is reload_button:
-                self.draft.replace_all(latest)
-                self.staged = deepcopy(self.draft.values)
-                self.quotes = list(self.staged["bible"]["quotes"])
-                self._apply_config_to_widgets(self.staged)
-                self._update_dependencies()
-                self._update_dirty_state()
-                self._apply_theme()
-                self._saving = False
-                if self.close_button is not None:
-                    self.close_button.setEnabled(True)
-                self.save_shortcut.setEnabled(True)
-                self._update_dirty_state()
-                return
-            if clicked is not keep_button:
-                self.draft.baseline = original_baseline
-                self.draft.values = original_values
-                self.staged = deepcopy(original_values)
-                self._saving = False
-                if self.close_button is not None:
-                    self.close_button.setEnabled(True)
-                self.save_shortcut.setEnabled(True)
-                self._update_dirty_state()
-                return
-        preferred_verse = self.pending_manual_quote
+            return
+        self._commit_save(
+            self.pending_manual_quote,
+            original_baseline,
+            original_values,
+        )
+
+    def _reload_after_conflict(self, latest: Mapping[str, Any]) -> None:
+        self.draft.replace_all(latest)
+        self.staged = deepcopy(self.draft.values)
+        self.quotes = list(self.staged["bible"]["quotes"])
+        self._apply_config_to_widgets(self.staged)
+        self._update_dependencies()
+        self._apply_theme()
+        self._finish_saving()
+
+    def _cancel_conflict(
+        self,
+        original_baseline: Mapping[str, Any],
+        original_values: Mapping[str, Any],
+    ) -> None:
+        self.draft.baseline = deepcopy(dict(original_baseline))
+        self.draft.values = deepcopy(dict(original_values))
+        self.staged = deepcopy(self.draft.values)
+        self._finish_saving()
+
+    def _finish_saving(self) -> None:
+        self._saving = False
+        if self.save_button is not None:
+            self.save_button.setText("Save changes")
+        if self.close_button is not None:
+            self.close_button.setEnabled(True)
+        self.save_shortcut.setEnabled(True)
+        self.close_shortcut.setEnabled(True)
+        self.escape_shortcut.setEnabled(True)
+        self._update_dirty_state()
+
+    def _commit_save(
+        self,
+        preferred_verse: Optional[str],
+        failure_baseline: Optional[Mapping[str, Any]] = None,
+        failure_values: Optional[Mapping[str, Any]] = None,
+    ) -> None:
         try:
             self.controller.save_config(
                 self.draft.values,
                 preferred_verse=preferred_verse,
             )
         except Exception as exc:
-            self._saving = False
-            if self.close_button is not None:
-                self.close_button.setEnabled(True)
+            if failure_baseline is not None and failure_values is not None:
+                self.draft.baseline = deepcopy(dict(failure_baseline))
+                self.draft.values = deepcopy(dict(failure_values))
+                self.staged = deepcopy(self.draft.values)
+                self.quotes = list(self.staged["bible"]["quotes"])
             detail = str(exc).strip() or "The configuration could not be written."
-            self._last_save_error = "Could not save changes: {}".format(detail)
-            if self.save_button is not None:
-                self.save_button.setEnabled(True)
-            self.save_shortcut.setEnabled(True)
-            self._update_dirty_state()
+            self._last_save_error = (
+                "Save failed. Your changes are still available."
+            )
+            self._last_save_error_detail = detail
+            self._finish_saving()
             return
         if preferred_verse is not None:
             self._saved_current_quote = preferred_verse
         self.pending_manual_quote = None
         self._last_save_error = ""
+        self._last_save_error_detail = ""
         latest_saved = getattr(self.controller, "config", self.draft.values)
         self.draft.replace_all(latest_saved)
         self.staged = deepcopy(self.draft.values)
         self._staged_new_event_ids.clear()
         self._staged_edited_event_ids.clear()
         self._staged_archived_event_ids.clear()
-        self._saving = False
         self._refresh_event_lists()
         self._refresh_quote_list()
-        if self.close_button is not None:
-            self.close_button.setEnabled(True)
-        self._update_dirty_state()
+        self._finish_saving()
+        self.footer.set_error()
         self._set_status("saved", "✓ Saved")
         self.saved_status_timer.start()
 
-    def _confirm_discard(self) -> bool:
-        if self._saving:
-            return False
+    def _has_unsaved_changes(self) -> bool:
         self._sync_draft()
-        if (
-            not self.draft.dirty
-            and (
-                self.pending_manual_quote is None
-                or self.pending_manual_quote == self._saved_current_quote
+        return bool(
+            self.draft.dirty
+            or (
+                self.pending_manual_quote is not None
+                and self.pending_manual_quote != self._saved_current_quote
             )
-            and not self._font_color_invalid
-        ):
-            return True
-        message = QMessageBox(self)
-        message.setIcon(QMessageBox.Icon.Warning)
-        message.setWindowTitle("Discard unsaved changes?")
-        message.setText("Your changes have not been saved.")
-        keep_button = message.addButton("Keep editing", QMessageBox.ButtonRole.RejectRole)
-        discard_button = message.addButton("Discard", QMessageBox.ButtonRole.DestructiveRole)
-        message.setDefaultButton(keep_button)
-        message.exec()
-        return message.clickedButton() is discard_button
+            or self._font_color_invalid
+        )
+
+    def _show_prompt(
+        self,
+        title: str,
+        message: str,
+        actions: List[tuple[str, str, Callable[[], None]]],
+        dismiss: Callable[[], None],
+    ) -> None:
+        if self._active_prompt is not None:
+            return
+        self.escape_shortcut.setEnabled(False)
+        prompt = SettingsPromptPage(
+            self._content_stack,
+            self,
+            title,
+            message,
+            actions,
+            dismiss,
+        )
+        _apply_role_fonts(prompt)
+        _apply_control_targets(prompt)
+        self._active_prompt = prompt
+        self._content_stack.addWidget(prompt)
+        self._content_stack.setCurrentWidget(prompt)
+
+    def _show_save_error_details(self) -> None:
+        details = self.footer.details_text.text().strip()
+        if not details:
+            return
+        self._show_prompt(
+            "Save error details",
+            details,
+            [("Close", "primary", lambda: None)],
+            lambda: None,
+        )
+
+    def _finish_prompt(
+        self,
+        prompt: SettingsPromptPage,
+        callback: Optional[Callable[[], None]],
+    ) -> None:
+        if self._active_prompt is not prompt:
+            return
+        self._active_prompt = None
+        self._content_stack.setCurrentWidget(self.settings_shell)
+        self._content_stack.removeWidget(prompt)
+        prompt.deleteLater()
+        self.escape_shortcut.setEnabled(not self._saving)
+        if callback is not None:
+            callback()
+
+    def request_close(self) -> None:
+        if self._saving or self._active_prompt is not None:
+            return
+        if not self._has_unsaved_changes():
+            self._close_dialog()
+            return
+        self._show_prompt(
+            "Discard unsaved changes?",
+            "Your changes have not been saved.",
+            [
+                ("Keep editing", "primary", lambda: None),
+                ("Discard and close", "danger", self._close_dialog),
+            ],
+            lambda: None,
+        )
+
+    def _close_dialog(self) -> None:
+        self._persist_window_geometry()
+        self._allow_close = True
+        super().reject()
 
     def reject(self) -> None:
-        if self._saving:
-            return
-        if self._allow_close or self._confirm_discard():
-            self._allow_close = True
+        if self._allow_close:
             super().reject()
+            return
+        self.request_close()
 
     def closeEvent(self, event: Any) -> None:
-        if self._saving:
-            event.ignore()
-            return
-        if self._allow_close or self._confirm_discard():
-            self._allow_close = True
+        if self._allow_close:
+            self._persist_window_geometry()
             super().closeEvent(event)
-        else:
-            event.ignore()
+            return
+        event.ignore()
+        self.request_close()
+
+    def force_close(self) -> None:
+        if self._active_prompt is not None:
+            self._active_prompt.dismiss_without_callback()
+            self._active_prompt = None
+        self._saving = False
+        self._close_dialog()
+
 
 def _object_name(menu: Any) -> str:
     getter = getattr(menu, "objectName", None)
@@ -4578,16 +5521,18 @@ def _caleb_menu(menu_bar: Any) -> Any:
 
 
 def install_settings_menu(controller: Any) -> None:
-    existing = getattr(mw, "_home_dashboard_overhaul_settings_action", None)
-    if existing is not None: return
     menu_bar = getattr(getattr(mw, "form", None), "menubar", None)
     if menu_bar is None:
         getter = getattr(mw, "menuBar", None); menu_bar = getter() if callable(getter) else None
     if menu_bar is None: return
     submenu = _caleb_menu(menu_bar)
+    existing = getattr(mw, "_home_dashboard_overhaul_settings_action", None)
+    if existing is not None: return
     for action in _actions(submenu):
         text = action.text() if callable(getattr(action, "text", None)) else ""
-        if text == ACTION_TEXT: mw._home_dashboard_overhaul_settings_action = action; return
+        if text == ACTION_TEXT:
+            mw._home_dashboard_overhaul_settings_action = action
+            return
     action = QAction(ACTION_TEXT, mw)
     action.triggered.connect(controller.open_settings)
     submenu.addAction(action)

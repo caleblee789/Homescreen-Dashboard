@@ -25,6 +25,20 @@ PLAN_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 OUTPUT_DIRECTORY_RE = re.compile(r"^[a-z0-9][a-z0-9.-]*$")
 STAGES = ("initial", "restart")
 COMPONENTS = ("production", "settings")
+SEMANTIC_CAPTURE_FIELDS = (
+    "anki_theme",
+    "host_platform",
+    "os_scale_percent",
+    "dpr_class",
+)
+REQUIRED_NATIVE_PLATFORM_PROFILES = (
+    ("windows", 100, "dpr-1"),
+    ("windows", 125, "native"),
+    ("windows", 150, "native"),
+    ("linux", 100, "dpr-1"),
+    ("linux", 150, "native"),
+    ("macos", 100, "retina"),
+)
 
 
 class CapturePlanError(ValueError):
@@ -260,6 +274,16 @@ class CapturePlan:
             _require(bool(CASE_ID_RE.fullmatch(case_id)), "invalid capture id: {}".format(case_id))
             _require(case.get("stage") in STAGES, "{} has an invalid stage".format(case_id))
             _require(case.get("component") in COMPONENTS, "{} has an invalid component".format(case_id))
+            for field in SEMANTIC_CAPTURE_FIELDS:
+                _require(
+                    field in case and case[field] not in (None, ""),
+                    "{} has no semantic {} field".format(case_id, field),
+                )
+            _require(
+                isinstance(case.get("os_scale_percent"), int)
+                and int(case["os_scale_percent"]) > 0,
+                "{} has an invalid OS scale".format(case_id),
+            )
             if case.get("component") == "production":
                 try:
                     date.fromisoformat(str(case.get("selected", "")))
@@ -271,6 +295,28 @@ class CapturePlan:
             _require(group in self._group_specs, "{} has an unknown sheet group: {}".format(case_id, group))
             case_ids.append(case_id)
         _require(len(case_ids) == len(set(case_ids)), "capture plan contains duplicate capture ids")
+
+        platform_matrix = self.raw.get("native_platform_matrix")
+        _require(
+            isinstance(platform_matrix, list),
+            "capture plan native_platform_matrix must be a list",
+        )
+        resolved_platforms: list[tuple[str, int, str]] = []
+        for entry in platform_matrix:
+            _require(isinstance(entry, Mapping), "native platform entries must be objects")
+            resolved_platforms.append((
+                str(entry.get("host_platform", "")),
+                int(entry.get("os_scale_percent", 0)),
+                str(entry.get("dpr_class", "")),
+            ))
+        _require(
+            tuple(resolved_platforms) == REQUIRED_NATIVE_PLATFORM_PROFILES,
+            "native platform matrix differs from the release-blocking contract",
+        )
+        _require(
+            len(resolved_platforms) == len(set(resolved_platforms)),
+            "native platform matrix contains duplicate profiles",
+        )
 
         all_families = set(self._family_specs)
         all_components = set(COMPONENTS)
@@ -319,6 +365,51 @@ class CapturePlan:
                     any(case["stage"] == stage for case in selected),
                     "profile {} has no {} captures".format(profile_id, stage),
                 )
+            expected_counts = profile.get("expected_capture_counts")
+            if expected_counts is not None:
+                _require(
+                    isinstance(expected_counts, Mapping)
+                    and dict(expected_counts) == self.counts(profile_id),
+                    "profile {} capture ceiling differs from its selected cases".format(
+                        profile_id
+                    ),
+                )
+            required_font_percent = profile.get(
+                "required_application_font_percent"
+            )
+            if required_font_percent is not None:
+                _require(
+                    all(
+                        case.get("font_percent") == required_font_percent
+                        for case in selected
+                        if case["component"] == "settings"
+                    ),
+                    "profile {} contains an alternate application-font capture".format(
+                        profile_id
+                    ),
+                )
+            maximum_sheets = profile.get("maximum_contact_sheets")
+            if maximum_sheets is not None:
+                planned_sheet_count = 2 + len(self.detail_groups(profile_id))
+                _require(
+                    isinstance(maximum_sheets, int)
+                    and maximum_sheets > 0
+                    and planned_sheet_count <= maximum_sheets,
+                    "profile {} exceeds its contact-sheet ceiling".format(profile_id),
+                )
+            manual_results = profile.get("required_structured_manual_results", [])
+            _require(
+                isinstance(manual_results, list)
+                and all(
+                    isinstance(result_id, str)
+                    and bool(PLAN_ID_RE.fullmatch(result_id))
+                    for result_id in manual_results
+                )
+                and len(manual_results) == len(set(manual_results)),
+                "profile {} has invalid structured manual-result requirements".format(
+                    profile_id
+                ),
+            )
 
         _require("full" in self._profile_specs, "capture plan requires a full profile")
         _require(
@@ -563,6 +654,26 @@ class CapturePlan:
             == len(self.family_ids("settings-pages")),
             "Settings page axes differ from the capture plan",
         )
+        planned_platforms = self.raw.get("native_platform_matrix")
+        _require(
+            matrix.get("required_native_platform_profiles") == planned_platforms
+            and contract.get("required_native_platform_profiles") == planned_platforms,
+            "native platform requirements differ from the capture plan",
+        )
+        settings_manual_results = tuple(
+            str(value)
+            for value in self._profile_specs.get("settings", {}).get(
+                "required_structured_manual_results", ()
+            )
+        )
+        settings_manual_gate = contract.get("settings_profile_structured_manual_gate")
+        _require(
+            isinstance(settings_manual_gate, Mapping)
+            and settings_manual_gate.get("required_for_acceptance") is True
+            and settings_manual_gate.get("adds_png_frames") is False
+            and settings_manual_results == (str(settings_manual_gate.get("id", "")),),
+            "Settings structured manual acceptance gate differs from the capture plan",
+        )
         derived = contract.get("derived_native_frame_count", {})
         full_counts = self.counts("full")
         _require(
@@ -586,6 +697,14 @@ class CapturePlan:
             "release": self.release,
             "plan_sha256": self.sha256,
             "profiles": {profile_id: self.counts(profile_id) for profile_id in self.profile_ids},
+            "required_structured_manual_results": {
+                profile_id: list(
+                    self._profile_specs[profile_id].get(
+                        "required_structured_manual_results", ()
+                    )
+                )
+                for profile_id in self.profile_ids
+            },
             "authority_files": {name: str(value) for name, value in authorities.items()},
         }
 

@@ -134,56 +134,120 @@ class FakeQueryOp:
             self.failure_callback(error or RuntimeError("failure"))
 
 
+class FakeQTimer:
+    pending = []
+
+    @classmethod
+    def singleShot(cls, delay, callback) -> None:
+        cls.pending.append((delay, callback))
+
+    @classmethod
+    def run_next(cls) -> None:
+        index = min(range(len(cls.pending)), key=lambda item: (cls.pending[item][0], item))
+        _delay, callback = cls.pending.pop(index)
+        callback()
+
+
+class FakeCentralLayout:
+    def __init__(self, web) -> None:
+        self.web = web
+
+    def indexOf(self, widget) -> int:
+        return 0 if widget is self.web else -1
+
+    def insertWidget(self, *_args) -> None:
+        return None
+
+
+class FakeCentralWidget:
+    def __init__(self, web) -> None:
+        self._layout = FakeCentralLayout(web)
+
+    def layout(self):
+        return self._layout
+
+
+class FakeRect:
+    def __init__(self, x, y, width, height) -> None:
+        self.x = x
+        self.y = y
+        self._width = width
+        self._height = height
+
+    def isValid(self):
+        return self._width > 0 and self._height > 0
+
+    def width(self):
+        return self._width
+
+    def height(self):
+        return self._height
+
+    def left(self):
+        return self.x
+
+    def top(self):
+        return self.y
+
+    def right(self):
+        return self.x + self._width - 1
+
+    def bottom(self):
+        return self.y + self._height - 1
+
+
+class FakeSize:
+    def __init__(self, width, height) -> None:
+        self._width = width
+        self._height = height
+
+    def width(self):
+        return self._width
+
+    def height(self):
+        return self._height
+
+
+class FakeScreen:
+    def __init__(self, available_geometry) -> None:
+        self.available_geometry = available_geometry
+
+    def availableGeometry(self):
+        return self.available_geometry
+
+
+class FakeStatusBar:
+    def __init__(self) -> None:
+        self.messages = []
+
+    def showMessage(self, message, duration) -> None:
+        self.messages.append((message, duration))
+
+
 class FakeSettingsDialog:
     instances = []
 
     def __init__(self, *args) -> None:
         self.args = args
-        self.visible = False
-        self.show_count = 0
         self.exec_count = 0
-        self.open_count = 0
-        self.window_modality = None
-        self.opened_pages = []
-        self.raised = 0
-        self.activated = 0
+        self.moves = []
         self.__class__.instances.append(self)
 
-    def isVisible(self):
-        return self.visible
+    def size(self):
+        return FakeSize(680, 620)
 
-    def show(self) -> None:
-        self.show_count += 1
-        self.visible = True
+    def move(self, x, y) -> None:
+        self.moves.append((x, y))
 
-    def exec(self) -> int:
+    def exec(self) -> None:
         self.exec_count += 1
-        self.visible = True
-        self.visible = False
-        return 0
-
-    def setWindowModality(self, modality) -> None:
-        self.window_modality = modality
-
-    def open(self) -> None:
-        self.open_count += 1
-        self.visible = True
-
-    def open_page(self, *args) -> None:
-        self.opened_pages.append(args)
-
-    def raise_(self) -> None:
-        self.raised += 1
-
-    def activateWindow(self) -> None:
-        self.activated += 1
 
 
 class ControllerCapabilityTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         names = (
-            "aqt", "aqt.deckbrowser", "aqt.operations", "aqt.theme",
+            "aqt", "aqt.deckbrowser", "aqt.operations", "aqt.qt", "aqt.theme",
             "home_dashboard_overhaul.controller",
         )
         cls.saved_modules = {name: sys.modules.get(name) for name in names}
@@ -207,16 +271,26 @@ class ControllerCapabilityTests(unittest.TestCase):
             addonManager=FakeAddonManager(),
             col=SimpleNamespace(sched=SimpleNamespace(today=500, day_cutoff=cutoff), mod=1),
         )
+        aqt.mw.web = object()
+        aqt.mw.form = SimpleNamespace(centralwidget=FakeCentralWidget(aqt.mw.web))
+        aqt.mw.centralWidget = lambda: aqt.mw.form.centralwidget
+        aqt.mw.geometry = lambda: FakeRect(0, 66, 667, 570)
+        aqt.mw.screen = lambda: FakeScreen(FakeRect(0, 0, 1710, 1112))
+        cls.status_bar = FakeStatusBar()
+        aqt.mw.statusBar = lambda: cls.status_bar
         deckbrowser = ModuleType("aqt.deckbrowser")
         deckbrowser.DeckBrowser = FakeDeckBrowser
         operations = ModuleType("aqt.operations")
         operations.QueryOp = FakeQueryOp
+        qt = ModuleType("aqt.qt")
+        qt.QTimer = FakeQTimer
         theme = ModuleType("aqt.theme")
         theme.theme_manager = SimpleNamespace(night_mode=False)
         sys.modules.update({
             "aqt": aqt,
             "aqt.deckbrowser": deckbrowser,
             "aqt.operations": operations,
+            "aqt.qt": qt,
             "aqt.theme": theme,
         })
         cls.aqt = aqt
@@ -233,6 +307,8 @@ class ControllerCapabilityTests(unittest.TestCase):
 
     def setUp(self) -> None:
         FakeQueryOp.pending.clear()
+        FakeQTimer.pending.clear()
+        self.status_bar.messages.clear()
         self.aqt.mw.addonManager.config = {}
         self.aqt.mw.addonManager.writes.clear()
         self.aqt.mw.state = "deckBrowser"
@@ -269,9 +345,15 @@ class ControllerCapabilityTests(unittest.TestCase):
             "payload": {"page": "events", "date": "2026-08-28", "event_id": "exam-42"},
         })
         self.controller.on_bridge_message((False, None), calendar, context)
+        self.assertEqual(calls, [])
+        self.assertEqual(len(FakeQTimer.pending), 1)
+        FakeQTimer.run_next()
         self.controller.on_bridge_message((False, None), event, context)
+        self.assertEqual(calls, [("calendar_data", "", "")])
+        self.assertEqual(len(FakeQTimer.pending), 1)
+        FakeQTimer.run_next()
         self.assertEqual(calls, [
-            ("calendar_data",),
+            ("calendar_data", "", ""),
             ("events", "2026-08-28", "exam-42"),
         ])
 
@@ -282,10 +364,26 @@ class ControllerCapabilityTests(unittest.TestCase):
         diagnostics = "hdo:" + json.dumps({"command": "diagnostics", "payload": {}})
 
         self.controller.on_bridge_message((False, None), diagnostics, context)
+        self.assertEqual(calls, [])
+        self.assertEqual(len(FakeQTimer.pending), 1)
+        FakeQTimer.run_next()
+        self.assertEqual(calls, [("about_support", "", "")])
 
-        self.assertEqual(calls, [("about_support",)])
+    def test_bridge_settings_requests_are_deferred_and_coalesced(self) -> None:
+        calls = []
+        self.controller.open_settings = lambda *args: calls.append(args)
 
-    def test_settings_uses_local_synchronous_dialog_lifecycle(self) -> None:
+        self.controller.request_settings_open("dashboard")
+        self.controller.request_settings_open("events", "2026-08-28", "exam-42")
+
+        self.assertEqual(calls, [])
+        self.assertEqual(len(FakeQTimer.pending), 1)
+        FakeQTimer.run_next()
+        self.assertEqual(calls, [("events", "2026-08-28", "exam-42")])
+        self.assertFalse(self.controller._settings_open_pending)
+        self.assertIsNone(self.controller._pending_settings_request)
+
+    def test_settings_constructs_parented_dialog_and_executes_immediately(self) -> None:
         FakeSettingsDialog.instances.clear()
         settings = ModuleType("home_dashboard_overhaul.settings")
         settings.SettingsDialog = FakeSettingsDialog
@@ -296,20 +394,54 @@ class ControllerCapabilityTests(unittest.TestCase):
 
             self.assertEqual(
                 dialog.args,
-                (self.controller, "calendar_data", "2026-08-28", "exam-42"),
+                (
+                    self.aqt.mw,
+                    self.controller,
+                    "calendar_data",
+                    "2026-08-28",
+                    "exam-42",
+                ),
             )
-            self.assertEqual(dialog.open_count, 0)
+            self.assertEqual(dialog.moves, [])
             self.assertEqual(dialog.exec_count, 1)
-            self.assertEqual(dialog.show_count, 0)
-            self.assertIsNone(dialog.window_modality)
-            self.assertFalse(dialog.visible)
-            self.assertEqual(dialog.raised, 0)
-            self.assertEqual(dialog.activated, 0)
-            self.assertFalse(hasattr(self.controller, "settings_dialog"))
+            self.assertEqual(FakeQTimer.pending, [])
 
-            self.controller.open_settings("events")
-            self.assertEqual(len(FakeSettingsDialog.instances), 2)
-            self.assertEqual(FakeSettingsDialog.instances[-1].exec_count, 1)
+    def test_settings_open_does_not_query_or_move_against_the_parent_screen(self) -> None:
+        FakeSettingsDialog.instances.clear()
+        settings = ModuleType("home_dashboard_overhaul.settings")
+        settings.SettingsDialog = FakeSettingsDialog
+        original_screen = self.aqt.mw.screen
+        self.aqt.mw.screen = lambda: (_ for _ in ()).throw(
+            AssertionError("primary Settings must leave placement to Qt")
+        )
+        try:
+            with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
+                self.controller.open_settings()
+        finally:
+            self.aqt.mw.screen = original_screen
+
+        dialog = FakeSettingsDialog.instances[-1]
+        self.assertEqual(dialog.moves, [])
+        self.assertEqual(dialog.exec_count, 1)
+        self.assertEqual(self.status_bar.messages, [])
+
+    def test_profile_close_cancels_pending_bridge_dialog(self) -> None:
+        FakeSettingsDialog.instances.clear()
+        settings = ModuleType("home_dashboard_overhaul.settings")
+        settings.SettingsDialog = FakeSettingsDialog
+
+        with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
+            self.controller.request_settings_open("events")
+            pending_token = self.controller._settings_request_token
+
+            self.controller.on_profile_close()
+
+            self.assertIsNone(self.controller._pending_settings_request)
+            self.assertFalse(self.controller._settings_open_pending)
+            self.assertGreater(self.controller._settings_request_token, pending_token)
+
+            FakeQTimer.run_next()
+            self.assertEqual(FakeSettingsDialog.instances, [])
 
     def test_year_scroll_position_survives_a_controller_rerender(self) -> None:
         message = "hdo:" + json.dumps({

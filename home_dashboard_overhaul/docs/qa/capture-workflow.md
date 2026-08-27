@@ -51,21 +51,42 @@ requested. Never overwrite a partial or completed output in place.
    the probe still requires `HDO_RELEASE_RUN_ROOT`, `HDO_RELEASE_PROFILE`,
    `HDO_RELEASE_CANDIDATE_SHA256`, `HDO_RELEASE_INSTANCE_KEY`,
    `HDO_RELEASE_EXCLUDED_PID`, and `HDO_RELEASE_PROBE_STAGE`.
+   Keep the macOS session unlocked for native compositor capture. The probe
+   rejects any frame whose sampled pixels do not match the live Settings client,
+   and page cases additionally require the complete decorated window.
 6. Assemble into a new output path. The assembler reads the same plan and
    derives capture order and contact-sheet groups without offsets:
 
    ```sh
-   python3 home_dashboard_overhaul/qa/assemble_release_evidence_1_8_6.py \
+   python3 home_dashboard_overhaul/qa/assemble_release_evidence_1_8_7.py \
      --profile full \
      --run-root /private/tmp/anki-release-qa.EXAMPLE \
+     --platform-bundle /path/to/windows-100 \
+     --platform-bundle /path/to/windows-125 \
+     --platform-bundle /path/to/windows-150 \
+     --platform-bundle /path/to/linux-100 \
+     --platform-bundle /path/to/linux-150 \
+     --platform-bundle /path/to/macos-retina \
      --output /path/to/new/evidence
    ```
+
+   Every platform bundle must contain a passing `platform-profile.json` for
+   the identical candidate and plan hashes. Native Windows 100/125/150%, Linux
+   100/150%, DPR 1, high-DPR, and macOS full-screen Space behavior are hard
+   gates. Environment-variable scale substitutes do not satisfy them.
 
 ## Profiles and focused revision
 
 - `full` is the complete release gate.
-- `settings` covers every current Settings page, interaction state, and
-  Settings restart state.
+- `settings` is the minimal 100%-font Settings authority: exactly 40 initial
+  states plus one controlled restart, capped at 11 contact sheets. It contains
+  12 page cases (four pages at 1080×760, 1280×800, and full screen), 28 existing
+  interaction/window/state cases, and one restart case. It does not include
+  720, 940, 150%-font, alternate-scale, or expanded full-release cases.
+  Acceptance additionally requires the structured exact-package native macOS
+  result `macos-fullscreen-no-space-switch-menu-and-dashboard-gear`. Both
+  opening paths must remain on Anki's full-screen Space without a desktop or
+  Space switch, including the hard-restart recheck. It adds no PNG frames.
 - `wide-100` selects cases semantically: wide production layouts, full-width
   Settings at 100% application font, and both relevant restart states. Its
   full-screen adapter contains only window/capture behavior; it does not own a
@@ -87,6 +108,17 @@ assembler accepts only a complete named profile with its required initial and
 restart reports, exact candidate hash, plan identity, isolation gates, and
 exact-once raw capture set.
 
+The focused Settings assembler also fails closed unless the native macOS
+full-screen report passes for the exact candidate and capture-plan hashes:
+
+```sh
+python3 home_dashboard_overhaul/qa/assemble_settings_review_evidence_1_8_7.py \
+  --run-root /private/tmp/anki-release-qa.EXAMPLE \
+  --candidate home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon \
+  --fullscreen-report /path/to/settings-fullscreen-acceptance.json \
+  --output /path/to/new/settings-evidence
+```
+
 The assembler has an explicit `--allow-legacy-unversioned-reports` escape hatch
 only for reconstructing externally archived 1.8.6 reports created before
 runtime reports carried a plan hash. New evidence must use the strict default;
@@ -96,7 +128,8 @@ is labelled `reconstructed-legacy`, not `passed`.
 ## Extension rules
 
 - Put selection dimensions in the plan as axes or semantic fields (`layout`,
-  `width`, `font_percent`, `component`), not in filename parsing.
+  `width`, `font_percent`, `component`, `anki_theme`, `host_platform`,
+  `os_scale_percent`, `dpr_class`), not in filename parsing.
 - Let profiles filter those fields. A new wide case then joins `wide-100`
   automatically; a new narrow case remains outside it automatically.
 - Give every new case one presentation group. Empty groups disappear for a
