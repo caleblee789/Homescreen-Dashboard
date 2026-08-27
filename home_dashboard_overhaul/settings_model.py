@@ -32,6 +32,11 @@ HISTORY_RANGE_VALUES = (
     HISTORY_RANGE_CUSTOM,
 )
 
+SETTINGS_DEFAULT_SIZE = (940, 680)
+SETTINGS_MINIMUM_SIZE = (720, 520)
+SETTINGS_MAXIMUM_WIDTH_RATIO = .92
+SETTINGS_MAXIMUM_HEIGHT_RATIO = .88
+
 
 def history_range_choice(history_days: object, ignore_before: object) -> str:
     """Project the persisted range fields into the compact Settings choice."""
@@ -63,18 +68,19 @@ def clamp_window_size(
     requested: object,
     available: Sequence[int],
     *,
-    default: Tuple[int, int] = (1200, 800),
-    minimum: Tuple[int, int] = (1040, 700),
-    margin: int = 32,
+    default: Tuple[int, int] = SETTINGS_DEFAULT_SIZE,
+    minimum: Tuple[int, int] = SETTINGS_MINIMUM_SIZE,
+    maximum_width_ratio: float = SETTINGS_MAXIMUM_WIDTH_RATIO,
+    maximum_height_ratio: float = SETTINGS_MAXIMUM_HEIGHT_RATIO,
 ) -> Tuple[int, int]:
-    """Clamp a requested Qt size to the screen without inventing a UI mode."""
+    """Clamp a logical requested size to the usable portion of one screen."""
 
     try:
         available_width, available_height = (int(available[0]), int(available[1]))
     except (TypeError, ValueError, IndexError):
         available_width, available_height = default
-    maximum_width = max(1, available_width - max(0, int(margin)))
-    maximum_height = max(1, available_height - max(0, int(margin)))
+    maximum_width = max(1, int(available_width * maximum_width_ratio))
+    maximum_height = max(1, int(available_height * maximum_height_ratio))
     try:
         requested_width, requested_height = (
             int(requested[0]), int(requested[1])  # type: ignore[index]
@@ -87,6 +93,98 @@ def clamp_window_size(
         min(maximum_width, max(minimum_width, requested_width)),
         min(maximum_height, max(minimum_height, requested_height)),
     )
+
+
+def clamp_window_geometry(
+    requested: object,
+    available: Sequence[int],
+    *,
+    parent: object = None,
+    default: Tuple[int, int] = SETTINGS_DEFAULT_SIZE,
+    minimum: Tuple[int, int] = SETTINGS_MINIMUM_SIZE,
+) -> Tuple[int, int, int, int]:
+    """Return a fully visible logical window rectangle for the active screen.
+
+    ``requested`` and ``parent`` use ``(x, y, width, height)`` tuples. A saved
+    rectangle is retained only when its center still belongs to the active
+    available geometry. This makes a disconnected-monitor restore recenter
+    deterministically without consulting physical pixels or device ratios.
+    """
+
+    try:
+        screen_x, screen_y, screen_width, screen_height = (
+            int(available[0]),
+            int(available[1]),
+            int(available[2]),
+            int(available[3]),
+        )
+    except (TypeError, ValueError, IndexError):
+        screen_x, screen_y = 0, 0
+        screen_width, screen_height = default
+    screen_width = max(1, screen_width)
+    screen_height = max(1, screen_height)
+
+    try:
+        requested_x, requested_y, requested_width, requested_height = (
+            int(requested[0]),  # type: ignore[index]
+            int(requested[1]),  # type: ignore[index]
+            int(requested[2]),  # type: ignore[index]
+            int(requested[3]),  # type: ignore[index]
+        )
+        requested_valid = requested_width > 0 and requested_height > 0
+    except (TypeError, ValueError, IndexError):
+        requested_x = requested_y = 0
+        requested_width, requested_height = default
+        requested_valid = False
+
+    width, height = clamp_window_size(
+        (requested_width, requested_height),
+        (screen_width, screen_height),
+        default=default,
+        minimum=minimum,
+    )
+    center_x = requested_x + requested_width // 2
+    center_y = requested_y + requested_height // 2
+    saved_screen_is_current = (
+        requested_valid
+        and screen_x <= center_x < screen_x + screen_width
+        and screen_y <= center_y < screen_y + screen_height
+    )
+
+    if saved_screen_is_current:
+        x = min(max(requested_x, screen_x), screen_x + screen_width - width)
+        y = min(max(requested_y, screen_y), screen_y + screen_height - height)
+        return x, y, width, height
+
+    try:
+        parent_x, parent_y, parent_width, parent_height = (
+            int(parent[0]),  # type: ignore[index]
+            int(parent[1]),  # type: ignore[index]
+            int(parent[2]),  # type: ignore[index]
+            int(parent[3]),  # type: ignore[index]
+        )
+        parent_center_x = parent_x + max(0, parent_width) // 2
+        parent_center_y = parent_y + max(0, parent_height) // 2
+        parent_is_current = (
+            screen_x <= parent_center_x < screen_x + screen_width
+            and screen_y <= parent_center_y < screen_y + screen_height
+        )
+    except (TypeError, ValueError, IndexError):
+        parent_center_x = screen_x + screen_width // 2
+        parent_center_y = screen_y + screen_height // 2
+        parent_is_current = False
+    if not parent_is_current:
+        parent_center_x = screen_x + screen_width // 2
+        parent_center_y = screen_y + screen_height // 2
+    x = min(
+        max(parent_center_x - width // 2, screen_x),
+        screen_x + screen_width - width,
+    )
+    y = min(
+        max(parent_center_y - height // 2, screen_y),
+        screen_y + screen_height - height,
+    )
+    return x, y, width, height
 
 
 SECTION_IDS = (
@@ -319,14 +417,35 @@ def three_way_merge(
 
 _RESET_DEFAULT_PATHS = {
     "appearance": (("appearance",), ("home_screen",)),
-    "dashboard_sections": (("visibility",), ("study",), ("new_cards",)),
+    "dashboard_sections": (("visibility",),),
+    "study_metrics": (("study",), ("new_cards",)),
     "home_screen_legacy": (
         ("visibility",),
         ("study",),
         ("new_cards",),
         ("home_screen",),
     ),
-    "calendar": (("heatmap",),),
+    "calendar_display": (
+        ("heatmap", "calendar_view"),
+        ("heatmap", "week_start"),
+        ("heatmap", "presets_by_theme"),
+        ("visibility", "events"),
+    ),
+    "calendar_range": (
+        ("heatmap", "history_days"),
+        ("heatmap", "ignore_before"),
+        ("heatmap", "show_due_forecast"),
+        ("heatmap", "forecast_days"),
+    ),
+    "local_data": (
+        ("heatmap", "exclude_manual_reschedules"),
+        ("heatmap", "exclude_deleted_cards"),
+        ("heatmap", "excluded_deck_ids"),
+    ),
+    "calendar": (
+        ("heatmap",),
+        ("visibility", "events"),
+    ),
     "dashboard": (
         ("appearance",),
         ("home_screen",),
@@ -424,6 +543,25 @@ class SettingsDraft:
             _assign_path(self.values, path, source)
         self.values = normalize_config(self.values)
         return True
+
+    def scope_differs_from_defaults(self, scope: object) -> bool:
+        """Return whether a scoped Reset action would change staged values."""
+
+        paths = _RESET_DEFAULT_PATHS.get(str(scope or "").strip().casefold())
+        if not paths:
+            return False
+        for path in paths:
+            current: object = self.values
+            default: object = self.defaults
+            try:
+                for part in path:
+                    current = current[part]  # type: ignore[index]
+                    default = default[part]  # type: ignore[index]
+            except (KeyError, TypeError):
+                return True
+            if current != default:
+                return True
+        return False
 
     def rebase(self, latest: Mapping[str, Any]) -> Tuple[MergeConflict, ...]:
         normalized_latest = normalize_config(deepcopy(dict(latest)))

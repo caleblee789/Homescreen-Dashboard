@@ -55,11 +55,22 @@ requested. Never overwrite a partial or completed output in place.
    derives capture order and contact-sheet groups without offsets:
 
    ```sh
-   python3 home_dashboard_overhaul/qa/assemble_release_evidence_1_8_6.py \
+   python3 home_dashboard_overhaul/qa/assemble_release_evidence_1_8_7.py \
      --profile full \
      --run-root /private/tmp/anki-release-qa.EXAMPLE \
+     --platform-bundle /path/to/windows-100 \
+     --platform-bundle /path/to/windows-125 \
+     --platform-bundle /path/to/windows-150 \
+     --platform-bundle /path/to/linux-100 \
+     --platform-bundle /path/to/linux-150 \
+     --platform-bundle /path/to/macos-retina \
      --output /path/to/new/evidence
    ```
+
+   Every platform bundle must contain a passing `platform-profile.json` for
+   the identical candidate and plan hashes. Native Windows 100/125/150%, Linux
+   100/150%, DPR 1, high-DPR, and macOS full-screen Space behavior are hard
+   gates. Environment-variable scale substitutes do not satisfy them.
 
 ## Profiles and focused revision
 
@@ -96,7 +107,8 @@ is labelled `reconstructed-legacy`, not `passed`.
 ## Extension rules
 
 - Put selection dimensions in the plan as axes or semantic fields (`layout`,
-  `width`, `font_percent`, `component`), not in filename parsing.
+  `width`, `font_percent`, `component`, `anki_theme`, `host_platform`,
+  `os_scale_percent`, `dpr_class`), not in filename parsing.
 - Let profiles filter those fields. A new wide case then joins `wide-100`
   automatically; a new narrow case remains outside it automatically.
 - Give every new case one presentation group. Empty groups disappear for a

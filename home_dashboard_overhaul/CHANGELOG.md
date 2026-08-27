@@ -4,39 +4,49 @@
 
 ## 1.8.7 — 2026-08-25
 
-- Removed Dashboard's pre-`exec()` screen query and `dialog.move()`. Explicitly
-  moving the dialog marked it as already positioned before Qt's normal
-  parent-aware `QDialog` placement ran, allowing macOS to associate it with a
-  desktop Space instead of Anki's active full-screen Space.
-- Removed the experimental explicit `Qt.Window`/full-screen-auxiliary flags.
-  Settings now leaves both native window classification and initial placement
-  to the same default `QDialog(mw)` path used by Progress Bar and PronounceIt.
-- Matched Progress Bar and PronounceIt by restoring a normal movable,
-  resizable `QDialog(mw)` with default flags, a 680×620 initial size, a
-  680×560 minimum, and a local `exec()` lifetime.
-- Fixed compact grid mounting that left initial Theme, Color mode, scale,
-  Bible, and palette fields absent. New field wrappers are now adopted by
-  their Settings card before they are shown or visibility-filtered.
-- Fixed the remaining dynamic-visibility path exercised during opening and
-  ordinary setting changes. Heatmap selection indicators and saved-verse
-  badges now have explicit child parents before `setVisible()`, and generic
-  draft synchronization no longer deletes and rebuilds the heatmap-card tree.
-  Theme, color-mode, and configuration-load paths retain their explicit
-  preview refresh.
-- Removed the central workspace, backing-view hiding, focus proxy/retries and
-  restoration, application shortcut filter, retained panel object, and
-  menu-`aboutToHide`/50 ms handoff that could activate Finder around
-  full-screen Settings transitions.
-- Opened Settings synchronously from the Caleb menu while retaining one
-  coalesced queued turn only for calendar/WebEngine bridge requests.
-- Preserved the four-page sidebar, Events tabs, native page scrollers, fixed
-  footer, staged Save behavior, and embedded conflict/dirty-close prompts.
-  Escape, Cmd-W, the title-bar control, and Close share the guarded dialog
-  rejection path.
-- Preserved schema 8, configuration keys, bridge commands, dashboard and
-  statistics calculations, calendar behavior, and frozen 1.8.6 evidence.
-  Full-screen macOS Space behavior remains a manual acceptance gate before any
-  push, PR, merge, or release.
+- Kept the parented native `QDialog(mw)` and local `exec()` lifecycle while
+  replacing the Settings geometry contract with logical 940×680 defaults,
+  720×520 minimums, and 92%×88% initial screen caps. A versioned UI-only
+  `QSettings` value preserves non-maximized geometry and clamps or recenters it
+  on the active screen before first visibility.
+- Rebuilt the shell as fixed header, zero-minimum scrollable body, and fixed
+  footer. The centered shell is capped at 1,120 px; the page column is capped
+  at 940 px; and a synchronized, non-eliding `QTabBar` replaces the 152 px
+  sidebar below 760 logical body pixels or before a label would wrap.
+- Added application-font-relative role fonts, 36 px shared controls, the
+  4/8/12/16/20/24/32 spacing scale, supplied graphite dark/light roles,
+  accent-soft selection, neutral Events tabs, standardized disclosures, and
+  scoped Reset visibility.
+- Reworked Dashboard Appearance, sections, Study metrics, Calendar display,
+  Calendar range, and Local data into responsive native groups. Added a native
+  dashboard-card preview at wide page widths and retained all saved palette
+  IDs, ranges, filters, and date semantics.
+- Rebuilt Events as one bounded list surface with explicit sorting, search
+  clearing and result summaries, separate empty/no-results states, neutral
+  Active/Archived tabs, readable two-line rows, and 32 px action menus. Normal
+  row activation opens the editor; persistent row selection was removed.
+- Added a native Bible verse preview, attached Custom color field/swatch,
+  blocking invalid-hex validation, nonblocking contrast warnings, dynamic
+  Rotation help, and a complete filtered `QAbstractListModel`/`QListView`
+  implementation with delegate-painted two-line rows instead of a visible
+  100-item cap.
+- Top-aligned independently sized About Version and Help cards, derived Anki
+  compatibility copy from the manifest, added two-second Copy diagnostics
+  feedback, standardized legal disclosures, tightened the local-data and
+  backup copy, and renamed the export action to Export verse edits.
+- Moved dirty, saving, success, validation, and failure feedback into the
+  footer beside its actions. Save failure now retains the draft and retry
+  state, shows production-safe copy, and keeps raw details collapsed. Dirty
+  close uses the existing embedded prompt with Keep editing and Discard and
+  close actions.
+- Expanded the canonical plan to 106 native frames and added hard native
+  Windows, Linux, DPR, OS-scaling, and macOS full-screen report gates keyed to
+  one package and plan hash. VoiceOver and forced colors remain explicitly
+  unrun and nonblocking. Existing 1.8.6 release evidence and the untracked
+  41-frame 1.8.7 review set remain immutable provenance.
+- Preserved schema 8, every setting key and saved identifier, events and verse
+  data, transactional persistence, dashboard statistics, native isolation,
+  and the 24-member package allowlist.
 ## 1.8.6 — 2026-08-24
 
 - Audited every study-derived value shown in Today’s Progress, Today’s

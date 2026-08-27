@@ -1,0 +1,19 @@
+{
+  "name": "Home Dashboard 1.8.7 canonical UI isolated release probe",
+  "release": "1.8.7",
+  "package": "zz_hdo_release_1_8_7_probe",
+  "ankiweb_id": "",
+  "homepage": "",
+  "conflicts": [],
+  "candidate_package": "home_dashboard_overhaul",
+  "stages": ["initial", "restart"],
+  "capture_plan": "capture_plan.json",
+  "capture_profile_authority": "capture_plan.json#profiles",
+  "helper_builder": "prepare_capture_helper.py",
+  "base_probe": "runtime_probe_release_1_8_4.py",
+  "components": ["production-dashboard", "canonical-settings", "standard-parented-settings-dialog", "native-statistics-parity", "logical-window-geometry", "responsive-settings-layout-assertions", "footer-local-save-state", "complete-verse-library-model"],
+  "capture_count_authority": "capture_plan.json#profiles[id=full]",
+  "release_probe": "runtime_probe_release_1_8_7.py",
+  "required_platform_matrix": "capture_plan.json#native_platform_matrix",
+  "platform_bundle_policy": "identical-package-and-plan-hashes-no-missing-required-profile"
+}

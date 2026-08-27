@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 QA_ROOT = ROOT / "qa"
 sys.path.insert(0, str(QA_ROOT))
 try:
+    import assemble_release_evidence_1_8_7
     import capture_plan
     import prepare_capture_helper
 finally:
@@ -27,7 +28,7 @@ class CapturePlanTests(unittest.TestCase):
         summary = self.plan.validate_authorities(QA_ROOT)
         self.assertEqual(summary["status"], "passed")
         contract = json.loads(
-            (QA_ROOT / "capture_evidence_manifest_1_8_6.json").read_text(encoding="utf-8")
+            (QA_ROOT / "capture_evidence_manifest_1_8_7.json").read_text(encoding="utf-8")
         )
         derived = contract["derived_native_frame_count"]
         self.assertEqual(
@@ -180,13 +181,14 @@ class CapturePlanTests(unittest.TestCase):
             self.assertTrue((output / "_fullscreen_profile.py").is_file())
 
     def test_runtime_and_assembler_consume_the_plan_without_positional_slices(self) -> None:
-        runtime = (QA_ROOT / "runtime_probe_release_1_8_6.py").read_text(encoding="utf-8")
-        assembler = (QA_ROOT / "assemble_release_evidence_1_8_6.py").read_text(encoding="utf-8")
+        runtime = (QA_ROOT / "runtime_probe_release_1_8_7.py").read_text(encoding="utf-8")
+        assembler = (QA_ROOT / "assemble_release_evidence_1_8_7.py").read_text(encoding="utf-8")
         self.assertIn("CAPTURE_PLAN.cases(", runtime)
         self.assertIn("CAPTURE_PLAN.ids(", runtime)
         self.assertIn("CAPTURE_PLAN.detail_groups(profile_id)", assembler)
         self.assertIn("allow_legacy_unversioned_reports", assembler)
         self.assertIn("CAPTURE_PLAN.validate_authorities", assembler)
+        self.assertIn("validate_platform_bundles", assembler)
         for stale in (
             "EXPECTED_PRODUCTION_INITIAL = 48",
             "EXPECTED_SETTINGS_INITIAL = 26",
@@ -195,6 +197,70 @@ class CapturePlanTests(unittest.TestCase):
             "contract[0:5]",
         ):
             self.assertNotIn(stale, runtime + assembler)
+
+    def test_platform_bundle_gate_requires_one_exact_native_report_per_profile(self) -> None:
+        candidate_hash = "a" * 64
+        with self.assertRaisesRegex(RuntimeError, "every required native platform bundle"):
+            assemble_release_evidence_1_8_7.validate_platform_bundles([], candidate_hash)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = []
+            for index, entry in enumerate(self.plan.raw["native_platform_matrix"]):
+                directory = root / "profile-{}".format(index)
+                directory.mkdir()
+                report = {
+                    "status": "passed",
+                    "release": self.plan.release,
+                    "package_sha256": candidate_hash,
+                    "capture_plan_sha256": self.plan.sha256,
+                    "host_platform": entry["host_platform"],
+                    "os_scale_percent": entry["os_scale_percent"],
+                    "dpr_class": entry["dpr_class"],
+                    "native_display_scaling": True,
+                    "environment_scale_substitute": False,
+                    "application_font_percents": [100, 150],
+                    "os": "fixture OS",
+                    "anki_version": "26.8",
+                    "qt_platform": "fixture",
+                    "available_logical_geometry": [0, 0, 1440, 900],
+                    "physical_geometry": [0, 0, 2880, 1800],
+                    "logical_dpi": 96.0,
+                    "physical_dpi": 192.0,
+                    "device_pixel_ratio": 2.0,
+                }
+                if entry["host_platform"] == "macos":
+                    report["fullscreen_space_switch"] = {
+                        "status": "passed",
+                        "opening_paths": ["menu", "dashboard-gear"],
+                        "all_four_pages": True,
+                        "events_tabs": True,
+                        "move_resize": True,
+                        "save_close_reopen": True,
+                        "hard_restart": True,
+                    }
+                (directory / "platform-profile.json").write_text(
+                    json.dumps(report), encoding="utf-8"
+                )
+                paths.append(directory)
+
+            result = assemble_release_evidence_1_8_7.validate_platform_bundles(
+                paths, candidate_hash
+            )
+            self.assertEqual(result["status"], "passed")
+            self.assertEqual(result["required_profile_count"], 6)
+
+            first_report = json.loads(
+                (paths[0] / "platform-profile.json").read_text(encoding="utf-8")
+            )
+            first_report["package_sha256"] = "b" * 64
+            (paths[0] / "platform-profile.json").write_text(
+                json.dumps(first_report), encoding="utf-8"
+            )
+            with self.assertRaisesRegex(RuntimeError, "native platform package differs"):
+                assemble_release_evidence_1_8_7.validate_platform_bundles(
+                    paths, candidate_hash
+                )
 
 
 if __name__ == "__main__":

@@ -1,108 +1,121 @@
 # Release visual contract
 
-Status: Home Screen Dashboard 1.8.6 canonical UI release contract.
+Status: Home Screen Dashboard 1.8.7 implementation contract complete; native
+release evidence blocked until every required platform bundle passes.
 
 ## Authority and retained evidence
 
 The current machine-readable authorities are:
 
-- `qa/calendar_surface_manifest_1_8_6.json`
-- `qa/ui-surface-registry_1_8_6.json`
-- `qa/visual_regression_matrix_1_8_6.json`
-- `qa/capture_evidence_manifest_1_8_6.json`
+- `qa/capture_plan.json`, the sole executable case/count/order authority
+- `qa/calendar_surface_manifest_1_8_7.json`
+- `qa/ui-surface-registry_1_8_7.json`
+- `qa/visual_regression_matrix_1_8_7.json`
+- `qa/capture_evidence_manifest_1_8_7.json`
+- `qa/settings_window_contract_1_8_7.json`
+- `qa/runtime_probe_release_1_8_7_manifest.json`
 
-The repository retains only the newest complete capture set at
-`qa/release-evidence-1.8.6-2026-08-25`. Older capture directories were removed
-after the replacement passed; they remain traceable in Git history and must not
-be represented as current 1.8.6 evidence.
+The completed `qa/release-evidence-1.8.6-2026-08-25` directory and the
+untracked 41-frame `qa/settings-evidence-1.8.7-2026-08-26-b995fec` review set
+are immutable provenance. A corrected candidate must write a new evidence
+directory; neither retained set may be overwritten, regenerated, or deleted.
 
 ## Production composition
 
-- The dashboard is at most 1,120 px wide, starts 24 px below the document top,
-  and retains at least 20 px side margins.
-- Anki's actual document scroller owns vertical movement. The dashboard adds
-  no viewport-height root, root overflow clipping, fixed/sticky positioning, or
-  page-level horizontal overflow.
-- A visible fixed/sticky Anki bottom-action container is detected without
-  localized button text and observed for resize. Root bottom padding and
-  document scroll padding equal its measured height plus 24 px, using 60 px
-  only as the missing-height fallback.
-- Month is always a 42-cell, six-week grid. Completion fill, selected overlay,
-  today's 2 px outline, due marker, and event diamond remain independently
-  visible.
-- Year is always a real 53-week grid with a 28 px weekday column and fluid week
-  columns. Below 760 px its label column and gaps compact so the full grid stays
-  inside the dashboard at 480 px and above; below 480 px only the heatmap may
-  scroll internally.
-- Month and Year share one header and identical outer-card width. The compact
-  footer conditionally omits disabled due/event legend groups and event summary.
-- Per-cell and secondary-card shadows are absent. The calendar card retains one
-  restrained outer shadow and one-pixel boundaries.
+- The dashboard remains at most 1,120 px wide with normal document scrolling
+  and measured clearance above Anki's visible bottom actions.
+- Month remains a 42-cell six-week grid. Year remains a real 53-week grid.
+  Completion, selection, Today, due, and event semantics remain independent.
+- Existing theme IDs, heatmap palette IDs, events, verses, study statistics,
+  schema 8 behavior, and restart semantics do not change.
 
-Production captures cover Month/Year, stable switching, all semantic marker
-combinations, every theme's four palette choices in light and dark, white,
-black, purple, and image host backgrounds, sections below the calendar, and
-bottom-scrolled clearance above Anki's native actions.
+All unaffected production and statistics cases remain in the canonical plan
+and must be captured from the same exact candidate as Settings.
 
-## Settings composition
+## Settings window and shell
 
-- One native Qt tree owns all widths: compact header, fixed 152 px rail, one
-  page scroller, and final-row footer. No WebEngine content is embedded.
-- The movable, resizable dialog starts at 680×620 with a 680×560 minimum. The
-  inner shell is capped at 1,240 px. The primary dialog performs no screen
-  query or pre-`exec()` move, so Qt retains parent-aware placement when Anki is
-  full-screen. No geometry is persisted or reapplied after opening.
-- Production opens a normal `QDialog(mw)` synchronously with `exec()` and
-  default flags. Sidebar navigation only changes the native stacked page; it
-  creates no timer, WebView, secondary window, or focus hook.
-- The rail paints exactly one active row, legacy Calendar routing aligns the
-  Calendar display card without exposing a preceding-card sliver, and the
-  About lead cards share a matched visual row.
-- Settings chrome follows only Anki's light/dark appearance. Application font
-  scaling relies on font-relative roles and control minimums based on line
-  height plus padding.
-- Event, verse, and deck lists have no internal vertical scrollbars; their rows
-  belong to the main page scroller. Verse loading remains incremental.
+- Production opens `SettingsDialog(mw, controller, …).exec()` with the parented
+  native Qt lifecycle and no WebEngine content, custom window flags, `winId()`,
+  post-show movement, activation, or focus manipulation.
+- Geometry uses logical coordinates: 940×680 default, 720×520 minimum, and
+  initial caps of 92% available width and 88% available height.
+- A versioned UI-only `QSettings` key stores the non-maximized logical `QRect`.
+  Launch restores a valid position, clamps it to the active screen, and
+  recenters an off-screen or disconnected-monitor rectangle before visibility.
+- The shell is a fixed header, `min-height: 0` body, and fixed footer. Each page
+  owns one vertical `QScrollArea`; horizontal scrolling is disabled; page
+  bottom padding equals the live footer height plus 16 logical pixels.
+- The centered shell is capped at 1,120 px. The desktop body uses a 152 px
+  sidebar, 24 px gap, and a centered page column capped at 940 px.
+- Below 760 logical body pixels, or before live font metrics would wrap a rail
+  label, a synchronized single-line, non-eliding `QTabBar` replaces the rail.
+- Cards and toolbars reflow from two columns to one using their current width
+  and font metrics. Wide native previews appear only when the main page column
+  is at least 900 px. Navigation never changes native window geometry.
 
-Settings captures cover all four pages at 1040, 1200, and full-screen widths;
-100% and 150% application fonts; required Events/Bible/About states; dirty,
-revert, save, and error states; legacy routing; standard parented windows; and
-restart.
+## Settings surfaces and behavior
 
-## Persistence and meaning
+- Dark and light Settings roles follow Anki's live palette only. Dashboard
+  Color mode changes dashboard output and native previews, not dialog chrome.
+- Role fonts are application-relative, visible text is at least 12 px at the
+  100% baseline, ordinary controls are at least 36 px high, list rows are
+  48–54 px or taller, and the footer is at least 52 px high.
+- Selected navigation and verse rows use accent-soft surfaces and a substantial
+  accent edge. Events tabs use neutral graphite surfaces. Event rows have no
+  persistent selection; activation opens the editor.
+- Dashboard contains responsive Appearance, sections, Study metrics, Calendar
+  display/range, and Local data groups. Reset is visible only when its scope
+  differs from defaults and never saves immediately.
+- Events contains one bounded list surface with search clearing, explicit Sort
+  by labeling, result counts, Active/Archived tabs, internal scrolling,
+  distinct empty and no-results states, and contained 32 px action menus.
+- Bible verse contains a native preview, attached Custom color controls,
+  blocking hex validation, nonblocking contrast warning, dynamic Rotation
+  copy, and a complete filtered model with delegate-painted two-line rows.
+- About uses top-aligned, independently sized 60/40 Version and Help cards,
+  manifest-derived compatibility copy, local two-second diagnostics feedback,
+  standardized disclosures, and Export verse edits wording.
+- Dirty, saving, success, validation, and persistence feedback is local to the
+  footer. Failed saves retain all staged values and expose the generic release
+  copy with raw details collapsed. Dirty close requires Keep editing or
+  Discard and close in the existing embedded prompt.
 
-- Schema remains 8. The only persisted config-domain expansion is
-  `events.sort = "name"`.
-- Existing completion-palette IDs and per-theme selections remain stable.
-- Settings size remains unpersisted and there is no preview preference.
-- `SettingsDraft`, staged changes, three-way merge, dependency retention, and
-  list-as-one-field dirty counting remain authoritative.
-- Saving validates all staged state before either write, disables Save while
-  active, updates the baseline only after complete success, and uses
-  best-effort rollback plus a specific inline error after partial failure.
-- Legacy Calendar routing activates Dashboard, settles on Calendar display,
-  and preserves staged values.
-- Saved configuration is loaded before the first production render.
+## Automated capture assertions
 
-## Release gate
+Before every Settings frame, the native probe requires zero horizontal scroll
+range; all visible interactive widgets inside their content viewport; no
+footer/final-card overlap; no unintended title, navigation, or button elision;
+no clipping at 150% application font; legible selected text; action-local
+feedback; Save enabled after failure; and Save disabled after success.
 
-Pass the Python and JavaScript suites, compilation, manifest/assets checks,
-`git diff --check`, source/archive parity, safe-path inspection, and secret/link
-audits. Build `home-dashboard-overhaul-1.8.6.ankiaddon` reproducibly.
+The plan contains 106 native frames: 104 initial and two controlled-restart
+states. It includes all four Settings pages at 720/default/full widths and
+100%/150% application font, Anki light/dark representatives, custom-color
+validation, event and verse long rows, future off/on, Advanced appearance,
+dirty close, saving, production-safe failure, geometry restore, legacy route,
+and restart-clean states. Every frame must appear exactly once in validated
+detail-sheet coverage.
 
-Install that exact hash into one fresh disposable sync-disabled Anki 26.8
-profile. Prove process, window, filesystem, and sync isolation before
-interaction, then repeat all four gates after one controlled restart.
+## Exact-package release gate
 
-The implementation-derived evidence contract contains 94 native captures: 92
-initial production/Settings states and two controlled-restart states. Every
-capture ID must appear exactly once in validated contact-sheet coverage.
+Run the Python, JavaScript, contract, builder, source-parity, process,
+filesystem, profile, sync-disabled, statistics, save, and controlled-restart
+gates against one 24-member candidate. The assembler rejects evidence unless
+all reports reference that package hash and the same capture-plan hash.
 
-Only after local gates, exact-package QA, restart persistence, visual review,
-and GitHub checks pass may the release PR be squash-merged.
+Six native platform profiles are mandatory:
 
-## Deferred and unrun
+- Windows at 100%, 125%, and 150% OS display scaling
+- Linux at 100% and 150% OS display scaling
+- DPR 1 and macOS Retina or equivalent high-DPR rendering
 
-VoiceOver, Windows, Linux, forced-colors, DPR 1, and OS display-scaling
-acceptance remain deferred and must be reported as unrun and unclaimed unless
-separately executed.
+Environment-variable scale substitutes do not count. Each report records OS,
+Anki version, Qt platform, logical and physical geometry, DPI, DPR, application
+font coverage, package hash, and plan hash. The macOS report additionally must
+pass both full-screen opening paths, all four pages, Events tabs, move/resize,
+save/close/reopen, and hard restart without a Space switch.
+
+VoiceOver and forced-colors may remain explicitly unrun and nonblocking. Any
+missing Windows, Linux, DPR, OS-scaling, or macOS full-screen evidence is a hard
+failure. Do not publish, merge as a release, or mark `release_ready` until all
+blocking profiles pass.

@@ -1,17 +1,25 @@
 {
   "schema_version": 1,
-  "release": "1.8.6",
+  "release": "1.8.7",
   "reference_date": "2026-08-23",
   "authority_files": {
-    "surface_manifest": "calendar_surface_manifest_1_8_6.json",
-    "visual_matrix": "visual_regression_matrix_1_8_6.json",
-    "evidence_contract": "capture_evidence_manifest_1_8_6.json"
+    "surface_manifest": "calendar_surface_manifest_1_8_7.json",
+    "visual_matrix": "visual_regression_matrix_1_8_7.json",
+    "evidence_contract": "capture_evidence_manifest_1_8_7.json"
   },
+  "native_platform_matrix": [
+    {"host_platform": "windows", "os_scale_percent": 100, "dpr_class": "dpr-1"},
+    {"host_platform": "windows", "os_scale_percent": 125, "dpr_class": "native"},
+    {"host_platform": "windows", "os_scale_percent": 150, "dpr_class": "native"},
+    {"host_platform": "linux", "os_scale_percent": 100, "dpr_class": "dpr-1"},
+    {"host_platform": "linux", "os_scale_percent": 150, "dpr_class": "native"},
+    {"host_platform": "macos", "os_scale_percent": 100, "dpr_class": "retina"}
+  ],
   "profiles": [
     {
       "id": "full",
       "description": "Complete release contract across every production and Settings state.",
-      "output_directory": "hdo-release-evidence-1.8.6",
+      "output_directory": "hdo-release-evidence-1.8.7",
       "families": [
         "production-palettes",
         "production-core",
@@ -26,7 +34,7 @@
     {
       "id": "settings",
       "description": "All Settings pages, interaction states, and Settings restart persistence.",
-      "output_directory": "hdo-settings-evidence-1.8.6",
+      "output_directory": "hdo-settings-evidence-1.8.7",
       "families": ["settings-pages", "settings-contract", "restart"],
       "components": ["settings"],
       "full_screen": false
@@ -34,7 +42,7 @@
     {
       "id": "wide-100",
       "description": "True-full-screen wide production and Settings coverage at 100 percent text.",
-      "output_directory": "hdo-wide-100-evidence-1.8.6",
+      "output_directory": "hdo-wide-100-evidence-1.8.7",
       "families": [
         "production-palettes",
         "production-core",
@@ -68,7 +76,11 @@
         "layout": "wide",
         "container_width": null,
         "week_start": 0,
-        "tags": ["palette", "production_month_tree"]
+        "tags": ["palette", "production_month_tree"],
+        "anki_theme": "dark",
+        "host_platform": "native",
+        "os_scale_percent": 100,
+        "dpr_class": "native"
       },
       "themes": [
         {
@@ -115,7 +127,11 @@
         "layout": "wide",
         "container_width": null,
         "week_start": 0,
-        "tags": []
+        "tags": [],
+        "anki_theme": "dark",
+        "host_platform": "native",
+        "os_scale_percent": 100,
+        "dpr_class": "native"
       },
       "cases": [
         {"id": "PROD-MONTH-STABLE", "sheet_group": "production-month-year-markers", "tags": ["stable_width_switching", "month_42_cells"]},
@@ -141,6 +157,12 @@
       "stage": "initial",
       "component": "settings",
       "generator": "settings-page-axes",
+      "defaults": {
+        "anki_theme": "dark",
+        "host_platform": "native",
+        "os_scale_percent": 100,
+        "dpr_class": "native"
+      },
       "pages": [
         {"id": "DASHBOARD", "page": "dashboard", "sheet_group": "settings-dashboard-widths"},
         {"id": "EVENTS", "page": "events", "sheet_group": "settings-events-widths"},
@@ -148,8 +170,8 @@
         {"id": "ABOUT", "page": "about_support", "sheet_group": "settings-about-widths"}
       ],
       "widths": [
-        {"id": "1040", "value": 1040},
-        {"id": "1200", "value": 1200},
+        {"id": "720", "value": 720},
+        {"id": "940", "value": 940},
         {"id": "FULL", "value": "full"}
       ],
       "font_percents": [100, 150],
@@ -159,24 +181,43 @@
       "id": "settings-contract",
       "stage": "initial",
       "component": "settings",
-      "defaults": {"width": 1200, "font_percent": 100},
+      "defaults": {
+        "width": 940,
+        "font_percent": 100,
+        "anki_theme": "dark",
+        "host_platform": "native",
+        "os_scale_percent": 100,
+        "dpr_class": "native"
+      },
       "cases": [
         {"id": "SET-EVENTS-EMPTY", "page": "events", "special": "events-empty", "sheet_group": "settings-events-states"},
         {"id": "SET-EVENTS-POPULATED", "page": "events", "special": "events-populated", "sheet_group": "settings-events-states"},
-        {"id": "SET-EVENTS-SELECTED", "page": "events", "special": "events-selected", "sheet_group": "settings-events-states"},
+        {"id": "SET-EVENT-EDITOR-OPEN", "page": "events", "special": "event-editor-open", "sheet_group": "settings-events-states"},
         {"id": "SET-EVENTS-SEARCHED", "page": "events", "special": "events-searched", "sheet_group": "settings-events-states"},
+        {"id": "SET-EVENTS-NO-RESULTS", "page": "events", "special": "events-no-results", "sheet_group": "settings-events-states"},
         {"id": "SET-EVENTS-ARCHIVED", "page": "events", "special": "events-archived", "sheet_group": "settings-events-states"},
+        {"id": "SET-EVENT-LONG-TITLE", "page": "events", "special": "event-long-title", "sheet_group": "settings-events-states"},
         {"id": "SET-BIBLE-SHORT", "page": "bible_verse", "special": "bible-short", "sheet_group": "settings-bible-states"},
         {"id": "SET-BIBLE-LONG", "page": "bible_verse", "special": "bible-long", "sheet_group": "settings-bible-states"},
-        {"id": "SET-BIBLE-CUSTOM", "page": "bible_verse", "special": "bible-custom", "sheet_group": "settings-bible-states"},
+        {"id": "SET-BIBLE-CUSTOM-VALID", "page": "bible_verse", "special": "bible-custom-valid", "sheet_group": "settings-bible-states"},
+        {"id": "SET-BIBLE-CUSTOM-INVALID", "page": "bible_verse", "special": "bible-custom-invalid", "sheet_group": "settings-bible-states"},
+        {"id": "SET-BIBLE-LONG-ROW", "page": "bible_verse", "special": "bible-long-row", "sheet_group": "settings-bible-states"},
         {"id": "SET-ABOUT-BOTTOM", "page": "about_support", "special": "about-bottom", "sheet_group": "settings-window-route"},
+        {"id": "SET-DASHBOARD-FUTURE-OFF", "page": "dashboard", "special": "future-off", "sheet_group": "settings-dashboard-widths"},
+        {"id": "SET-DASHBOARD-FUTURE-ON", "page": "dashboard", "special": "future-on", "sheet_group": "settings-dashboard-widths"},
+        {"id": "SET-DASHBOARD-ADVANCED", "page": "dashboard", "special": "advanced-appearance", "sheet_group": "settings-dashboard-widths"},
         {"id": "SET-DIRTY", "page": "dashboard", "special": "dirty", "sheet_group": "settings-save-workflow"},
-        {"id": "SET-REVERT", "page": "dashboard", "special": "revert", "sheet_group": "settings-save-workflow"},
+        {"id": "SET-DISCARD", "page": "dashboard", "special": "discard", "sheet_group": "settings-save-workflow"},
+        {"id": "SET-CLOSE-CONFIRM", "page": "dashboard", "special": "close-confirmation", "sheet_group": "settings-save-workflow"},
+        {"id": "SET-SAVE-IN-PROGRESS", "page": "dashboard", "special": "save-in-progress", "sheet_group": "settings-save-workflow"},
         {"id": "SET-SAVE-SUCCESS", "page": "dashboard", "special": "save-success", "sheet_group": "settings-save-workflow"},
-        {"id": "SET-SAVE-ERROR", "page": "dashboard", "special": "save-error", "sheet_group": "settings-save-workflow"},
+        {"id": "SET-SAVE-ERROR", "page": "dashboard", "special": "save-error-production", "sheet_group": "settings-save-workflow"},
         {"id": "SET-LEGACY-ROUTE", "page": "calendar", "special": "legacy-route", "sheet_group": "settings-window-route"},
         {"id": "SET-WINDOW-STANDARD", "page": "dashboard", "special": "window-standard", "sheet_group": "settings-window-route"},
-        {"id": "SET-WINDOW-CLAMP", "page": "dashboard", "special": "window-clamp", "sheet_group": "settings-window-route"}
+        {"id": "SET-WINDOW-CLAMP", "page": "dashboard", "special": "window-clamp", "sheet_group": "settings-window-route"},
+        {"id": "SET-WINDOW-OFFSCREEN-RESTORE", "page": "dashboard", "special": "window-offscreen-restore", "sheet_group": "settings-window-route"},
+        {"id": "SET-THEME-LIGHT", "page": "dashboard", "special": "anki-light", "anki_theme": "light", "sheet_group": "settings-window-route"},
+        {"id": "SET-THEME-DARK", "page": "dashboard", "special": "anki-dark", "anki_theme": "dark", "sheet_group": "settings-window-route"}
       ]
     },
     {
@@ -195,6 +236,10 @@
         "week_start": 0,
         "sheet_group": "statistics-accuracy",
         "tags": ["statistics_accuracy"]
+        ,"anki_theme": "dark",
+        "host_platform": "native",
+        "os_scale_percent": 100,
+        "dpr_class": "native"
       },
       "cases": [
         {"id": "PROD-STATS-WIDE-MONTH", "tags": ["statistics_accuracy", "wide_2x2", "month"]},
@@ -206,6 +251,12 @@
     {
       "id": "restart",
       "stage": "restart",
+      "defaults": {
+        "anki_theme": "dark",
+        "host_platform": "native",
+        "os_scale_percent": 100,
+        "dpr_class": "native"
+      },
       "cases": [
         {
           "id": "PROD-RESTART-PERSISTENCE",
@@ -226,8 +277,12 @@
           "id": "SET-RESTART-PERSISTENCE",
           "component": "settings",
           "page": "dashboard",
-          "width": 1160,
+          "width": 940,
           "font_percent": 100,
+          "anki_theme": "dark",
+          "host_platform": "native",
+          "os_scale_percent": 100,
+          "dpr_class": "native",
           "special": "restart-persistence",
           "sheet_group": "restart-persistence"
         }
@@ -252,7 +307,7 @@
       {"id": "settings-font-150", "title": "Settings pages · 150% application font"},
       {"id": "settings-events-states", "title": "Settings Events states"},
       {"id": "settings-bible-states", "title": "Settings Bible states"},
-      {"id": "settings-save-workflow", "title": "Settings dirty, revert, save, and error"},
+      {"id": "settings-save-workflow", "title": "Settings dirty, discard, save, and error"},
       {"id": "settings-window-route", "title": "Settings About bottom, legacy route, standard window, and clamp"},
       {"id": "statistics-accuracy", "title": "Statistics accuracy · responsive shells"},
       {"id": "restart-persistence", "title": "Controlled restart persistence"}

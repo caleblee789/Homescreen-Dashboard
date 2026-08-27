@@ -7,9 +7,12 @@ Browser or statistics classes.
 
 ## 1.8.7 highlights
 
-- Settings now uses the same native window contract as Progress Bar and
-  PronounceIt: a movable, resizable `QDialog(mw)` with a 680×620 initial size,
-  a 680×560 minimum, default flags, and a local `exec()` lifetime.
+- Settings remains a parented native `QDialog(mw)` with a local `exec()`
+  lifetime. Its logical default is 940×680, its minimum is 720×520, and its
+  initial size is capped to 92%×88% of the active screen.
+- The non-maximized logical `QRect` is stored in a versioned UI-only
+  `QSettings` key. Restores are clamped to the current active screen and are
+  recentered before first visibility when a saved monitor is unavailable.
 - The Caleb menu opens Settings directly and synchronously. Calendar/WebEngine
   requests alone wait one coalesced event-loop turn so the bridge callback can
   return before the dialog opens.
@@ -36,26 +39,30 @@ Browser or statistics classes.
 - Initial HTML, live refresh, wide Month and Year 2×2 layouts, intermediate and
   narrow shells, and hard restart are contractually checked
   against identical values from the same collection snapshot.
-- Settings keeps the compact visual workflow used by conventional add-on
-  settings in a normal parented dialog. It does not query a screen or call
-  `move()` before opening; Qt therefore retains its parent-aware `QDialog`
-  placement instead of treating Settings as an explicitly positioned desktop
-  window. It also does not save coordinates, set window flags, hide Anki's
-  backing views, force focus, or contain a WebEngine preview surface. Sidebar
-  and Events-tab changes only swap child widgets in the existing stack.
+- Settings uses a fixed header, vertically scrollable native page body, and
+  fixed footer. A centered 1,120 px shell contains a 152 px desktop sidebar
+  and a centered page column capped at 940 px. Below 760 logical body pixels,
+  or before “About & support” would wrap, a synchronized single-line `QTabBar`
+  replaces the sidebar without changing window geometry.
 - Responsive Settings grids parent every new field to its card before showing
   or visibility-filtering it. Dynamic heatmap and verse badges likewise have
   explicit child parents before visibility changes. Generic staged-setting
   synchronization no longer destroys and rebuilds the heatmap-card tree, while
   actual theme and color-mode changes still refresh those previews.
 
-- Settings uses one native Qt composition at every size: a compact header,
-  152 px text rail, one active page scroller, and a stable final-row footer.
-- At 150% application font size, long Settings rail labels wrap within that
-  fixed rail instead of being clipped or elided.
-- Dashboard, Events, Bible verse, and About use compact content-sized controls
-  while retaining schema 8, staged changes, three-way merge behavior, and all
-  existing configuration keys. Event sorting additionally accepts `name`.
+- Dashboard adds a labeled palette preview, consistent segmented controls,
+  scoped reset actions, responsive calendar groups, and a native card preview
+  at wide page widths. Events uses a bounded list surface and row activation
+  opens the editor without persistent selection. Bible verse uses a complete
+  filtered model with delegate-painted two-line rows and a native verse-card
+  preview. About uses independent 60/40 Version and Help cards.
+- Dirty, saving, success, validation, and persistence feedback now lives in
+  the footer beside Close and Save. Failed saves retain every staged value and
+  expose generic user-facing copy with technical details collapsed separately.
+- Settings colors follow only Anki's live palette. Dark and light graphite
+  tokens, accent-soft selection, neutral Events tabs, relative role fonts,
+  36 px controls, and the shared 4/8/12/16/20/24/32 spacing scale are applied
+  consistently at 100% and 150% application font.
 - Month is a stable 42-cell grid and Year remains a true 53-week grid. The
   production dashboard is capped at 1,120 px and measures Anki's visible
   bottom actions to maintain 24 px of clearance in normal document flow.
@@ -71,11 +78,10 @@ Browser or statistics classes.
 
 The local 1.8.7 candidate is built as
 `home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon` for
-installation through **Tools → Add-ons → Install from file**. Its checksum is
-written alongside the archive: SHA-256
-`09d5dbbfae01d13b0a05798a756447c52ac347a670bf884bcaab868d60cc5376`.
-This candidate remains local until the native macOS full-screen Space check
-passes. Disable any legacy source add-ons named by the activation card.
+installation through **Tools → Add-ons → Install from file**. The builder
+writes the candidate checksum beside the archive. This candidate remains local
+until the native platform matrix and macOS full-screen Space checks pass.
+Disable any legacy source add-ons named by the activation card.
 
 The manifest supports Anki Desktop 26.8 (`min_point_version` and
 `max_point_version` 260800).
@@ -86,26 +92,29 @@ Use Python 3.10 or newer:
 
 ```sh
 python3 -m unittest home_dashboard_overhaul.tests.test_controller_insights home_dashboard_overhaul.tests.test_settings_release_contract -v
+python3 -m unittest discover -s home_dashboard_overhaul/tests -v
+node home_dashboard_overhaul/tests/calendar_model_test.js
+python3 home_dashboard_overhaul/qa/capture_plan.py --json
+python3 home_dashboard_overhaul/qa/validate_revised_ui_contract.py
 python3 home_dashboard_overhaul/qa/validate_settings_window_contract_1_8_7.py
 python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
 The builder creates one 24-member allowlisted archive and verifies its version,
-safe paths, focused Settings contract, and source/archive byte parity. The
-full 1.8.6 statistics and 94-frame evidence campaign is not rerun for this
-compact-window candidate.
+safe paths, current Settings contract, and source/archive byte parity. The
+canonical 1.8.7 plan contains 106 native frames: 104 initial states and two
+controlled-restart states.
 
-The current focused window authority is
-[settings_window_contract_1_8_7.json](home_dashboard_overhaul/qa/settings_window_contract_1_8_7.json).
-The frozen 1.8.6 release authorities remain:
+The current 1.8.7 authorities are:
 
-- [capture_plan.json](home_dashboard_overhaul/qa/capture_plan.json), the
-  extensible execution registry used by helper preparation, runtime selection,
-  and evidence assembly
-- [calendar_surface_manifest_1_8_6.json](home_dashboard_overhaul/qa/calendar_surface_manifest_1_8_6.json)
-- [ui-surface-registry_1_8_6.json](home_dashboard_overhaul/qa/ui-surface-registry_1_8_6.json)
-- [visual_regression_matrix_1_8_6.json](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_6.json)
-- [capture_evidence_manifest_1_8_6.json](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_6.json)
+- [capture_plan.json](home_dashboard_overhaul/qa/capture_plan.json), the sole
+  executable case, count, order, profile, and presentation authority
+- [calendar_surface_manifest_1_8_7.json](home_dashboard_overhaul/qa/calendar_surface_manifest_1_8_7.json)
+- [ui-surface-registry_1_8_7.json](home_dashboard_overhaul/qa/ui-surface-registry_1_8_7.json)
+- [visual_regression_matrix_1_8_7.json](home_dashboard_overhaul/qa/visual_regression_matrix_1_8_7.json)
+- [capture_evidence_manifest_1_8_7.json](home_dashboard_overhaul/qa/capture_evidence_manifest_1_8_7.json)
+- [runtime_probe_release_1_8_7_manifest.json](home_dashboard_overhaul/qa/runtime_probe_release_1_8_7_manifest.json)
+- [settings_window_contract_1_8_7.json](home_dashboard_overhaul/qa/settings_window_contract_1_8_7.json)
 
 The [capture workflow](home_dashboard_overhaul/docs/qa/capture-workflow.md)
 documents how to extend coverage, generate a named profile, run focused

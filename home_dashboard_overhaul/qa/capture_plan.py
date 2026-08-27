@@ -25,6 +25,20 @@ PLAN_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 OUTPUT_DIRECTORY_RE = re.compile(r"^[a-z0-9][a-z0-9.-]*$")
 STAGES = ("initial", "restart")
 COMPONENTS = ("production", "settings")
+SEMANTIC_CAPTURE_FIELDS = (
+    "anki_theme",
+    "host_platform",
+    "os_scale_percent",
+    "dpr_class",
+)
+REQUIRED_NATIVE_PLATFORM_PROFILES = (
+    ("windows", 100, "dpr-1"),
+    ("windows", 125, "native"),
+    ("windows", 150, "native"),
+    ("linux", 100, "dpr-1"),
+    ("linux", 150, "native"),
+    ("macos", 100, "retina"),
+)
 
 
 class CapturePlanError(ValueError):
@@ -260,6 +274,16 @@ class CapturePlan:
             _require(bool(CASE_ID_RE.fullmatch(case_id)), "invalid capture id: {}".format(case_id))
             _require(case.get("stage") in STAGES, "{} has an invalid stage".format(case_id))
             _require(case.get("component") in COMPONENTS, "{} has an invalid component".format(case_id))
+            for field in SEMANTIC_CAPTURE_FIELDS:
+                _require(
+                    field in case and case[field] not in (None, ""),
+                    "{} has no semantic {} field".format(case_id, field),
+                )
+            _require(
+                isinstance(case.get("os_scale_percent"), int)
+                and int(case["os_scale_percent"]) > 0,
+                "{} has an invalid OS scale".format(case_id),
+            )
             if case.get("component") == "production":
                 try:
                     date.fromisoformat(str(case.get("selected", "")))
@@ -271,6 +295,28 @@ class CapturePlan:
             _require(group in self._group_specs, "{} has an unknown sheet group: {}".format(case_id, group))
             case_ids.append(case_id)
         _require(len(case_ids) == len(set(case_ids)), "capture plan contains duplicate capture ids")
+
+        platform_matrix = self.raw.get("native_platform_matrix")
+        _require(
+            isinstance(platform_matrix, list),
+            "capture plan native_platform_matrix must be a list",
+        )
+        resolved_platforms: list[tuple[str, int, str]] = []
+        for entry in platform_matrix:
+            _require(isinstance(entry, Mapping), "native platform entries must be objects")
+            resolved_platforms.append((
+                str(entry.get("host_platform", "")),
+                int(entry.get("os_scale_percent", 0)),
+                str(entry.get("dpr_class", "")),
+            ))
+        _require(
+            tuple(resolved_platforms) == REQUIRED_NATIVE_PLATFORM_PROFILES,
+            "native platform matrix differs from the release-blocking contract",
+        )
+        _require(
+            len(resolved_platforms) == len(set(resolved_platforms)),
+            "native platform matrix contains duplicate profiles",
+        )
 
         all_families = set(self._family_specs)
         all_components = set(COMPONENTS)
@@ -562,6 +608,12 @@ class CapturePlan:
             and matrix.get("settings_page_case_count")
             == len(self.family_ids("settings-pages")),
             "Settings page axes differ from the capture plan",
+        )
+        planned_platforms = self.raw.get("native_platform_matrix")
+        _require(
+            matrix.get("required_native_platform_profiles") == planned_platforms
+            and contract.get("required_native_platform_profiles") == planned_platforms,
+            "native platform requirements differ from the capture plan",
         )
         derived = contract.get("derived_native_frame_count", {})
         full_counts = self.counts("full")

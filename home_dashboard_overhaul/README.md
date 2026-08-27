@@ -7,9 +7,12 @@ Browser or statistics classes.
 
 ## What changed in 1.8.7
 
-- Settings now matches Progress Bar and PronounceIt with a normal parented
-  `QDialog`, a 680×620 initial size, a 680×560 minimum, default flags, and a
-  movable, upward-resizable native title bar.
+- Settings remains a normal parented `QDialog` with default flags and a local
+  `exec()` lifetime. It opens at 940×680 logical pixels, has a 720×520 minimum,
+  and caps initial geometry to 92%×88% of the active screen.
+- A versioned UI-only `QSettings` key preserves the non-maximized logical
+  `QRect`. Each launch clamps it to the active screen and recenters an
+  off-screen or disconnected-monitor restore before first visibility.
 - The Caleb menu constructs and executes the dialog synchronously. Deck Browser
   bridge requests alone remain deferred and coalesced until their callback
   returns. Primary Save and dirty-close confirmations remain stacked child
@@ -17,7 +20,7 @@ Browser or statistics classes.
 - The retired central workspace, backing-view hiding, focus handoff/retries,
   focus restoration, application event filter, and menu-dismissal timer are
   removed. Qt manages the same dialog lifecycle as the two working add-ons.
-- The corrected 1.8.6 statistics, schema 8, configuration keys, bridge
+- The corrected statistics, schema 8, configuration keys, bridge
   commands, and all four Settings pages remain unchanged.
 
 - Every study-derived value is computed from one scheduler-authoritative
@@ -49,12 +52,22 @@ Browser or statistics classes.
   states are checked for identical metric values. Schema
   8, all existing labels/order/JSON/DOM keys, and bridge commands are unchanged.
 
-- Settings has one native Qt widget tree at every size: a compact global
-  header, fixed 152 px text rail, one page scroller, and a true final-row
-  footer.
-- Dashboard, Events, Bible verse, and About use compact shared rows and
-  content-sized controls. All controls are native Qt and staged state writes
-  nothing until Save.
+- Settings has one native Qt widget tree at every size: fixed header, a body
+  with one vertical scroller per page, and a true final-row footer. The
+  centered shell is capped at 1,120 px and the page column at 940 px.
+- A 152 px sidebar becomes a synchronized single-line tab row below 760
+  logical body pixels, or earlier when the live application font would wrap a
+  label. Forms, toolbars, previews, heatmap palettes, and footer actions reflow
+  without horizontal scrolling.
+- Dashboard uses scoped Reset actions, responsive Calendar display and Local
+  data disclosures, and a native wide preview. Events uses a bounded list and
+  row clicks open the editor without persistent selection. Bible verse uses a
+  complete filtered model with delegate-painted two-line rows and a native
+  preview. About uses top-aligned independently sized Version and Help cards.
+- Dirty, saving, saved, validation, and persistence feedback is action-local
+  in the footer. A failed save retains all staged values, enables retry, and
+  keeps technical details behind a disclosure. All controls remain native Qt
+  and staged state writes nothing until Save.
 - Month is always 42 cells. Year always uses one responsive 53-week tree that
   stays inside the dashboard without horizontal scrolling at 480 px and above;
   only the heatmap may scroll below that boundary. Calendar legend and
@@ -91,20 +104,21 @@ are omitted when their corresponding features are disabled.
 
 ## Themes, settings, and persistence
 
-Open settings from Anki's Tools menu or the calendar gear. Changes stay staged
-until **Save changes**. **Revert changes** returns every staged field to the
-saved baseline. The baseline updates only after a completely successful save.
+Open settings from Anki's Tools menu or the calendar gear. Changes are applied
+when you save. **Discard changes** returns every staged field to the saved
+baseline, while each visible **Reset** affects only its own default scope. The
+baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only swatches and production rendering.
-Settings is a normal `QDialog(mw)` with a 680×620 initial size and 680×560
-minimum. It is movable and resizable, uses default Qt flags, and is opened with
-a local `exec()` call. The primary dialog performs no screen query or
-pre-`exec()` move, allowing Qt to place its native dialog relative to Anki in
-the active full-screen Space. It never saves coordinates, repositions after
-opening, hides Anki's central widgets, forces focus, or embeds WebEngine
-content. Every page remains vertically scrollable, and sidebar and Events-tab
-navigation only changes widgets inside the existing stack.
+Settings is a movable, resizable `QDialog(mw)` with a 940×680 logical default,
+720×520 minimum, default Qt flags, and a local `exec()` call. It resolves the
+parent window's active screen, falls back to the screen containing the parent
+center and then the primary screen, and applies a clamped logical geometry
+before first visibility. It never calls `winId()`, repositions after opening,
+hides Anki's central widgets, forces focus, or embeds WebEngine content. Every
+page remains vertically scrollable, and navigation only changes child widgets
+inside the existing stack.
 
 Responsive field grids mount every new field under its Settings card before
 changing visibility or filtering layout rows. This prevents a parentless field
@@ -131,17 +145,23 @@ From the repository root, use Python 3.10 or newer:
 
 ```sh
 python3 -m unittest home_dashboard_overhaul.tests.test_controller_insights home_dashboard_overhaul.tests.test_settings_release_contract -v
+python3 -m unittest discover -s home_dashboard_overhaul/tests -v
+node home_dashboard_overhaul/tests/calendar_model_test.js
+python3 home_dashboard_overhaul/qa/capture_plan.py --json
+python3 home_dashboard_overhaul/qa/validate_revised_ui_contract.py
 python3 home_dashboard_overhaul/qa/validate_settings_window_contract_1_8_7.py
 python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
 The builder creates one 24-file allowlisted archive, checks its version and
-safe paths, validates the focused 1.8.7 Settings contract, and verifies every
-packaged byte against source. The full 1.8.6 statistics and 94-frame native
-evidence remain frozen rather than being regenerated for this candidate.
+safe paths, validates the 1.8.7 release authorities, and verifies every
+packaged byte against source. The canonical plan contains 106 native frames,
+including 53 Settings frames and two controlled-restart states.
 
-VoiceOver, Windows, Linux, forced colors, DPR 1, and OS-level display-scaling
-acceptance remain deferred and unclaimed unless separately run.
+VoiceOver and forced-colors remain explicitly unrun and nonblocking. Windows,
+Linux, DPR 1, native OS display scaling, and macOS full-screen Space behavior
+are release-blocking and remain unclaimed until their native reports pass
+against one exact package and capture-plan hash.
 
 Copyright 2026. Licensed under AGPL-3.0-or-later. See
 `THIRD_PARTY_NOTICES.md` for Scripture and upstream notices.

@@ -15,36 +15,39 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         qa = ROOT / "qa"
         cls.manifest = json.loads(
-            (qa / "calendar_surface_manifest_1_8_6.json").read_text(encoding="utf-8")
+            (qa / "calendar_surface_manifest_1_8_7.json").read_text(encoding="utf-8")
         )
         cls.matrix = json.loads(
-            (qa / "visual_regression_matrix_1_8_6.json").read_text(encoding="utf-8")
+            (qa / "visual_regression_matrix_1_8_7.json").read_text(encoding="utf-8")
         )
         cls.capture = json.loads(
-            (qa / "capture_evidence_manifest_1_8_6.json").read_text(encoding="utf-8")
+            (qa / "capture_evidence_manifest_1_8_7.json").read_text(encoding="utf-8")
         )
         cls.registry = json.loads(
-            (qa / "ui-surface-registry_1_8_6.json").read_text(encoding="utf-8")
+            (qa / "ui-surface-registry_1_8_7.json").read_text(encoding="utf-8")
         )
         plan_namespace = runpy.run_path(str(qa / "capture_plan.py"))
         cls.plan = plan_namespace["load_capture_plan"](qa / "capture_plan.json")
 
-    def test_manifest_is_the_authoritative_1_8_6_schema_eight_contract(self) -> None:
+    def test_manifest_is_the_authoritative_1_8_7_schema_eight_contract(self) -> None:
         self.assertEqual(self.manifest["schema_version"], 8)
-        self.assertEqual(self.manifest["release"], "1.8.6")
+        self.assertEqual(self.manifest["release"], "1.8.7")
         self.assertEqual(
             self.manifest["contract"],
-            "canonical-settings-and-production-dashboard-final-ui-2026-08-24",
+            "corrected-native-settings-and-production-dashboard-release-ui-2026-08-26",
         )
         self.assertEqual(
             self.manifest["dashboard_order"],
             ["study_calendar", "summary_metrics", "bible_verse"],
         )
         settings = self.manifest["settings_architecture"]
-        self.assertEqual(settings["default_window"], [1200, 800])
-        self.assertEqual(settings["minimum_normal_window"], [1040, 700])
-        self.assertEqual(settings["maximum_inner_width"], 1240)
+        self.assertEqual(settings["default_window"], [940, 680])
+        self.assertEqual(settings["minimum_normal_window"], [720, 520])
+        self.assertEqual(settings["initial_available_geometry_caps"], {"width": .92, "height": .88})
+        self.assertEqual(settings["maximum_inner_width"], 1120)
+        self.assertEqual(settings["maximum_page_width"], 940)
         self.assertEqual(settings["rail_width"], 152)
+        self.assertEqual(settings["compact_navigation_threshold"], 760)
         self.assertEqual(settings["embedded_web_content"], "none")
         self.assertEqual(settings["window_lifecycle"], "parented-standard-dialog-exec")
         self.assertEqual(settings["page_switching"], "native-stacked-widget-only-no-render-timer")
@@ -67,7 +70,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertTrue(self.registry["exact_once"])
         self.assertEqual(
             self.registry["authority"],
-            "qa/calendar_surface_manifest_1_8_6.json",
+            "qa/calendar_surface_manifest_1_8_7.json",
         )
 
     def test_palette_matrix_covers_every_theme_id_in_both_modes(self) -> None:
@@ -99,7 +102,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         )
         self.assertGreater(expected_count, 0)
         self.assertEqual(self.matrix["settings_page_case_count"], expected_count)
-        self.assertEqual(axes["window_width"], [1040, 1200, "full-screen"])
+        self.assertEqual(axes["window_width"], [720, 940, "full-screen"])
         self.assertEqual(axes["application_font_percent"], [100, 150])
 
     def test_capture_count_is_derived_from_contract_families(self) -> None:
@@ -137,15 +140,19 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
             item for item in self.capture["capture_families"]
             if item["id"] == "settings-contract"
         )
+        self.assertEqual(
+            tuple(family["capture_ids"]),
+            self.plan.family_ids("settings-contract"),
+        )
         required = {
-            "SET-EVENTS-EMPTY", "SET-EVENTS-POPULATED", "SET-EVENTS-SELECTED",
-            "SET-EVENTS-SEARCHED", "SET-EVENTS-ARCHIVED",
-            "SET-BIBLE-SHORT", "SET-BIBLE-LONG", "SET-BIBLE-CUSTOM",
-            "SET-ABOUT-BOTTOM", "SET-DIRTY", "SET-REVERT",
-            "SET-SAVE-SUCCESS", "SET-SAVE-ERROR", "SET-LEGACY-ROUTE",
-            "SET-WINDOW-STANDARD", "SET-WINDOW-CLAMP",
+            "SET-EVENT-EDITOR-OPEN", "SET-EVENTS-NO-RESULTS", "SET-EVENT-LONG-TITLE",
+            "SET-BIBLE-CUSTOM-VALID", "SET-BIBLE-CUSTOM-INVALID", "SET-BIBLE-LONG-ROW",
+            "SET-DASHBOARD-FUTURE-OFF", "SET-DASHBOARD-FUTURE-ON", "SET-DASHBOARD-ADVANCED",
+            "SET-CLOSE-CONFIRM", "SET-SAVE-IN-PROGRESS", "SET-WINDOW-OFFSCREEN-RESTORE",
+            "SET-THEME-LIGHT", "SET-THEME-DARK",
         }
         self.assertTrue(required <= set(family["capture_ids"]))
+        self.assertNotIn("SET-EVENTS-SELECTED", family["capture_ids"])
 
     def test_statistics_accuracy_family_covers_every_value_shell(self) -> None:
         family = next(
@@ -190,12 +197,17 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertTrue(all("path" not in item for item in references))
 
     def test_acceptance_boundaries_and_isolation_are_explicit(self) -> None:
-        expected_unrun = {
-            "voiceover_review", "windows_validation", "linux_validation",
-            "forced_colors_review", "device_pixel_ratio_1", "os_display_scaling",
-        }
+        expected_unrun = {"voiceover_review", "forced_colors_review"}
         self.assertEqual(set(self.capture["deferred_unrun"]), expected_unrun)
         self.assertEqual(set(self.matrix["deferred_unrun"]), expected_unrun)
+        self.assertEqual(
+            self.capture["required_native_platform_profiles"],
+            self.plan.raw["native_platform_matrix"],
+        )
+        self.assertEqual(
+            self.matrix["required_native_platform_profiles"],
+            self.plan.raw["native_platform_matrix"],
+        )
         self.assertEqual(len(self.capture["isolation_gates"]), 4)
         self.assertIn("controlled-restart", self.capture["required_automated_gates"])
         self.assertIn("native-statistics-parity", self.capture["required_automated_gates"])

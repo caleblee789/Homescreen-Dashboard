@@ -52,14 +52,14 @@ DEFERRED_SOURCE_PREFIXES = ("_vendor/",)
 RELEASE_CONTRACT_FILES = (
     "qa/settings_window_contract_1_8_7.json",
     "qa/validate_settings_window_contract_1_8_7.py",
-    "qa/calendar_surface_manifest_1_8_6.json",
-    "qa/visual_regression_matrix_1_8_6.json",
-    "qa/ui-surface-registry_1_8_6.json",
-    "qa/capture_evidence_manifest_1_8_6.json",
-    "qa/runtime_probe_release_1_8_6_manifest.json",
-    "qa/runtime_probe_release_1_8_6.py",
+    "qa/calendar_surface_manifest_1_8_7.json",
+    "qa/visual_regression_matrix_1_8_7.json",
+    "qa/ui-surface-registry_1_8_7.json",
+    "qa/capture_evidence_manifest_1_8_7.json",
+    "qa/runtime_probe_release_1_8_7_manifest.json",
+    "qa/runtime_probe_release_1_8_7.py",
     "qa/runtime_probe_release_1_8_4.py",
-    "qa/assemble_release_evidence_1_8_6.py",
+    "qa/assemble_release_evidence_1_8_7.py",
     "qa/capture_plan.json",
     "qa/capture_plan.py",
     "qa/prepare_capture_helper.py",
@@ -305,10 +305,11 @@ def validate_sources() -> dict:
     manifest = _json("manifest.json")
     config = _json("config.json")
     verse_data = _json("default_verses.json")
-    surface_contract = _json("qa/calendar_surface_manifest_1_8_6.json")
-    visual_matrix = _json("qa/visual_regression_matrix_1_8_6.json")
-    capture_contract = _json("qa/capture_evidence_manifest_1_8_6.json")
-    probe_contract = _json("qa/runtime_probe_release_1_8_6_manifest.json")
+    surface_contract = _json("qa/calendar_surface_manifest_1_8_7.json")
+    visual_matrix = _json("qa/visual_regression_matrix_1_8_7.json")
+    capture_contract = _json("qa/capture_evidence_manifest_1_8_7.json")
+    probe_contract = _json("qa/runtime_probe_release_1_8_7_manifest.json")
+    surface_registry = _json("qa/ui-surface-registry_1_8_7.json")
     capture_plan_namespace = runpy.run_path(str(ROOT / "qa" / "capture_plan.py"))
     capture_plan = capture_plan_namespace["load_capture_plan"](
         ROOT / "qa" / "capture_plan.json"
@@ -346,6 +347,13 @@ def validate_sources() -> dict:
             "ui_primitives.py", "web/dashboard.js", "web/dashboard.css",
         )
     }
+    packaged_text = "\n".join(
+        (ROOT / relative).read_text(encoding="utf-8", errors="ignore")
+        for relative in PACKAGE_FILES
+        if (ROOT / relative).suffix.casefold() in {".py", ".json", ".md", ".txt", ".js", ".css"}
+    )
+    if "simulated transactional write failure" in packaged_text:
+        raise ValueError("developer-facing save fixture wording must not ship")
     required = {
         "analytics.py": (
             "due_load_reference", "math.ceil(len(forecast_counts) * .90)",
@@ -390,24 +398,27 @@ def validate_sources() -> dict:
         "settings.py": (
             "class SettingsDialog(QDialog):", "class SettingsPromptPage(QWidget):",
             "super().__init__(parent)",
-            'self.setWindowTitle("Home Screen Dashboard settings")',
-            "self.setMinimumSize(680, 560)", "self.resize(680, 620)",
+            'self.setWindowTitle("Home Screen Dashboard Settings")',
+            "self.setMinimumSize(*SETTINGS_MINIMUM_SIZE)",
+            "SETTINGS_GEOMETRY_KEY", "clamp_window_geometry(",
             "self._content_stack.setCurrentWidget(prompt)",
             "def reject(self) -> None:", "def closeEvent(self, event: Any) -> None:",
             "action.triggered.connect(controller.open_settings)",
-            "self.settings_shell.setMaximumWidth(1240)", "self.nav.setFixedWidth(152)",
+            "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)", "self.sidebar_panel.setFixedWidth(152)",
+            "self.compact_nav = QTabBar", "SETTINGS_COMPACT_BODY_WIDTH = 760",
+            "SETTINGS_PAGE_MAX_WIDTH = 940", "ScrollBarAlwaysOff",
             "host = grid.parentWidget()", "widget.setParent(host)",
             "widget.show()", "if not widget.isHidden():",
             'selected_indicator = QLabel("✓", button)',
-            'self.current_badge = QLabel("Current", self)',
-            'self.selected_badge = QLabel("Selected", self)',
             "def _connect_change_signals(self) -> None:",
             "def _settings_changed(self, *_args: object) -> None:",
-            'SettingsCard("Study calculations")', 'SettingsCard("Calendar display")',
-            'SettingsCard("Calendar range")', 'SettingsCard("Data and reset"',
-            "class EventRowWidget", "class VerseRowWidget", "def _attach_event_menu",
-            'self.revert_button = QPushButton("Revert changes")',
-            'self.save_error.setObjectName("InlineSaveError")',
+            'SettingsCard("Study metrics", "", "Reset")', '"Calendar display",',
+            'SettingsCard("Calendar range", "", "Reset")', "class DisclosureHeader",
+            "class EventRowWidget", "class VerseLibraryModel", "class VerseLibraryDelegate",
+            "def _attach_event_menu", 'self.revert_button = QPushButton("Discard changes")',
+            "class SettingsFooter", 'self.error_label.setObjectName("InlineSaveError")',
+            "Couldn’t save settings. Your changes are still available. Try again.",
+            "scope_differs_from_defaults", "DashboardCardPreview", "VerseCardPreview",
         ),
         "web/dashboard.js": (
             "function buildCalendarTooltipRows", "function getSelectedDateCapabilities",
@@ -481,10 +492,9 @@ def validate_sources() -> dict:
     if "self._refresh_heatmap_preset_cards()" in apply_theme_source:
         raise ValueError("generic Settings synchronization must not rebuild heatmap cards")
     for forbidden in (
-        "availableGeometry", "QApplication.primaryScreen", "clamp_window_size",
-        "self.screen()", "self.move(", "setWindowModality", "setModal(",
+        "clamp_window_size", "self.screen()", "self.move(", "setWindowModality", "setModal(",
         "def showEvent", "AnkiWebView", "QWebEngine", "raise_()",
-        "setGeometry(", "setWindowFlags", "activateWindow()", "setFocus(",
+        "setWindowFlags", "activateWindow()", "setFocus(",
         "setFocusProxy(", "installEventFilter(self)", "super().__init__(parent,",
         "Qt.WindowType.Window", "Qt.WindowType.CustomizeWindowHint",
     ):
@@ -561,10 +571,13 @@ def validate_sources() -> dict:
         or any(not item.get("tags") or not str(item.get("requirement", "")).strip() for item in criteria)
     ):
         raise ValueError("corrected surface contract must encode unique tagged acceptance criteria")
-    if any(contract.get("release") != "1.8.6" for contract in (
-        surface_contract, visual_matrix, capture_contract, probe_contract
+    if any(contract.get("release") != version for contract in (
+        surface_contract, visual_matrix, capture_contract, probe_contract,
+        surface_registry,
     )):
-        raise ValueError("frozen 1.8.6 release contracts were modified")
+        raise ValueError("1.8.7 release authorities use different versions")
+    if surface_registry.get("surfaces") != surface_contract.get("canonical_surfaces"):
+        raise ValueError("surface registry differs from the canonical surface authority")
     if capture_plan.release != version:
         raise ValueError("capture plan must match the manifest version")
     if (
@@ -574,28 +587,40 @@ def validate_sources() -> dict:
         != "capture_plan.json#profiles[id=full]"
         or probe_contract.get("helper_builder") != "prepare_capture_helper.py"
         or probe_contract.get("base_probe") != "runtime_probe_release_1_8_4.py"
+        or probe_contract.get("release_probe") != "runtime_probe_release_1_8_7.py"
+        or probe_contract.get("required_platform_matrix")
+        != "capture_plan.json#native_platform_matrix"
     ):
         raise ValueError("runtime probe metadata does not delegate profiles and counts to the capture plan")
     if settings_window_contract.get("release") != version:
         raise ValueError("focused Settings contract must match the manifest version")
     if (
         settings_window_contract.get("reference_addons") != ["Progress Bar", "PronounceIt"]
-        or settings_window_contract.get("minimum_size") != [680, 560]
-        or settings_window_contract.get("initial_size") != [680, 620]
+        or settings_window_contract.get("minimum_size") != [720, 520]
+        or settings_window_contract.get("default_size") != [940, 680]
+        or settings_window_contract.get("initial_size_caps")
+        != {"available_width_ratio": .92, "available_height_ratio": .88}
         or settings_window_contract.get("native_window") is not True
+        or settings_window_contract.get("logical_coordinates") is not True
         or settings_window_contract.get("movable") is not True
         or settings_window_contract.get("resizable") is not True
         or settings_window_contract.get("default_window_flags") is not True
         or settings_window_contract.get("initial_placement")
-        != "Qt parent-aware QDialog placement at exec()"
-        or settings_window_contract.get("screen_geometry_queries")
-        != "none for the primary Settings dialog"
-        or settings_window_contract.get("pre_exec_move") is not False
-        or settings_window_contract.get("primary_screen_fallback") is not False
+        != "restored logical QRect clamped to active screen or centered on parent before first visibility"
+        or settings_window_contract.get("pre_exec_geometry") is not True
         or settings_window_contract.get("reposition_after_open") is not False
-        or settings_window_contract.get("saved_geometry") is not False
+        or settings_window_contract.get("saved_geometry")
+        != "versioned UI-only QSettings non-maximized QRect"
+        or settings_window_contract.get("geometry_key")
+        != "home_dashboard_overhaul/settings_dialog_geometry/v2"
+        or settings_window_contract.get("active_screen_order")
+        != ["parent window handle", "screen containing parent center", "primary screen"]
+        or settings_window_contract.get("shell_maximum_width") != 1120
+        or settings_window_contract.get("page_maximum_width") != 940
+        or settings_window_contract.get("rail_width") != 152
+        or settings_window_contract.get("rail_gap") != 24
         or settings_window_contract.get("dynamic_badge_mount")
-        != "parent heatmap and verse badges before visibility changes"
+        != "parent heatmap indicators before visibility changes; verse rows use one delegate"
         or settings_window_contract.get("generic_theme_sync_rebuilds_heatmap") is not False
         or settings_window_contract.get("programmatic_lifecycle_focus") is not False
         or settings_window_contract.get("retained_dialog_object") is not False
@@ -614,6 +639,10 @@ def validate_sources() -> dict:
     wide_counts = capture_plan.counts("wide-100")
     if not (0 < wide_counts["initial"] <= full_counts["initial"] and wide_counts["restart"] <= full_counts["restart"]):
         raise ValueError("wide 100 percent profile is not a valid subset of the full capture plan")
+    if full_counts != {"initial": 104, "restart": 2, "total": 106}:
+        raise ValueError("corrected 1.8.7 full capture count must be 106")
+    if capture_contract.get("required_native_platform_profiles") != capture_plan.raw.get("native_platform_matrix"):
+        raise ValueError("release-blocking native platform matrix drifted")
 
     verses = verse_data.get("quote")
     if (
