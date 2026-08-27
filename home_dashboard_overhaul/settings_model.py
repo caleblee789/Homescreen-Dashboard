@@ -9,7 +9,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass, replace
 from datetime import date
-from typing import Any, Dict, Iterable, Mapping, MutableMapping, Sequence, Tuple
+from typing import Any, Dict, Iterable, Mapping, MutableMapping, Optional, Sequence, Tuple
 
 from .config_schema import default_config, normalize_config
 from .models import DashboardSnapshot, EventItem, ValueState
@@ -33,10 +33,29 @@ HISTORY_RANGE_VALUES = (
 )
 
 SETTINGS_DEFAULT_SIZE = (1080, 760)
-SETTINGS_MINIMUM_SIZE = (920, 640)
+SETTINGS_MINIMUM_SIZE = (820, 600)
 SETTINGS_NORMAL_SCREEN_MARGIN = 48
 SETTINGS_SMALL_SCREEN_MARGIN = 24
 SETTINGS_MINIMUM_VISIBLE_RATIO = .80
+SETTINGS_GEOMETRY_VERSION = 4
+SETTINGS_PREVIOUS_GEOMETRY_VERSION = 3
+
+
+def _effective_axis_margin(
+    available: int,
+    minimum: int,
+    normal_margin: int = SETTINGS_NORMAL_SCREEN_MARGIN,
+    small_screen_margin: int = SETTINGS_SMALL_SCREEN_MARGIN,
+) -> int:
+    """Choose the largest supported inset without shrinking a fitting minimum."""
+
+    if available - (2 * normal_margin) >= minimum:
+        return normal_margin
+    if available - (2 * small_screen_margin) >= minimum:
+        return small_screen_margin
+    if available >= minimum:
+        return max(0, (available - minimum) // 2)
+    return small_screen_margin if available > (2 * small_screen_margin) else 0
 
 
 def history_range_choice(history_days: object, ignore_before: object) -> str:
@@ -87,12 +106,20 @@ def clamp_window_size(
         available_width, available_height = default
     available_width = max(1, available_width)
     available_height = max(1, available_height)
-    normal_width = max(1, available_width - (2 * normal_margin))
-    normal_height = max(1, available_height - (2 * normal_margin))
-    normal_screen = normal_width >= minimum[0] and normal_height >= minimum[1]
-    margin = normal_margin if normal_screen else small_screen_margin
-    maximum_width = max(1, available_width - (2 * margin))
-    maximum_height = max(1, available_height - (2 * margin))
+    horizontal_margin = _effective_axis_margin(
+        available_width,
+        minimum[0],
+        normal_margin,
+        small_screen_margin,
+    )
+    vertical_margin = _effective_axis_margin(
+        available_height,
+        minimum[1],
+        normal_margin,
+        small_screen_margin,
+    )
+    maximum_width = max(1, available_width - (2 * horizontal_margin))
+    maximum_height = max(1, available_height - (2 * vertical_margin))
     try:
         requested_width, requested_height = (
             int(requested[0]), int(requested[1])  # type: ignore[index]
@@ -112,17 +139,24 @@ def settings_screen_uses_compact_fallback(
     *,
     minimum: Tuple[int, int] = SETTINGS_MINIMUM_SIZE,
     normal_margin: int = SETTINGS_NORMAL_SCREEN_MARGIN,
+    small_screen_margin: int = SETTINGS_SMALL_SCREEN_MARGIN,
+    rail_width: int = 184,
+    minimum_main_width: int = 680,
 ) -> bool:
-    """Return whether a screen cannot host the normal shell and 48 px margins."""
+    """Return whether the usable dialog width cannot retain the sidebar."""
 
     try:
-        width, height = int(available[0]), int(available[1])
+        width = int(available[0])
     except (TypeError, ValueError, IndexError):
         return False
-    return (
-        width - (2 * normal_margin) < minimum[0]
-        or height - (2 * normal_margin) < minimum[1]
+    horizontal_margin = _effective_axis_margin(
+        max(1, width),
+        minimum[0],
+        normal_margin,
+        small_screen_margin,
     )
+    usable_width = max(1, width - (2 * horizontal_margin))
+    return usable_width < rail_width + minimum_main_width
 
 
 def visible_geometry_ratio(requested: object, screens: Sequence[Sequence[int]]) -> float:
@@ -170,7 +204,7 @@ def saved_window_geometry_is_valid(
     minimum: Tuple[int, int] = SETTINGS_MINIMUM_SIZE,
     visible_ratio: float = SETTINGS_MINIMUM_VISIBLE_RATIO,
 ) -> bool:
-    """Validate a v3 normal-window rectangle before it can be restored."""
+    """Validate a normal-window rectangle before it can be restored."""
 
     if not saved_screen_exists:
         return False
@@ -197,6 +231,46 @@ def saved_window_geometry_is_valid(
     if width > right - left or height > bottom - top:
         return False
     return visible_geometry_ratio(requested, valid_screens) >= visible_ratio
+
+
+def migrate_saved_window_geometry(
+    requested: object,
+    screens: Sequence[Sequence[int]],
+    *,
+    source_version: object,
+    saved_screen_exists: bool = True,
+    minimum: Tuple[int, int] = SETTINGS_MINIMUM_SIZE,
+    visible_ratio: float = SETTINGS_MINIMUM_VISIBLE_RATIO,
+) -> Optional[Tuple[int, int, int, int]]:
+    """Return a restorable v3/v4 logical rectangle for geometry storage v4.
+
+    Geometry storage keys are versioned independently from the add-on config
+    schema.  A v3 rectangle can therefore migrate without rewriting user
+    configuration, but it must satisfy the current minimum size and visibility
+    contract.  Unknown versions and disconnected-screen records fail closed.
+    """
+
+    try:
+        version = int(source_version)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if isinstance(source_version, bool) or version not in {
+        SETTINGS_PREVIOUS_GEOMETRY_VERSION,
+        SETTINGS_GEOMETRY_VERSION,
+    }:
+        return None
+    if not saved_window_geometry_is_valid(
+        requested,
+        screens,
+        saved_screen_exists=saved_screen_exists,
+        minimum=minimum,
+        visible_ratio=visible_ratio,
+    ):
+        return None
+    try:
+        return tuple(int(requested[index]) for index in range(4))  # type: ignore[index,return-value]
+    except (TypeError, ValueError, IndexError):
+        return None
 
 
 def clamp_window_geometry(
@@ -247,19 +321,18 @@ def clamp_window_geometry(
         default=default,
         minimum=minimum,
     )
-    compact_fallback = settings_screen_uses_compact_fallback(
-        (screen_width, screen_height),
-        minimum=minimum,
+    horizontal_margin = _effective_axis_margin(
+        screen_width,
+        minimum[0],
     )
-    margin = (
-        SETTINGS_SMALL_SCREEN_MARGIN
-        if compact_fallback
-        else SETTINGS_NORMAL_SCREEN_MARGIN
+    vertical_margin = _effective_axis_margin(
+        screen_height,
+        minimum[1],
     )
-    left = screen_x + margin
-    top = screen_y + margin
-    right = max(left, screen_x + screen_width - margin - width)
-    bottom = max(top, screen_y + screen_height - margin - height)
+    left = screen_x + horizontal_margin
+    top = screen_y + vertical_margin
+    right = max(left, screen_x + screen_width - horizontal_margin - width)
+    bottom = max(top, screen_y + screen_height - vertical_margin - height)
     center_x = requested_x + requested_width // 2
     center_y = requested_y + requested_height // 2
     saved_screen_is_current = (
@@ -532,62 +605,89 @@ def three_way_merge(
     return MergeResult(merged, tuple(conflicts))
 
 
+_APPEARANCE_RESET_PATHS: Tuple[Path, ...] = (
+    ("appearance", "preset"),
+    ("appearance", "mode"),
+    ("appearance", "opacity"),
+    ("appearance", "blur"),
+    ("appearance", "text_scale"),
+    ("home_screen", "position"),
+    ("heatmap", "presets_by_theme"),
+)
+_DASHBOARD_SECTIONS_RESET_PATHS: Tuple[Path, ...] = (
+    ("visibility", "heatmap"),
+    ("visibility", "remaining"),
+    ("visibility", "today"),
+    ("visibility", "heatmap_metrics"),
+    ("visibility", "bible"),
+)
+_STUDY_METRICS_RESET_PATHS: Tuple[Path, ...] = (
+    ("study", "pace_unit"),
+    ("study", "retention_target"),
+    ("new_cards", "include_rescheduled"),
+)
+_CALENDAR_DISPLAY_RESET_PATHS: Tuple[Path, ...] = (
+    ("heatmap", "calendar_view"),
+    ("heatmap", "week_start"),
+    ("visibility", "events"),
+)
+_CALENDAR_RANGE_RESET_PATHS: Tuple[Path, ...] = (
+    ("heatmap", "history_days"),
+    ("heatmap", "ignore_before"),
+    ("heatmap", "show_due_forecast"),
+    ("heatmap", "forecast_days"),
+)
+_LOCAL_DATA_RESET_PATHS: Tuple[Path, ...] = (
+    ("heatmap", "exclude_manual_reschedules"),
+    ("heatmap", "exclude_deleted_cards"),
+    ("heatmap", "excluded_deck_ids"),
+)
+_BIBLE_APPEARANCE_RESET_PATHS: Tuple[Path, ...] = (
+    ("bible", "font_family"),
+    ("bible", "font_size"),
+    ("bible", "font_color"),
+    ("bible", "theme_aware_color"),
+)
+_BIBLE_ROTATION_RESET_PATHS: Tuple[Path, ...] = (
+    ("bible", "rotation_mode"),
+)
+
+
 _RESET_DEFAULT_PATHS = {
-    "appearance": (("appearance",), ("home_screen",)),
-    "dashboard_sections": (("visibility",),),
-    "study_metrics": (("study",), ("new_cards",)),
+    "appearance": _APPEARANCE_RESET_PATHS,
+    "dashboard_sections": _DASHBOARD_SECTIONS_RESET_PATHS,
+    "study_metrics": _STUDY_METRICS_RESET_PATHS,
     "home_screen_legacy": (
-        ("visibility",),
-        ("study",),
-        ("new_cards",),
-        ("home_screen",),
+        _DASHBOARD_SECTIONS_RESET_PATHS
+        + _STUDY_METRICS_RESET_PATHS
+        + (("home_screen", "position"),)
     ),
-    "calendar_display": (
-        ("heatmap", "calendar_view"),
-        ("heatmap", "week_start"),
-        ("heatmap", "presets_by_theme"),
-        ("visibility", "events"),
-    ),
-    "calendar_range": (
-        ("heatmap", "history_days"),
-        ("heatmap", "ignore_before"),
-        ("heatmap", "show_due_forecast"),
-        ("heatmap", "forecast_days"),
-    ),
-    "local_data": (
-        ("heatmap", "exclude_manual_reschedules"),
-        ("heatmap", "exclude_deleted_cards"),
-        ("heatmap", "excluded_deck_ids"),
-    ),
+    "calendar_display": _CALENDAR_DISPLAY_RESET_PATHS,
+    "calendar_range": _CALENDAR_RANGE_RESET_PATHS,
+    "local_data": _LOCAL_DATA_RESET_PATHS,
     "calendar": (
-        ("heatmap",),
-        ("visibility", "events"),
+        _CALENDAR_DISPLAY_RESET_PATHS
+        + _CALENDAR_RANGE_RESET_PATHS
+        + _LOCAL_DATA_RESET_PATHS
     ),
     "dashboard": (
-        ("appearance",),
-        ("home_screen",),
-        ("visibility",),
-        ("study",),
-        ("new_cards",),
-        ("heatmap",),
+        _APPEARANCE_RESET_PATHS
+        + _DASHBOARD_SECTIONS_RESET_PATHS
+        + _STUDY_METRICS_RESET_PATHS
     ),
-    "bible_appearance": (
-        ("bible", "font_family"),
-        ("bible", "font_size"),
-        ("bible", "font_color"),
-        ("bible", "theme_aware_color"),
-    ),
-    "bible_rotation": (
-        ("bible", "rotation_mode"),
-    ),
+    "bible_appearance": _BIBLE_APPEARANCE_RESET_PATHS,
+    "bible_rotation": _BIBLE_ROTATION_RESET_PATHS,
     "bible_verse": (
-        ("bible", "font_family"),
-        ("bible", "font_size"),
-        ("bible", "font_color"),
-        ("bible", "theme_aware_color"),
-        ("bible", "rotation_mode"),
+        _BIBLE_APPEARANCE_RESET_PATHS + _BIBLE_ROTATION_RESET_PATHS
     ),
 }
+
+
+def _path_value(source: Mapping[str, Any], path: Path) -> object:
+    value: object = source
+    for part in path:
+        value = value[part]  # type: ignore[index]
+    return value
 
 
 class SettingsDraft:
@@ -654,10 +754,33 @@ class SettingsDraft:
         if not paths:
             return False
         for path in paths:
-            source: object = self.defaults
-            for part in path:
-                source = source[part]  # type: ignore[index]
-            _assign_path(self.values, path, source)
+            _assign_path(self.values, path, _path_value(self.defaults, path))
+        self.values = normalize_config(self.values)
+        return True
+
+    def scope_snapshot(self, scope: object) -> Dict[Path, object]:
+        """Copy only the fields owned by one Reset action."""
+
+        paths = _RESET_DEFAULT_PATHS.get(str(scope or "").strip().casefold())
+        if not paths:
+            return {}
+        return {
+            path: deepcopy(_path_value(self.values, path))
+            for path in paths
+        }
+
+    def restore_scope(
+        self,
+        scope: object,
+        snapshot: Mapping[Path, object],
+    ) -> bool:
+        """Restore one scoped snapshot while preserving all other edits."""
+
+        paths = _RESET_DEFAULT_PATHS.get(str(scope or "").strip().casefold())
+        if not paths or any(path not in snapshot for path in paths):
+            return False
+        for path in paths:
+            _assign_path(self.values, path, snapshot[path])
         self.values = normalize_config(self.values)
         return True
 
@@ -668,12 +791,9 @@ class SettingsDraft:
         if not paths:
             return False
         for path in paths:
-            current: object = self.values
-            default: object = self.defaults
             try:
-                for part in path:
-                    current = current[part]  # type: ignore[index]
-                    default = default[part]  # type: ignore[index]
+                current = _path_value(self.values, path)
+                default = _path_value(self.defaults, path)
             except (KeyError, TypeError):
                 return True
             if current != default:

@@ -31,7 +31,7 @@ SETTINGS_COLOR_TOKENS: Mapping[str, Mapping[str, str]] = {
         "ui_warning": "#E2BD57",
         "ui_success": "#63D49A",
         "ui_danger": "#EE7880",
-        "ui_overlay": "rgba(0, 0, 0, 118)",
+        "ui_overlay": "rgba(0, 0, 0, 153)",
     },
     "light": {
         "ui_bg": "#F3F5F7",
@@ -54,7 +54,7 @@ SETTINGS_COLOR_TOKENS: Mapping[str, Mapping[str, str]] = {
         "ui_warning": "#8A6815",
         "ui_success": "#2F7D50",
         "ui_danger": "#A6424A",
-        "ui_overlay": "rgba(0, 0, 0, 96)",
+        "ui_overlay": "rgba(0, 0, 0, 140)",
     },
 }
 

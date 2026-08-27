@@ -41,22 +41,23 @@ and must be captured from the same exact candidate as Settings.
 
 - Production opens `SettingsDialog(mw, controller, …).exec()` with the parented
   native Qt lifecycle and no WebEngine content, custom window flags, `winId()`,
-  post-show movement, activation, or focus manipulation.
-- Geometry uses logical coordinates: 1080×760 default, 920×640 normal minimum,
+  unconditional post-show movement, raising, or activation.
+- Geometry uses logical coordinates: 1080×760 default, 820×600 normal minimum,
   48 px normal margins, and a 24 px constrained-screen fallback.
-- `settings_dialog_geometry/v3` stores a valid deliberate non-transient logical
-  rectangle and screen identity. The dialog never reads v2 and rejects records
-  that are undersized, less than 80% visible, off-screen, disconnected,
-  compact-triggering, maximized, full-screen, or produced during Space changes.
+- `settings_dialog_geometry/v4` stores logical geometry, screen identity,
+  available bounds, and informational DPR. A v3 record migrates only when it
+  meets the new minimum, names a connected screen, and remains at least 80%
+  visible. Maximized/full-screen geometry is never saved.
 - The shell is a fixed header, `min-height: 0` body, and fixed footer. Each page
   owns one vertical `QScrollArea`; horizontal scrolling is disabled; page
   bottom padding equals the live footer height plus 16 logical pixels.
-- The shell is capped near 1,240 px. A 184 px sidebar spans the fixed 72 px
-  page header, scrolling page body, and fixed 60 px footer; the page column is
-  capped at 980 px.
+- The shell is capped at 1,120 px. A 184 px sidebar spans the 72 px baseline
+  page header, scrolling page body, and 60 px baseline footer; header, footer,
+  rows, and actions grow with application fonts. Ordinary pages are capped at
+  920 px and About at 840 px.
 - Vertical navigation remains active in normal operation. A synchronized top
-  navigation activates below 820 logical pixels only on a screen that cannot
-  accommodate the normal 920×640 minimum.
+  navigation activates whenever the sidebar would leave less than 680 px for
+  the main region; the 820 px supported minimum therefore uses compact nav.
 - Cards and toolbars reflow using current width and font metrics. Settings has
   no rendered preview cards or preview-only reflow branch. Navigation never
   changes native window geometry.
@@ -74,18 +75,20 @@ and must be captured from the same exact candidate as Settings.
 - Dashboard contains Appearance, Dashboard sections, Study metrics, and
   Calendar display. Text selectors replace palette/theme/heatmap previews;
   Reset is scoped and never saves immediately.
-- Events contains a header-level Add event action, flexible list surface,
-  search/sort toolbar, Active/Archived tabs, 54 px rows, internal scrolling,
-  distinct empty/no-results states, and a parented 560×320 editor.
+- Events shows both header and empty-state Add actions only while empty, then a
+  populated-toolbar Add action. Its search/sort toolbar, Active/Archived tabs,
+  naturally growing 54 px baseline rows, six-row scrolling threshold,
+  distinct empty/no-results states, and parented editor capped near 440 px are
+  asserted.
 - Bible verse contains Appearance, Rotation, and a flexible Verse library;
   equal-width color-source segments; the retained custom-color well; one
   blocking inline hex error; and clamped two-line library excerpts.
 - About contains Version and support, Privacy and legal, and Backup and recovery,
   with manifest-derived `Supports Anki Desktop 26.8` compatibility copy.
-- Dirty, saving, success, validation, and persistence feedback is local to the
-  footer. Failed saves retain all staged values and expose the generic release
-  copy with raw details collapsed. Dirty close requires Keep editing or
-  Discard and close in the existing embedded prompt.
+- Dirty, animated saving, success, validation, and persistence feedback is
+  local to the footer. Failed saves retain all staged values and expose View
+  details and Copy error. Dirty close uses Cancel, Discard, and Save and close
+  in the existing scrimmed in-window prompt.
 
 ## Automated capture assertions
 
@@ -108,11 +111,17 @@ compositor and include the complete decorated native Settings window.
 
 Small-screen fallback, two legacy geometry sizes, valid 1180×800 restore,
 secondary/disconnected screen handling, 80% visibility, and no post-show shrink
-are structured assertions rather than additional PNGs. Full-screen behavior is
-a mandatory structured native macOS acceptance result because a still frame
+are structured assertions rather than additional PNGs. A canonical-100%
+structured pass also checks all four pages in a 1366×768
+logical work-area fixture and opens a real disconnected-monitor v4 record; it
+adds no PNGs. Alternate application-font scales remain intentionally unrun.
+Full-screen behavior is a mandatory structured native macOS acceptance result because a still frame
 cannot prove it. The exact package must open Settings from both the menu and
 Dashboard gear while remaining on Anki's full-screen Space, with no desktop or
-Space switch, and repeat the check after hard restart. The focused assembler
+Space switch. Through each route, the schema-v2 report records page navigation,
+Events tabs, resize, event edit, verse edit, save, close/reopen, and controlled
+restart as separate steps; every step must independently retain the current
+Anki Space. The focused assembler
 rejects a missing, failed, candidate-mismatched, or plan-mismatched report; the
 41 PNGs cannot waive this gate.
 
@@ -128,14 +137,16 @@ alternate-scale matrices. These release gates remain explicitly unrun rather
 than being inferred from the 41-frame visual acceptance set:
 
 - Windows at 100%, 125%, and 150% OS display scaling
-- Linux at 100% and 150% OS display scaling
+- Linux at 100% and 150% OS display scaling, both with DPR 1
 - DPR 1 and macOS Retina or equivalent high-DPR rendering
 
 Environment-variable scale substitutes do not count. Each report records OS,
 Anki version, Qt platform, logical and physical geometry, DPI, DPR, application
-font coverage, package hash, and plan hash. The macOS report additionally must
-pass both full-screen opening paths, all four pages, Events tabs, resizing,
-save/close/reopen, and hard restart without a Space switch.
+font coverage, package hash, and plan hash. Physical dimensions must agree with
+logical dimensions multiplied by DPR; DPR-1 profiles must report approximately
+1.0 and matching dimensions. Each native report also carries passing structured
+layout assertions for all four Settings pages. The macOS report additionally
+must pass the complete per-route full-screen workflow without a Space switch.
 
 VoiceOver and forced-colors may remain explicitly unrun and nonblocking. Any
 missing Windows, Linux, DPR, OS-scaling, or macOS full-screen evidence is a hard

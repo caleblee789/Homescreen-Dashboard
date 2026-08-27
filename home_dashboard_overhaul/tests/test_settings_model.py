@@ -27,6 +27,7 @@ from home_dashboard_overhaul.settings_model import (
     history_range_choice,
     history_range_values,
     import_quotes,
+    migrate_saved_window_geometry,
     preview_snapshot_with_staged_events,
     resolve_section,
     resolve_section_target,
@@ -211,6 +212,12 @@ class SettingsDraftTests(unittest.TestCase):
         baseline = normalize_config(
             {
                 "appearance": {"opacity": 95},
+                "heatmap": {
+                    "presets_by_theme": {
+                        "Sapphire Glass": "Rose",
+                        "Graphite": "Plum",
+                    }
+                },
                 "events": {
                     "items": [
                         {
@@ -226,12 +233,161 @@ class SettingsDraftTests(unittest.TestCase):
         )
         draft = SettingsDraft(baseline)
         self.assertTrue(draft.reset_section("appearance"))
+        defaults = normalize_config({})
+        self.assertEqual(
+            draft.values["heatmap"]["presets_by_theme"],
+            defaults["heatmap"]["presets_by_theme"],
+        )
         self.assertEqual(draft.values["events"]["items"], baseline["events"]["items"])
         self.assertEqual(draft.values["bible"]["quotes"], ["Keep this verse"])
         self.assertTrue(draft.values["future"]["feature"]["enabled"])
         self.assertTrue(draft.reset_section("bible verse"))
         self.assertEqual(draft.values["bible"]["quotes"], ["Keep this verse"])
         self.assertFalse(draft.reset_section("events"))
+
+    def test_calendar_display_reset_preserves_appearance_owned_heatmap_palettes(self) -> None:
+        baseline = normalize_config(
+            {
+                "heatmap": {
+                    "calendar_view": "month",
+                    "week_start": 6,
+                    "presets_by_theme": {
+                        "Sapphire Glass": "Rose",
+                        "Graphite": "Plum",
+                    },
+                }
+            }
+        )
+        draft = SettingsDraft(baseline)
+
+        self.assertTrue(draft.reset_card("calendar_display"))
+        self.assertEqual(
+            draft.values["heatmap"]["presets_by_theme"],
+            baseline["heatmap"]["presets_by_theme"],
+        )
+
+    def test_card_resets_preserve_unknown_nested_and_managed_values(self) -> None:
+        baseline = normalize_config(
+            {
+                "appearance": {
+                    "mode": "dark",
+                    "future": {"appearance_option": "keep"},
+                },
+                "home_screen": {
+                    "position": "bottom",
+                    "future": {"placement_option": "keep"},
+                },
+                "visibility": {
+                    "today": False,
+                    "events": False,
+                    "future_marker": True,
+                },
+                "study": {
+                    "retention_target": 93,
+                    "future": {"metric": "keep"},
+                },
+                "new_cards": {
+                    "include_rescheduled": False,
+                    "future": {"rule": "keep"},
+                },
+                "heatmap": {
+                    "calendar_view": "month",
+                    "future": {"calendar_option": "keep"},
+                },
+                "events": {
+                    "items": [
+                        {
+                            "id": "managed-event",
+                            "date": "2026-08-27",
+                            "name": "Keep event",
+                        }
+                    ]
+                },
+                "bible": {
+                    "quotes": ["Keep verse"],
+                    "font_size": "40px",
+                    "future": {"verse_option": "keep"},
+                },
+            }
+        )
+        draft = SettingsDraft(baseline)
+
+        for scope in (
+            "appearance",
+            "dashboard_sections",
+            "study_metrics",
+            "calendar_display",
+            "calendar_range",
+            "local_data",
+            "bible_appearance",
+            "bible_rotation",
+        ):
+            with self.subTest(scope=scope):
+                self.assertTrue(draft.reset_card(scope))
+
+        self.assertTrue(draft.values["visibility"]["future_marker"])
+        self.assertEqual(
+            draft.values["appearance"]["future"]["appearance_option"],
+            "keep",
+        )
+        self.assertEqual(
+            draft.values["home_screen"]["future"]["placement_option"],
+            "keep",
+        )
+        self.assertEqual(draft.values["study"]["future"]["metric"], "keep")
+        self.assertEqual(draft.values["new_cards"]["future"]["rule"], "keep")
+        self.assertEqual(
+            draft.values["heatmap"]["future"]["calendar_option"],
+            "keep",
+        )
+        self.assertEqual(draft.values["events"]["items"], baseline["events"]["items"])
+        self.assertEqual(draft.values["bible"]["quotes"], ["Keep verse"])
+        self.assertEqual(draft.values["bible"]["future"]["verse_option"], "keep")
+
+    def test_dashboard_sections_reset_does_not_own_calendar_event_markers(self) -> None:
+        draft = SettingsDraft(
+            normalize_config(
+                {
+                    "visibility": {
+                        "today": False,
+                        "heatmap": False,
+                        "events": False,
+                    }
+                }
+            )
+        )
+
+        snapshot = draft.scope_snapshot("dashboard_sections")
+        self.assertTrue(draft.reset_card("dashboard_sections"))
+
+        self.assertTrue(draft.values["visibility"]["today"])
+        self.assertTrue(draft.values["visibility"]["heatmap"])
+        self.assertFalse(draft.values["visibility"]["events"])
+        self.assertNotIn(("visibility", "events"), snapshot)
+
+    def test_scoped_restore_preserves_later_edits_outside_reset_card(self) -> None:
+        draft = SettingsDraft(
+            normalize_config(
+                {
+                    "appearance": {"mode": "dark", "opacity": 95},
+                    "study": {"retention_target": 91},
+                }
+            )
+        )
+        appearance_snapshot = draft.scope_snapshot("appearance")
+        self.assertTrue(draft.reset_card("appearance"))
+        later_values = deepcopy(draft.values)
+        later_values["study"]["retention_target"] = 94
+        draft.replace_values(later_values)
+
+        self.assertTrue(
+            draft.restore_scope("appearance", appearance_snapshot)
+        )
+
+        self.assertEqual(draft.values["appearance"]["mode"], "dark")
+        self.assertEqual(draft.values["appearance"]["opacity"], 95)
+        self.assertEqual(draft.values["study"]["retention_target"], 94)
+        self.assertFalse(draft.restore_scope("unknown", appearance_snapshot))
 
     def test_home_screen_reset_restores_top_position(self) -> None:
         draft = SettingsDraft(
@@ -311,13 +467,20 @@ class SettingsUtilityTests(unittest.TestCase):
         self.assertEqual(clamp_window_size(None, (1440, 900)), (1080, 760))
 
     def test_requested_settings_size_is_clamped_to_minimum_and_screen(self) -> None:
-        self.assertEqual(clamp_window_size((700, 500), (1440, 900)), (920, 640))
+        self.assertEqual(clamp_window_size((700, 500), (1440, 900)), (820, 600))
         self.assertEqual(clamp_window_size((4000, 3000), (1440, 900)), (1344, 804))
 
     def test_physically_small_screen_uses_same_shell_inside_available_geometry(self) -> None:
-        self.assertEqual(clamp_window_size((1200, 800), (800, 600)), (752, 552))
+        self.assertEqual(clamp_window_size((1200, 800), (800, 600)), (752, 600))
+        self.assertEqual(clamp_window_size((1080, 760), (850, 620)), (820, 600))
+        self.assertEqual(clamp_window_size((1080, 760), (820, 600)), (820, 600))
+        self.assertEqual(
+            clamp_window_geometry(None, (0, 0, 819, 599)),
+            (24, 24, 771, 551),
+        )
         self.assertTrue(settings_screen_uses_compact_fallback((800, 600)))
         self.assertFalse(settings_screen_uses_compact_fallback((1440, 900)))
+        self.assertFalse(settings_screen_uses_compact_fallback((1440, 650)))
 
     def test_default_geometry_centers_on_parent_in_logical_coordinates(self) -> None:
         self.assertEqual(
@@ -352,10 +515,13 @@ class SettingsUtilityTests(unittest.TestCase):
         logical = (60, 60, 1180, 800)
         self.assertEqual(clamp_window_geometry(logical, (0, 0, 1600, 1000)), logical)
 
-    def test_v3_saved_geometry_requires_minimum_size_screen_and_eighty_percent_visibility(self) -> None:
+    def test_saved_geometry_requires_minimum_size_screen_and_eighty_percent_visibility(self) -> None:
         primary = (0, 0, 1600, 1000)
         secondary = (1600, 0, 1920, 1080)
         self.assertFalse(saved_window_geometry_is_valid((100, 100, 720, 520), [primary]))
+        self.assertFalse(saved_window_geometry_is_valid((100, 100, 819, 600), [primary]))
+        self.assertFalse(saved_window_geometry_is_valid((100, 100, 820, 599), [primary]))
+        self.assertTrue(saved_window_geometry_is_valid((100, 100, 820, 600), [primary]))
         self.assertTrue(saved_window_geometry_is_valid((100, 100, 940, 680), [primary]))
         self.assertTrue(saved_window_geometry_is_valid((100, 100, 1180, 800), [primary]))
         self.assertTrue(saved_window_geometry_is_valid((-236, 100, 1180, 800), [primary]))
@@ -376,6 +542,49 @@ class SettingsUtilityTests(unittest.TestCase):
             )
         )
 
+    def test_geometry_v4_migrates_only_valid_v3_or_v4_logical_rectangles(self) -> None:
+        primary = (0, 0, 1600, 1000)
+        valid = (100, 120, 1080, 760)
+
+        self.assertEqual(
+            migrate_saved_window_geometry(
+                valid,
+                [primary],
+                source_version=3,
+            ),
+            valid,
+        )
+        self.assertEqual(
+            migrate_saved_window_geometry(
+                valid,
+                [primary],
+                source_version=4,
+            ),
+            valid,
+        )
+        for unsupported in (None, True, 2, 5, "future"):
+            self.assertIsNone(
+                migrate_saved_window_geometry(
+                    valid,
+                    [primary],
+                    source_version=unsupported,
+                )
+            )
+        self.assertIsNone(
+            migrate_saved_window_geometry(
+                (100, 120, 819, 600),
+                [primary],
+                source_version=3,
+            )
+        )
+        self.assertIsNone(
+            migrate_saved_window_geometry(
+                valid,
+                [primary],
+                source_version=3,
+                saved_screen_exists=False,
+            )
+        )
     def test_reset_scope_visibility_and_split_calendar_scopes(self) -> None:
         baseline = normalize_config({
             "heatmap": {

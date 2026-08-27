@@ -8,16 +8,17 @@ Browser or statistics classes.
 ## What changed in 1.8.7
 
 - Settings remains a normal parented `QDialog` with default flags and a local
-  `exec()` lifetime. It opens at 1080×760 logical pixels, has a 920×640 normal
+  `exec()` lifetime. It opens at 1080×760 logical pixels, has an 820×600 normal
   minimum, and uses 48 px normal or 24 px constrained-screen margins.
-- The UI-only `settings_dialog_geometry/v3` record preserves a deliberate
-  non-transient logical rectangle and screen identity. Invalid, off-screen,
-  disconnected, compact-triggering, maximized, and full-screen records are
-  rejected, and the retired v2 record is never restored.
+- The UI-only `settings_dialog_geometry/v4` record preserves logical geometry,
+  screen identity, available bounds, and informational DPR. A valid v3 record
+  migrates only when it meets the new minimum and remains at least 80% visible;
+  disconnected, undersized, maximized, and full-screen records are rejected.
 - The Caleb menu constructs and executes the dialog synchronously. Deck Browser
   bridge requests alone remain deferred and coalesced until their callback
-  returns. Primary Save and dirty-close confirmations remain stacked child
-  pages inside the dialog.
+  returns. The controller retains one temporary dialog reference during modal
+  execution so re-entry focuses/routes the existing instance. Confirmations
+  remain scrimmed child layers inside the same window.
 - The retired central workspace, backing-view hiding, focus handoff/retries,
   focus restoration, application event filter, and menu-dismissal timer are
   removed. Qt manages the same dialog lifecycle as the two working add-ons.
@@ -55,14 +56,15 @@ Browser or statistics classes.
 
 - Settings has one native Qt widget tree at every size: fixed header, a body
   with one vertical scroller per page, and a true final-row footer. The
-  shell is capped near 1,240 px, the sidebar is 184 px, the page header is
-  72 px, the footer is 60 px, and the page column is capped at 980 px.
-- Compact top navigation activates below 820 logical pixels only on a screen
-  that cannot accommodate the normal 920×640 minimum. Forms and toolbars
+  shell is capped at 1,120 px, the sidebar is 184 px, the page header is at
+  least 72 px, the footer is at least 60 px, and ordinary pages are capped at
+  920 px (About at 840 px).
+- Compact top navigation activates whenever retaining the sidebar would leave
+  less than 680 px for the main region, so the 820 px minimum is compact. Forms and toolbars
   remain horizontally contained without rendered Settings previews.
 - Dashboard groups Appearance, Dashboard sections, Study metrics, and Calendar
-  display. Events uses a flexible searchable/sortable Active/Archived list,
-  54 px rows, and a parented 560×320 editor. Bible verse uses a flexible
+  display. Events uses a searchable/sortable Active/Archived list bounded to
+  six naturally growing rows and a parented editor capped near 440 px. Bible verse uses a flexible
   filtered library with two-line clamped excerpts and one inline hex error.
   About groups Version and support, Privacy and legal, and Backup and recovery.
 - Dirty, saving, saved, validation, and persistence feedback is action-local
@@ -114,11 +116,12 @@ The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only production rendering; Settings shows
 text selectors and retains the custom-color input well without preview cards.
 Settings is a movable, resizable `QDialog(mw)` with a 1080×760 logical default,
-920×640 normal minimum, default Qt flags, and a local `exec()` call. It resolves the
+820×600 normal minimum, default Qt flags, and a local `exec()` call. It resolves the
 parent window's active screen, falls back to the screen containing the parent
 center and then the primary screen, and applies a clamped logical geometry
-before first visibility. It never calls `winId()`, repositions after opening,
-hides Anki's central widgets, forces focus, or embeds WebEngine content. Every
+before first visibility. After showing, it corrects only a decorated frame that
+is genuinely outside the available screen. It never calls `winId()`, raises or
+activates the window, hides Anki's central widgets, or embeds WebEngine content. Every
 page remains vertically scrollable, and navigation only changes child widgets
 inside the existing stack.
 
@@ -160,7 +163,9 @@ controlled-restart states. Settings presentation is capped at 11 sheets.
 The focused Settings assembler additionally requires a structured exact-package
 native macOS result proving that both the full-screen menu and Dashboard-gear
 paths remain on Anki's full-screen Space without switching to the desktop,
-including after hard restart. This required result adds no PNG frames.
+while separately completing all pages, Events tabs, resize, event and verse
+edits, save, close/reopen, and controlled restart through each route. Every
+step records current-Space retention. This required result adds no PNG frames.
 
 VoiceOver and forced-colors remain explicitly unrun and nonblocking. The macOS
 full-screen no-switch result is mandatory for Settings acceptance. Windows,

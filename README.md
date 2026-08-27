@@ -110,7 +110,9 @@ Dashboard background is a capture failure.
 Settings acceptance also requires a structured exact-package native macOS
 result proving that opening Settings from both the full-screen menu and the
 Dashboard gear stays on Anki's full-screen Space without switching to the
-desktop, including after hard restart. This gate adds no PNG captures.
+desktop. Each route separately verifies all pages, Events tabs, resize, event
+and verse edits, save, close/reopen, and controlled restart with current-Space
+retention recorded for every step. This gate adds no PNG captures.
 
 The current 1.8.7 authorities are:
 

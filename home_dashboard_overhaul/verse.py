@@ -26,6 +26,11 @@ REFERENCE_RE = re.compile(
     r"(?:[-\u2013]\d+)?(?:\s+\([^)]+\))?)\s*$",
     re.IGNORECASE | re.DOTALL,
 )
+VERSE_BREAK_RE = re.compile(r"<br\s*/?>|\r?\n", re.IGNORECASE)
+EXPLICIT_REFERENCE_RE = re.compile(
+    r"^\s*[-\u2013\u2014]\s*(?P<reference>.+?)\s*$",
+    re.DOTALL,
+)
 
 
 def verse_within_limit(value: object) -> bool:
@@ -101,12 +106,36 @@ def split_quote_reference(value: object) -> Tuple[str, str]:
     if not isinstance(value, str):
         return "", ""
     candidate = value.strip()
+
+    # A marker on the final line is an explicit body/reference boundary. Check
+    # this before the legacy citation matcher so user-authored references are
+    # not constrained by the historical Bible-reference length and shape.
+    breaks = list(VERSE_BREAK_RE.finditer(candidate))
+    if breaks:
+        final_break = breaks[-1]
+        explicit = EXPLICIT_REFERENCE_RE.match(candidate[final_break.end() :])
+        if explicit:
+            body = candidate[: final_break.start()].strip()
+            reference = explicit.group("reference").strip()
+            if body and reference:
+                return body, reference
+
     match = REFERENCE_RE.match(candidate)
     if not match:
         return candidate, ""
     body = match.group("body").strip()
     reference = match.group("reference").strip()
     return (body, reference) if body and reference else (candidate, "")
+
+
+def serialize_quote_reference(body: object, reference: object) -> str:
+    """Return the canonical quote string used by the existing config schema."""
+
+    body_value = body.strip() if isinstance(body, str) else ""
+    reference_value = reference.strip() if isinstance(reference, str) else ""
+    if not reference_value:
+        return body_value
+    return "{}<br>- {}".format(body_value, reference_value)
 
 
 def verse_content(value: object) -> VerseContent:
@@ -175,6 +204,30 @@ class QuoteRotator:
         self._memory_fingerprint = fingerprint
         self._memory_quote = quote
         return quote
+
+    def current_quote(self, quotes: List[str], mode: str) -> str:
+        """Return the stable current quote without selecting or persisting one."""
+
+        if not quotes or mode == "every render":
+            return ""
+        refresh_key = self._refresh_key(mode)
+        fingerprint = quote_fingerprint(quotes)
+        if (
+            self._memory_quote in quotes
+            and self._memory_key == refresh_key
+            and self._memory_fingerprint == fingerprint
+        ):
+            return self._memory_quote
+        state = self._load()
+        if (
+            state
+            and state.get("version") == STATE_VERSION
+            and state.get("refresh_key") == refresh_key
+            and state.get("quote_fingerprint") == fingerprint
+            and state.get("quote") in quotes
+        ):
+            return str(state["quote"])
+        return ""
 
     def clear(self, persistent: bool = True) -> None:
         self._memory_key = self._memory_quote = self._memory_fingerprint = ""

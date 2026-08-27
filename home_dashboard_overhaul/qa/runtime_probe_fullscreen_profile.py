@@ -41,15 +41,20 @@ def _fullscreen_geometry() -> dict[str, Any]:
 def _fit_fullscreen(case: Mapping[str, Any], continuation: Any, attempt: int = 0) -> None:
     try:
         screen = base._qa_screen()
-        if mw.windowHandle() is not None and mw.windowHandle().screen() is not screen:
-            available = screen.availableGeometry()
-            mw.showNormal()
-            mw.move(available.center() - mw.rect().center())
-        mw.showFullScreen()
-        mw.raise_()
-        mw.activateWindow()
+        handle = mw.windowHandle()
+        handle_screen = handle.screen() if handle is not None else mw.screen()
+        base._require(
+            handle_screen is None or handle_screen.name() == screen.name(),
+            "isolated Anki window must already be on the capture display before fullscreen",
+        )
+        # Enter full screen in place. Moving, raising, or activating an already
+        # visible native window can cross macOS Spaces and would invalidate the
+        # exact behavior this profile is intended to observe.
+        if not mw.isFullScreen():
+            mw.showFullScreen()
         QApplication.processEvents()
-        handle_screen = mw.windowHandle().screen() if mw.windowHandle() is not None else mw.screen()
+        handle = mw.windowHandle()
+        handle_screen = handle.screen() if handle is not None else mw.screen()
         settled = (
             bool(mw.isFullScreen())
             and handle_screen is not None

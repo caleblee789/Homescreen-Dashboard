@@ -19,6 +19,7 @@ CURRENT_AUTHORITIES = {
     "matrix": "visual_regression_matrix_1_8_7.json",
     "registry": "ui-surface-registry_1_8_7.json",
     "capture": "capture_evidence_manifest_1_8_7.json",
+    "settings": "settings_window_contract_1_8_7.json",
 }
 
 
@@ -78,6 +79,7 @@ def validate(root: Path = ROOT) -> List[str]:
     matrix = _read(CURRENT_AUTHORITIES["matrix"])
     registry = _read(CURRENT_AUTHORITIES["registry"])
     capture = _read(CURRENT_AUTHORITIES["capture"])
+    settings = _read(CURRENT_AUTHORITIES["settings"])
     addon_manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
     config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
 
@@ -89,7 +91,7 @@ def validate(root: Path = ROOT) -> List[str]:
         errors.append("capture execution plan is invalid: {}".format(exc))
         plan = None
 
-    authorities = (surface, matrix, registry, capture)
+    authorities = (surface, matrix, registry, capture, settings)
     if addon_manifest.get("human_version") != RELEASE:
         errors.append("add-on manifest must target release {}".format(RELEASE))
     if config.get("schema_version") != 8:
@@ -103,21 +105,24 @@ def validate(root: Path = ROOT) -> List[str]:
     if registry.get("surfaces") != surface.get("canonical_surfaces") or registry.get("exact_once") is not True:
         errors.append("surface registry must exactly mirror the governing authority")
 
-    settings = surface.get("settings_architecture", {})
     expected_settings = {
-        "default_window": [1080, 760],
-        "minimum_normal_window": [920, 640],
+        "default_size": [1080, 760],
+        "minimum_size": [820, 600],
         "screen_margins": {"normal": 48, "small_screen_fallback": 24},
         "minimum_saved_visible_ratio": .8,
-        "maximum_inner_width": 1240,
-        "maximum_page_width": 980,
+        "geometry_version": 4,
+        "previous_geometry_version": 3,
+        "shell_maximum_width": 1120,
+        "page_maximum_width": 920,
+        "about_page_maximum_width": 840,
         "rail_width": 184,
-        "fixed_header_height": 72,
-        "fixed_footer_height": 60,
-        "compact_navigation_threshold": 820,
+        "header_height": 72,
+        "footer_height": 60,
+        "compact_navigation": "single-line synchronized QTabBar whenever retaining the 184 px rail would leave less than 680 logical pixels for the main region; the 820 px supported minimum is compact",
+        "reposition_after_open": "one decoration-only clamp when the decorated frame is outside the active screen; never move an already-contained frame",
     }
     if not isinstance(settings, Mapping) or any(settings.get(key) != value for key, value in expected_settings.items()):
-        errors.append("native Settings geometry and responsive architecture drifted")
+        errors.append("focused v4 Settings geometry and responsive architecture drifted")
 
     criteria = surface.get("acceptance_criteria", [])
     criteria_ids = [item.get("id") for item in criteria if isinstance(item, Mapping)]
@@ -159,12 +164,41 @@ def validate(root: Path = ROOT) -> List[str]:
         gate = capture.get("settings_profile_structured_manual_gate")
         if gate != {
             "id": required_manual_results[0],
+            "report_schema_version": 2,
             "required_for_acceptance": True,
             "adds_png_frames": False,
             "opening_paths": ["menu", "dashboard-gear"],
-            "required_result": "both paths remain on the native Anki full-screen Space with no desktop switch, including hard-restart recheck",
+            "workflow_steps_per_path": [
+                "all-four-pages",
+                "events-tabs",
+                "resize",
+                "event-edit",
+                "verse-edit",
+                "save",
+                "close-reopen",
+                "controlled-restart",
+            ],
+            "required_result": "every workflow step through both paths remains on the current native Anki full-screen Space with no desktop switch",
         }:
             errors.append("Settings structured full-screen acceptance gate drifted")
+        if capture.get("native_platform_profile_contract") != {
+            "geometry": "physical width and height equal available logical width and height multiplied by the declared device pixel ratio within one percent or two pixels",
+            "dpr_1": "DPR is within 0.05 of 1.0 and physical and logical dimensions match",
+            "native_scale": "native-class DPR matches declared OS scale within 0.08; environment scale substitutes are forbidden",
+            "settings_pages": ["dashboard", "events", "bible_verse", "about_support"],
+            "settings_page_assertions": [
+                "horizontal_scroll_zero",
+                "visible_controls_contained",
+                "labels_unclipped_or_approved",
+                "segmented_selection_matches_model",
+                "body_footer_disjoint",
+                "footer_actions_visible",
+                "page_bottom_reachable",
+                "target_fully_visible",
+            ],
+            "macos_fullscreen_schema_version": 2,
+        }:
+            errors.append("native platform profile validation contract drifted")
         if (
             "macos-fullscreen-menu-and-dashboard-gear-open-without-desktop-space-switch"
             not in matrix.get("settings_quality_assertions", [])
@@ -207,13 +241,16 @@ def validate(root: Path = ROOT) -> List[str]:
 
     _require_markers(errors, "settings.py", (
         'self.setWindowTitle("Home Screen Dashboard Settings")',
-        "self.setMinimumSize(*SETTINGS_MINIMUM_SIZE)",
+        "self.setMinimumSize(\n            min(SETTINGS_MINIMUM_SIZE[0], geometry[2])",
         "self._apply_initial_window_geometry(parent)",
-        "saved_valid = saved_window_geometry_is_valid(",
+        "migrated = migrate_saved_window_geometry(",
+        "saved_valid = migrated is not None",
         "SETTINGS_GEOMETRY_SCREEN_KEY",
         "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)",
-        "SETTINGS_PAGE_MAX_WIDTH = 980",
-        "SETTINGS_COMPACT_BODY_WIDTH = 820",
+        "SETTINGS_SHELL_MAX_WIDTH = 1120",
+        "SETTINGS_PAGE_MAX_WIDTH = 920",
+        "SETTINGS_ABOUT_MAX_WIDTH = 840",
+        "SETTINGS_COMPACT_BODY_WIDTH = SETTINGS_SIDEBAR_WIDTH + 680",
         "SETTINGS_SIDEBAR_WIDTH = 184",
         "SETTINGS_HEADER_HEIGHT = 72",
         "SETTINGS_FOOTER_MIN_HEIGHT = 60",
@@ -227,30 +264,48 @@ def validate(root: Path = ROOT) -> List[str]:
         "self.heatmap_preset = QComboBox()",
         'SettingsCard("Version and support")',
         "scope_differs_from_defaults",
-        "Save failed. Your changes are still available.",
-        '"Discard unsaved changes?"',
-        '("Keep editing", "primary"',
-        '("Discard and close", "danger"',
+        "Could not save changes. Your draft is still available.",
+        '"Unsaved changes"',
+        '("Cancel", "secondary", lambda: None)',
+        '("Discard", "danger", self._close_dialog)',
+        '("Save and close", "primary", self._save_and_close)',
+        'self._set_status("saving", "Saving changes...")',
+        'self.save_button.setText("Save changes")',
+        "self._set_mutation_controls_enabled(False)",
         'SettingsCard("Study metrics", "", "Reset")',
         '"Advanced appearance"',
-        '"Export verse edits"',
+        '"Export verse library edits"',
+        "def showEvent(self, event: Any) -> None:",
+        "QTimer.singleShot(0, self._correct_decorated_frame_if_needed)",
+        "if available.contains(frame):",
+        "self.move(self.pos() + QPoint(dx, dy))",
     ))
     _require_markers(errors, "settings_model.py", (
         "SETTINGS_DEFAULT_SIZE = (1080, 760)",
-        "SETTINGS_MINIMUM_SIZE = (920, 640)",
+        "SETTINGS_MINIMUM_SIZE = (820, 600)",
         "SETTINGS_NORMAL_SCREEN_MARGIN = 48",
         "SETTINGS_SMALL_SCREEN_MARGIN = 24",
+        "SETTINGS_GEOMETRY_VERSION = 4",
+        "SETTINGS_PREVIOUS_GEOMETRY_VERSION = 3",
         "def saved_window_geometry_is_valid(",
+        "def migrate_saved_window_geometry(",
         "def clamp_window_geometry(",
         "def scope_differs_from_defaults(",
-        '"calendar_display": (',
-        '"calendar_range": (',
-        '"local_data": (',
+        "def scope_snapshot(",
+        "def restore_scope(",
+        '"calendar_display": _CALENDAR_DISPLAY_RESET_PATHS',
+        '"calendar_range": _CALENDAR_RANGE_RESET_PATHS',
+        '"local_data": _LOCAL_DATA_RESET_PATHS',
     ))
     _require_markers(errors, "controller.py", (
         "dialog = SettingsDialog(",
         "mw,",
+        "active_dialog = self._active_settings_dialog",
+        "self._route_active_settings_dialog(active_dialog, request)",
+        "self._active_settings_dialog = dialog",
         "dialog.exec()",
+        "if self._active_settings_dialog is dialog:",
+        "self._active_settings_dialog = None",
         "QTimer.singleShot(0, lambda: self._open_pending_settings(token))",
         "def _persist_settings_transaction(",
     ))
@@ -269,7 +324,6 @@ def validate(root: Path = ROOT) -> List[str]:
         "setTransientParent",
         "Qt.WindowModality.NonModal",
         "objc_msgSend",
-        "def showEvent",
         "raise_()",
         "activateWindow()",
         "AnkiWebView",
@@ -288,6 +342,10 @@ def validate(root: Path = ROOT) -> List[str]:
     ):
         if retired in settings_source:
             errors.append("retired Settings behavior remains: {}".format(retired))
+    if dialog_source.count("self.move(") != 1:
+        errors.append(
+            "Settings may move only in the one guarded decorated-frame correction"
+        )
     if dialog_source.index("self._apply_initial_window_geometry(parent)") > dialog_source.index("self._build_dashboard_page()"):
         errors.append("Settings geometry must be applied before the first page is built or shown")
     controller_source = _source("controller.py")
