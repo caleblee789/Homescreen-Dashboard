@@ -83,9 +83,27 @@
     {"host_platform": "windows", "os_scale_percent": 125, "dpr_class": "native"},
     {"host_platform": "windows", "os_scale_percent": 150, "dpr_class": "native"},
     {"host_platform": "linux", "os_scale_percent": 100, "dpr_class": "dpr-1"},
-    {"host_platform": "linux", "os_scale_percent": 150, "dpr_class": "native"},
+    {"host_platform": "linux", "os_scale_percent": 150, "dpr_class": "dpr-1"},
     {"host_platform": "macos", "os_scale_percent": 100, "dpr_class": "retina"}
   ],
+  "structured_settings_layout": {
+    "schema_version": 1,
+    "stage": "initial",
+    "required_profiles": ["full", "settings"],
+    "adds_png_frames": false,
+    "work_area_logical": [0, 0, 1366, 768],
+    "application_font_percents": [100],
+    "pages": ["dashboard", "events", "bible_verse", "about_support"],
+    "restore_scenarios": [
+      {
+        "id": "disconnected-monitor-v4",
+        "saved_geometry_logical": [1700, 100, 1180, 800],
+        "saved_screen_name": "Disconnected Display",
+        "saved_available_logical": [1600, 0, 1920, 1080],
+        "saved_device_pixel_ratio": 2.0
+      }
+    ]
+  },
   "host_backgrounds": ["white", "black", "purple", "image"],
   "deferred_unrun": [
     "windows-native-settings-validation",

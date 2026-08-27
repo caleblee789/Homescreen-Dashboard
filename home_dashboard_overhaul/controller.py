@@ -135,6 +135,7 @@ class DashboardController:
         self._pending_settings_request: Optional[Tuple[str, str, str]] = None
         self._settings_open_pending = False
         self._settings_request_token = 0
+        self._active_settings_dialog: Optional[Any] = None
 
     def start(self) -> None:
         mw.addonManager.setWebExports(self.package, r"web/.*\.(css|js)")
@@ -1189,17 +1190,54 @@ class DashboardController:
     ) -> None:
         from .settings import SettingsDialog
 
-        page_name = page if isinstance(page, str) else ""
-        date_value = selected_date if self._valid_bridge_date(selected_date) else ""
-        event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
+        request = self._settings_request(page, selected_date, selected_event_id)
+        active_dialog = self._active_settings_dialog
+        if active_dialog is not None:
+            self._route_active_settings_dialog(active_dialog, request)
+            return
         dialog = SettingsDialog(
             mw,
             self,
-            page_name,
-            date_value,
-            event_value,
+            *request,
         )
-        dialog.exec()
+        self._active_settings_dialog = dialog
+        try:
+            dialog.exec()
+        finally:
+            if self._active_settings_dialog is dialog:
+                self._active_settings_dialog = None
+
+    def _settings_request(
+        self,
+        page: object,
+        selected_date: object,
+        selected_event_id: object,
+    ) -> Tuple[str, str, str]:
+        page_name = page if isinstance(page, str) else ""
+        date_value = selected_date if self._valid_bridge_date(selected_date) else ""
+        event_value = (
+            str(selected_event_id)[:80]
+            if isinstance(selected_event_id, (str, int))
+            else ""
+        )
+        return page_name, date_value, event_value
+
+    @staticmethod
+    def _route_active_settings_dialog(
+        dialog: Any,
+        request: Tuple[str, str, str],
+    ) -> None:
+        open_page = getattr(dialog, "open_page", None)
+        if callable(open_page):
+            open_page(*request)
+        is_visible = getattr(dialog, "isVisible", None)
+        try:
+            visible = bool(is_visible()) if callable(is_visible) else False
+        except Exception:
+            visible = False
+        set_focus = getattr(dialog, "setFocus", None)
+        if visible and callable(set_focus):
+            set_focus()
 
     def request_settings_open(
         self,
@@ -1209,10 +1247,11 @@ class DashboardController:
     ) -> None:
         """Leave a WebEngine callback before entering the native dialog."""
 
-        page_name = page if isinstance(page, str) else ""
-        date_value = selected_date if self._valid_bridge_date(selected_date) else ""
-        event_value = str(selected_event_id)[:80] if isinstance(selected_event_id, (str, int)) else ""
-        self._pending_settings_request = (page_name, date_value, event_value)
+        self._pending_settings_request = self._settings_request(
+            page,
+            selected_date,
+            selected_event_id,
+        )
         if self._settings_open_pending:
             return
         self._settings_request_token += 1

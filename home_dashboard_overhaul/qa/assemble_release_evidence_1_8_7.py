@@ -23,6 +23,26 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 CAPTURE_PLAN = load_capture_plan(SOURCE_ROOT / "qa" / "capture_plan.json")
 RELEASE = CAPTURE_PLAN.release
 DEFAULT_CANDIDATE = SOURCE_ROOT / "dist" / "home-dashboard-overhaul-1.8.7.ankiaddon"
+FULLSCREEN_WORKFLOW_STEP_IDS = (
+    "all-four-pages",
+    "events-tabs",
+    "resize",
+    "event-edit",
+    "verse-edit",
+    "save",
+    "close-reopen",
+    "controlled-restart",
+)
+NATIVE_SETTINGS_LAYOUT_ASSERTIONS = (
+    "horizontal_scroll_zero",
+    "visible_controls_contained",
+    "labels_unclipped_or_approved",
+    "segmented_selection_matches_model",
+    "body_footer_disjoint",
+    "footer_actions_visible",
+    "page_bottom_reachable",
+    "target_fully_visible",
+)
 
 
 def require(condition: bool, message: str) -> None:
@@ -69,6 +89,162 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def validate_fullscreen_workflow(
+    raw_result: object,
+    *,
+    allow_unrun: bool = False,
+    label: str = "macOS full-screen acceptance",
+) -> dict[str, Any]:
+    """Validate every workflow step through both Settings opening routes.
+
+    A route-level aggregate is not enough: each interaction must independently
+    record that it stayed on Anki's current native full-screen Space.
+    """
+
+    require(isinstance(raw_result, Mapping), "{} is malformed".format(label))
+    result = dict(raw_result)
+    require(
+        result.get("schema_version") == 2,
+        "{} schema mismatch".format(label),
+    )
+    status = result.get("status")
+    require(status in {"passed", "unrun"}, "{} has an invalid status".format(label))
+    if status == "unrun":
+        require(allow_unrun, "{} did not pass".format(label))
+        require(
+            isinstance(result.get("reason"), str) and bool(result["reason"].strip()),
+            "unrun {} lacks a reason".format(label),
+        )
+        require(
+            result.get("native_fullscreen") is False,
+            "unrun {} must not claim native full screen".format(label),
+        )
+    else:
+        require(
+            result.get("native_fullscreen") is True,
+            "{} did not use native macOS full screen".format(label),
+        )
+
+    paths = result.get("opening_paths")
+    require(isinstance(paths, Mapping), "{} lacks opening-path results".format(label))
+    require(
+        set(paths) == {"menu", "dashboard-gear"},
+        "{} must cover menu and Dashboard gear".format(label),
+    )
+    expected_step_status = "passed" if status == "passed" else "unrun"
+    for path_id, raw_path in paths.items():
+        path_label = "{} {} path".format(label, path_id)
+        require(isinstance(raw_path, Mapping), "{} is malformed".format(path_label))
+        require(
+            raw_path.get("status") == expected_step_status,
+            "{} status disagrees with the overall result".format(path_label),
+        )
+        steps = raw_path.get("workflow_steps")
+        require(isinstance(steps, Mapping), "{} lacks workflow steps".format(path_label))
+        require(
+            list(steps) == list(FULLSCREEN_WORKFLOW_STEP_IDS),
+            "{} workflow steps or order differ from the contract".format(path_label),
+        )
+        if status == "passed":
+            require(raw_path.get("settings_opened") is True, "{} did not open Settings".format(path_label))
+            require(
+                raw_path.get("remained_on_anki_fullscreen_space") is True
+                and raw_path.get("desktop_or_space_switch_observed") is False,
+                "{} caused or failed to exclude a desktop/Space switch".format(path_label),
+            )
+        else:
+            require(
+                raw_path.get("settings_opened") is False
+                and raw_path.get("remained_on_anki_fullscreen_space") is None
+                and raw_path.get("desktop_or_space_switch_observed") is None,
+                "{} unrun result claims full-screen observations".format(path_label),
+            )
+        for step_id, raw_step in steps.items():
+            step_label = "{} step {}".format(path_label, step_id)
+            require(isinstance(raw_step, Mapping), "{} is malformed".format(step_label))
+            require(
+                set(raw_step)
+                == {
+                    "status",
+                    "completed",
+                    "remained_on_current_anki_space",
+                    "desktop_or_space_switch_observed",
+                },
+                "{} keys differ from the contract".format(step_label),
+            )
+            require(
+                raw_step.get("status") == expected_step_status,
+                "{} status disagrees with the overall result".format(step_label),
+            )
+            if status == "passed":
+                require(
+                    raw_step.get("completed") is True
+                    and raw_step.get("remained_on_current_anki_space") is True
+                    and raw_step.get("desktop_or_space_switch_observed") is False,
+                    "{} did not prove current-Space retention".format(step_label),
+                )
+            else:
+                require(
+                    raw_step.get("completed") is False
+                    and raw_step.get("remained_on_current_anki_space") is None
+                    and raw_step.get("desktop_or_space_switch_observed") is None,
+                    "{} unrun result claims observations".format(step_label),
+                )
+    require(
+        result.get("desktop_space_switch_regression")
+        == ("not-observed" if status == "passed" else "unrun"),
+        "{} desktop/Space-switch summary disagrees with its steps".format(label),
+    )
+    return result
+
+
+def _validated_geometry(report: Mapping[str, Any], field: str, key: object) -> tuple[float, ...]:
+    raw = report.get(field)
+    require(
+        isinstance(raw, list)
+        and len(raw) == 4
+        and all(
+            isinstance(value, (int, float)) and not isinstance(value, bool)
+            for value in raw
+        )
+        and float(raw[2]) > 0
+        and float(raw[3]) > 0,
+        "platform profile has invalid {}: {}".format(field, key),
+    )
+    return tuple(float(value) for value in raw)
+
+
+def _validate_native_settings_pages(report: Mapping[str, Any], key: object) -> None:
+    layout = report.get("settings_page_layout")
+    require(isinstance(layout, Mapping), "platform profile lacks per-page Settings layout: {}".format(key))
+    require(layout.get("status") == "passed", "platform Settings layout did not pass: {}".format(key))
+    require(
+        layout.get("application_font_percent") == 100,
+        "platform Settings layout is not at 100 percent application font: {}".format(key),
+    )
+    expected_pages = CAPTURE_PLAN.structured_settings_layout()["pages"]
+    pages = layout.get("pages")
+    require(
+        isinstance(pages, list)
+        and [page.get("id") if isinstance(page, Mapping) else None for page in pages]
+        == expected_pages,
+        "platform Settings page order differs from the contract: {}".format(key),
+    )
+    for page in pages:
+        page_id = str(page["id"])
+        require(page.get("status") == "passed", "platform Settings page did not pass: {} {}".format(key, page_id))
+        assertions = page.get("assertions")
+        require(
+            isinstance(assertions, Mapping)
+            and set(assertions) == set(NATIVE_SETTINGS_LAYOUT_ASSERTIONS),
+            "platform Settings page assertions differ from the contract: {} {}".format(key, page_id),
+        )
+        require(
+            all(assertions[name] is True for name in NATIVE_SETTINGS_LAYOUT_ASSERTIONS),
+            "platform Settings page has a failed layout assertion: {} {}".format(key, page_id),
+        )
+
+
 def expected_capture_ids(profile_id: str = "full") -> list[str]:
     return list(CAPTURE_PLAN.ids(profile_id))
 
@@ -100,13 +276,333 @@ def isolation_summary(report: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def validate_structured_settings_layout(
+    raw_report: object,
+    candidate_hash: str,
+    profile_id: str,
+    *,
+    allow_failures: bool = False,
+) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    """Validate the plan-bound, non-PNG Settings layout report.
+
+    Full release assembly uses the default fail-closed policy. The focused
+    Settings assembler opts into retaining complete negative results, while a
+    missing, malformed, identity-mismatched, or internally inconsistent report
+    remains an assembly error in both lanes.
+    """
+
+    spec = CAPTURE_PLAN.structured_settings_layout()
+    require(
+        set(spec)
+        == {
+            "schema_version",
+            "stage",
+            "required_profiles",
+            "adds_png_frames",
+            "work_area_logical",
+            "application_font_percents",
+            "pages",
+            "restore_scenarios",
+        },
+        "capture-plan structured Settings layout keys differ from the contract",
+    )
+    require(
+        spec.get("schema_version") == 1 and spec.get("stage") == "initial",
+        "capture-plan structured Settings layout identity is invalid",
+    )
+    required_profiles = spec.get("required_profiles")
+    require(
+        isinstance(required_profiles, list)
+        and required_profiles == ["full", "settings"]
+        and profile_id in required_profiles,
+        "structured Settings layout report is not required for this profile",
+    )
+    require(
+        spec.get("adds_png_frames") is False,
+        "structured Settings layout report may not add PNG frames",
+    )
+    work_area = spec.get("work_area_logical")
+    require(
+        isinstance(work_area, list)
+        and len(work_area) == 4
+        and all(
+            isinstance(value, int) and not isinstance(value, bool)
+            for value in work_area
+        )
+        and work_area[2] > 0
+        and work_area[3] > 0,
+        "structured Settings logical work area is invalid",
+    )
+    font_percents = spec.get("application_font_percents")
+    require(
+        isinstance(font_percents, list) and font_percents == [100],
+        "structured Settings application-font profiles differ from the contract",
+    )
+    pages = spec.get("pages")
+    require(
+        isinstance(pages, list)
+        and pages == ["dashboard", "events", "bible_verse", "about_support"],
+        "structured Settings page order differs from the contract",
+    )
+    restore_scenarios = spec.get("restore_scenarios")
+    require(
+        isinstance(restore_scenarios, list) and len(restore_scenarios) == 1,
+        "structured Settings restoration scenarios differ from the contract",
+    )
+    restore_spec = restore_scenarios[0]
+    require(
+        isinstance(restore_spec, Mapping)
+        and set(restore_spec)
+        == {
+            "id",
+            "saved_geometry_logical",
+            "saved_screen_name",
+            "saved_available_logical",
+            "saved_device_pixel_ratio",
+        }
+        and restore_spec.get("id") == "disconnected-monitor-v4",
+        "structured Settings restoration scenario is invalid",
+    )
+    for geometry_key in ("saved_geometry_logical", "saved_available_logical"):
+        geometry = restore_spec.get(geometry_key)
+        require(
+            isinstance(geometry, list)
+            and len(geometry) == 4
+            and all(
+                isinstance(value, int) and not isinstance(value, bool)
+                for value in geometry
+            )
+            and geometry[2] > 0
+            and geometry[3] > 0,
+            "{} is not a logical QRect".format(geometry_key),
+        )
+    require(
+        isinstance(restore_spec.get("saved_screen_name"), str)
+        and bool(restore_spec["saved_screen_name"].strip())
+        and isinstance(restore_spec.get("saved_device_pixel_ratio"), (int, float))
+        and not isinstance(restore_spec.get("saved_device_pixel_ratio"), bool)
+        and float(restore_spec["saved_device_pixel_ratio"]) > 0,
+        "structured Settings saved-screen metadata is invalid",
+    )
+
+    require(
+        isinstance(raw_report, Mapping),
+        "initial runtime report lacks structured_settings_layout",
+    )
+    report = dict(raw_report)
+    require(
+        set(report)
+        == {
+            "schema_version",
+            "release",
+            "stage",
+            "status",
+            "package_sha256",
+            "capture_plan_sha256",
+            "adds_png_frames",
+            "generated_png_count",
+            "reports",
+        },
+        "structured Settings layout report keys differ from the contract",
+    )
+    require(report.get("schema_version") == 1, "structured Settings layout schema mismatch")
+    require(report.get("release") == RELEASE, "structured Settings layout release mismatch")
+    require(report.get("stage") == "initial", "structured Settings layout stage mismatch")
+    require(
+        report.get("package_sha256") == candidate_hash,
+        "structured Settings layout used the wrong package hash",
+    )
+    require(
+        report.get("capture_plan_sha256") == CAPTURE_PLAN.sha256,
+        "structured Settings layout capture-plan hash drifted",
+    )
+    require(
+        report.get("adds_png_frames") is False
+        and report.get("generated_png_count") == 0,
+        "structured Settings layout report added PNG frames",
+    )
+    raw_entries = report.get("reports")
+    require(
+        isinstance(raw_entries, list),
+        "structured Settings layout reports must be an ordered list",
+    )
+    expected_ids = [
+        "settings-font-{}".format(percent) for percent in font_percents
+    ] + [str(restore_spec["id"])]
+    require(
+        [entry.get("id") if isinstance(entry, Mapping) else None for entry in raw_entries]
+        == expected_ids,
+        "structured Settings layout report IDs or order differ from the contract",
+    )
+
+    layout_assertions = {
+        "horizontal_scroll_zero",
+        "visible_controls_contained",
+        "labels_unclipped_or_approved",
+        "segmented_selection_matches_model",
+        "body_footer_disjoint",
+        "footer_actions_visible",
+        "page_bottom_reachable",
+        "target_fully_visible",
+    }
+    restoration_assertions = {
+        "saved_screen_not_connected",
+        "saved_record_rejected",
+        "centered_on_parent_screen_before_visibility",
+        "logical_geometry_not_dpr_multiplied",
+        "decorated_frame_inside_available",
+    }
+    failures: dict[str, dict[str, Any]] = {}
+
+    def validate_status(value: object, label: str, has_failures: bool) -> None:
+        require(value in {"passed", "failed"}, "{} has an invalid status".format(label))
+        require(
+            (value == "failed") == has_failures,
+            "{} status disagrees with its assertions".format(label),
+        )
+
+    for index, percent in enumerate(font_percents):
+        entry = raw_entries[index]
+        require(isinstance(entry, Mapping), "structured font-layout report is malformed")
+        require(
+            set(entry)
+            == {
+                "id",
+                "kind",
+                "status",
+                "application_font_percent",
+                "fixture_kind",
+                "work_area_logical",
+                "resolved_window_geometry_logical",
+                "pages",
+            },
+            "{} keys differ from the contract".format(expected_ids[index]),
+        )
+        require(
+            entry.get("kind") == "application-font-layout"
+            and entry.get("application_font_percent") == percent
+            and entry.get("fixture_kind") == "logical-work-area-equivalence"
+            and entry.get("work_area_logical") == work_area,
+            "{} environment identity differs from the plan".format(expected_ids[index]),
+        )
+        geometry = entry.get("resolved_window_geometry_logical")
+        require(
+            isinstance(geometry, list)
+            and len(geometry) == 4
+            and all(
+                isinstance(value, int) and not isinstance(value, bool)
+                for value in geometry
+            )
+            and geometry[2] > 0
+            and geometry[3] > 0,
+            "{} resolved logical geometry is invalid".format(expected_ids[index]),
+        )
+        require(
+            geometry[0] >= work_area[0]
+            and geometry[1] >= work_area[1]
+            and geometry[0] + geometry[2] <= work_area[0] + work_area[2]
+            and geometry[1] + geometry[3] <= work_area[1] + work_area[3],
+            "{} resolved logical geometry is outside the fixture work area".format(
+                expected_ids[index]
+            ),
+        )
+        page_reports = entry.get("pages")
+        require(
+            isinstance(page_reports, list)
+            and [
+                page.get("id") if isinstance(page, Mapping) else None
+                for page in page_reports
+            ]
+            == pages,
+            "{} page IDs or order differ from the contract".format(expected_ids[index]),
+        )
+        entry_failed = False
+        for page in page_reports:
+            require(isinstance(page, Mapping), "structured Settings page report is malformed")
+            page_id = str(page["id"])
+            require(
+                set(page) == {"id", "status", "assertions"},
+                "{}/{} keys differ from the contract".format(expected_ids[index], page_id),
+            )
+            assertions = page.get("assertions")
+            require(
+                isinstance(assertions, Mapping)
+                and set(assertions) == layout_assertions
+                and all(isinstance(value, bool) for value in assertions.values()),
+                "{}/{} assertions differ from the contract".format(
+                    expected_ids[index], page_id
+                ),
+            )
+            page_failed = not all(assertions.values())
+            validate_status(
+                page.get("status"),
+                "{}/{}".format(expected_ids[index], page_id),
+                page_failed,
+            )
+            entry_failed = entry_failed or page_failed
+            for assertion, passed in assertions.items():
+                if not passed:
+                    failure_id = "{}/{}/{}".format(
+                        expected_ids[index], page_id, assertion
+                    )
+                    failures[failure_id] = {
+                        "report_id": expected_ids[index],
+                        "page": page_id,
+                        "assertion": assertion,
+                        "error": "structured Settings layout assertion failed",
+                    }
+        validate_status(entry.get("status"), expected_ids[index], entry_failed)
+
+    restore_entry = raw_entries[-1]
+    require(isinstance(restore_entry, Mapping), "structured restoration report is malformed")
+    require(
+        set(restore_entry)
+        == {"id", "kind", "status", "application_font_percent", "assertions"},
+        "{} keys differ from the contract".format(expected_ids[-1]),
+    )
+    require(
+        restore_entry.get("kind") == "geometry-restoration"
+        and restore_entry.get("application_font_percent") == 100,
+        "{} identity differs from the plan".format(expected_ids[-1]),
+    )
+    restore_assertion_values = restore_entry.get("assertions")
+    require(
+        isinstance(restore_assertion_values, Mapping)
+        and set(restore_assertion_values) == restoration_assertions
+        and all(isinstance(value, bool) for value in restore_assertion_values.values()),
+        "{} assertions differ from the contract".format(expected_ids[-1]),
+    )
+    restore_failed = not all(restore_assertion_values.values())
+    validate_status(restore_entry.get("status"), expected_ids[-1], restore_failed)
+    for assertion, passed in restore_assertion_values.items():
+        if not passed:
+            failure_id = "{}/{}".format(expected_ids[-1], assertion)
+            failures[failure_id] = {
+                "report_id": expected_ids[-1],
+                "assertion": assertion,
+                "error": "structured Settings restoration assertion failed",
+            }
+
+    validate_status(report.get("status"), "structured Settings layout report", bool(failures))
+    require(
+        allow_failures or not failures,
+        "structured Settings layout report did not pass",
+    )
+    return report, failures
+
+
 def validate_runtime(
     run_output: Path,
     candidate_hash: str,
     profile_id: str,
     *,
     allow_legacy_unversioned_reports: bool = False,
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+) -> tuple[
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, Any],
+]:
     initial = read_json(run_output / "runtime-report-initial.json")
     restart = read_json(run_output / "runtime-report-restart.json")
     counts = CAPTURE_PLAN.counts(profile_id)
@@ -133,6 +629,55 @@ def validate_runtime(
                 "runtime report lacks capture-plan identity; use the explicit legacy flag only to reconstruct retained full-profile evidence",
             )
             legacy_stages.append(stage)
+        if isinstance(plan_record, Mapping):
+            capture_records = report.get("captures", {})
+            planned_cases = {
+                str(case["id"]): case
+                for case in CAPTURE_PLAN.cases(profile_id, stage=stage)
+            }
+            for capture_id, case in planned_cases.items():
+                if case.get("component") != "settings":
+                    continue
+                record = capture_records.get(capture_id, {})
+                require(
+                    isinstance(record, Mapping)
+                    and record.get("caption") == case.get("caption")
+                    and record.get("visible_target") == case.get("visible_target")
+                    and record.get("visible_target_fully_visible") is True,
+                    "{} did not prove its declared visible target".format(capture_id),
+                )
+                if (
+                    case.get("family") == "settings-pages"
+                    or case.get("special") == "window-fresh-open"
+                ):
+                    require(
+                        record.get("decorated_window_included") is True
+                        and record.get("capture_scope")
+                        == "complete-decorated-settings-window"
+                        and str(record.get("capture_method", "")).startswith(
+                            "QScreen.grabWindow"
+                        ),
+                        "{} omits the complete decorated Settings window".format(
+                            capture_id
+                        ),
+                    )
+                if case.get("compare_with") is not None:
+                    comparison = record.get("paired_image_comparison", {})
+                    require(
+                        isinstance(comparison, Mapping)
+                        and comparison.get("status") == "passed"
+                        and comparison.get("baseline_capture_id")
+                        == case.get("compare_with")
+                        and comparison.get("same_physical_size") is True
+                        and comparison.get("sha256_differs") is True
+                        and float(
+                            comparison.get("sampled_image_difference_ratio", 0)
+                        )
+                        >= float(case["minimum_image_difference_ratio"]),
+                        "{} did not visibly differ from its paired baseline".format(
+                            capture_id
+                        ),
+                    )
         require(report.get("multi_deck_new_limit_smoke", {}).get("status") == "passed", "{} scheduler-authoritative count smoke failed".format(stage))
         require(report.get("native_statistics_comparison", {}).get("status") == "passed", "{} native statistics comparison failed".format(stage))
         candidate = report.get("identity", {}).get("candidate", {})
@@ -149,13 +694,22 @@ def validate_runtime(
                 set(report.get("statistics_responsive_parity", {})) == expected_statistics,
                 "{} responsive statistics parity is incomplete".format(stage),
             )
+    structured_layout, _structured_failures = validate_structured_settings_layout(
+        initial.get("structured_settings_layout"),
+        candidate_hash,
+        profile_id,
+    )
+    require(
+        "structured_settings_layout" not in restart,
+        "structured Settings layout report must be emitted only during initial runtime",
+    )
     isolation = {
         "initial": isolation_summary(initial),
         "restart": isolation_summary(restart),
         "all_four_gates_repeated_after_restart": True,
         "legacy_unversioned_capture_reports": legacy_stages,
     }
-    return initial, restart, isolation
+    return initial, restart, isolation, structured_layout
 
 
 def archive_inspection(candidate: Path) -> dict[str, Any]:
@@ -249,22 +803,44 @@ def validate_platform_bundles(
             "device_pixel_ratio",
         ):
             require(report.get(field) not in (None, "", []), "platform profile lacks {}: {}".format(field, key))
-        if key[0] == "macos":
-            fullscreen = report.get("fullscreen_space_switch")
-            require(isinstance(fullscreen, Mapping), "macOS profile lacks fullscreen Space-switch acceptance")
-            require(fullscreen.get("status") == "passed", "macOS fullscreen Space-switch acceptance did not pass")
+        logical = _validated_geometry(report, "available_logical_geometry", key)
+        physical = _validated_geometry(report, "physical_geometry", key)
+        dpr = float(report["device_pixel_ratio"])
+        require(0.5 <= dpr <= 4.0, "platform profile has an invalid DPR: {}".format(key))
+        for dimension, logical_value, physical_value in zip(
+            ("width", "height"), logical[2:], physical[2:]
+        ):
+            expected_physical = logical_value * dpr
+            tolerance = max(2.0, expected_physical * 0.01)
             require(
-                set(fullscreen.get("opening_paths", ())) == {"menu", "dashboard-gear"},
-                "macOS fullscreen acceptance lacks both opening paths",
+                abs(physical_value - expected_physical) <= tolerance,
+                "platform {} does not match logical geometry and DPR: {}".format(
+                    dimension, key
+                ),
             )
-            for field in (
-                "all_four_pages",
-                "events_tabs",
-                "move_resize",
-                "save_close_reopen",
-                "hard_restart",
-            ):
-                require(fullscreen.get(field) is True, "macOS fullscreen acceptance lacks {}".format(field))
+        if key[2] == "dpr-1":
+            require(abs(dpr - 1.0) <= 0.05, "DPR-1 profile did not use DPR 1: {}".format(key))
+            require(
+                abs(physical[2] - logical[2]) <= max(2.0, logical[2] * 0.01)
+                and abs(physical[3] - logical[3]) <= max(2.0, logical[3] * 0.01),
+                "DPR-1 profile logical and physical dimensions differ: {}".format(key),
+            )
+        elif key[2] == "native":
+            declared_scale = key[1] / 100.0
+            require(
+                abs(dpr - declared_scale) <= 0.08,
+                "native platform DPR does not match declared OS scale: {}".format(key),
+            )
+        elif key[2] == "retina":
+            require(dpr >= 1.5, "Retina profile did not use a high-DPR display: {}".format(key))
+        else:
+            require(False, "unknown native platform DPR class: {}".format(key))
+        _validate_native_settings_pages(report, key)
+        if key[0] == "macos":
+            validate_fullscreen_workflow(
+                report.get("fullscreen_space_switch"),
+                label="macOS platform full-screen acceptance",
+            )
         resolved[key] = report
     missing = [key for key in expected if key not in resolved]
     require(not missing, "missing required native platform profiles: {}".format(missing))
@@ -346,6 +922,10 @@ def make_capture_sheet(
         font=font(16),
         fill="#cbd5e1",
     )
+    captions = {
+        str(case["id"]): str(case.get("caption", ""))
+        for case in CAPTURE_PLAN.cases(profile_id)
+    }
     for index, capture_id in enumerate(capture_ids):
         row, column = divmod(index, columns)
         x = 16 + column * tile_width
@@ -355,6 +935,15 @@ def make_capture_sheet(
         draw.rounded_rectangle((x + 4, y + 4, x + tile_width - 4, y + tile_height - 4), radius=8, outline="#334155", width=2)
         label = capture_id if len(capture_id) <= 46 else capture_id[:43] + "…"
         draw.text((x + 12, y + thumb[1] + 18), label, font=font(14, True), fill="#f8fafc")
+        caption = captions.get(capture_id, "")
+        if caption:
+            caption = caption if len(caption) <= 62 else caption[:59] + "…"
+            draw.text(
+                (x + 12, y + thumb[1] + 42),
+                caption,
+                font=font(12),
+                fill="#cbd5e1",
+            )
     path = output / "contact-sheets" / filename
     path.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(path, "PNG", optimize=True)
@@ -362,6 +951,11 @@ def make_capture_sheet(
         "file": path.relative_to(output).as_posix(),
         "title": title,
         "capture_ids": capture_ids,
+        "captions": {
+            capture_id: captions[capture_id]
+            for capture_id in capture_ids
+            if captions.get(capture_id)
+        },
         "sha256": sha256(path),
         "physical_pixels": [canvas.width, canvas.height],
     }
@@ -395,6 +989,7 @@ def report_sheet(
         "Native statistics parity: Anki Graphs + Scheduler = dashboard cards and calendar PASS",
         "Restart persistence: production Year + Settings clean state + event name sort + resizable window policy",
         "Native Windows, Linux, DPR 1, OS scaling, and macOS Retina matrix: PASS",
+        "Structured Settings layout at canonical 100% plus disconnected-monitor v4 restoration: PASS",
         "macOS fullscreen menu and dashboard-gear Space-switch acceptance: PASS",
         "VoiceOver and forced-colors: UNRUN (nonblocking, not claimed)",
     ]
@@ -503,6 +1098,8 @@ This immutable evidence set was assembled from the exact reproducible package
 - `reports/runtime-report-initial.json` and `runtime-report-restart.json` retain
   exact-package, scheduler-count, Settings, persistence, and all four isolation
   gates.
+- `reports/settings-structured-layout.json` retains the non-PNG canonical 100%
+  application-font checks plus disconnected-monitor v4 restoration proof.
 - `reports/archive-inspection.json` proves the 24-member allowlist, safe paths,
   and source/archive byte parity.
 - `reports/native-platform-matrix.json` proves all {platform_count} required native
@@ -552,7 +1149,7 @@ def _assemble_to_directory(
     run_output = run_root / str(CAPTURE_PLAN.profile(profile_id)["output_directory"])
     candidate_hash = sha256(candidate)
     platforms = validate_platform_bundles(platform_bundles, candidate_hash)
-    initial, restart, isolation = validate_runtime(
+    initial, restart, isolation, structured_layout = validate_runtime(
         run_output,
         candidate_hash,
         profile_id,
@@ -562,6 +1159,11 @@ def _assemble_to_directory(
     public_initial = redact_evidence_paths(initial, run_root=run_root, candidate=candidate)
     public_restart = redact_evidence_paths(restart, run_root=run_root, candidate=candidate)
     public_isolation = redact_evidence_paths(isolation, run_root=run_root, candidate=candidate)
+    public_structured_layout = redact_evidence_paths(
+        structured_layout,
+        run_root=run_root,
+        candidate=candidate,
+    )
     require(not output.exists(), "release evidence output appeared during validation: {}".format(output))
     output.mkdir(parents=True)
     captures = collect_captures(run_output, output, initial, restart, profile_id)
@@ -570,6 +1172,10 @@ def _assemble_to_directory(
     reports.mkdir()
     write_json(reports / "runtime-report-initial.json", public_initial)
     write_json(reports / "runtime-report-restart.json", public_restart)
+    write_json(
+        reports / "settings-structured-layout.json",
+        public_structured_layout,
+    )
     write_json(reports / "isolation-gates.json", public_isolation)
     write_json(reports / "archive-inspection.json", archive)
     write_json(reports / "native-platform-matrix.json", platforms)
@@ -641,6 +1247,12 @@ def _assemble_to_directory(
         ),
         "isolation": public_isolation,
         "restart_persistence": "passed",
+        "structured_settings_layout": {
+            "status": public_structured_layout["status"],
+            "report": "reports/settings-structured-layout.json",
+            "adds_png_frames": False,
+            "generated_png_count": 0,
+        },
         "native_platform_matrix": platforms,
         "deferred_unrun": [
             "voiceover_review", "forced_colors_review",

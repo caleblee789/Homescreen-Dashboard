@@ -72,8 +72,12 @@ requested. Never overwrite a partial or completed output in place.
 
    Every platform bundle must contain a passing `platform-profile.json` for
    the identical candidate and plan hashes. Native Windows 100/125/150%, Linux
-   100/150%, DPR 1, high-DPR, and macOS full-screen Space behavior are hard
-   gates. Environment-variable scale substitutes do not satisfy them.
+   100/150% at DPR 1, high-DPR, and macOS full-screen Space behavior are hard
+   gates. Environment-variable scale substitutes do not satisfy them. These
+   profiles remain explicitly unrun in the focused 100% lane. When supplied
+   for full release, physical dimensions must match logical dimensions times
+   DPR, and every bundle must include passing structured assertions for all
+   four Settings pages.
 
 ## Profiles and focused revision
 
@@ -86,7 +90,13 @@ requested. Never overwrite a partial or completed output in place.
   Acceptance additionally requires the structured exact-package native macOS
   result `macos-fullscreen-no-space-switch-menu-and-dashboard-gear`. Both
   opening paths must remain on Anki's full-screen Space without a desktop or
-  Space switch, including the hard-restart recheck. It adds no PNG frames.
+  Space switch. Schema version 2 requires these ordered `workflow_steps` for
+  each route: `all-four-pages`, `events-tabs`, `resize`, `event-edit`,
+  `verse-edit`, `save`, `close-reopen`, and `controlled-restart`. Every step
+  records current-Space retention independently. Start from
+  `qa/settings_fullscreen_acceptance_template_1_8_7.json`; keep every entry
+  `unrun` until that exact step is observed against the exact package. It adds
+  no PNG frames.
 - `wide-100` selects cases semantically: wide production layouts, full-width
   Settings at 100% application font, and both relevant restart states. Its
   full-screen adapter contains only window/capture behavior; it does not own a

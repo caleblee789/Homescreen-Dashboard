@@ -12,9 +12,27 @@
     {"host_platform": "windows", "os_scale_percent": 125, "dpr_class": "native"},
     {"host_platform": "windows", "os_scale_percent": 150, "dpr_class": "native"},
     {"host_platform": "linux", "os_scale_percent": 100, "dpr_class": "dpr-1"},
-    {"host_platform": "linux", "os_scale_percent": 150, "dpr_class": "native"},
+    {"host_platform": "linux", "os_scale_percent": 150, "dpr_class": "dpr-1"},
     {"host_platform": "macos", "os_scale_percent": 100, "dpr_class": "retina"}
   ],
+  "structured_settings_layout": {
+    "schema_version": 1,
+    "stage": "initial",
+    "required_profiles": ["full", "settings"],
+    "adds_png_frames": false,
+    "work_area_logical": [0, 0, 1366, 768],
+    "application_font_percents": [100],
+    "pages": ["dashboard", "events", "bible_verse", "about_support"],
+    "restore_scenarios": [
+      {
+        "id": "disconnected-monitor-v4",
+        "saved_geometry_logical": [1700, 100, 1180, 800],
+        "saved_screen_name": "Disconnected Display",
+        "saved_available_logical": [1600, 0, 1920, 1080],
+        "saved_device_pixel_ratio": 2.0
+      }
+    ]
+  },
   "profiles": [
     {
       "id": "full",
@@ -170,10 +188,10 @@
         "dpr_class": "native"
       },
       "pages": [
-        {"id": "DASHBOARD", "page": "dashboard", "sheet_group": "settings-dashboard-widths"},
-        {"id": "EVENTS", "page": "events", "sheet_group": "settings-events-widths"},
-        {"id": "BIBLE", "page": "bible_verse", "sheet_group": "settings-bible-widths"},
-        {"id": "ABOUT", "page": "about_support", "sheet_group": "settings-about-widths"}
+        {"id": "DASHBOARD", "page": "dashboard", "sheet_group": "settings-dashboard-widths", "caption_template": "Dashboard · {width} · {font_percent}% application font", "visible_target": {"kind": "active-page", "scroll": "top"}},
+        {"id": "EVENTS", "page": "events", "sheet_group": "settings-events-widths", "caption_template": "Events · {width} · {font_percent}% application font", "visible_target": {"kind": "active-page", "scroll": "top"}},
+        {"id": "BIBLE", "page": "bible_verse", "sheet_group": "settings-bible-widths", "caption_template": "Bible verse · {width} · {font_percent}% application font", "visible_target": {"kind": "active-page", "scroll": "top"}},
+        {"id": "ABOUT", "page": "about_support", "sheet_group": "settings-about-widths", "caption_template": "About & support · {width} · {font_percent}% application font", "visible_target": {"kind": "active-page", "scroll": "top"}}
       ],
       "widths": [
       {"id": "1080", "value": 1080},
@@ -195,34 +213,34 @@
         "dpr_class": "native"
       },
       "cases": [
-        {"id": "SET-EVENTS-EMPTY", "page": "events", "special": "events-empty", "sheet_group": "settings-events-states"},
-        {"id": "SET-EVENTS-POPULATED", "page": "events", "special": "events-populated", "sheet_group": "settings-events-states"},
-        {"id": "SET-EVENT-EDITOR-OPEN", "page": "events", "special": "event-editor-open", "sheet_group": "settings-events-states"},
-        {"id": "SET-EVENTS-SEARCHED", "page": "events", "special": "events-searched", "sheet_group": "settings-events-states"},
-        {"id": "SET-EVENTS-NO-RESULTS", "page": "events", "special": "events-no-results", "sheet_group": "settings-events-states"},
-        {"id": "SET-EVENTS-ARCHIVED", "page": "events", "special": "events-archived", "sheet_group": "settings-events-states"},
-        {"id": "SET-EVENT-LONG-TITLE", "page": "events", "special": "event-long-title", "sheet_group": "settings-events-states"},
-        {"id": "SET-BIBLE-SHORT", "page": "bible_verse", "special": "bible-short", "sheet_group": "settings-bible-states"},
-        {"id": "SET-BIBLE-LONG", "page": "bible_verse", "special": "bible-long", "sheet_group": "settings-bible-states"},
-        {"id": "SET-BIBLE-CUSTOM-VALID", "page": "bible_verse", "special": "bible-custom-valid", "sheet_group": "settings-bible-states"},
-        {"id": "SET-BIBLE-CUSTOM-INVALID", "page": "bible_verse", "special": "bible-custom-invalid", "sheet_group": "settings-bible-states"},
-        {"id": "SET-BIBLE-LONG-ROW", "page": "bible_verse", "special": "bible-long-row", "sheet_group": "settings-bible-states"},
-        {"id": "SET-ABOUT-BOTTOM", "page": "about_support", "special": "about-bottom", "sheet_group": "settings-window-route"},
-        {"id": "SET-DASHBOARD-FUTURE-OFF", "page": "dashboard", "special": "future-off", "sheet_group": "settings-dashboard-widths"},
-        {"id": "SET-DASHBOARD-FUTURE-ON", "page": "dashboard", "special": "future-on", "sheet_group": "settings-dashboard-widths"},
-        {"id": "SET-DASHBOARD-ADVANCED", "page": "dashboard", "special": "advanced-appearance", "sheet_group": "settings-dashboard-widths"},
-        {"id": "SET-DIRTY", "page": "dashboard", "special": "dirty", "sheet_group": "settings-save-workflow"},
-        {"id": "SET-DISCARD", "page": "dashboard", "special": "discard", "sheet_group": "settings-save-workflow"},
-        {"id": "SET-CLOSE-CONFIRM", "page": "dashboard", "special": "close-confirmation", "sheet_group": "settings-save-workflow"},
-        {"id": "SET-SAVE-IN-PROGRESS", "page": "dashboard", "special": "save-in-progress", "sheet_group": "settings-save-workflow"},
-        {"id": "SET-SAVE-SUCCESS", "page": "dashboard", "special": "save-success", "sheet_group": "settings-save-workflow"},
-        {"id": "SET-SAVE-ERROR", "page": "dashboard", "special": "save-error-production", "sheet_group": "settings-save-workflow"},
-        {"id": "SET-LEGACY-ROUTE", "page": "calendar", "special": "legacy-route", "sheet_group": "settings-window-route"},
-      {"id": "SET-WINDOW-FRESH-OPEN", "page": "dashboard", "special": "window-fresh-open", "sheet_group": "settings-window-route"},
-        {"id": "SET-WINDOW-CLAMP", "page": "dashboard", "special": "window-clamp", "sheet_group": "settings-window-route"},
-        {"id": "SET-WINDOW-OFFSCREEN-RESTORE", "page": "dashboard", "special": "window-offscreen-restore", "sheet_group": "settings-window-route"},
-        {"id": "SET-THEME-LIGHT", "page": "dashboard", "special": "anki-light", "anki_theme": "light", "sheet_group": "settings-window-route"},
-        {"id": "SET-THEME-DARK", "page": "dashboard", "special": "anki-dark", "anki_theme": "dark", "sheet_group": "settings-window-route"}
+        {"id": "SET-EVENTS-EMPTY", "page": "events", "special": "events-empty", "sheet_group": "settings-events-states", "caption": "Events · empty state and Add event action", "visible_target": {"kind": "widget", "attribute": "event_empty_state"}},
+        {"id": "SET-EVENTS-POPULATED", "page": "events", "special": "events-populated", "sheet_group": "settings-events-states", "caption": "Events · populated list with compact rows", "visible_target": {"kind": "item", "attribute": "active_events", "item": "first"}},
+        {"id": "SET-EVENT-EDITOR-OPEN", "page": "events", "special": "event-editor-open", "sheet_group": "settings-events-states", "caption": "Events · parented single-title editor", "visible_target": {"kind": "editor", "attribute": "_qa_event_editor"}},
+        {"id": "SET-EVENTS-SEARCHED", "page": "events", "special": "events-searched", "sheet_group": "settings-events-states", "caption": "Events · search result and matching count", "visible_target": {"kind": "item", "attribute": "active_events", "item": "first"}},
+        {"id": "SET-EVENTS-NO-RESULTS", "page": "events", "special": "events-no-results", "sheet_group": "settings-events-states", "caption": "Events · no matching results", "visible_target": {"kind": "widget", "attribute": "event_empty_state"}},
+        {"id": "SET-EVENTS-ARCHIVED", "page": "events", "special": "events-archived", "sheet_group": "settings-events-states", "caption": "Events · archived tab and restore actions", "visible_target": {"kind": "item", "attribute": "archived_events", "item": "first"}},
+        {"id": "SET-EVENT-LONG-TITLE", "page": "events", "width": 820, "special": "event-long-title", "sheet_group": "settings-events-states", "caption": "Events · long title at the responsive minimum", "visible_target": {"kind": "item", "attribute": "active_events", "item": "last", "allow_elision": true}},
+        {"id": "SET-BIBLE-SHORT", "page": "bible_verse", "special": "bible-short", "sheet_group": "settings-bible-states", "caption": "Bible verse · short library row", "visible_target": {"kind": "item", "attribute": "quote_list", "item": "first"}},
+        {"id": "SET-BIBLE-LONG", "page": "bible_verse", "special": "bible-long", "sheet_group": "settings-bible-states", "caption": "Bible verse · single-title editor with separate Body and Reference", "visible_target": {"kind": "editor", "attribute": "_qa_verse_editor"}},
+        {"id": "SET-BIBLE-CUSTOM-VALID", "page": "bible_verse", "special": "bible-custom-valid", "sheet_group": "settings-bible-states", "caption": "Bible verse · valid custom color with low-contrast warning", "visible_target": {"kind": "widget", "attribute": "font_color_warning"}},
+        {"id": "SET-BIBLE-CUSTOM-INVALID", "page": "bible_verse", "special": "bible-custom-invalid", "sheet_group": "settings-bible-states", "caption": "Bible verse · invalid color and blocked Save", "visible_target": {"kind": "widget", "attribute": "font_color_warning"}},
+        {"id": "SET-BIBLE-LONG-ROW", "page": "bible_verse", "special": "bible-long-row", "sheet_group": "settings-bible-states", "caption": "Bible verse · fully reachable final long row", "visible_target": {"kind": "item", "attribute": "quote_list", "item": "last", "scroll": "bottom", "allow_elision": true}},
+        {"id": "SET-ABOUT-BOTTOM", "page": "about_support", "special": "about-bottom", "sheet_group": "settings-window-route", "caption": "About & support · backup and export at page bottom", "visible_target": {"kind": "widget", "attribute": "about_recovery_card", "scroll": "bottom"}},
+        {"id": "SET-DASHBOARD-FUTURE-OFF", "page": "dashboard", "special": "future-off", "sheet_group": "settings-dashboard-widths", "caption": "Dashboard · future range visible and disabled", "visible_target": {"kind": "widget", "attribute": "forecast_days"}},
+        {"id": "SET-DASHBOARD-FUTURE-ON", "page": "dashboard", "special": "future-on", "sheet_group": "settings-dashboard-widths", "caption": "Dashboard · future range visible and enabled", "visible_target": {"kind": "widget", "attribute": "forecast_days"}, "compare_with": "SET-DASHBOARD-FUTURE-OFF", "minimum_image_difference_ratio": 0.0005},
+        {"id": "SET-DASHBOARD-ADVANCED", "page": "dashboard", "special": "advanced-appearance", "sheet_group": "settings-dashboard-widths", "caption": "Dashboard · expanded Sapphire advanced appearance fields", "visible_target": {"kind": "widget", "attribute": "appearance_advanced"}},
+        {"id": "SET-DIRTY", "page": "dashboard", "special": "dirty", "sheet_group": "settings-save-workflow", "caption": "Save workflow · dirty count and enabled Save", "visible_target": {"kind": "widget", "attribute": "status_label"}},
+        {"id": "SET-DISCARD", "page": "dashboard", "special": "discard", "sheet_group": "settings-save-workflow", "caption": "Save workflow · changes discarded confirmation", "visible_target": {"kind": "widget", "attribute": "status_label"}},
+        {"id": "SET-CLOSE-CONFIRM", "page": "dashboard", "special": "close-confirmation", "sheet_group": "settings-save-workflow", "caption": "Save workflow · three-action unsaved-changes prompt", "visible_target": {"kind": "prompt"}},
+        {"id": "SET-SAVE-IN-PROGRESS", "page": "dashboard", "special": "save-in-progress", "sheet_group": "settings-save-workflow", "caption": "Save workflow · one saving status and stable actions", "visible_target": {"kind": "widget", "attribute": "status_label"}},
+        {"id": "SET-SAVE-SUCCESS", "page": "dashboard", "special": "save-success", "sheet_group": "settings-save-workflow", "caption": "Save workflow · transient Saved confirmation", "visible_target": {"kind": "widget", "attribute": "status_label"}},
+        {"id": "SET-SAVE-ERROR", "page": "dashboard", "special": "save-error-production", "sheet_group": "settings-save-workflow", "caption": "Save workflow · preserved draft with Retry and error details", "visible_target": {"kind": "widget", "attribute": "footer.error_panel"}},
+        {"id": "SET-LEGACY-ROUTE", "page": "calendar", "special": "legacy-route", "sheet_group": "settings-window-route", "caption": "Legacy Calendar route · normalized Dashboard anchor", "visible_target": {"kind": "widget", "attribute": "calendar_display_card"}},
+        {"id": "SET-WINDOW-FRESH-OPEN", "page": "dashboard", "special": "window-fresh-open", "sheet_group": "settings-window-route", "caption": "Fresh open · complete decorated 1080 × 760 Settings window", "visible_target": {"kind": "dialog"}},
+        {"id": "SET-WINDOW-CLAMP", "page": "dashboard", "special": "window-clamp", "sheet_group": "settings-window-route", "caption": "Window geometry · oversized record clamped on screen", "visible_target": {"kind": "dialog"}},
+        {"id": "SET-WINDOW-OFFSCREEN-RESTORE", "page": "dashboard", "special": "window-offscreen-restore", "sheet_group": "settings-window-route", "caption": "Window geometry · disconnected position restored safely", "visible_target": {"kind": "dialog"}},
+        {"id": "SET-THEME-LIGHT", "page": "dashboard", "special": "anki-light", "anki_theme": "light", "sheet_group": "settings-window-route", "caption": "HOST-LIGHT · DASHBOARD-DARK", "visible_target": {"kind": "widget", "attribute": "appearance_controls"}},
+        {"id": "SET-THEME-DARK", "page": "dashboard", "special": "anki-dark", "anki_theme": "dark", "sheet_group": "settings-window-route", "caption": "HOST-DARK · DASHBOARD-DARK", "visible_target": {"kind": "widget", "attribute": "appearance_controls"}}
       ]
     },
     {
@@ -289,7 +307,9 @@
           "os_scale_percent": 100,
           "dpr_class": "native",
           "special": "restart-persistence",
-          "sheet_group": "restart-persistence"
+          "sheet_group": "restart-persistence",
+          "caption": "Controlled restart · saved values, geometry, and clean footer",
+          "visible_target": {"kind": "widget", "attribute": "appearance_controls"}
         }
       ]
     }

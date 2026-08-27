@@ -65,6 +65,7 @@ RELEASE_CONTRACT_FILES = (
     "qa/prepare_capture_helper.py",
     "qa/runtime_probe_profile_entrypoint.py",
     "qa/runtime_probe_fullscreen_profile.py",
+    "qa/settings_fullscreen_acceptance_template_1_8_7.json",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 FIXED_TIMESTAMP = (2026, 8, 26, 0, 0, 0)
@@ -377,7 +378,12 @@ def validate_sources() -> dict:
             'command == "diagnostics"', 'self.request_settings_open("about_support")',
             "def _persist_settings_transaction", "_restore_optional_bytes",
             "from .settings import SettingsDialog", "dialog = SettingsDialog(",
+            "active_dialog = self._active_settings_dialog",
+            "self._route_active_settings_dialog(active_dialog, request)",
+            "self._active_settings_dialog = dialog",
             "dialog.exec()",
+            "if self._active_settings_dialog is dialog:",
+            "self._active_settings_dialog = None",
             "self._settings_request_token",
             "QTimer.singleShot(0, lambda: self._open_pending_settings(token))",
         ),
@@ -399,14 +405,19 @@ def validate_sources() -> dict:
             "class SettingsDialog(QDialog):", "class SettingsPromptPage(QWidget):",
             "super().__init__(parent)",
             'self.setWindowTitle("Home Screen Dashboard Settings")',
-            "self.setMinimumSize(*SETTINGS_MINIMUM_SIZE)",
-            "SETTINGS_GEOMETRY_KEY", "clamp_window_geometry(",
+            "min(SETTINGS_MINIMUM_SIZE[0], geometry[2])",
+            "min(SETTINGS_MINIMUM_SIZE[1], geometry[3])",
+            'SETTINGS_GEOMETRY_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v4"',
+            'SETTINGS_PREVIOUS_GEOMETRY_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v3"',
+            "migrated = migrate_saved_window_geometry(", "clamp_window_geometry(",
             "self._content_stack.setCurrentWidget(prompt)",
+            "QStackedLayout.StackingMode.StackAll",
             "def reject(self) -> None:", "def closeEvent(self, event: Any) -> None:",
             "action.triggered.connect(controller.open_settings)",
             "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)", "self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)",
-            "self.compact_nav = QTabBar", "SETTINGS_COMPACT_BODY_WIDTH = 820",
-            "SETTINGS_PAGE_MAX_WIDTH = 980", "SETTINGS_HEADER_HEIGHT = 72",
+            "self.compact_nav = QTabBar", "SETTINGS_COMPACT_BODY_WIDTH = SETTINGS_SIDEBAR_WIDTH + 680",
+            "SETTINGS_SHELL_MAX_WIDTH = 1120", "SETTINGS_PAGE_MAX_WIDTH = 920",
+            "SETTINGS_ABOUT_MAX_WIDTH = 840", "SETTINGS_HEADER_HEIGHT = 72",
             "SETTINGS_FOOTER_MIN_HEIGHT = 60", "ScrollBarAlwaysOff",
             "host = grid.parentWidget()", "widget.setParent(host)",
             "widget.show()", "if not widget.isHidden():",
@@ -418,7 +429,15 @@ def validate_sources() -> dict:
             "class EventRowWidget", "class VerseLibraryModel", "class VerseLibraryDelegate",
             "def _attach_event_menu", 'self.revert_button = QPushButton("Discard changes")',
             "class SettingsFooter", 'self.error_label.setObjectName("InlineSaveError")',
-            "Save failed. Your changes are still available.",
+            "Could not save changes. Your draft is still available.",
+            'self._set_status("saving", "Saving changes...")',
+            'self.save_button.setText("Save changes")',
+            "self._set_mutation_controls_enabled(False)",
+            '"Unsaved changes"', '("Save and close", "primary", self._save_and_close)',
+            "def showEvent(self, event: Any) -> None:",
+            "QTimer.singleShot(0, self._correct_decorated_frame_if_needed)",
+            "if available.contains(frame):",
+            "self.move(self.pos() + QPoint(dx, dy))",
             "scope_differs_from_defaults", 'SettingsCard("Version and support")',
             'SettingsCard("Privacy and legal")',
         ),
@@ -478,9 +497,9 @@ def validate_sources() -> dict:
     if "self._refresh_heatmap_preset_options()" in apply_theme_source:
         raise ValueError("generic Settings synchronization must not rebuild heatmap options")
     for forbidden in (
-        "clamp_window_size", "self.screen()", "self.move(", "setWindowModality", "setModal(",
-        "def showEvent", "AnkiWebView", "QWebEngine", "raise_()",
-        "setWindowFlags", "activateWindow()", "setFocus(",
+        "clamp_window_size", "setWindowModality", "setModal(",
+        "AnkiWebView", "QWebEngine", "raise_()",
+        "setWindowFlags", "activateWindow()",
         "setFocusProxy(", "installEventFilter(self)", "super().__init__(parent,",
         "Qt.WindowType.Window", "Qt.WindowType.CustomizeWindowHint",
     ):
@@ -488,6 +507,10 @@ def validate_sources() -> dict:
             raise ValueError(
                 "Settings dialog retains custom lifecycle marker: {}".format(forbidden)
             )
+    if dialog_source.count("self.move(") != 1:
+        raise ValueError(
+            "Settings may move only in the one guarded decorated-frame correction"
+        )
 
     for forbidden in (
         "def _clamped_settings_origin(", "def _place_settings_dialog(",
@@ -509,7 +532,6 @@ def validate_sources() -> dict:
         "Qt.WindowType.Tool", "self.winId()", "setTransientParent",
         "_attach_transient_parent", "Qt.WindowModality.NonModal", "objc_msgSend",
         "_attach_macos_settings_window", "_detach_macos_settings_window",
-        "self.move(",
     ):
         if retired in sources["settings.py"]:
             raise ValueError(
@@ -582,43 +604,60 @@ def validate_sources() -> dict:
         raise ValueError("runtime probe metadata does not delegate profiles and counts to the capture plan")
     if settings_window_contract.get("release") != version:
         raise ValueError("focused Settings contract must match the manifest version")
-    if (
-        settings_window_contract.get("reference_addons") != ["Progress Bar", "PronounceIt"]
-        or settings_window_contract.get("minimum_size") != [920, 640]
-        or settings_window_contract.get("default_size") != [1080, 760]
-        or settings_window_contract.get("screen_margins")
-        != {"normal": 48, "small_screen_fallback": 24}
-        or settings_window_contract.get("minimum_saved_visible_ratio") != .8
-        or settings_window_contract.get("native_window") is not True
-        or settings_window_contract.get("logical_coordinates") is not True
-        or settings_window_contract.get("movable") is not True
-        or settings_window_contract.get("resizable") is not True
-        or settings_window_contract.get("default_window_flags") is not True
-        or settings_window_contract.get("initial_placement")
-        != "restore a valid logical v3 QRect on its connected screen or center on the active parent screen before first visibility"
-        or settings_window_contract.get("pre_exec_geometry") is not True
-        or settings_window_contract.get("reposition_after_open") is not False
-        or settings_window_contract.get("saved_geometry")
-        != "versioned UI-only QSettings normal logical QRect plus screen identity; reject undersized offscreen disconnected and compact records"
-        or settings_window_contract.get("geometry_key")
-        != "home_dashboard_overhaul/settings_dialog_geometry/v3"
-        or settings_window_contract.get("geometry_screen_key")
-        != "home_dashboard_overhaul/settings_dialog_geometry/v3_screen"
-        or settings_window_contract.get("active_screen_order")
-        != ["parent window handle", "screen containing parent center", "primary screen"]
-        or settings_window_contract.get("shell_maximum_width") != 1240
-        or settings_window_contract.get("page_maximum_width") != 980
-        or settings_window_contract.get("rail_width") != 184
-        or settings_window_contract.get("header_height") != 72
-        or settings_window_contract.get("footer_height") != 60
-        or settings_window_contract.get("rendered_previews")
-        != "none; dashboard verse palette swatch and heatmap preview surfaces are absent"
-        or settings_window_contract.get("settings_profile_acceptance_gate")
-        != "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 41 PNGs cannot satisfy or waive this gate"
-        or settings_window_contract.get("programmatic_lifecycle_focus") is not False
-        or settings_window_contract.get("retained_dialog_object") is not False
-    ):
-        raise ValueError("focused Settings contract does not require native dialog parity")
+    expected_settings_window = {
+        "reference_addons": ["Progress Bar", "PronounceIt"],
+        "minimum_size": [820, 600],
+        "default_size": [1080, 760],
+        "screen_margins": {"normal": 48, "small_screen_fallback": 24},
+        "minimum_saved_visible_ratio": .8,
+        "native_window": True,
+        "logical_coordinates": True,
+        "movable": True,
+        "resizable": True,
+        "default_window_flags": True,
+        "initial_placement": "migrate and restore a valid logical v3 or v4 QRect on its connected screen or center the preferred size on the active parent screen before first visibility",
+        "pre_exec_geometry": True,
+        "reposition_after_open": "one decoration-only clamp when the decorated frame is outside the active screen; never move an already-contained frame",
+        "saved_geometry": "versioned UI-only QSettings normal logical QRect plus screen identity available bounds and informational DPR; reject undersized offscreen disconnected and compact records",
+        "geometry_version": 4,
+        "previous_geometry_version": 3,
+        "geometry_key": "home_dashboard_overhaul/settings_dialog_geometry/v4",
+        "geometry_screen_key": "home_dashboard_overhaul/settings_dialog_geometry/v4_screen",
+        "geometry_available_key": "home_dashboard_overhaul/settings_dialog_geometry/v4_available",
+        "geometry_dpr_key": "home_dashboard_overhaul/settings_dialog_geometry/v4_dpr",
+        "active_screen_order": [
+            "parent window handle",
+            "screen containing parent center",
+            "primary screen",
+        ],
+        "shell_maximum_width": 1120,
+        "page_maximum_width": 920,
+        "about_page_maximum_width": 840,
+        "rail_width": 184,
+        "header_height": 72,
+        "footer_height": 60,
+        "compact_navigation": "single-line synchronized QTabBar whenever retaining the 184 px rail would leave less than 680 logical pixels for the main region; the 820 px supported minimum is compact",
+        "rendered_previews": "none; dashboard verse palette swatch and heatmap preview surfaces are absent",
+        "active_dialog_reference": "one temporary controller reference exists only during modal exec for re-entry routing and is cleared in finally",
+        "primary_prompts": "stacked overlay children keep the Settings shell visible beneath a tokenized scrim and never create another window",
+        "auxiliary_dialogs": "single-title event and verse editors plus native file and color pickers remain parented dialogs",
+        "editor_titles": "event and verse editors use one native title only and stage Add or Apply changes into the global draft",
+        "save_close": "stable Save changes label during saving; mutation controls and close are disabled; failures preserve the draft; dirty close offers Cancel Discard and Save and close with pending-close cleared on failure",
+        "settings_profile_acceptance_gate": "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 41 PNGs cannot satisfy or waive this gate",
+        "programmatic_lifecycle_focus": False,
+        "retained_dialog_object": False,
+    }
+    mismatched_settings_fields = [
+        key
+        for key, expected in expected_settings_window.items()
+        if settings_window_contract.get(key) != expected
+    ]
+    if mismatched_settings_fields:
+        raise ValueError(
+            "focused Settings contract differs for: {}".format(
+                ", ".join(mismatched_settings_fields)
+            )
+        )
     if capture_contract.get("runtime_smoke_requirements") != {
         "active_head_deck": "A",
         "raw_new_cards_per_head_minimum": 40,
@@ -646,10 +685,21 @@ def validate_sources() -> dict:
         raise ValueError("minimal Settings profile lacks its full-screen no-switch gate")
     if capture_contract.get("settings_profile_structured_manual_gate") != {
         "id": structured_gate_id,
+        "report_schema_version": 2,
         "required_for_acceptance": True,
         "adds_png_frames": False,
         "opening_paths": ["menu", "dashboard-gear"],
-        "required_result": "both paths remain on the native Anki full-screen Space with no desktop switch, including hard-restart recheck",
+        "workflow_steps_per_path": [
+            "all-four-pages",
+            "events-tabs",
+            "resize",
+            "event-edit",
+            "verse-edit",
+            "save",
+            "close-reopen",
+            "controlled-restart",
+        ],
+        "required_result": "every workflow step through both paths remains on the current native Anki full-screen Space with no desktop switch",
     }:
         raise ValueError("Settings full-screen structured acceptance contract drifted")
     if (

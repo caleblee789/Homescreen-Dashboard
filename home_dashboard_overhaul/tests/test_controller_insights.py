@@ -226,11 +226,16 @@ class FakeStatusBar:
 
 class FakeSettingsDialog:
     instances = []
+    exec_hook = None
+    exec_error = None
 
     def __init__(self, *args) -> None:
         self.args = args
         self.exec_count = 0
         self.moves = []
+        self.routes = []
+        self.focus_count = 0
+        self.visible = False
         self.__class__.instances.append(self)
 
     def size(self):
@@ -241,6 +246,23 @@ class FakeSettingsDialog:
 
     def exec(self) -> None:
         self.exec_count += 1
+        self.visible = True
+        hook = type(self).exec_hook
+        if hook is not None:
+            hook(self)
+        error = type(self).exec_error
+        self.visible = False
+        if error is not None:
+            raise error
+
+    def open_page(self, *args) -> None:
+        self.routes.append(args)
+
+    def isVisible(self) -> bool:
+        return self.visible
+
+    def setFocus(self) -> None:
+        self.focus_count += 1
 
 
 class ControllerCapabilityTests(unittest.TestCase):
@@ -315,6 +337,9 @@ class ControllerCapabilityTests(unittest.TestCase):
         self.aqt.mw.deckBrowser = FakeDeckBrowser()
         self.aqt.dialogs.opened.clear()
         self.aqt.gui_hooks.browser_will_search.clear()
+        FakeSettingsDialog.instances.clear()
+        FakeSettingsDialog.exec_hook = None
+        FakeSettingsDialog.exec_error = None
         self.rotation_directory = tempfile.TemporaryDirectory()
         self.original_rotation = self.module.ROTATION_STATE_PATH
         self.module.ROTATION_STATE_PATH = Path(self.rotation_directory.name) / "rotation.json"
@@ -384,7 +409,6 @@ class ControllerCapabilityTests(unittest.TestCase):
         self.assertIsNone(self.controller._pending_settings_request)
 
     def test_settings_constructs_parented_dialog_and_executes_immediately(self) -> None:
-        FakeSettingsDialog.instances.clear()
         settings = ModuleType("home_dashboard_overhaul.settings")
         settings.SettingsDialog = FakeSettingsDialog
 
@@ -405,6 +429,48 @@ class ControllerCapabilityTests(unittest.TestCase):
             self.assertEqual(dialog.moves, [])
             self.assertEqual(dialog.exec_count, 1)
             self.assertEqual(FakeQTimer.pending, [])
+            self.assertIsNone(self.controller._active_settings_dialog)
+
+    def test_reentrant_menu_and_deferred_gear_route_the_live_dialog(self) -> None:
+        settings = ModuleType("home_dashboard_overhaul.settings")
+        settings.SettingsDialog = FakeSettingsDialog
+
+        def reroute(_dialog) -> None:
+            self.controller.open_settings("calendar_data")
+            self.controller.request_settings_open(
+                "events",
+                "2026-08-28",
+                "exam-42",
+            )
+            FakeQTimer.run_next()
+
+        FakeSettingsDialog.exec_hook = reroute
+        with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
+            self.controller.open_settings("dashboard")
+
+        self.assertEqual(len(FakeSettingsDialog.instances), 1)
+        dialog = FakeSettingsDialog.instances[0]
+        self.assertEqual(
+            dialog.routes,
+            [
+                ("calendar_data", "", ""),
+                ("events", "2026-08-28", "exam-42"),
+            ],
+        )
+        self.assertEqual(dialog.focus_count, 2)
+        self.assertEqual(dialog.moves, [])
+        self.assertIsNone(self.controller._active_settings_dialog)
+
+    def test_active_settings_reference_clears_when_modal_exec_raises(self) -> None:
+        settings = ModuleType("home_dashboard_overhaul.settings")
+        settings.SettingsDialog = FakeSettingsDialog
+        FakeSettingsDialog.exec_error = RuntimeError("dialog failed")
+
+        with patch.dict(sys.modules, {"home_dashboard_overhaul.settings": settings}):
+            with self.assertRaisesRegex(RuntimeError, "dialog failed"):
+                self.controller.open_settings()
+
+        self.assertIsNone(self.controller._active_settings_dialog)
 
     def test_settings_open_does_not_query_or_move_against_the_parent_screen(self) -> None:
         FakeSettingsDialog.instances.clear()

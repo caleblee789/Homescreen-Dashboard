@@ -42,15 +42,16 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         )
         settings = self.manifest["settings_architecture"]
         self.assertEqual(settings["default_window"], [1080, 760])
-        self.assertEqual(settings["minimum_normal_window"], [920, 640])
+        self.assertEqual(settings["minimum_normal_window"], [820, 600])
         self.assertEqual(settings["screen_margins"], {"normal": 48, "small_screen_fallback": 24})
         self.assertEqual(settings["minimum_saved_visible_ratio"], .8)
-        self.assertEqual(settings["maximum_inner_width"], 1240)
-        self.assertEqual(settings["maximum_page_width"], 980)
+        self.assertEqual(settings["maximum_inner_width"], 1120)
+        self.assertEqual(settings["maximum_page_width"], 920)
+        self.assertEqual(settings["maximum_about_width"], 840)
         self.assertEqual(settings["rail_width"], 184)
         self.assertEqual(settings["fixed_header_height"], 72)
         self.assertEqual(settings["fixed_footer_height"], 60)
-        self.assertEqual(settings["compact_navigation_threshold"], 820)
+        self.assertEqual(settings["compact_navigation_threshold"], 864)
         self.assertEqual(settings["embedded_web_content"], "none")
         self.assertEqual(settings["window_lifecycle"], "parented-standard-dialog-exec")
         self.assertEqual(settings["page_switching"], "native-stacked-widget-only-no-render-timer")
@@ -230,15 +231,34 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         gate = self.capture["settings_profile_structured_manual_gate"]
         self.assertEqual(gate, {
             "id": "macos-fullscreen-no-space-switch-menu-and-dashboard-gear",
+            "report_schema_version": 2,
             "required_for_acceptance": True,
             "adds_png_frames": False,
             "opening_paths": ["menu", "dashboard-gear"],
-            "required_result": "both paths remain on the native Anki full-screen Space with no desktop switch, including hard-restart recheck",
+            "workflow_steps_per_path": [
+                "all-four-pages",
+                "events-tabs",
+                "resize",
+                "event-edit",
+                "verse-edit",
+                "save",
+                "close-reopen",
+                "controlled-restart",
+            ],
+            "required_result": "every workflow step through both paths remains on the current native Anki full-screen Space with no desktop switch",
         })
         self.assertEqual(
             self.plan.profile("settings")["required_structured_manual_results"],
             [gate["id"]],
         )
+        platform_contract = self.capture["native_platform_profile_contract"]
+        self.assertEqual(platform_contract["macos_fullscreen_schema_version"], 2)
+        self.assertEqual(
+            platform_contract["settings_pages"],
+            ["dashboard", "events", "bible_verse", "about_support"],
+        )
+        self.assertIn("horizontal_scroll_zero", platform_contract["settings_page_assertions"])
+        self.assertIn("target_fully_visible", platform_contract["settings_page_assertions"])
         self.assertIn(
             "macos-fullscreen-menu-and-dashboard-gear-open-without-desktop-space-switch",
             self.matrix["settings_quality_assertions"],

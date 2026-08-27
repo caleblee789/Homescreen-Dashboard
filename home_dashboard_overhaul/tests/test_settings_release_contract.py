@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import ast
+from copy import deepcopy
 import json
 from pathlib import Path
+from types import SimpleNamespace
 import unittest
 
 from home_dashboard_overhaul.themes import (
@@ -11,6 +13,7 @@ from home_dashboard_overhaul.themes import (
     PRESETS,
     SETTINGS_COLOR_TOKENS,
 )
+from home_dashboard_overhaul.settings_model import history_range_choice
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +31,9 @@ class SettingsReleaseContractTests(unittest.TestCase):
         cls.release_probe_base = (ROOT / "qa" / "runtime_probe_release_1_8_4.py").read_text(
             encoding="utf-8"
         )
+        cls.fullscreen_probe = (
+            ROOT / "qa" / "runtime_probe_fullscreen_profile.py"
+        ).read_text(encoding="utf-8")
         cls.evidence_assembler = (
             ROOT / "qa" / "assemble_release_evidence_1_8_7.py"
         ).read_text(encoding="utf-8")
@@ -122,9 +128,10 @@ class SettingsReleaseContractTests(unittest.TestCase):
     def test_settings_use_one_canonical_native_shell(self) -> None:
         for marker in (
             "class SettingsDialog(QDialog):",
-            "SETTINGS_SHELL_MAX_WIDTH = 1240",
-            "SETTINGS_PAGE_MAX_WIDTH = 980",
-            "SETTINGS_COMPACT_BODY_WIDTH = 820",
+            "SETTINGS_SHELL_MAX_WIDTH = 1120",
+            "SETTINGS_PAGE_MAX_WIDTH = 920",
+            "SETTINGS_ABOUT_MAX_WIDTH = 840",
+            "SETTINGS_COMPACT_BODY_WIDTH = SETTINGS_SIDEBAR_WIDTH + 680",
             "SETTINGS_SIDEBAR_WIDTH = 184",
             "SETTINGS_HEADER_HEIGHT = 72",
             "SETTINGS_FOOTER_MIN_HEIGHT = 60",
@@ -133,14 +140,18 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "self._update_settings_shell_margins()",
             "inset = max(0, (self.width() - SETTINGS_SHELL_MAX_WIDTH) // 2)",
             "self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)",
-            "self.header_stack.setFixedHeight(SETTINGS_HEADER_HEIGHT)",
+            "self.header_stack.setMinimumHeight(SETTINGS_HEADER_HEIGHT)",
             "outer.addWidget(self.sidebar_panel, 0, 0, 3, 1)",
             "outer.setRowStretch(1, 1)",
             "outer.addWidget(self.header_shell, 0, 1)",
             "outer.addWidget(self.body_shell, 1, 1)",
             "outer.addWidget(self.footer_shell, 2, 1)",
             "scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
-            "page.setMaximumWidth(SETTINGS_PAGE_MAX_WIDTH)",
+            "page.setMaximumWidth(",
+            "if page is getattr(self, \"about_page\", None)",
+            "else SETTINGS_PAGE_MAX_WIDTH",
+            "SETTINGS_ABOUT_MAX_WIDTH",
+            "page_padding = 20",
             'self._add_page("dashboard", page)',
             'self._add_page("events", page)',
             'self._add_page("bible_verse", page)',
@@ -167,16 +178,21 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "parent: QWidget",
             "super().__init__(parent)",
             'self.setWindowTitle("Home Screen Dashboard Settings")',
-            "self.setMinimumSize(*SETTINGS_MINIMUM_SIZE)",
+            "self.setMinimumSize(\n            min(SETTINGS_MINIMUM_SIZE[0], geometry[2])",
             "self._apply_initial_window_geometry(parent)",
-            "SETTINGS_GEOMETRY_KEY = \"home_dashboard_overhaul/settings_dialog_geometry/v3\"",
-            "SETTINGS_GEOMETRY_SCREEN_KEY = \"home_dashboard_overhaul/settings_dialog_geometry/v3_screen\"",
+            "SETTINGS_GEOMETRY_KEY = \"home_dashboard_overhaul/settings_dialog_geometry/v4\"",
+            "SETTINGS_GEOMETRY_SCREEN_KEY = \"home_dashboard_overhaul/settings_dialog_geometry/v4_screen\"",
+            "SETTINGS_GEOMETRY_AVAILABLE_KEY = \"home_dashboard_overhaul/settings_dialog_geometry/v4_available\"",
+            "SETTINGS_GEOMETRY_DPR_KEY = \"home_dashboard_overhaul/settings_dialog_geometry/v4_dpr\"",
+            "SETTINGS_PREVIOUS_GEOMETRY_KEY = \"home_dashboard_overhaul/settings_dialog_geometry/v3\"",
             "saved = self._rect_tuple(self._geometry_settings.value(SETTINGS_GEOMETRY_KEY))",
-            "saved_valid = saved_window_geometry_is_valid(",
+            "source_version = SETTINGS_GEOMETRY_VERSION",
+            "source_version = SETTINGS_PREVIOUS_GEOMETRY_VERSION",
+            "migrated = migrate_saved_window_geometry(",
+            "saved_valid = migrated is not None",
             "geometry = clamp_window_geometry(",
             "self.setGeometry(QRect(*geometry))",
-            "or self.isMaximized()",
-            "or self.isFullScreen()",
+            "if self.isMaximized() or self.isFullScreen():",
             "self._settle_initial_scroll_top()",
         ):
             self.assertIn(marker, self.settings)
@@ -188,11 +204,15 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "dialog = SettingsDialog(",
             "            mw,",
             "            self,",
+            "active_dialog = self._active_settings_dialog",
+            "self._route_active_settings_dialog(active_dialog, request)",
+            "self._active_settings_dialog = dialog",
             "dialog.exec()",
+            "if self._active_settings_dialog is dialog:",
+            "self._active_settings_dialog = None",
         ):
             self.assertIn(marker, opener)
         for forbidden_opening_marker in (
-            "self.settings_dialog",
             "SettingsWorkspace",
             "centralwidget",
             "host_layout",
@@ -209,14 +229,11 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "def _object_name", 1
         )[0]
         for forbidden_marker in (
-            "self.move(",
-            "def showEvent",
             "setWindowModality",
             "setModal(",
             "setWindowFlags",
             "activateWindow()",
             "raise_()",
-            "setFocus(",
             "setFocusProxy(",
             "installEventFilter(self)",
             "AnkiWebView",
@@ -225,6 +242,17 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "Qt.WindowType.CustomizeWindowHint",
         ):
             self.assertNotIn(forbidden_marker, dialog_source)
+        for guarded_frame_marker in (
+            "def showEvent(self, event: Any) -> None:",
+            "if not self._post_show_clamp_done:",
+            "QTimer.singleShot(0, self._correct_decorated_frame_if_needed)",
+            "def _correct_decorated_frame_if_needed(self) -> None:",
+            "if available.contains(frame):",
+            "if dx or dy:",
+            "self.move(self.pos() + QPoint(dx, dy))",
+        ):
+            self.assertIn(guarded_frame_marker, dialog_source)
+        self.assertEqual(dialog_source.count("self.move("), 1)
         for retired_placement_marker in (
             "def _clamped_settings_origin(",
             "def _place_settings_dialog(",
@@ -247,7 +275,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired_window_marker, self.settings)
         self.assertNotIn("settingsWindowSize", json.dumps(self.config))
-        self.assertEqual(self.settings_window_contract["minimum_size"], [920, 640])
+        self.assertEqual(self.settings_window_contract["minimum_size"], [820, 600])
         self.assertEqual(self.settings_window_contract["default_size"], [1080, 760])
         self.assertEqual(
             self.settings_window_contract["screen_margins"],
@@ -258,9 +286,15 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertTrue(self.settings_window_contract["logical_coordinates"])
         self.assertTrue(self.settings_window_contract["movable"])
         self.assertTrue(self.settings_window_contract["resizable"])
+        self.assertEqual(self.settings_window_contract["geometry_version"], 4)
+        self.assertEqual(self.settings_window_contract["previous_geometry_version"], 3)
+        self.assertEqual(
+            self.settings_window_contract["active_dialog_reference"],
+            "one temporary controller reference exists only during modal exec for re-entry routing and is cleared in finally",
+        )
         self.assertEqual(
             self.settings_window_contract["initial_placement"],
-            "restore a valid logical v3 QRect on its connected screen or center on the active parent screen before first visibility",
+            "migrate and restore a valid logical v3 or v4 QRect on its connected screen or center the preferred size on the active parent screen before first visibility",
         )
 
     def test_native_capture_cannot_accept_the_dashboard_background(self) -> None:
@@ -284,7 +318,10 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, self.settings_review_assembler)
         self.assertTrue(self.settings_window_contract["pre_exec_geometry"])
-        self.assertFalse(self.settings_window_contract["reposition_after_open"])
+        self.assertEqual(
+            self.settings_window_contract["reposition_after_open"],
+            "one decoration-only clamp when the decorated frame is outside the active screen; never move an already-contained frame",
+        )
         self.assertEqual(
             self.settings_window_contract["initial_grid_mount"],
             "parent every new field to its Settings card before showing or visibility filtering",
@@ -325,18 +362,25 @@ class SettingsReleaseContractTests(unittest.TestCase):
 
     def test_primary_save_and_close_prompts_are_embedded_children(self) -> None:
         self.assertIn("class SettingsPromptPage(QWidget):", self.settings)
+        self.assertIn("QStackedLayout.StackingMode.StackAll", self.settings)
+        self.assertIn('QWidget#SettingsPromptPage {{ background: {overlay}; }}', self.settings)
+        self.assertIn("prompt = SettingsPromptPage(\n            self._content_stack,", self.settings)
         self.assertIn("self._content_stack.setCurrentWidget(prompt)", self.settings)
         self.assertIn("self._content_stack.setCurrentWidget(self.settings_shell)", self.settings)
-        self.assertIn('"Discard unsaved changes?"', self.settings)
+        self.assertIn('"Unsaved changes"', self.settings)
+        self.assertIn('"Save your changes before closing?"', self.settings)
+        self.assertIn('("Cancel", "secondary", lambda: None)', self.settings)
+        self.assertIn('("Discard", "danger", self._close_dialog)', self.settings)
+        self.assertIn('("Save and close", "primary", self._save_and_close)', self.settings)
         self.assertIn('"Settings changed elsewhere"', self.settings)
         self.assertIn("self._show_prompt(", self.settings)
         self.assertIn(
-            'expected_visible_scrollers = 0 if special == "close-confirmation" else 1',
+            'state.get("close_prompt_titles") == ["Unsaved changes"]',
             self.release_probe,
         )
-        self.assertGreaterEqual(
-            self.release_probe.count('if special != "close-confirmation":'),
-            3,
+        self.assertIn(
+            'state.get("close_prompt_actions") == ["Cancel", "Discard", "Save and close"]',
+            self.release_probe,
         )
         primary_source = self.settings.split("    def _save(self) -> None:", 1)[1].split(
             "def _object_name", 1
@@ -349,6 +393,10 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "self.request_close()",
             "super().reject()",
             "event.ignore()",
+            "self._pending_close_after_save = True",
+            "close_after_save = self._pending_close_after_save",
+            "if close_after_save:",
+            "self._pending_close_after_save = False",
         ):
             self.assertIn(marker, primary_source)
 
@@ -390,6 +438,33 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, self.settings)
         self.assertNotIn("WindowStaysOnTopHint", self.release_probe)
+
+    def test_fullscreen_probe_enters_in_place_without_space_switching_calls(self) -> None:
+        fitter = self.fullscreen_probe.split("def _fit_fullscreen(", 1)[1].split(
+            "def _capture_fullscreen", 1
+        )[0]
+        for marker in (
+            "isolated Anki window must already be on the capture display before fullscreen",
+            "if not mw.isFullScreen():",
+            "mw.showFullScreen()",
+        ):
+            self.assertIn(marker, fitter)
+        for forbidden in (
+            "mw.showNormal()",
+            "mw.move(",
+            "mw.raise_()",
+            "mw.activateWindow()",
+        ):
+            self.assertNotIn(forbidden, fitter)
+        settings_preparation = self.fullscreen_probe.split(
+            "def _prepare_settings_case(", 1
+        )[1].split("def _capture_settings", 1)[0]
+        self.assertLess(
+            settings_preparation.index("dialog = _release_prepare_settings(case)"),
+            settings_preparation.index("dialog.move("),
+        )
+        self.assertNotIn("dialog.show()", settings_preparation)
+        self.assertNotIn("dialog.exec()", settings_preparation)
 
     def test_fixed_settings_rail_wraps_without_eliding_large_font_labels(self) -> None:
         for marker in (
@@ -451,7 +526,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'base.REPORT.setdefault("settings_case_failures", {})',
             'capture_state["layout_assertions"]',
             'base.REPORT["capture_completion_status"] = "complete"',
-            '"review-failed" if settings_failures else "passed"',
+            "if settings_failures or structured_layout_failed",
         ):
             self.assertIn(marker, self.release_probe)
         for marker in (
@@ -464,17 +539,124 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "def _validate_fullscreen_report(",
             'parser.add_argument("--fullscreen-report", required=True',
             '"--allow-unrun-fullscreen"',
-            'report.get("status") == "unrun"',
-            '"unrun full-screen report lacks a reason"',
+            'report.get("schema_version") == 2',
+            "validate_fullscreen_workflow(",
             'UNRUN BY USER DIRECTION',
             '"settings-fullscreen-acceptance.json"',
-            'result.get("remained_on_anki_fullscreen_space") is True',
-            'result.get("desktop_or_space_switch_observed") is False',
-            'report.get("desktop_space_switch_regression") == "not-observed"',
-            '"resize",',
         ):
             self.assertIn(marker, self.settings_review_assembler)
-        self.assertNotIn('"move_resize"', self.settings_review_assembler)
+        for marker in (
+            "FULLSCREEN_WORKFLOW_STEP_IDS",
+            '"all-four-pages"',
+            '"events-tabs"',
+            '"resize"',
+            '"event-edit"',
+            '"verse-edit"',
+            '"save"',
+            '"close-reopen"',
+            '"controlled-restart"',
+            'raw_step.get("remained_on_current_anki_space") is True',
+            "_validate_native_settings_pages(report, key)",
+            "physical_value - expected_physical",
+            'key[2] == "dpr-1"',
+        ):
+            self.assertIn(marker, self.evidence_assembler)
+
+    def test_structured_settings_layout_report_is_shared_and_adds_no_pngs(self) -> None:
+        for marker in (
+            "def validate_structured_settings_layout(",
+            "CAPTURE_PLAN.structured_settings_layout()",
+            'report.get("generated_png_count") == 0',
+            '"structured Settings layout report did not pass"',
+            'reports / "settings-structured-layout.json"',
+            '"generated_png_count": 0',
+        ):
+            self.assertIn(marker, self.evidence_assembler)
+        for marker in (
+            "validate_structured_settings_layout(",
+            "allow_failures=True",
+            'reports / "settings-structured-layout.json"',
+            '"review-failed"\n            if failures or structured_failures',
+            '"structured_settings_layout_failure_count"',
+            '"release_ready": False',
+        ):
+            self.assertIn(marker, self.settings_review_assembler)
+        self.assertNotIn(
+            "settings-structured-layout.png",
+            self.evidence_assembler + self.settings_review_assembler,
+        )
+
+    def test_settings_review_sheets_resolve_canonical_plan_captions(self) -> None:
+        source = self.settings_review_assembler.split("def _make_sheets(", 1)[1].split(
+            "def assemble(", 1
+        )[0]
+        self.assertEqual(source.count('\n            "settings",\n'), 1)
+        self.assertEqual(source.count('\n                "settings",\n'), 1)
+        self.assertNotIn(
+            'CAPTURE_PLAN.detail_groups("settings-100-review")',
+            source,
+        )
+
+    def test_native_probe_produces_structured_layout_without_capture_calls(self) -> None:
+        for marker in (
+            "def _start_structured_settings_layout()",
+            "def _inspect_structured_settings_case(",
+            "def _structured_restoration_assertions(",
+            "def _assert_scoped_settings_resets(",
+            'if case.get("id") == "settings-font-100-dashboard":',
+            "_assert_scoped_settings_resets(dialog)",
+            "dialog._reset_card(scope, label)",
+            '"Calendar event marker preserved"',
+            '"pending manual verse restored"',
+            "CAPTURE_PLAN.structured_settings_layout()",
+            '"structured_work_area_logical"',
+            '"structured_settings_application_font_percent"',
+            '"generated_png_count": generated_png_count',
+            "base._sha256(path)",
+            "application.aboutToQuit.connect(_restore_application_font)",
+            "_snapshot_geometry_preferences()",
+            "_restore_geometry_snapshot(_structured_settings_geometry_snapshot)",
+            'dialog.retention_target.setValue(81)',
+            '"page_bottom_reachable"',
+            '"clipped_wrapped_labels"',
+            "width = max(1, label.width())",
+            "required_height > label.height() + 1",
+            'config["bible"]["rotation_mode"] = "manual"',
+            "not text_elided",
+            'or bool(target.get("elision_fallback_available"))',
+        ):
+            self.assertIn(marker, self.release_probe)
+
+        tree = ast.parse(self.release_probe)
+        structured_names = {
+            "_start_structured_settings_layout",
+            "_next_structured_settings_case",
+            "_activate_structured_settings_case",
+            "_inspect_structured_settings_case",
+            "_finish_structured_settings_layout",
+            "_assert_scoped_settings_resets",
+        }
+        for function in (
+            node
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name in structured_names
+        ):
+            calls = {
+                node.func.id
+                for node in ast.walk(function)
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+            }
+            self.assertNotIn("_capture_settings", calls, function.name)
+
+        structured_next = self.release_probe.split(
+            "def _next_structured_settings_case()", 1
+        )[1].split("def _start_structured_settings_layout()", 1)[0]
+        self.assertLess(
+            structured_next.index("_close_settings_dialog()"),
+            structured_next.index(
+                "_restore_geometry_snapshot(_structured_settings_geometry_snapshot)"
+            ),
+        )
 
     def test_report_sheet_distinguishes_new_limit_from_total_restart_workload(self) -> None:
         self.assertIn(
@@ -612,10 +794,15 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "semantic = bool(index.data(VERSE_CURRENT_ROLE) or index.data(VERSE_PENDING_ROLE))",
             'tokens["accent_soft"] if selected or semantic else tokens["base"]',
             "QRect(rect.left(), rect.top(), 3, rect.height())",
-            '("✓ " if semantic else "") + first_line',
+            "reference_font.setWeight(QFont.Weight.DemiBold)",
+            "painter.drawEllipse(indicator)",
+            "painter.drawEllipse(indicator.adjusted(4, 4, -4, -4))",
             "_two_line_excerpt(excerpt, excerpt_metrics, excerpt_rect.width())",
+            "menu_rect = QRect(rect.right() - 39, rect.center().y() - 16, 32, 32)",
+            "for offset in (-6, 0, 6):",
         ):
             self.assertIn(marker, verse_source)
+        self.assertNotIn('("✓ " if semantic else "")', verse_source)
         self.assertNotIn("class VerseRowWidget", self.settings)
 
         self.assertIn("def _refresh_heatmap_preset_options", self.settings)
@@ -627,7 +814,34 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired, self.settings)
 
-    def test_heatmap_text_options_refresh_only_on_explicit_paths(self) -> None:
+    def test_theme_and_heatmap_palette_share_a_responsive_appearance_row(self) -> None:
+        appearance_source = self.settings.split("def _create_appearance_card", 1)[1].split(
+            "def _build_dashboard_page", 1
+        )[0]
+        calendar_source = self.settings.split("def _create_calendar_cards", 1)[1].split(
+            "def _build_events_page", 1
+        )[0]
+        self.assertIn("self.heatmap_preset = QComboBox()", appearance_source)
+        self.assertNotIn("self.heatmap_preset = QComboBox()", calendar_source)
+        self.assertLess(
+            appearance_source.index("self.dashboard_theme_field"),
+            appearance_source.index("self.heatmap_palette_field"),
+        )
+
+        reflow_source = self.settings.split("def _reflow_compact_grids", 1)[1].split(
+            "def _reflow_event_toolbar", 1
+        )[0]
+        for marker in (
+            "if large_text or width < 680:",
+            "for row, field in enumerate(self.appearance_fields):",
+            "self.appearance_grid.addWidget(self.dashboard_theme_field, 0, 0)",
+            "self.appearance_grid.addWidget(self.heatmap_palette_field, 0, 1)",
+            "self.appearance_grid.addWidget(self.dashboard_mode_field, 1, 0, 1, 2)",
+            "self.appearance_grid.addWidget(self.dashboard_scale_field, 2, 0, 1, 2)",
+        ):
+            self.assertIn(marker, reflow_source)
+
+    def test_theme_and_heatmap_choices_use_targeted_staging(self) -> None:
         apply_theme_source = self.settings.split("def _apply_theme", 1)[1].split(
             "def _update_forecast_range_visibility", 1
         )[0]
@@ -641,20 +855,759 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "self.preset.currentIndexChanged.connect(self._dashboard_theme_changed)",
             appearance_source,
         )
-        self.assertIn(
-            "self.mode.connect_changed(self._refresh_heatmap_preset_options)",
-            appearance_source,
-        )
+        self.assertNotIn("self.mode.connect_changed(self._refresh_heatmap_preset_options)", appearance_source)
 
         theme_source = self.settings.split("def _dashboard_theme_changed", 1)[1].split(
             "def _update_glass_controls", 1
         )[0]
         self.assertIn("self._refresh_heatmap_preset_options()", theme_source)
+        self.assertIn("self._stage_theme_palette_choices()", theme_source)
+
+        stage_source = self.settings.split("def _stage_theme_palette_choices", 1)[1].split(
+            "def _update_glass_controls", 1
+        )[0]
+        for marker in (
+            'self.draft.values["appearance"]["preset"] = theme_name',
+            'self.draft.values["heatmap"]["presets_by_theme"] = preferences',
+            'self.staged["appearance"]["preset"] = theme_name',
+            'self.staged["heatmap"]["presets_by_theme"] = deepcopy(preferences)',
+            "self._update_color_swatch()",
+            "self._update_dirty_state()",
+        ):
+            self.assertIn(marker, stage_source)
+        for forbidden in (
+            "_settings_changed",
+            "_sync_draft",
+            "_gather",
+            "_minimal_excluded_deck_ids",
+            "_apply_theme",
+            "normalize_config",
+        ):
+            self.assertNotIn(forbidden, stage_source)
+
+        handlers_source = self.settings.split("def _select_heatmap_preset", 1)[1].split(
+            "def _update_color_swatch", 1
+        )[0]
+        self.assertGreaterEqual(
+            handlers_source.count("self._queue_theme_palette_stage()"),
+            2,
+        )
+        self.assertNotIn("self._settings_changed()", handlers_source)
 
         config_source = self.settings.split("def _apply_config_to_widgets", 1)[1].split(
             "def _walk_deck_items", 1
         )[0]
         self.assertIn("self._refresh_heatmap_preset_options()", config_source)
+
+    def test_theme_palette_popup_signals_defer_layout_feedback_until_the_next_event_loop(self) -> None:
+        init_source = self.settings.split("class SettingsDialog(QDialog):", 1)[1].split(
+            "@staticmethod\n    def _active_screen", 1
+        )[0]
+        for marker in (
+            "self._theme_palette_stage_timer = QTimer(self)",
+            "self._theme_palette_stage_timer.setSingleShot(True)",
+            "self._theme_palette_stage_timer.timeout.connect(",
+        ):
+            self.assertIn(marker, init_source)
+
+        theme_source = self.settings.split("def _dashboard_theme_changed", 1)[1].split(
+            "def _queue_theme_palette_stage", 1
+        )[0]
+        self.assertIn(
+            "self._queue_theme_palette_stage(refresh_controls=True)",
+            theme_source,
+        )
+        for forbidden in (
+            "self._update_glass_controls()",
+            "self._refresh_heatmap_preset_options()",
+            "self._stage_theme_palette_choices()",
+            "self._update_dirty_state()",
+        ):
+            self.assertNotIn(forbidden, theme_source)
+
+        handlers_source = self.settings.split("def _select_heatmap_preset", 1)[1].split(
+            "def _refresh_heatmap_preset_options", 1
+        )[0]
+        self.assertGreaterEqual(
+            handlers_source.count("self._queue_theme_palette_stage()"),
+            2,
+        )
+        self.assertNotIn("self._stage_theme_palette_choices()", handlers_source)
+
+        flush_source = self.settings.split("def _flush_theme_palette_stage", 1)[1].split(
+            "def _stage_theme_palette_choices", 1
+        )[0]
+        self.assertIn("self._update_glass_controls()", flush_source)
+        self.assertIn("self._refresh_heatmap_preset_options()", flush_source)
+        self.assertIn("self._stage_theme_palette_choices()", flush_source)
+
+    def test_deferred_theme_palette_staging_accepts_repeated_same_session_changes(self) -> None:
+        module = ast.parse(self.settings)
+        dialog = next(
+            node
+            for node in module.body
+            if isinstance(node, ast.ClassDef) and node.name == "SettingsDialog"
+        )
+        method_names = {
+            "_dashboard_theme_changed",
+            "_queue_theme_palette_stage",
+            "_flush_theme_palette_stage",
+            "_stage_theme_palette_choices",
+            "_heatmap_preset_changed",
+        }
+        functions = [
+            node
+            for node in dialog.body
+            if isinstance(node, ast.FunctionDef) and node.name in method_names
+        ]
+        self.assertEqual({function.name for function in functions}, method_names)
+        for function in functions:
+            function.decorator_list = []
+            function.returns = None
+            arguments = list(function.args.args) + list(function.args.kwonlyargs)
+            if function.args.vararg is not None:
+                arguments.append(function.args.vararg)
+            for argument in arguments:
+                argument.annotation = None
+
+        namespace: dict[str, object] = {
+            "DEFAULT_HEATMAP_PRESETS": DEFAULT_HEATMAP_PRESETS,
+            "HEATMAP_PRESETS": HEATMAP_PRESETS,
+            "_combo_value": lambda combo, default: getattr(combo, "value", default),
+            "deepcopy": deepcopy,
+        }
+        exec(
+            compile(
+                ast.fix_missing_locations(
+                    ast.Module(body=functions, type_ignores=[])
+                ),
+                str(ROOT / "settings.py"),
+                "exec",
+            ),
+            namespace,
+        )
+
+        class FakeTimer:
+            def __init__(self) -> None:
+                self.starts: list[int] = []
+
+            def start(self, delay: int) -> None:
+                self.starts.append(delay)
+
+        class FakeDialog:
+            def __init__(self) -> None:
+                self._building = False
+                self._theme_palette_refresh_pending = False
+                self._theme_palette_stage_timer = FakeTimer()
+                self.preset = SimpleNamespace(value="Sapphire Glass")
+                self.heatmap_preset = SimpleNamespace(value="Sapphire")
+                self._heatmap_preset_preferences = deepcopy(
+                    self_config["heatmap"]["presets_by_theme"]
+                )
+                self.draft = SimpleNamespace(values=deepcopy(self_config))
+                self.staged = deepcopy(self_config)
+                self.glass_updates = 0
+                self.option_refreshes = 0
+                self.font_color_swatch = object()
+                self.swatch_updates = 0
+                self.dirty_updates = 0
+
+            def _update_glass_controls(self) -> None:
+                self.glass_updates += 1
+
+            def _refresh_heatmap_preset_options(self) -> None:
+                self.option_refreshes += 1
+                theme_name = self.preset.value
+                self.heatmap_preset.value = self._heatmap_preset_preferences.get(
+                    theme_name,
+                    DEFAULT_HEATMAP_PRESETS[theme_name],
+                )
+
+            def _update_dirty_state(self) -> None:
+                self.dirty_updates += 1
+
+            def _update_color_swatch(self) -> None:
+                self.swatch_updates += 1
+
+        for method_name in method_names:
+            setattr(FakeDialog, method_name, namespace[method_name])
+
+        self_config = deepcopy(self.config)
+        fake = FakeDialog()
+
+        fake.preset.value = "Graphite"
+        fake._dashboard_theme_changed(1)
+        self.assertEqual(fake.dirty_updates, 0)
+        self.assertEqual(fake.glass_updates, 0)
+        fake._flush_theme_palette_stage()
+        self.assertEqual(fake.heatmap_preset.value, "Slate")
+
+        fake.preset.value = "Emerald"
+        fake._dashboard_theme_changed(2)
+        fake._flush_theme_palette_stage()
+        self.assertEqual(fake.heatmap_preset.value, "Emerald")
+
+        for palette_name in ("Moss", "Lagoon"):
+            before = fake.dirty_updates
+            fake.heatmap_preset.value = palette_name
+            fake._heatmap_preset_changed(3)
+            self.assertEqual(fake.dirty_updates, before)
+            fake._flush_theme_palette_stage()
+            self.assertEqual(
+                fake.draft.values["heatmap"]["presets_by_theme"]["Emerald"],
+                palette_name,
+            )
+
+        fake.preset.value = "Graphite"
+        fake._dashboard_theme_changed(4)
+        fake._flush_theme_palette_stage()
+        self.assertEqual(fake.heatmap_preset.value, "Slate")
+        fake.heatmap_preset.value = "Mint"
+        fake._heatmap_preset_changed(5)
+        fake._flush_theme_palette_stage()
+
+        fake.preset.value = "Emerald"
+        fake._dashboard_theme_changed(6)
+        fake._flush_theme_palette_stage()
+        self.assertEqual(fake.heatmap_preset.value, "Lagoon")
+        self.assertEqual(fake.dirty_updates, 7)
+        self.assertEqual(fake.glass_updates, 4)
+        self.assertEqual(fake.option_refreshes, 4)
+        self.assertEqual(fake.swatch_updates, 7)
+        self.assertEqual(fake._theme_palette_stage_timer.starts, [0] * 7)
+        self.assertEqual(
+            fake.draft.values["heatmap"]["presets_by_theme"]["Graphite"],
+            "Mint",
+        )
+        self.assertEqual(
+            fake.draft.values["heatmap"]["presets_by_theme"]["Emerald"],
+            "Lagoon",
+        )
+
+    def test_targeted_theme_palette_staging_preserves_per_theme_choices(self) -> None:
+        module = ast.parse(self.settings)
+        dialog = next(
+            node
+            for node in module.body
+            if isinstance(node, ast.ClassDef) and node.name == "SettingsDialog"
+        )
+        function = next(
+            node
+            for node in dialog.body
+            if isinstance(node, ast.FunctionDef)
+            and node.name == "_stage_theme_palette_choices"
+        )
+        function.decorator_list = []
+        function.returns = None
+        for argument in function.args.args:
+            argument.annotation = None
+
+        namespace: dict[str, object] = {
+            "DEFAULT_HEATMAP_PRESETS": DEFAULT_HEATMAP_PRESETS,
+            "HEATMAP_PRESETS": HEATMAP_PRESETS,
+            "_combo_value": lambda combo, default: getattr(combo, "value", default),
+            "deepcopy": deepcopy,
+        }
+        exec(
+            compile(
+                ast.fix_missing_locations(
+                    ast.Module(body=[function], type_ignores=[])
+                ),
+                str(ROOT / "settings.py"),
+                "exec",
+            ),
+            namespace,
+        )
+        stage_choices = namespace["_stage_theme_palette_choices"]
+
+        class FakeDialog:
+            def __init__(self) -> None:
+                self._building = False
+                self.preset = SimpleNamespace(value="Graphite")
+                self.heatmap_preset = SimpleNamespace(value="Plum")
+                self._heatmap_preset_preferences = deepcopy(
+                    self_config["heatmap"]["presets_by_theme"]
+                )
+                self.draft = SimpleNamespace(values=deepcopy(self_config))
+                self.staged = deepcopy(self_config)
+                self.dirty_updates = 0
+
+            def _update_dirty_state(self) -> None:
+                self.dirty_updates += 1
+
+        self_config = deepcopy(self.config)
+        fake = FakeDialog()
+        original_events = fake.draft.values["events"]
+
+        graphite_palette = list(HEATMAP_PRESETS["Graphite"])[-1]
+        emerald_palette = list(HEATMAP_PRESETS["Emerald"])[-1]
+        fake.preset.value = "Graphite"
+        fake.heatmap_preset.value = graphite_palette
+        stage_choices(fake)
+        fake.preset.value = "Emerald"
+        fake.heatmap_preset.value = emerald_palette
+        stage_choices(fake)
+        fake.preset.value = "Graphite"
+        fake.heatmap_preset.value = graphite_palette
+        stage_choices(fake)
+
+        self.assertEqual(fake.dirty_updates, 3)
+        self.assertIs(fake.draft.values["events"], original_events)
+        self.assertEqual(fake.draft.values["appearance"]["preset"], "Graphite")
+        self.assertEqual(
+            fake.draft.values["heatmap"]["presets_by_theme"]["Graphite"],
+            graphite_palette,
+        )
+        self.assertEqual(
+            fake.draft.values["heatmap"]["presets_by_theme"]["Emerald"],
+            emerald_palette,
+        )
+        self.assertEqual(
+            fake.draft.values["heatmap"]["presets_by_theme"],
+            fake.staged["heatmap"]["presets_by_theme"],
+        )
+
+    def test_scoped_widget_hydration_repaints_each_reset_without_touching_context(self) -> None:
+        module = ast.parse(self.settings)
+        dialog = next(
+            node
+            for node in module.body
+            if isinstance(node, ast.ClassDef) and node.name == "SettingsDialog"
+        )
+        function = next(
+            node
+            for node in dialog.body
+            if isinstance(node, ast.FunctionDef)
+            and node.name == "_apply_config_to_widgets"
+        )
+        function.decorator_list = []
+        function.returns = None
+        for argument in list(function.args.args) + list(function.args.kwonlyargs):
+            argument.annotation = None
+
+        class FakeDate:
+            def __init__(self, value: str, valid: bool) -> None:
+                self.value = value
+                self._valid = valid
+
+            def isValid(self) -> bool:
+                return self._valid
+
+        class FakeQDate:
+            @staticmethod
+            def fromString(value: str, _format: str) -> FakeDate:
+                return FakeDate(value, bool(value))
+
+            @staticmethod
+            def currentDate() -> FakeDate:
+                return FakeDate("CURRENT_DATE", True)
+
+        namespace: dict[str, object] = {
+            "QDate": FakeQDate,
+            "deepcopy": deepcopy,
+            "history_range_choice": history_range_choice,
+        }
+        exec(
+            compile(
+                ast.fix_missing_locations(
+                    ast.Module(body=[function], type_ignores=[])
+                ),
+                str(ROOT / "settings.py"),
+                "exec",
+            ),
+            namespace,
+        )
+        apply_config = namespace["_apply_config_to_widgets"]
+
+        class FakeText:
+            def __init__(self, value: str) -> None:
+                self.value = value
+
+            def text(self) -> str:
+                return self.value
+
+            def setText(self, value: object) -> None:
+                self.value = str(value)
+
+        class FakeValue:
+            def __init__(self, value: object) -> None:
+                self.current = value
+
+            def setValue(self, value: object) -> None:
+                self.current = value
+
+        class FakeNumber(FakeValue):
+            def __init__(self, value: int, text: str = "invalid") -> None:
+                super().__init__(value)
+                self.editor = FakeText(text)
+                self.valid = False
+
+            def setValue(self, value: object) -> None:
+                super().setValue(int(value))
+                self.editor.setText(value)
+                self.valid = True
+
+            def is_valid(self) -> bool:
+                return self.valid
+
+        class FakeCheck:
+            def __init__(self, checked: bool) -> None:
+                self.checked = checked
+
+            def setChecked(self, checked: object) -> None:
+                self.checked = bool(checked)
+
+        class FakeDateEdit:
+            def __init__(self) -> None:
+                self.current = FakeDate("STALE_DATE", True)
+
+            def setDate(self, value: FakeDate) -> None:
+                self.current = value
+
+        class FakeDialog:
+            def __init__(self) -> None:
+                self._building = False
+                self.context = {
+                    "page": "bible_verse",
+                    "scroll": 317,
+                    "event_search": "exam",
+                    "deck_filter": "language",
+                    "quote_search": "grace",
+                    "selection": "keep-selection",
+                    "disclosure": True,
+                }
+                self.preset = FakeValue("Not default")
+                self.mode = FakeValue("dark")
+                self.opacity = FakeValue(94)
+                self.blur = FakeValue(0)
+                self.text_scale = FakeValue(150)
+                self.home_screen_position = FakeValue("bottom")
+                self.visibility = {
+                    key: FakeCheck(not bool(default))
+                    for key, default in defaults["visibility"].items()
+                }
+                self.pace_unit = FakeValue("cards_per_minute")
+                self.retention_target = FakeNumber(51)
+                self.include_rescheduled = FakeCheck(False)
+                self.calendar_view = FakeValue("month")
+                self._legacy_week_start_value = "6"
+                self._week_start_touched = True
+                self.week_start = FakeValue("6")
+                self.history_range = FakeValue("custom")
+                self.forecast_days = FakeNumber(365)
+                self.show_forecast = FakeCheck(False)
+                self.ignore_before = FakeDateEdit()
+                self.exclude_reschedules = FakeCheck(False)
+                self.exclude_deleted = FakeCheck(True)
+                self.deck_ids = [999]
+                self.event_sort = FakeValue("descending")
+                self.font_family_name = "Other"
+                self.font_size = FakeNumber(9)
+                self.font_color_value = "#BADBAD"
+                self._font_color_invalid = True
+                self.font_color = FakeText("not-a-color")
+                self.theme_color = FakeValue("custom")
+                self._font_family_touched = True
+                self.rotation = FakeValue("manual")
+                self.quotes = ["Unrelated verse"]
+                self.pending_manual_quote = "Unrelated verse"
+                self._pending_manual_quote_index = 0
+                self._heatmap_preset_preferences = {"future": "keep"}
+                self.event_refreshes = 0
+                self.quote_refreshes = 0
+                self.swatch_updates = 0
+
+            def _set_combo_data(self, combo: FakeValue, value: object) -> None:
+                combo.current = value
+
+            def _update_glass_controls(self) -> None:
+                pass
+
+            def _refresh_heatmap_preset_options(self) -> None:
+                pass
+
+            def _update_forecast_range_visibility(self) -> None:
+                pass
+
+            def _update_history_range_visibility(self) -> None:
+                pass
+
+            def _apply_deck_exclusions(self, values: object) -> None:
+                self.deck_ids = list(values) if isinstance(values, list) else []
+
+            def _update_deck_exclusion_summary(self) -> None:
+                pass
+
+            def _select_saved_font_family(self, value: str) -> None:
+                self.font_family_name = value
+
+            def _update_rotation_help(self) -> None:
+                pass
+
+            def _update_quote_actions(self) -> None:
+                if self.rotation.current != "manual":
+                    self.pending_manual_quote = None
+                    self._pending_manual_quote_index = None
+
+            def _refresh_event_lists(self) -> None:
+                self.event_refreshes += 1
+
+            def _refresh_quote_list(self) -> None:
+                self.quote_refreshes += 1
+
+            def _update_color_swatch(self) -> None:
+                self.swatch_updates += 1
+
+        FakeDialog._apply_config_to_widgets = apply_config
+        defaults = deepcopy(self.config)
+
+        for scope in (
+            "appearance",
+            "dashboard_sections",
+            "study_metrics",
+            "calendar_display",
+            "calendar_range",
+            "local_data",
+            "bible_appearance",
+            "bible_rotation",
+        ):
+            with self.subTest(scope=scope):
+                fake = FakeDialog()
+                context_before = deepcopy(fake.context)
+                fake._apply_config_to_widgets(defaults, scope=scope)
+                self.assertEqual(fake.context, context_before)
+                self.assertEqual(fake.event_refreshes, 0)
+                self.assertEqual(fake.quote_refreshes, 0)
+                if scope != "bible_rotation":
+                    self.assertEqual(
+                        fake.pending_manual_quote,
+                        "Unrelated verse",
+                    )
+                if scope == "appearance":
+                    self.assertEqual(fake.preset.current, defaults["appearance"]["preset"])
+                    self.assertEqual(fake.opacity.current, defaults["appearance"]["opacity"])
+                    self.assertFalse(fake.forecast_days.is_valid())
+                elif scope == "dashboard_sections":
+                    for key in ("heatmap", "remaining", "today", "heatmap_metrics", "bible"):
+                        self.assertEqual(
+                            fake.visibility[key].checked,
+                            defaults["visibility"][key],
+                        )
+                    self.assertFalse(fake.visibility["events"].checked)
+                elif scope == "study_metrics":
+                    self.assertEqual(
+                        fake.retention_target.current,
+                        defaults["study"]["retention_target"],
+                    )
+                    self.assertTrue(fake.retention_target.is_valid())
+                    self.assertFalse(fake.forecast_days.is_valid())
+                elif scope == "calendar_display":
+                    self.assertEqual(
+                        fake.calendar_view.current,
+                        defaults["heatmap"]["calendar_view"],
+                    )
+                    self.assertTrue(fake.visibility["events"].checked)
+                    self.assertFalse(fake.retention_target.is_valid())
+                elif scope == "calendar_range":
+                    self.assertEqual(fake.history_range.current, "all")
+                    self.assertTrue(fake.forecast_days.is_valid())
+                    self.assertEqual(fake.ignore_before.current.value, "CURRENT_DATE")
+                    self.assertFalse(fake.retention_target.is_valid())
+                elif scope == "local_data":
+                    self.assertEqual(fake.deck_ids, [])
+                    self.assertEqual(
+                        fake.exclude_reschedules.checked,
+                        defaults["heatmap"]["exclude_manual_reschedules"],
+                    )
+                    self.assertFalse(fake.retention_target.is_valid())
+                elif scope == "bible_appearance":
+                    self.assertTrue(fake.font_size.is_valid())
+                    self.assertFalse(fake._font_color_invalid)
+                    self.assertEqual(
+                        fake.font_color.text(),
+                        defaults["bible"]["font_color"],
+                    )
+                elif scope == "bible_rotation":
+                    self.assertEqual(
+                        fake.rotation.current,
+                        defaults["bible"]["rotation_mode"],
+                    )
+                    self.assertIsNone(fake.pending_manual_quote)
+                    self.assertFalse(fake.font_size.is_valid())
+
+    def test_reset_undo_and_commit_lifecycle_are_scoped(self) -> None:
+        visibility_source = self.settings.split(
+            "    def _update_reset_visibility",
+            1,
+        )[1].split("    def _request_revert_changes", 1)[0]
+        self.assertIn("or self._scope_has_visual_error(scope)", visibility_source)
+        self.assertIn("not self.retention_target.is_valid()", visibility_source)
+        self.assertIn("not self.forecast_days.is_valid()", visibility_source)
+        self.assertIn("not self.font_size.is_valid()", visibility_source)
+        self.assertIn("self._font_color_invalid", visibility_source)
+
+        reset_source = self.settings.split("    def _reset_card", 1)[1].split(
+            "    def _week_start_changed", 1
+        )[0]
+        for marker in (
+            "self.draft.scope_snapshot(scope)",
+            '"kind": "reset"',
+            '"scope": scope',
+            "self._apply_config_to_widgets(self.staged, scope=scope)",
+            "self.draft.restore_scope(scope, snapshot)",
+            "self._capture_reset_visual_state(scope)",
+            "self._restore_reset_visual_state(scope, visual_state)",
+            "pending_manual_quote=self.pending_manual_quote",
+        ):
+            self.assertIn(marker, reset_source)
+        self.assertNotIn("self.draft.replace_values(self._reset_undo_values)", reset_source)
+
+        revert_source = self.settings.split("    def _revert_changes", 1)[1].split(
+            "    def _reset_current_section", 1
+        )[0]
+        reload_source = self.settings.split("    def _reload_after_conflict", 1)[1].split(
+            "    def _cancel_conflict", 1
+        )[0]
+        commit_source = self.settings.split("    def _commit_save", 1)[1].split(
+            "    def _has_unsaved_changes", 1
+        )[0]
+        self.assertIn("self._clear_undo_state()", revert_source)
+        self.assertIn("self._clear_event_feedback()", revert_source)
+        self.assertIn("retain_quote_export_feedback", revert_source)
+        self.assertIn("self.quote_current_feedback.setText(quote_feedback)", revert_source)
+        self.assertIn("self._clear_undo_state()", reload_source)
+        self.assertIn("self._clear_undo_state()", commit_source)
+        failure_source = commit_source.split("except Exception as exc:", 1)[1].split(
+            "self.pending_manual_quote = None", 1
+        )[0]
+        self.assertNotIn("self._clear_undo_state()", failure_source)
+
+        for source in (reload_source, commit_source):
+            self.assertIn(
+                "self._saved_current_quote = self._read_current_quote(self.staged)",
+                source,
+            )
+        read_source = self.settings.split("    def _read_current_quote", 1)[1].split(
+            "    def _week_start_changed", 1
+        )[0]
+        self.assertIn('"current_quote"', read_source)
+
+    def test_event_status_and_feedback_follow_net_staged_values(self) -> None:
+        module = ast.parse(self.settings)
+        dialog = next(
+            node
+            for node in module.body
+            if isinstance(node, ast.ClassDef) and node.name == "SettingsDialog"
+        )
+        names = {
+            "_baseline_event",
+            "_event_stage_status",
+            "_event_items_differ_from_baseline",
+            "_reconcile_event_feedback",
+            "_set_event_feedback",
+            "_clear_event_feedback",
+        }
+        functions = [
+            node
+            for node in dialog.body
+            if isinstance(node, ast.FunctionDef) and node.name in names
+        ]
+        self.assertEqual({function.name for function in functions}, names)
+        for function in functions:
+            function.decorator_list = []
+            function.returns = None
+            arguments = list(function.args.args) + list(function.args.kwonlyargs)
+            for argument in arguments:
+                argument.annotation = None
+        namespace: dict[str, object] = {"Mapping": dict}
+        exec(
+            compile(
+                ast.fix_missing_locations(
+                    ast.Module(body=functions, type_ignores=[])
+                ),
+                str(ROOT / "settings.py"),
+                "exec",
+            ),
+            namespace,
+        )
+
+        class FakeLabel:
+            def __init__(self) -> None:
+                self.value = ""
+                self.accessible_name = ""
+                self.accessible_description = ""
+
+            def text(self) -> str:
+                return self.value
+
+            def setText(self, value: str) -> None:
+                self.value = value
+
+            def clear(self) -> None:
+                self.value = ""
+
+            def setAccessibleName(self, value: str) -> None:
+                self.accessible_name = value
+
+            def setAccessibleDescription(self, value: str) -> None:
+                self.accessible_description = value
+
+        class FakeDialog:
+            def __init__(self) -> None:
+                baseline_event = {
+                    "id": "one",
+                    "name": "Exam",
+                    "date": "2026-08-27",
+                    "archived": False,
+                    "archived_at": "",
+                }
+                self.draft = SimpleNamespace(
+                    baseline={"events": {"items": [deepcopy(baseline_event)]}}
+                )
+                self.staged = {"events": {"items": [deepcopy(baseline_event)]}}
+                self.event_action_feedback = FakeLabel()
+
+        for name in names:
+            setattr(FakeDialog, name, namespace[name])
+        fake = FakeDialog()
+        event = fake.staged["events"]["items"][0]
+
+        self.assertEqual(fake._event_stage_status(event), "")
+        event["name"] = "Exam review"
+        self.assertEqual(fake._event_stage_status(event), "Edited")
+        fake._set_event_feedback("Updated. Save to keep this change.")
+        self.assertIn("Save to keep", fake.event_action_feedback.text())
+        event["name"] = "Exam"
+        self.assertEqual(fake._event_stage_status(event), "")
+        fake._set_event_feedback(
+            "Updated. Save to keep this change.",
+            change_active=False,
+        )
+        self.assertEqual(fake.event_action_feedback.text(), "")
+
+        event["archived"] = True
+        self.assertEqual(fake._event_stage_status(event), "Archived")
+        event["archived"] = False
+        self.assertEqual(fake._event_stage_status(event), "")
+        fake.event_action_feedback.setText("Restored. Save to keep this change.")
+        fake._reconcile_event_feedback()
+        self.assertEqual(fake.event_action_feedback.text(), "")
+
+        restored = deepcopy(fake.draft.baseline["events"]["items"][0])
+        restored["archived"] = True
+        fake.draft.baseline["events"]["items"][0] = restored
+        self.assertEqual(fake._event_stage_status(event), "Restored")
+        self.assertEqual(
+            fake._event_stage_status(
+                {
+                    "id": "new",
+                    "name": "New event",
+                    "date": "2026-08-28",
+                    "archived": False,
+                }
+            ),
+            "New",
+        )
 
     def test_compact_grid_adopts_fields_before_visibility_filtering(self) -> None:
         module = ast.parse(self.settings)
@@ -756,24 +1709,32 @@ class SettingsReleaseContractTests(unittest.TestCase):
             self.assertIs(field.parentWidget(), host)
             self.assertFalse(field.was_shown_as_window)
 
-    def test_event_manager_uses_two_line_rows_name_sort_and_main_scroller(self) -> None:
+    def test_event_manager_uses_two_line_rows_and_a_bounded_six_row_list(self) -> None:
         for marker in (
             "class EventRowWidget(QWidget)",
             'self.title.setObjectName("EventRowTitle")',
             'self.metadata.setObjectName("EventRowMeta")',
+            'self.overflow.setIcon(_settings_vector_icon("ellipsis"))',
             'self.overflow.setFixedSize(32, 32)',
             'button.setToolTip("Event actions")',
             'self.event_tabs.addTab(self.active_events, "Active (0)")',
             'self.event_tabs.addTab(self.archived_events, "Archived (0)")',
             'self.event_add = QPushButton("Add event")',
             "page._hdo_header_actions.addWidget(self.event_add)",
+            'self.event_toolbar_add = QPushButton("Add event")',
+            "self.event_add.setVisible(not has_events)",
+            "self.event_toolbar_add.setVisible(has_events)",
             '_stacked_field("Sort by", "", self.event_sort)',
-            'self.event_search_clear = QPushButton("Clear")',
+            'self.event_search_clear = _icon_button("clear", "Clear event search")',
+            'self.event_empty_add = QPushButton("Add event")',
+            'self.event_empty_icon.setPixmap(_settings_vector_icon("calendar", 32).pixmap(32, 32))',
             'self.event_empty_clear = QPushButton("Clear search")',
-            'self.event_surface.setMinimumHeight(360)',
-            'tree.setMinimumHeight(260)',
-            'tree.setMaximumHeight(16777215)',
-            'QSize(max(1, tree.viewport().width()), 54)',
+            "self.event_empty_state.setMinimumHeight(220)",
+            "self.event_empty_state.setMaximumHeight(260)",
+            "tree.setMinimumHeight(54 + 8)",
+            "tree.setMaximumHeight((6 * 54) + 8)",
+            "visible_rows = min(6, max(1, tree.topLevelItemCount()))",
+            "target = (visible_rows * _event_row_target_height(tree, row_widget)) + 8",
             '("Name", "name")',
             'if sort_value == "name"',
             'str(item.get("name", "")).casefold()',
@@ -782,12 +1743,34 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "tree.clearSelection()",
             '"{} matching event{}".format',
             '"No events match “{}”.".format(query)',
+            '"Delete permanently" if archived else "Delete"',
+            'edit_action = None if archived else menu.addAction("Edit")',
         ):
             self.assertIn(marker, self.settings)
-        self.assertNotIn('self.event_empty_add = QPushButton("Add event")', self.settings)
+        event_source = self.settings.split("    def _build_events_page", 1)[1].split(
+            "    def _build_bible_page", 1
+        )[0]
+        self.assertNotIn("setMaximumHeight(16777215)", event_source)
+        self.assertNotIn('self.event_search_clear = QPushButton("Clear")', event_source)
         self.assertNotIn('QWidget#HomeDashboardSettings QWidget#EventRow[selected="true"]', self.settings)
 
-    def test_bible_library_uses_reference_excerpt_badges_and_incremental_rows(self) -> None:
+    def test_page_header_keeps_actions_beside_title_and_help(self) -> None:
+        page_source = self.settings.split("def _page(", 1)[1].split(
+            "def _section_title", 1
+        )[0]
+        for marker in (
+            "header_outer = QHBoxLayout(header)",
+            "header_copy = QVBoxLayout()",
+            "header_copy.addWidget(heading)",
+            "header_copy.addWidget(help_label)",
+            'header_actions_host.setObjectName("SettingsPageHeaderActions")',
+            "Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter",
+            "page._hdo_header_actions = header_actions",
+        ):
+            self.assertIn(marker, page_source)
+        self.assertNotIn("header_outer.addWidget(help_label)", page_source)
+
+    def test_bible_library_uses_reference_excerpt_and_a_bounded_complete_model(self) -> None:
         for marker in (
             "class VerseLibraryModel(QAbstractListModel):",
             "class VerseLibraryDelegate(QStyledItemDelegate):",
@@ -800,11 +1783,22 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "_two_line_excerpt(excerpt, excerpt_metrics, excerpt_rect.width())",
             'self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)',
             '"{} verses".format(len(self.quotes))',
-            '"{} matching verse{}".format',
+            '"{} of {} verses".format(total, len(self.quotes))',
+            "target = max(180, min(520, viewport_height - 300))",
+            "self.quote_list.setMinimumHeight(target)",
+            "self.quote_list.setMaximumHeight(target)",
             'SettingsCard(\n            "Rotation"',
             'SettingsCard(\n            "Verse library"',
+            'self.quote_search_clear = _icon_button("clear", "Clear verse search")',
+            "self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)",
+            'save_button.setText("Add" if title.startswith("Add") else "Apply changes")',
+            "serialize_quote_reference(",
         ):
             self.assertIn(marker, self.settings)
+        fit_source = self.settings.split("    def _fit_quote_list", 1)[1].split(
+            "    def _open_quote_menu_for_model", 1
+        )[0]
+        self.assertNotIn("16777215", fit_source)
         for retired in (
             "VerseCardPreview",
             "class VerseRowWidget",
@@ -815,7 +1809,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired, self.settings)
 
-    def test_about_is_compact_and_exposes_only_existing_recovery_behavior(self) -> None:
+    def test_about_is_bounded_and_export_feedback_never_dirties_the_draft(self) -> None:
         attribution = (
             "Scripture quotations are taken from the Holy Bible, New Living Translation, "
             "copyright ©1996, 2004, 2015 by Tyndale House Foundation. Used by permission "
@@ -823,15 +1817,25 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )
         for marker in (
             'SettingsCard("Version and support")',
+            "page.setMaximumWidth(SETTINGS_ABOUT_MAX_WIDTH)",
+            'definition_list.setObjectName("AboutDefinitionList")',
+            'version_form.addRow("Version", QLabel(version))',
+            'version_form.addRow("Compatibility", QLabel(compatibility))',
             "QSizePolicy.Policy.Maximum",
-            'self.copy_diagnostics.setText("Copied")',
+            'self.copy_diagnostics.setText("Diagnostics copied")',
             'ExternalLinkButton("Documentation", PROJECT_URL)',
             'ExternalLinkButton("Report an issue", ISSUES_URL)',
             'SettingsCard("Privacy and legal")',
+            'privacy_callout.setObjectName("InfoBanner")',
+            "def add_about_disclosure(title: str, copy: str) -> None:",
             'SettingsCard("Backup and recovery")',
             '"Dashboard data stays on this device and is not sent to external services."',
-            'recovery_export = QPushButton("Export verse edits")',
+            'recovery_export = QPushButton("Export verse library edits")',
+            "self.recovery_export = recovery_export",
             'recovery_export.clicked.connect(self._export_quotes)',
+            '"Verse library edits exported to {}.".format(path)',
+            '"Could not export verse library edits. Your staged settings were not changed."',
+            'self.export_copy_error = QPushButton("Copy error")',
             attribution,
         ):
             self.assertIn(marker, self.settings)
@@ -840,6 +1844,11 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )[0]
         for forbidden in ("restore", "reset", "import"):
             self.assertNotIn(forbidden, recovery_source.casefold())
+        export_source = self.settings.split("    def _export_quotes", 1)[1].split(
+            "    def _copy_export_error", 1
+        )[0]
+        self.assertNotIn("_settings_changed", export_source)
+        self.assertNotIn("_sync_draft", export_source)
 
     def test_footer_has_action_local_dirty_success_and_error_states(self) -> None:
         footer_index = self.settings.index("outer.addWidget(self.footer_shell, 2, 1)")
@@ -851,28 +1860,38 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'self.save_button.setText("Save changes")',
             'self.error_label.setObjectName("InlineSaveError")',
             'self.details_button = QPushButton("View details")',
+            'self.copy_error_button = QPushButton("Copy error")',
+            'self.copy_error_button.setIcon(_settings_vector_icon("copy"))',
+            "def _request_revert_changes(self)",
+            "if not self._has_staged_destructive_deletions():",
             "def _revert_changes(self)",
             "baseline = deepcopy(self.draft.baseline)",
-            'self._set_status("saving", "Saving…")',
-            'self.save_button.setText("Saving…")',
+            'self._set_status("discarded", "Changes discarded")',
+            'self._set_status("saving", "Saving changes...")',
+            'self.save_button.setText("Save changes")',
+            "self._set_mutation_controls_enabled(False)",
             "self.saved_status_timer.timeout.connect(self._clear_saved_status)",
             "self.saved_status_timer.setInterval(2000)",
-            'self._set_status("saved", "✓ Saved")',
+            'self._set_status("saved", "Saved")',
             "self.save_button.setEnabled(False)",
-            '"Save failed. Your changes are still available."',
+            '"Could not save changes. Your draft is still available."',
             "self._last_save_error_detail = detail",
             "self.draft.baseline = deepcopy(dict(failure_baseline))",
             "self.draft.values = deepcopy(dict(failure_values))",
             'self.quotes = list(self.staged["bible"]["quotes"])',
-            '"● {} unsaved change{}".format',
+            '"{} unsaved change{}".format',
+            "class SettingsStatusIndicator(QWidget):",
+            'if self._state == "saving":',
             "self.draft.replace_all(latest_saved)",
+            "self._pending_close_after_save = False",
             "self._footer_clearance_timer = QTimer(self)",
             "self._footer_clearance_timer.timeout.connect(",
             "clearance = 36",
-            'self._set_status("validation-error", "Fix 1 error to save")',
+            '"validation-error",',
+            '"Fix {} error{} to save".format(',
             '"Enter a valid #RRGGBB color."',
             "self._schedule_settings_footer_clearance()",
-            "self.footer.error_panel.isHidden()",
+            "self.error_panel.isHidden()",
         ):
             self.assertIn(marker, self.settings)
         self.assertNotIn(
@@ -880,6 +1899,11 @@ class SettingsReleaseContractTests(unittest.TestCase):
             self.settings,
         )
         self.assertNotIn("simulated transactional write failure", self.settings)
+        save_source = self.settings.split("    def _save(self) -> None:", 1)[1].split(
+            "    def _has_unsaved_changes", 1
+        )[0]
+        self.assertNotIn('self.save_button.setText("Saving…")', save_source)
+        self.assertNotIn('self._set_status("saved", "✓ Saved")', save_source)
 
     def test_controls_grow_with_application_font_without_an_alternate_layout(self) -> None:
         for marker in (
@@ -887,6 +1911,14 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "return max(INTERACTION_TARGET_MIN_PX, view.fontMetrics().lineSpacing() + 12)",
             "max(56, (2 * view.fontMetrics().lineSpacing()) + 20)",
             "self.setFixedSize(44, 36)",
+            "class SuffixNumberField(QWidget):",
+            "QIntValidator(self._minimum, self._maximum, self.editor)",
+            'self.editor.setProperty("invalid", invalid)',
+            "self.editor.editingFinished.connect(self._commit)",
+            "spin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)",
+            "spin.setReadOnly(True)",
+            "self.setMaximumWidth(380)",
+            'button.setProperty("last", option_index == len(options) - 1)',
             "combo.setMaximumWidth(420)",
             "spin.setMaximumWidth(120)",
             "QFormLayout.RowWrapPolicy.WrapLongRows",
@@ -895,9 +1927,10 @@ class SettingsReleaseContractTests(unittest.TestCase):
             '"CardTitle": role_font(14, QFont.Weight.DemiBold)',
             '"PageHelp": role_font(12)',
             '"FieldHelp": role_font(12)',
+            "large_text = self.fontMetrics().lineSpacing() >= 22",
         ):
             self.assertIn(marker, self.settings)
-        self.assertNotIn("font-size:", self.settings)
+        self.assertNotIn("font-family:", self.settings)
 
     def test_untitled_surfaces_and_label_resizes_survive_native_teardown(self) -> None:
         self.assertIn('title: str = ""', self.settings)

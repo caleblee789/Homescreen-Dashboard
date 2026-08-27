@@ -23,8 +23,11 @@ from typing import Any, Iterable, Mapping, Sequence
 CASE_ID_RE = re.compile(r"^[A-Z0-9]+(?:-[A-Z0-9]+)*$")
 PLAN_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 OUTPUT_DIRECTORY_RE = re.compile(r"^[a-z0-9][a-z0-9.-]*$")
+ATTRIBUTE_PATH_RE = re.compile(r"^_?[A-Za-z][A-Za-z0-9_]*(?:\._?[A-Za-z][A-Za-z0-9_]*)*$")
 STAGES = ("initial", "restart")
 COMPONENTS = ("production", "settings")
+VISIBLE_TARGET_KINDS = ("active-page", "dialog", "editor", "item", "prompt", "widget")
+VISIBLE_TARGET_ITEMS = ("current", "first", "last")
 SEMANTIC_CAPTURE_FIELDS = (
     "anki_theme",
     "host_platform",
@@ -36,9 +39,36 @@ REQUIRED_NATIVE_PLATFORM_PROFILES = (
     ("windows", 125, "native"),
     ("windows", 150, "native"),
     ("linux", 100, "dpr-1"),
-    ("linux", 150, "native"),
+    ("linux", 150, "dpr-1"),
     ("macos", 100, "retina"),
 )
+STRUCTURED_SETTINGS_LAYOUT_FIELDS = {
+    "schema_version",
+    "stage",
+    "required_profiles",
+    "adds_png_frames",
+    "work_area_logical",
+    "application_font_percents",
+    "pages",
+    "restore_scenarios",
+}
+STRUCTURED_SETTINGS_RESTORE_FIELDS = {
+    "id",
+    "saved_geometry_logical",
+    "saved_screen_name",
+    "saved_available_logical",
+    "saved_device_pixel_ratio",
+}
+REQUIRED_STRUCTURED_SETTINGS_PROFILES = ("full", "settings")
+REQUIRED_STRUCTURED_SETTINGS_WORK_AREA = (0, 0, 1366, 768)
+REQUIRED_STRUCTURED_SETTINGS_FONTS = (100,)
+REQUIRED_STRUCTURED_SETTINGS_PAGES = (
+    "dashboard",
+    "events",
+    "bible_verse",
+    "about_support",
+)
+REQUIRED_STRUCTURED_SETTINGS_RESTORE_IDS = ("disconnected-monitor-v4",)
 
 
 class CapturePlanError(ValueError):
@@ -189,13 +219,21 @@ class CapturePlan:
                 _require(isinstance(raw_width, Mapping), "Settings width axis must be an object")
                 for raw_font in fonts:
                     font_percent = int(raw_font)
+                    width = raw_width.get("value")
+                    width_label = "Full screen" if width == "full" else "{} px".format(width)
+                    caption_template = str(raw_page.get("caption_template", ""))
                     result.append(self._merged_case(family, {
                         "id": "SET-PAGE-{}-{}-{}".format(
                             raw_page.get("id"), raw_width.get("id"), font_percent
                         ),
                         "page": str(raw_page.get("page", "")),
-                        "width": raw_width.get("value"),
+                        "width": width,
                         "font_percent": font_percent,
+                        "caption": caption_template.format(
+                            width=width_label,
+                            font_percent=font_percent,
+                        ),
+                        "visible_target": deepcopy(raw_page.get("visible_target")),
                         "special": "page-axis",
                         "sheet_group": (
                             large_group
@@ -293,8 +331,109 @@ class CapturePlan:
                     ) from exc
             group = str(case.get("sheet_group", ""))
             _require(group in self._group_specs, "{} has an unknown sheet group: {}".format(case_id, group))
+            if case.get("component") == "settings":
+                caption = case.get("caption")
+                _require(
+                    isinstance(caption, str)
+                    and bool(caption.strip())
+                    and "\n" not in caption
+                    and len(caption) <= 160,
+                    "{} has an invalid Settings caption".format(case_id),
+                )
+                target = case.get("visible_target")
+                _require(
+                    isinstance(target, Mapping),
+                    "{} has no declarative visible target".format(case_id),
+                )
+                target_kind = str(target.get("kind", ""))
+                _require(
+                    set(target)
+                    <= {"kind", "attribute", "item", "scroll", "allow_elision"},
+                    "{} visible target contains an unknown field".format(case_id),
+                )
+                _require(
+                    target_kind in VISIBLE_TARGET_KINDS,
+                    "{} has an invalid visible-target kind".format(case_id),
+                )
+                attribute = target.get("attribute")
+                if target_kind in {"editor", "item", "widget"}:
+                    _require(
+                        isinstance(attribute, str)
+                        and bool(ATTRIBUTE_PATH_RE.fullmatch(attribute)),
+                        "{} visible target has an invalid attribute path".format(case_id),
+                    )
+                else:
+                    _require(
+                        attribute is None,
+                        "{} visible target must not name an attribute".format(case_id),
+                    )
+                if target_kind == "item":
+                    item = target.get("item")
+                    _require(
+                        item in VISIBLE_TARGET_ITEMS
+                        or (isinstance(item, int) and item >= 0),
+                        "{} item target has an invalid row selector".format(case_id),
+                    )
+                else:
+                    _require(
+                        "item" not in target,
+                        "{} non-item target declares an item selector".format(case_id),
+                    )
+                _require(
+                    target.get("scroll", "nearest") in {"bottom", "nearest", "top"},
+                    "{} visible target has an invalid scroll mode".format(case_id),
+                )
+                _require(
+                    isinstance(target.get("allow_elision", False), bool),
+                    "{} visible target has an invalid elision policy".format(case_id),
+                )
             case_ids.append(case_id)
         _require(len(case_ids) == len(set(case_ids)), "capture plan contains duplicate capture ids")
+        case_positions = {case_id: index for index, case_id in enumerate(case_ids)}
+        cases_by_id = {
+            str(case["id"]): case
+            for case in self._cases
+        }
+        for case in self._cases:
+            case_id = str(case["id"])
+            compare_with = case.get("compare_with")
+            if compare_with is None:
+                _require(
+                    "minimum_image_difference_ratio" not in case,
+                    "{} declares an image-difference threshold without a baseline".format(case_id),
+                )
+                continue
+            _require(
+                isinstance(compare_with, str) and compare_with in cases_by_id,
+                "{} names an unknown comparison baseline".format(case_id),
+            )
+            baseline = cases_by_id[compare_with]
+            _require(
+                case_positions[compare_with] < case_positions[case_id]
+                and baseline.get("component") == case.get("component")
+                and baseline.get("stage") == case.get("stage"),
+                "{} comparison baseline must be an earlier peer capture".format(case_id),
+            )
+            for field in (
+                "page",
+                "width",
+                "font_percent",
+                "anki_theme",
+                "host_platform",
+                "os_scale_percent",
+                "dpr_class",
+            ):
+                _require(
+                    baseline.get(field) == case.get(field),
+                    "{} comparison baseline changes {}".format(case_id, field),
+                )
+            minimum_difference = case.get("minimum_image_difference_ratio")
+            _require(
+                isinstance(minimum_difference, (int, float))
+                and not isinstance(minimum_difference, bool)
+                and 0 < float(minimum_difference) <= 1,
+                "{} has an invalid image-difference threshold".format(case_id),
+            )
 
         platform_matrix = self.raw.get("native_platform_matrix")
         _require(
@@ -316,6 +455,147 @@ class CapturePlan:
         _require(
             len(resolved_platforms) == len(set(resolved_platforms)),
             "native platform matrix contains duplicate profiles",
+        )
+
+        structured_layout = self.raw.get("structured_settings_layout")
+        _require(
+            isinstance(structured_layout, Mapping),
+            "capture plan structured_settings_layout must be an object",
+        )
+        _require(
+            set(structured_layout) == STRUCTURED_SETTINGS_LAYOUT_FIELDS,
+            "structured Settings layout fields differ from the non-PNG contract",
+        )
+        _require(
+            structured_layout.get("schema_version") == 1
+            and not isinstance(structured_layout.get("schema_version"), bool),
+            "structured Settings layout schema version is invalid",
+        )
+        _require(
+            structured_layout.get("stage") == "initial",
+            "structured Settings layout must run during the initial stage",
+        )
+        required_profiles = structured_layout.get("required_profiles")
+        _require(
+            isinstance(required_profiles, list)
+            and tuple(required_profiles) == REQUIRED_STRUCTURED_SETTINGS_PROFILES
+            and all(profile_id in self._profile_specs for profile_id in required_profiles),
+            "structured Settings layout required profiles differ from the release contract",
+        )
+        _require(
+            structured_layout.get("adds_png_frames") is False,
+            "structured Settings layout must not add PNG frames",
+        )
+        work_area = structured_layout.get("work_area_logical")
+        _require(
+            isinstance(work_area, list)
+            and all(isinstance(value, int) and not isinstance(value, bool) for value in work_area)
+            and tuple(work_area) == REQUIRED_STRUCTURED_SETTINGS_WORK_AREA,
+            "structured Settings layout work area differs from the release contract",
+        )
+        font_percents = structured_layout.get("application_font_percents")
+        _require(
+            isinstance(font_percents, list)
+            and all(isinstance(value, int) and not isinstance(value, bool) for value in font_percents)
+            and tuple(font_percents) == REQUIRED_STRUCTURED_SETTINGS_FONTS,
+            "structured Settings layout font percentages differ from the release contract",
+        )
+        pages = structured_layout.get("pages")
+        _require(
+            isinstance(pages, list)
+            and tuple(pages) == REQUIRED_STRUCTURED_SETTINGS_PAGES,
+            "structured Settings layout pages differ from the non-PNG contract",
+        )
+        restore_scenarios = structured_layout.get("restore_scenarios")
+        _require(
+            isinstance(restore_scenarios, list) and bool(restore_scenarios),
+            "structured Settings layout restore_scenarios must be a non-empty list",
+        )
+        resolved_restore_ids: list[str] = []
+        for scenario in restore_scenarios:
+            _require(
+                isinstance(scenario, Mapping),
+                "structured Settings restore scenarios must be objects",
+            )
+            _require(
+                set(scenario) == STRUCTURED_SETTINGS_RESTORE_FIELDS,
+                "structured Settings restore scenario fields differ from the v4 contract",
+            )
+            scenario_id = str(scenario.get("id", ""))
+            _require(
+                bool(PLAN_ID_RE.fullmatch(scenario_id)),
+                "structured Settings restore scenario has an invalid id",
+            )
+            geometry = scenario.get("saved_geometry_logical")
+            available = scenario.get("saved_available_logical")
+            for label, rectangle in (
+                ("saved geometry", geometry),
+                ("saved available bounds", available),
+            ):
+                _require(
+                    isinstance(rectangle, list)
+                    and len(rectangle) == 4
+                    and all(
+                        isinstance(value, int) and not isinstance(value, bool)
+                        for value in rectangle
+                    )
+                    and rectangle[2] > 0
+                    and rectangle[3] > 0,
+                    "structured Settings restore scenario has invalid {}".format(label),
+                )
+            _require(
+                geometry[2] >= 820 and geometry[3] >= 600,
+                "structured Settings restore geometry is below the supported minimum",
+            )
+            _require(
+                isinstance(scenario.get("saved_screen_name"), str)
+                and bool(scenario["saved_screen_name"].strip())
+                and "\n" not in scenario["saved_screen_name"],
+                "structured Settings restore scenario has an invalid saved screen name",
+            )
+            saved_dpr = scenario.get("saved_device_pixel_ratio")
+            _require(
+                isinstance(saved_dpr, (int, float))
+                and not isinstance(saved_dpr, bool)
+                and float(saved_dpr) > 0,
+                "structured Settings restore scenario has an invalid saved DPR",
+            )
+            geometry_right = geometry[0] + geometry[2]
+            geometry_bottom = geometry[1] + geometry[3]
+            available_right = available[0] + available[2]
+            available_bottom = available[1] + available[3]
+            visible_width = max(
+                0,
+                min(geometry_right, available_right) - max(geometry[0], available[0]),
+            )
+            visible_height = max(
+                0,
+                min(geometry_bottom, available_bottom) - max(geometry[1], available[1]),
+            )
+            _require(
+                (visible_width * visible_height) / (geometry[2] * geometry[3]) >= 0.8,
+                "structured Settings restore geometry is not valid on its saved screen",
+            )
+            current_right = work_area[0] + work_area[2]
+            current_bottom = work_area[1] + work_area[3]
+            current_visible_width = max(
+                0,
+                min(geometry_right, current_right) - max(geometry[0], work_area[0]),
+            )
+            current_visible_height = max(
+                0,
+                min(geometry_bottom, current_bottom) - max(geometry[1], work_area[1]),
+            )
+            _require(
+                (current_visible_width * current_visible_height)
+                / (geometry[2] * geometry[3])
+                < 0.8,
+                "structured Settings disconnected restore is still valid on the work area",
+            )
+            resolved_restore_ids.append(scenario_id)
+        _require(
+            tuple(resolved_restore_ids) == REQUIRED_STRUCTURED_SETTINGS_RESTORE_IDS,
+            "structured Settings restore scenarios differ from the v4 release contract",
         )
 
         all_families = set(self._family_specs)
@@ -436,6 +716,16 @@ class CapturePlan:
         except KeyError as exc:
             raise CapturePlanError("unknown capture profile: {}".format(profile_id)) from exc
 
+    def structured_settings_layout(self) -> dict[str, Any]:
+        """Return the non-PNG Settings layout-report contract."""
+
+        value = self.raw.get("structured_settings_layout")
+        _require(
+            isinstance(value, Mapping),
+            "capture plan structured_settings_layout must be an object",
+        )
+        return deepcopy(dict(value))
+
     def cases(
         self,
         profile_id: str = "full",
@@ -490,6 +780,17 @@ class CapturePlan:
             _require(isinstance(component_override, Mapping), "component override must be an object")
             case.update(deepcopy(dict(component_override)))
             selected.append(case)
+
+        selected_ids = {str(case["id"]) for case in selected}
+        for case in selected:
+            compare_with = case.get("compare_with")
+            _require(
+                compare_with is None or compare_with in selected_ids,
+                "capture selection omits comparison baseline {} for {}".format(
+                    compare_with,
+                    case["id"],
+                ),
+            )
 
         return selected
 
@@ -660,6 +961,12 @@ class CapturePlan:
             and contract.get("required_native_platform_profiles") == planned_platforms,
             "native platform requirements differ from the capture plan",
         )
+        planned_structured_layout = self.structured_settings_layout()
+        _require(
+            matrix.get("structured_settings_layout") == planned_structured_layout
+            and contract.get("structured_settings_layout") == planned_structured_layout,
+            "structured Settings layout requirements differ from the capture plan",
+        )
         settings_manual_results = tuple(
             str(value)
             for value in self._profile_specs.get("settings", {}).get(
@@ -705,6 +1012,7 @@ class CapturePlan:
                 )
                 for profile_id in self.profile_ids
             },
+            "structured_settings_layout": planned_structured_layout,
             "authority_files": {name: str(value) for name, value in authorities.items()},
         }
 

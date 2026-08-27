@@ -1,0 +1,126 @@
+{
+  "schema_version": 2,
+  "id": "macos-fullscreen-no-space-switch-menu-and-dashboard-gear",
+  "release": "1.8.7",
+  "host_platform": "macos",
+  "candidate_sha256": "<exact-package-sha256>",
+  "capture_plan_sha256": "<capture-plan-sha256>",
+  "status": "unrun",
+  "reason": "Replace this reason only after running the exact-package native macOS workflow.",
+  "native_fullscreen": false,
+  "desktop_space_switch_regression": "unrun",
+  "opening_paths": {
+    "menu": {
+      "status": "unrun",
+      "settings_opened": false,
+      "remained_on_anki_fullscreen_space": null,
+      "desktop_or_space_switch_observed": null,
+      "workflow_steps": {
+        "all-four-pages": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "events-tabs": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "resize": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "event-edit": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "verse-edit": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "save": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "close-reopen": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "controlled-restart": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        }
+      }
+    },
+    "dashboard-gear": {
+      "status": "unrun",
+      "settings_opened": false,
+      "remained_on_anki_fullscreen_space": null,
+      "desktop_or_space_switch_observed": null,
+      "workflow_steps": {
+        "all-four-pages": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "events-tabs": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "resize": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "event-edit": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "verse-edit": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "save": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "close-reopen": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        },
+        "controlled-restart": {
+          "status": "unrun",
+          "completed": false,
+          "remained_on_current_anki_space": null,
+          "desktop_or_space_switch_observed": null
+        }
+      }
+    }
+  }
+}

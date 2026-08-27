@@ -177,19 +177,47 @@
   ],
   "settings_profile_structured_manual_gate": {
     "id": "macos-fullscreen-no-space-switch-menu-and-dashboard-gear",
+    "report_schema_version": 2,
     "required_for_acceptance": true,
     "adds_png_frames": false,
     "opening_paths": ["menu", "dashboard-gear"],
-    "required_result": "both paths remain on the native Anki full-screen Space with no desktop switch, including hard-restart recheck"
+    "workflow_steps_per_path": ["all-four-pages", "events-tabs", "resize", "event-edit", "verse-edit", "save", "close-reopen", "controlled-restart"],
+    "required_result": "every workflow step through both paths remains on the current native Anki full-screen Space with no desktop switch"
   },
   "required_native_platform_profiles": [
     {"host_platform": "windows", "os_scale_percent": 100, "dpr_class": "dpr-1"},
     {"host_platform": "windows", "os_scale_percent": 125, "dpr_class": "native"},
     {"host_platform": "windows", "os_scale_percent": 150, "dpr_class": "native"},
     {"host_platform": "linux", "os_scale_percent": 100, "dpr_class": "dpr-1"},
-    {"host_platform": "linux", "os_scale_percent": 150, "dpr_class": "native"},
+    {"host_platform": "linux", "os_scale_percent": 150, "dpr_class": "dpr-1"},
     {"host_platform": "macos", "os_scale_percent": 100, "dpr_class": "retina"}
   ],
+  "native_platform_profile_contract": {
+    "geometry": "physical width and height equal available logical width and height multiplied by the declared device pixel ratio within one percent or two pixels",
+    "dpr_1": "DPR is within 0.05 of 1.0 and physical and logical dimensions match",
+    "native_scale": "native-class DPR matches declared OS scale within 0.08; environment scale substitutes are forbidden",
+    "settings_pages": ["dashboard", "events", "bible_verse", "about_support"],
+    "settings_page_assertions": ["horizontal_scroll_zero", "visible_controls_contained", "labels_unclipped_or_approved", "segmented_selection_matches_model", "body_footer_disjoint", "footer_actions_visible", "page_bottom_reachable", "target_fully_visible"],
+    "macos_fullscreen_schema_version": 2
+  },
+  "structured_settings_layout": {
+    "schema_version": 1,
+    "stage": "initial",
+    "required_profiles": ["full", "settings"],
+    "adds_png_frames": false,
+    "work_area_logical": [0, 0, 1366, 768],
+    "application_font_percents": [100],
+    "pages": ["dashboard", "events", "bible_verse", "about_support"],
+    "restore_scenarios": [
+      {
+        "id": "disconnected-monitor-v4",
+        "saved_geometry_logical": [1700, 100, 1180, 800],
+        "saved_screen_name": "Disconnected Display",
+        "saved_available_logical": [1600, 0, 1920, 1080],
+        "saved_device_pixel_ratio": 2.0
+      }
+    ]
+  },
   "deferred_unrun": [
     "windows-native-settings-validation",
     "linux-native-settings-validation",
