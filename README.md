@@ -8,11 +8,12 @@ Browser or statistics classes.
 ## 1.8.7 highlights
 
 - Settings remains a parented native `QDialog(mw)` with a local `exec()`
-  lifetime. Its logical default is 940×680, its minimum is 720×520, and its
-  initial size is capped to 92%×88% of the active screen.
-- The non-maximized logical `QRect` is stored in a versioned UI-only
-  `QSettings` key. Restores are clamped to the current active screen and are
-  recentered before first visibility when a saved monitor is unavailable.
+  lifetime. Its logical default is 1080×760, its normal minimum is 920×640,
+  and it keeps 48 px normal screen margins or 24 px on a constrained screen.
+- The UI-only `settings_dialog_geometry/v3` record stores a non-transient
+  logical rectangle plus screen identity. Invalid, compact-triggering,
+  off-screen, disconnected-screen, maximized, and full-screen geometry is
+  never restored or persisted; the retired v2 record is never read.
 - The Caleb menu opens Settings directly and synchronously. Calendar/WebEngine
   requests alone wait one coalesced event-loop turn so the bridge callback can
   return before the dialog opens.
@@ -40,29 +41,27 @@ Browser or statistics classes.
   narrow shells, and hard restart are contractually checked
   against identical values from the same collection snapshot.
 - Settings uses a fixed header, vertically scrollable native page body, and
-  fixed footer. A centered 1,120 px shell contains a 152 px desktop sidebar
-  and a centered page column capped at 940 px. Below 760 logical body pixels,
-  or before “About & support” would wrap, a synchronized single-line `QTabBar`
-  replaces the sidebar without changing window geometry.
-- Responsive Settings grids parent every new field to its card before showing
-  or visibility-filtering it. Dynamic heatmap and verse badges likewise have
-  explicit child parents before visibility changes. Generic staged-setting
-  synchronization no longer destroys and rebuilds the heatmap-card tree, while
-  actual theme and color-mode changes still refresh those previews.
+  fixed 60 px footer. A shell capped near 1,240 px contains a 184 px sidebar,
+  fixed 72 px page header, and page column capped at 980 px. Compact top
+  navigation is reserved for screens that cannot accommodate the 920×640
+  normal minimum and activates below 820 logical pixels.
+- Responsive Settings grids parent every field to its card before showing or
+  filtering it. Settings renders no Dashboard, verse, palette, theme, or
+  heatmap previews; selector text carries those choices and the custom-color
+  well remains an input.
 
-- Dashboard adds a labeled palette preview, consistent segmented controls,
-  scoped reset actions, responsive calendar groups, and a native card preview
-  at wide page widths. Events uses a bounded list surface and row activation
-  opens the editor without persistent selection. Bible verse uses a complete
-  filtered model with delegate-painted two-line rows and a native verse-card
-  preview. About uses independent 60/40 Version and Help cards.
+- Dashboard groups Appearance, Dashboard sections, Study metrics, and Calendar
+  display. Events has a header Add action, flexible searchable/sortable
+  Active/Archived list with 54 px rows, and a parented 560×320 editor. Bible
+  verse has Appearance, Rotation, and a flexible clamped Verse library. About
+  groups Version and support, Privacy and legal, and Backup and recovery.
 - Dirty, saving, success, validation, and persistence feedback now lives in
   the footer beside Close and Save. Failed saves retain every staged value and
   expose generic user-facing copy with technical details collapsed separately.
 - Settings colors follow only Anki's live palette. Dark and light graphite
   tokens, accent-soft selection, neutral Events tabs, relative role fonts,
   36 px controls, and the shared 4/8/12/16/20/24/32 spacing scale are applied
-  consistently at 100% and 150% application font.
+  consistently at the canonical 100% application font.
 - Month is a stable 42-cell grid and Year remains a true 53-week grid. The
   production dashboard is capped at 1,120 px and measures Anki's visible
   bottom actions to maintain 24 px of clearance in normal document flow.
@@ -102,8 +101,16 @@ python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 
 The builder creates one 24-member allowlisted archive and verifies its version,
 safe paths, current Settings contract, and source/archive byte parity. The
-canonical 1.8.7 plan contains 106 native frames: 104 initial states and two
-controlled-restart states.
+canonical 1.8.7 plan contains 94 native frames: 92 initial states and two
+controlled-restart states. Its minimal Settings profile is exactly 41 frames
+at 100% application font, with no more than 11 compact contact sheets.
+Each PNG must sample-match the live Settings client, and all 12 page captures
+must include the complete decorated native Settings window; a same-sized
+Dashboard background is a capture failure.
+Settings acceptance also requires a structured exact-package native macOS
+result proving that opening Settings from both the full-screen menu and the
+Dashboard gear stays on Anki's full-screen Space without switching to the
+desktop, including after hard restart. This gate adds no PNG captures.
 
 The current 1.8.7 authorities are:
 
@@ -124,18 +131,23 @@ The completed [1.8.6 native release evidence](home_dashboard_overhaul/qa/release
 contains the exact 24-member archive, 94 contract-owned native captures,
 passing restart-persistence and archive-parity reports, and four-gate isolation
 proof repeated after restart. Its 19 generated presentation sheets were
-reviewed locally and are retained with the current evidence set. Seventeen
+reviewed locally and remain the latest product-wide evidence. Seventeen
 capture-detail sheets cover every native frame exactly once, with one overview
 and one package/isolation report sheet. The
 [evidence manifest](home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-25/capture-evidence-manifest.json)
 records the sheet counts, exact package hash, and deferred gates.
-Only the newest complete capture set is retained in the repository. Superseded
-live-UI, 1.8.0-1.8.5, prior 1.8.6, and standalone Settings capture directories
-were removed after this set passed; their Git history remains traceable.
-The untracked 1.8.7 Settings review evidence is retained separately as immutable
-design provenance. VoiceOver and forced-colors remain explicitly unrun and
-nonblocking; Windows, Linux, DPR 1, true OS display scaling, and native macOS
-full-screen Space behavior remain release-blocking until run successfully.
+
+The retained [1.8.7 Settings review evidence](home_dashboard_overhaul/qa/settings-evidence-1.8.7-2026-08-27-7bf8bff3-review-100/README.md)
+matches the current package and contains exactly 41 native Settings captures
+at 100% application font plus 11 contact sheets. Its status is
+`review-incomplete-nonrelease`: capture cases completed without per-frame
+failures, but the exact-package full-screen macOS opening-path check was
+explicitly skipped and remains unrun. Superseded and failed 1.8.7 Settings
+capture directories were removed after a recoverable safety snapshot; the
+broader 1.8.6 set remains because a Settings-only review is not a replacement
+for product-wide evidence. VoiceOver and forced-colors remain explicitly unrun
+and nonblocking. Windows, Linux, DPR 1, and true OS display scaling remain
+separate release-blocking gates until run successfully.
 
 ## Project layout
 

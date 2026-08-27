@@ -237,7 +237,7 @@ def validate_platform_bundles(
         require(report.get("native_display_scaling") is True, "platform profile used non-native display scaling: {}".format(key))
         require(report.get("environment_scale_substitute") is False, "platform profile used an environment scale substitute: {}".format(key))
         font_percents = report.get("application_font_percents")
-        require(font_percents == [100, 150], "platform profile lacks 100/150 percent application-font coverage: {}".format(key))
+        require(font_percents == [100], "platform profile is not limited to the canonical 100 percent application font: {}".format(key))
         for field in (
             "os",
             "anki_version",

@@ -100,6 +100,9 @@ def prepare_helper(
             "expected_capture_count": counts["total"],
             "stages": [stage for stage in ("initial", "restart") if counts[stage]],
             "selected_capture_ids": canonical_ids,
+            "required_structured_manual_results": list(
+                profile.get("required_structured_manual_results", ())
+            ),
             "helper_files": {
                 name: {"sha256": _sha256(output / name), "source": source.name}
                 for name, source in sources.items()

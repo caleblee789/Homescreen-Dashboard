@@ -29,6 +29,12 @@ def main() -> int:
     settings = (ROOT / "settings.py").read_text(encoding="utf-8")
     model = (ROOT / "settings_model.py").read_text(encoding="utf-8")
     controller = (ROOT / "controller.py").read_text(encoding="utf-8")
+    release_probe = (ROOT / "qa" / "runtime_probe_release_1_8_7.py").read_text(
+        encoding="utf-8"
+    )
+    review_assembler = (
+        ROOT / "qa" / "assemble_settings_review_evidence_1_8_7.py"
+    ).read_text(encoding="utf-8")
     dialog = settings.split("class SettingsDialog(QDialog):", 1)[1].split(
         "def _object_name", 1
     )[0]
@@ -47,27 +53,52 @@ def main() -> int:
     _require(errors, contract.get("release") == "1.8.7", "window contract release differs")
     _require(errors, capture_plan.get("release") == "1.8.7", "capture plan release differs")
     _require(errors, config.get("schema_version") == 8, "configuration schema changed")
-    _require(errors, contract.get("minimum_size") == [720, 520], "minimum geometry differs")
-    _require(errors, contract.get("default_size") == [940, 680], "default geometry differs")
+    _require(errors, contract.get("minimum_size") == [920, 640], "minimum geometry differs")
+    _require(errors, contract.get("default_size") == [1080, 760], "default geometry differs")
     _require(
         errors,
-        contract.get("initial_size_caps")
-        == {"available_width_ratio": 0.92, "available_height_ratio": 0.88},
-        "initial geometry caps differ",
+        contract.get("screen_margins")
+        == {"normal": 48, "small_screen_fallback": 24},
+        "screen margins differ",
     )
+    _require(errors, contract.get("minimum_saved_visible_ratio") == 0.8, "saved visibility threshold differs")
     _require(errors, contract.get("logical_coordinates") is True, "geometry is not logical")
     _require(errors, contract.get("pre_exec_geometry") is True, "geometry is not pre-exec")
     _require(errors, contract.get("reposition_after_open") is False, "post-show geometry remains")
-    _require(errors, contract.get("shell_maximum_width") == 1120, "shell cap differs")
-    _require(errors, contract.get("page_maximum_width") == 940, "page cap differs")
-    _require(errors, contract.get("rail_width") == 152, "rail width differs")
-    _require(errors, contract.get("rail_gap") == 24, "rail gap differs")
+    _require(errors, contract.get("shell_maximum_width") == 1240, "shell cap differs")
+    _require(errors, contract.get("page_maximum_width") == 980, "page cap differs")
+    _require(errors, contract.get("rail_width") == 184, "rail width differs")
+    _require(errors, contract.get("header_height") == 72, "header height differs")
+    _require(errors, contract.get("footer_height") == 60, "footer height differs")
+    _require(
+        errors,
+        contract.get("settings_profile_acceptance_gate")
+        == "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 41 PNGs cannot satisfy or waive this gate",
+        "full-screen no-Space-switch acceptance gate differs",
+    )
+    settings_profile = next(
+        (
+            profile
+            for profile in capture_plan.get("profiles", [])
+            if profile.get("id") == "settings"
+        ),
+        {},
+    )
+    _require(
+        errors,
+        settings_profile.get("required_structured_manual_results")
+        == ["macos-fullscreen-no-space-switch-menu-and-dashboard-gear"],
+        "Settings capture profile does not require the full-screen no-switch result",
+    )
 
     for marker in (
-        "SETTINGS_DEFAULT_SIZE = (940, 680)",
-        "SETTINGS_MINIMUM_SIZE = (720, 520)",
-        "SETTINGS_MAXIMUM_WIDTH_RATIO = .92",
-        "SETTINGS_MAXIMUM_HEIGHT_RATIO = .88",
+        "SETTINGS_DEFAULT_SIZE = (1080, 760)",
+        "SETTINGS_MINIMUM_SIZE = (920, 640)",
+        "SETTINGS_NORMAL_SCREEN_MARGIN = 48",
+        "SETTINGS_SMALL_SCREEN_MARGIN = 24",
+        "SETTINGS_MINIMUM_VISIBLE_RATIO = .80",
+        "def saved_window_geometry_is_valid(",
+        "def settings_screen_uses_compact_fallback(",
         "def clamp_window_geometry(",
     ):
         _require(errors, marker in model, "missing logical geometry marker: {}".format(marker))
@@ -77,10 +108,13 @@ def main() -> int:
         "self.setMinimumSize(*SETTINGS_MINIMUM_SIZE)",
         "self._apply_initial_window_geometry(parent)",
         "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)",
-        "self.compact_nav = QTabBar(self.body_shell)",
-        "body_width < SETTINGS_COMPACT_BODY_WIDTH or not self.nav.labels_fit()",
+        "self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)",
+        "self.header_stack.setFixedHeight(SETTINGS_HEADER_HEIGHT)",
+        "self.compact_nav = QTabBar(self.header_shell)",
+        "shell_width < SETTINGS_COMPACT_BODY_WIDTH",
         "scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
         "self.footer = SettingsFooter()",
+        "self.setFixedHeight(SETTINGS_FOOTER_MIN_HEIGHT)",
         'self.revert_button = QPushButton("Discard changes")',
         'self.save_button.setText("Saving…")',
         '"Discard and close"',
@@ -88,6 +122,8 @@ def main() -> int:
         "class VerseLibraryModel(QAbstractListModel):",
         "class VerseLibraryView(QListView):",
         '"{} verses".format(len(self.quotes))',
+        'SETTINGS_GEOMETRY_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v3"',
+        'SETTINGS_GEOMETRY_SCREEN_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v3_screen"',
     ):
         _require(errors, marker in settings, "missing responsive Settings marker: {}".format(marker))
 
@@ -119,6 +155,10 @@ def main() -> int:
         "quote_load_more",
         "class VerseRowWidget",
         "Could not save changes:",
+        "class DashboardCardPreview",
+        "class VerseCardPreview",
+        "HeatmapPresetCard",
+        "settings_dialog_geometry/v2",
     ):
         _require(errors, forbidden not in dialog, "forbidden Settings marker remains: {}".format(forbidden))
 
@@ -138,6 +178,21 @@ def main() -> int:
         "dialog.move(",
     ):
         _require(errors, marker not in opener, "opener retains custom lifecycle: {}".format(marker))
+    for marker in (
+        "settings_surface_match_ratio",
+        "settings_surface_verified",
+        "decorated_window_included",
+        "native_frame_decoration",
+        "active_dialog.exec()",
+        "Settings page capture lacks native window decoration",
+        "native Settings capture sampled the parent background instead of the Settings surface",
+    ):
+        _require(errors, marker in release_probe, "Settings capture verification is missing: {}".format(marker))
+    _require(
+        errors,
+        "record.get(\"settings_surface_verified\") is True" in review_assembler,
+        "Settings evidence assembler does not reject background-only PNGs",
+    )
     for marker in (
         "self._pending_settings_request",
         "self._settings_open_pending",

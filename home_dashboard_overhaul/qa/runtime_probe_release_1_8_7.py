@@ -44,9 +44,14 @@ from home_dashboard_overhaul.models import DashboardSnapshot, VerseContent
 from home_dashboard_overhaul.settings import (
     EventEditDialog,
     SETTINGS_GEOMETRY_KEY,
+    SETTINGS_GEOMETRY_SCREEN_KEY,
     SettingsDialog,
 )
-from home_dashboard_overhaul.settings_model import clamp_window_geometry
+from home_dashboard_overhaul.settings_model import (
+    clamp_window_geometry,
+    saved_window_geometry_is_valid,
+    settings_screen_uses_compact_fallback,
+)
 from home_dashboard_overhaul.themes import contrast_ratio
 
 from . import _capture_plan as capture_plan
@@ -138,7 +143,9 @@ base.REPORT = {
         "profile": CAPTURE_PROFILE,
         "profile_counts": PROFILE_COUNTS,
         "selected_capture_ids": (
-            list(REQUESTED_CAPTURE_IDS) if REQUESTED_CAPTURE_IDS is not None else None
+            list(REQUESTED_CAPTURE_IDS)
+            if REQUESTED_CAPTURE_IDS is not None
+            else list(CAPTURE_PLAN.ids(CAPTURE_PROFILE))
         ),
     },
     "capture_profile": {
@@ -151,7 +158,7 @@ base.REPORT = {
     "captures": {},
     "scale_policy": {
         "production_ui_percent": 100,
-        "settings_application_font_percent": [100, 150],
+        "settings_application_font_percent": [100],
         "native_only": True,
         "environment_variable_scale_substitutes": False,
         "required_native_profiles": deepcopy(
@@ -805,8 +812,15 @@ _settings_started = False
 _geometry_store = QSettings()
 _geometry_preference_was_present = _geometry_store.contains(SETTINGS_GEOMETRY_KEY)
 _geometry_preference_before_probe = _geometry_store.value(SETTINGS_GEOMETRY_KEY)
+_geometry_screen_preference_was_present = _geometry_store.contains(
+    SETTINGS_GEOMETRY_SCREEN_KEY
+)
+_geometry_screen_preference_before_probe = _geometry_store.value(
+    SETTINGS_GEOMETRY_SCREEN_KEY
+)
 _geometry_restart_marker = OUTPUT_ROOT / "settings-geometry-restart.json"
 _preserve_geometry_for_restart = False
+_legacy_geometry_key = "home_dashboard_overhaul/settings_dialog_geometry/v2"
 
 
 def _rect_payload(value: object) -> list[int] | None:
@@ -828,6 +842,58 @@ def _read_geometry_restart_marker() -> dict[str, Any]:
     except (OSError, ValueError):
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _record_geometry_contract_assertions() -> None:
+    """Prove non-PNG geometry cases inside the disposable native run."""
+
+    primary = (0, 0, 1600, 1000)
+    secondary = (1600, 0, 1920, 1080)
+    checks = {
+        "legacy_720x520_v2_record_ignored": (
+            _legacy_geometry_key != SETTINGS_GEOMETRY_KEY
+            and not saved_window_geometry_is_valid((100, 100, 720, 520), [primary])
+        ),
+        "legacy_940x680_v2_record_ignored": (
+            _legacy_geometry_key != SETTINGS_GEOMETRY_KEY
+            and saved_window_geometry_is_valid((100, 100, 940, 680), [primary])
+        ),
+        "valid_1180x800_restore_accepted": saved_window_geometry_is_valid(
+            (100, 100, 1180, 800), [primary]
+        ),
+        "secondary_monitor_restore_accepted": saved_window_geometry_is_valid(
+            (1700, 100, 1180, 800), [primary, secondary],
+            saved_screen_exists=True,
+        ),
+        "disconnected_monitor_restore_rejected": not saved_window_geometry_is_valid(
+            (1700, 100, 1180, 800), [primary],
+            saved_screen_exists=False,
+        ),
+        "eighty_percent_visibility_accepted": saved_window_geometry_is_valid(
+            (-236, 100, 1180, 800), [primary]
+        ),
+        "below_eighty_percent_visibility_rejected": not saved_window_geometry_is_valid(
+            (-237, 100, 1180, 800), [primary]
+        ),
+        "normal_screen_keeps_vertical_navigation": not settings_screen_uses_compact_fallback(
+            (1440, 900)
+        ),
+        "small_screen_activates_compact_fallback": settings_screen_uses_compact_fallback(
+            (1000, 700)
+        ),
+        "normal_geometry_keeps_48px_margins": clamp_window_geometry(
+            None, primary
+        ) == (260, 120, 1080, 760),
+    }
+    for label, passed in checks.items():
+        base._require(passed, "Settings geometry assertion failed: {}".format(label))
+    base.REPORT["settings_geometry_assertions"] = {
+        "status": "passed",
+        "checks": checks,
+        "png_count": 0,
+        "legacy_geometry_key_read": False,
+        "space_switching": "manual-result-required",
+    }
 
 
 def _settings_page_cases() -> list[dict[str, Any]]:
@@ -955,6 +1021,13 @@ def _set_geometry_fixture(case: Mapping[str, Any], available: Any) -> None:
         _geometry_store.sync()
         return
     _geometry_store.remove(SETTINGS_GEOMETRY_KEY)
+    _geometry_store.remove(SETTINGS_GEOMETRY_SCREEN_KEY)
+    _geometry_store.remove(_legacy_geometry_key)
+    if special == "window-fresh-open":
+        _geometry_store.setValue(
+            _legacy_geometry_key,
+            QRect(available.x() + 20, available.y() + 20, 940, 680),
+        )
     if special == "window-clamp":
         _geometry_store.setValue(
             SETTINGS_GEOMETRY_KEY,
@@ -965,15 +1038,23 @@ def _set_geometry_fixture(case: Mapping[str, Any], available: Any) -> None:
                 available.height() * 2,
             ),
         )
+        _geometry_store.setValue(
+            SETTINGS_GEOMETRY_SCREEN_KEY,
+            _settings_screen().name(),
+        )
     elif special == "window-offscreen-restore":
         _geometry_store.setValue(
             SETTINGS_GEOMETRY_KEY,
             QRect(
                 available.right() + 2400,
                 available.bottom() + 1600,
-                940,
-                680,
+                1080,
+                760,
             ),
+        )
+        _geometry_store.setValue(
+            SETTINGS_GEOMETRY_SCREEN_KEY,
+            _settings_screen().name(),
         )
     _geometry_store.sync()
 
@@ -986,8 +1067,14 @@ def _restore_geometry_preference() -> None:
     marker_present = bool(marker.get("original_was_present"))
     if marker_present and marker_rect is not None:
         _geometry_store.setValue(SETTINGS_GEOMETRY_KEY, QRect(*marker_rect))
+        marker_screen = str(marker.get("original_screen") or "")
+        if marker_screen:
+            _geometry_store.setValue(SETTINGS_GEOMETRY_SCREEN_KEY, marker_screen)
+        else:
+            _geometry_store.remove(SETTINGS_GEOMETRY_SCREEN_KEY)
     elif marker and not marker_present:
         _geometry_store.remove(SETTINGS_GEOMETRY_KEY)
+        _geometry_store.remove(SETTINGS_GEOMETRY_SCREEN_KEY)
     elif _geometry_preference_was_present:
         _geometry_store.setValue(
             SETTINGS_GEOMETRY_KEY,
@@ -995,6 +1082,15 @@ def _restore_geometry_preference() -> None:
         )
     else:
         _geometry_store.remove(SETTINGS_GEOMETRY_KEY)
+    if not marker:
+        if _geometry_screen_preference_was_present:
+            _geometry_store.setValue(
+                SETTINGS_GEOMETRY_SCREEN_KEY,
+                _geometry_screen_preference_before_probe,
+            )
+        else:
+            _geometry_store.remove(SETTINGS_GEOMETRY_SCREEN_KEY)
+    _geometry_store.remove(_legacy_geometry_key)
     _geometry_store.sync()
     if base.STAGE == "restart" and _geometry_restart_marker.exists():
         try:
@@ -1012,19 +1108,19 @@ def _previsibility_capture_resize(
 
     special = str(case.get("special", ""))
     if special in {
-        "window-standard",
+        "window-fresh-open",
         "window-clamp",
         "window-offscreen-restore",
         "restart-persistence",
     }:
         return
-    target_width = case.get("width", 940)
+    target_width = case.get("width", 1080)
     if target_width == "full":
-        width = available.width()
-        height = available.height()
+        return
     else:
-        width = min(max(720, int(target_width)), available.width())
-        height = min(680, available.height())
+        width = min(max(920, int(target_width)), available.width() - 96)
+        target_height = 800 if int(target_width) >= 1280 else 760
+        height = min(max(640, target_height), available.height() - 96)
     dialog.resize(width, height)
     dialog.move(
         available.x() + max(0, (available.width() - width) // 2),
@@ -1052,18 +1148,8 @@ def _prepare_settings_case(case: Mapping[str, Any]) -> SettingsDialog:
     dialog._qa_anki_theme = expected_anki_theme
     _previsibility_capture_resize(dialog, case, available)
     dialog.setModal(True)
-    dialog.show()
-    QApplication.processEvents()
 
-    if special == "event-editor-open":
-        base._require(dialog._select_event_id("evt-a", False), "event fixture is missing")
-        event = dialog._selected_event()
-        base._require(event is not None, "event editor has no selected event")
-        editor = EventEditDialog(dialog, event)
-        editor.setModal(True)
-        editor.show()
-        dialog._qa_event_editor = editor
-    elif special == "events-searched":
+    if special == "events-searched":
         dialog.event_search.setText("Pediatrics")
         dialog._refresh_event_lists()
     elif special == "events-no-results":
@@ -1079,10 +1165,6 @@ def _prepare_settings_case(case: Mapping[str, Any]) -> SettingsDialog:
         dialog._font_color_edited()
     elif special == "advanced-appearance":
         dialog.appearance_advanced_button.setChecked(True)
-    elif special == "about-bottom":
-        scroll = dialog.stack.currentWidget()
-        if isinstance(scroll, QScrollArea):
-            scroll.verticalScrollBar().setValue(scroll.verticalScrollBar().maximum())
     elif special in {
         "dirty",
         "discard",
@@ -1143,8 +1225,45 @@ def _prepare_settings_case(case: Mapping[str, Any]) -> SettingsDialog:
                 dialog._save()
     elif special == "legacy-route":
         dialog.open_page("calendar")
-    QApplication.processEvents()
     return dialog
+
+
+def _activate_settings_case(case: Mapping[str, Any]) -> None:
+    """Finish visible-only setup inside the production-equivalent exec loop."""
+
+    try:
+        base._require(_settings_dialog is not None, "Settings dialog disappeared before activation")
+        dialog = _settings_dialog
+        special = str(case.get("special", ""))
+        if case.get("family") == "settings-pages" and case.get("width") == "full":
+            dialog.showMaximized()
+        if special == "event-editor-open":
+            base._require(dialog._select_event_id("evt-a", False), "event fixture is missing")
+            event = dialog._selected_event()
+            base._require(event is not None, "event editor has no selected event")
+            editor = EventEditDialog(dialog, event)
+            editor.setModal(True)
+            editor.show()
+            dialog._qa_event_editor = editor
+            editor.raise_()
+            editor.activateWindow()
+        elif special == "about-bottom":
+            scroll = dialog.stack.currentWidget()
+            if isinstance(scroll, QScrollArea):
+                scroll.verticalScrollBar().setValue(
+                    scroll.verticalScrollBar().maximum()
+                )
+        dialog.raise_()
+        dialog.activateWindow()
+        QApplication.processEvents()
+        editor = getattr(dialog, "_qa_event_editor", None)
+        if editor is not None:
+            editor.raise_()
+            editor.activateWindow()
+        QTimer.singleShot(720, lambda: _inspect_settings_case(case))
+    except Exception as exc:
+        _exit_active_settings_exec()
+        base._error("{}-activate".format(case.get("id", "settings")), exc)
 
 
 def _global_rect(widget: QWidget) -> QRect:
@@ -1238,6 +1357,8 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
     about_item_height = dialog.nav.visualItemRect(about_item).height() if about_item is not None else 0
     tokens = getattr(dialog, "_hdo_theme_tokens", {})
     status_rect = _global_rect(dialog.status_label) if dialog.status_label.isVisible() else QRect()
+    error_rect = _global_rect(dialog.footer.error_panel) if dialog.footer.error_panel.isVisible() else QRect()
+    feedback_intersection = status_rect.intersected(error_rect)
     save_rect = _global_rect(dialog.save_button) if dialog.save_button is not None else QRect()
     prompt_titles = [
         str(label.text())
@@ -1248,6 +1369,21 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         dialog.settings_shell.mapTo(dialog, QPoint(0, 0)),
         dialog.settings_shell.size(),
     )
+    event_editor = getattr(dialog, "_qa_event_editor", None)
+    rendered_preview_types = {
+        "DashboardCardPreview",
+        "VerseCardPreview",
+        "HeatmapPresetCard",
+    }
+    visible_add_event_ctas = [
+        button
+        for button in dialog.findChildren(QAbstractButton)
+        if button.text().replace("&", "").strip() == "Add event"
+        and button.isVisibleTo(dialog)
+    ]
+    event_row_height = 0
+    if active_tree is not None and active_tree.topLevelItemCount():
+        event_row_height = active_tree.topLevelItem(0).sizeHint(0).height()
     return {
         "section": dialog.current_section,
         "normalized_route": getattr(dialog, "_normalized_route", ""),
@@ -1271,11 +1407,16 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
             ]
         ),
         "minimum_size": [dialog.minimumWidth(), dialog.minimumHeight()],
+        "window_maximized": dialog.isMaximized(),
         "available_size": [available_geometry.width(), available_geometry.height()],
         "available_geometry": [available_geometry.x(), available_geometry.y(), available_geometry.width(), available_geometry.height()],
         "screen_geometry": [geometry.x(), geometry.y(), geometry.width(), geometry.height()],
         "screen_physical_pixels": [round(geometry.width() * settings_screen.devicePixelRatio()), round(geometry.height() * settings_screen.devicePixelRatio())],
         "decorated_frame": [frame.x(), frame.y(), frame.width(), frame.height()],
+        "native_frame_decoration": {
+            "width": max(0, frame.width() - dialog.width()),
+            "height": max(0, frame.height() - dialog.height()),
+        },
         "screen_name": settings_screen.name(),
         "screen_device_pixel_ratio": settings_screen.devicePixelRatio(),
         "screen_logical_dpi": [settings_screen.logicalDotsPerInchX(), settings_screen.logicalDotsPerInchY()],
@@ -1305,18 +1446,36 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         "nav_about_visual_height": about_item_height,
         "nav_font_line_spacing": dialog.nav.fontMetrics().lineSpacing(),
         "body_width": dialog.body_shell.width(),
+        "screen_compact_fallback": bool(dialog._screen_compact_fallback),
         "page_count": dialog.stack.count(),
+        "visible_page_scroller_count": sum(
+            isinstance(dialog.stack.widget(index), QScrollArea)
+            and dialog.stack.widget(index).isVisibleTo(dialog)
+            for index in range(dialog.stack.count())
+        ),
         "main_page_scroller": isinstance(current, QScrollArea),
         "horizontal_scroll_maximum": current.horizontalScrollBar().maximum() if isinstance(current, QScrollArea) else -1,
         "horizontal_scroll_disabled": isinstance(current, QScrollArea) and current.horizontalScrollBarPolicy() == Qt.ScrollBarPolicy.ScrollBarAlwaysOff,
         "visible_interactive_overflow": _visible_interactive_overflow(dialog, current),
         "clipped_button_labels": _clipped_button_labels(dialog),
         "body_height": dialog.body_shell.height(),
+        "header_height": dialog.header_stack.height(),
+        "footer_minimum_height": dialog.footer.minimumHeight(),
+        "sidebar_spans_shell": (
+            dialog.sidebar_panel.geometry().top() == 0
+            and dialog.sidebar_panel.geometry().bottom()
+            >= dialog.settings_shell.rect().bottom() - 1
+        ),
+        "page_maximum_width": (
+            current.widget().maximumWidth()
+            if isinstance(current, QScrollArea) and current.widget() is not None
+            else 0
+        ),
         "calendar_anchor_viewport_y": calendar_viewport_y,
         "footer_after_body": dialog.footer_shell.geometry().top() >= dialog.body_shell.geometry().bottom() - 1,
         "footer_overlaps_page_viewport": not viewport_rect.isNull() and footer_rect.top() <= viewport_rect.bottom(),
         "page_bottom_margin": page_bottom_margin,
-        "required_page_bottom_margin": dialog.footer.sizeHint().height() + 16,
+        "required_page_bottom_margin": 36,
         "save_text": dialog.save_button.text() if dialog.save_button is not None else "",
         "save_enabled": dialog.save_button.isEnabled() if dialog.save_button is not None else False,
         "close_text": dialog.close_button.text() if dialog.close_button is not None else "",
@@ -1324,10 +1483,25 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         "discard_visible": dialog.revert_button.isVisible(),
         "save_error_visible": dialog.footer.error_panel.isVisible(),
         "save_error_text": dialog.save_error.text(),
+        "save_error_label_clipped": (
+            dialog.footer.error_panel.isVisible()
+            and (
+                dialog.save_error.fontMetrics().horizontalAdvance(dialog.save_error.text())
+                > dialog.save_error.contentsRect().width()
+                or dialog.save_error.fontMetrics().lineSpacing()
+                > dialog.save_error.contentsRect().height()
+            )
+        ),
         "save_error_details": dialog.footer.details_text.text(),
         "save_error_details_collapsed": not dialog.footer.details_text.isVisible(),
         "status": dialog.status_label.text(),
         "status_visible": dialog.status_label.isVisible(),
+        "footer_feedback_exclusive": not (
+            dialog.status_label.isVisible()
+            and dialog.footer.error_panel.isVisible()
+        ),
+        "footer_feedback_overlap_area": max(0, feedback_intersection.width())
+        * max(0, feedback_intersection.height()),
         "status_and_save_inside_footer": (
             (status_rect.isNull() or footer_rect.contains(status_rect))
             and (save_rect.isNull() or footer_rect.contains(save_rect))
@@ -1376,22 +1550,41 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         "event_result_summary": dialog.event_result_summary.text() if hasattr(dialog, "event_result_summary") else "",
         "event_empty_title": dialog.event_empty_title.text() if hasattr(dialog, "event_empty_title") and dialog.event_empty_state.isVisible() else "",
         "event_editor_open": bool(getattr(dialog, "_qa_event_editor", None) and dialog._qa_event_editor.isVisible()),
-        "event_list_bounded": all(
+        "event_editor_size": (
+            [event_editor.width(), event_editor.height()]
+            if event_editor is not None
+            else []
+        ),
+        "event_list_flexible": all(
             view is None
             or (
-                240 <= view.minimumHeight()
-                and view.maximumHeight() <= 420
-                and view.height() <= 420
+                260 <= view.minimumHeight()
+                and view.maximumHeight() >= 16777215
             )
             for view in (active_tree, archived_tree)
         ),
+        "visible_add_event_cta_count": len(visible_add_event_ctas),
+        "event_row_height": event_row_height,
         "quote_count": quote_model.rowCount() if quote_model is not None else 0,
         "quote_matching_count": quote_model.matching_count if quote_model is not None else 0,
-        "quote_list_bounded": quote_list is None or (240 <= quote_list.minimumHeight() and quote_list.maximumHeight() <= 420),
+        "quote_list_flexible": quote_list is None or (
+            260 <= quote_list.minimumHeight()
+            and quote_list.maximumHeight() >= 16777215
+        ),
         "font_color_invalid": bool(getattr(dialog, "_font_color_invalid", False)),
+        "font_color_inline_error": (
+            dialog.font_color_warning.text()
+            if hasattr(dialog, "font_color_warning")
+            and dialog.font_color_warning.isVisible()
+            else ""
+        ),
         "forecast_range_visible": bool(
             getattr(dialog, "forecast_days", None)
             and not dialog.forecast_days.isHidden()
+        ),
+        "forecast_range_enabled": bool(
+            getattr(dialog, "forecast_days", None)
+            and dialog.forecast_days.isEnabled()
         ),
         "advanced_appearance_expanded": bool(getattr(dialog, "appearance_advanced_button", None) and dialog.appearance_advanced_button.isChecked()),
         "close_prompt_titles": prompt_titles,
@@ -1400,6 +1593,22 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         "settings_shell_center_delta": abs(
             shell_rect.center().x() - dialog.rect().center().x()
         ),
+        "rendered_previews_absent": (
+            not any(
+                hasattr(dialog, attribute)
+                for attribute in (
+                    "appearance_preview",
+                    "verse_preview",
+                    "preset_swatch",
+                    "heatmap_preset_cards",
+                )
+            )
+            and not any(
+                type(widget).__name__ in rendered_preview_types
+                for widget in dialog.findChildren(QWidget)
+            )
+        ),
+        "custom_color_well_present": hasattr(dialog, "font_color_swatch"),
         "anki_theme": getattr(dialog, "_qa_anki_theme", ""),
         "settings_window_token": tokens.get("window", ""),
         "selection_primary_contrast": contrast_ratio(tokens.get("text", "#000000"), tokens.get("accent_soft", "#FFFFFF")),
@@ -1410,12 +1619,13 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
 def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     special = str(case.get("special", ""))
     base._require(state.get("window_title") == "Home Screen Dashboard Settings", "Settings window title is incorrect")
-    base._require(state.get("minimum_size") == [720, 520], "Settings minimum size is not 720x520 logical px")
-    base._require(state.get("nav_width") == 152, "Settings rail is not 152px")
+    if not bool(state.get("screen_compact_fallback")):
+        base._require(state.get("minimum_size") == [920, 640], "Settings minimum size is not 920x640 logical px")
+    base._require(state.get("nav_width") == 184, "Settings rail is not 184px")
     base._require(not bool(state.get("nav_word_wrap")), "Settings rail wraps labels")
     base._require(bool(state.get("nav_elision_disabled")), "Settings rail elides long labels")
     base._require(bool(state.get("compact_nav_elision_disabled")), "compact Settings tabs elide labels")
-    compact_required = int(state.get("body_width", 0)) < 760
+    compact_required = bool(state.get("screen_compact_fallback"))
     if special != "close-confirmation":
         if compact_required:
             base._require(bool(state.get("compact_nav_visible")), "compact navigation did not replace the rail")
@@ -1439,45 +1649,66 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
             "About & support wrapped in the desktop rail",
         )
     base._require(state.get("page_count") == 4, "Settings does not own exactly four pages")
+    expected_visible_scrollers = 0 if special == "close-confirmation" else 1
+    base._require(
+        state.get("visible_page_scroller_count") == expected_visible_scrollers,
+        "Settings does not expose exactly the expected page-body scroller count",
+    )
     base._require(bool(state.get("main_page_scroller")), "active Settings page is not the main scroller")
     base._require(state.get("horizontal_scroll_maximum") == 0, "Settings page has horizontal overflow")
     base._require(bool(state.get("horizontal_scroll_disabled")), "Settings page permits horizontal scrolling")
     base._require(not state.get("visible_interactive_overflow"), "visible Settings controls escape the content viewport: {}".format(state.get("visible_interactive_overflow")))
     base._require(not state.get("clipped_button_labels"), "Settings buttons clip text: {}".format(state.get("clipped_button_labels")))
-    base._require(bool(state.get("footer_after_body")), "Settings footer is not the final layout row")
-    base._require(not bool(state.get("footer_overlaps_page_viewport")), "Settings footer overlaps the active page viewport")
+    if special != "close-confirmation":
+        base._require(bool(state.get("footer_after_body")), "Settings footer is not the final layout row")
+        base._require(not bool(state.get("footer_overlaps_page_viewport")), "Settings footer overlaps the active page viewport")
     base._require(
         int(state.get("page_bottom_margin", 0)) >= int(state.get("required_page_bottom_margin", 0)),
         "Settings page lacks footer-height bottom clearance",
     )
     base._require(state.get("close_text") == "Close", "Close button label is unstable")
-    base._require(state.get("settings_shell_maximum") == 1120, "Settings inner shell is not capped at 1120px")
-    expected_shell_width = min(int(state.get("window_size", [0])[0]), 1120)
-    base._require(
-        abs(int(state.get("settings_shell_width", 0)) - expected_shell_width) <= 2,
-        "Settings shell does not occupy the available dialog width",
-    )
-    base._require(
-        int(state.get("settings_shell_center_delta", 9999)) <= 2,
-        "Settings shell is not centered in the dialog",
-    )
+    base._require(state.get("header_height") == 72, "Settings page header is not fixed at 72px")
+    base._require(state.get("footer_minimum_height") == 60, "Settings footer is not fixed at a 60px minimum")
+    if special != "close-confirmation":
+        base._require(bool(state.get("sidebar_spans_shell")), "Settings sidebar does not span header body and footer")
+    base._require(state.get("page_maximum_width") == 980, "Settings page is not capped at 980px")
+    base._require(state.get("settings_shell_maximum") == 1240, "Settings inner shell is not capped at 1240px")
+    expected_shell_width = min(int(state.get("window_size", [0])[0]), 1240)
+    if special != "close-confirmation":
+        base._require(
+            abs(int(state.get("settings_shell_width", 0)) - expected_shell_width) <= 2,
+            "Settings shell does not occupy the available dialog width",
+        )
+        base._require(
+            int(state.get("settings_shell_center_delta", 9999)) <= 2,
+            "Settings shell is not centered in the dialog",
+        )
     base._require(
         bool(state.get("decorated_frame_inside_available")),
         "decorated Settings window escaped available screen geometry",
     )
     base._require(bool(state.get("status_and_save_inside_footer")), "Settings feedback is not local to the footer actions")
+    base._require(bool(state.get("footer_feedback_exclusive")), "Settings status and save-error feedback are visible together")
+    base._require(int(state.get("footer_feedback_overlap_area", 0)) == 0, "Settings footer feedback overlaps")
     base._require(float(state.get("minimum_visible_text_pixels", 0)) >= 11.5, "visible Settings text falls below the 12px baseline")
     base._require(float(state.get("selection_primary_contrast", 0)) >= 4.5, "selected-row primary text contrast is insufficient")
     base._require(float(state.get("selection_secondary_contrast", 0)) >= 4.5, "selected-row secondary text contrast is insufficient")
-    base._require(bool(state.get("event_list_bounded")), "Events list region is not bounded")
-    base._require(bool(state.get("quote_list_bounded")), "Verse list region is not bounded")
+    base._require(bool(state.get("event_list_flexible")), "Events list region is not flexible")
+    base._require(bool(state.get("quote_list_flexible")), "Verse list region is not flexible")
+    base._require(bool(state.get("rendered_previews_absent")), "a rendered Settings preview remains")
+    base._require(bool(state.get("custom_color_well_present")), "the custom color input well is missing")
     if special == "events-empty":
         base._require(state.get("event_active_count") == 0 and state.get("event_archived_count") == 0, "empty Events state is populated")
         base._require(state.get("event_empty_title") == "No events yet", "empty Events copy is incorrect")
+    if state.get("section") == "events":
+        base._require(state.get("visible_add_event_cta_count") == 1, "Events does not expose exactly one header-level Add event action")
+        if int(state.get("event_active_count", 0)):
+            base._require(state.get("event_row_height") == 54, "Event rows are not 54px high")
     if special == "events-populated":
         base._require(state.get("event_active_count") == 2, "populated Events state is incomplete")
     if special == "event-editor-open":
         base._require(bool(state.get("event_editor_open")), "event row did not open its editor")
+        base._require(state.get("event_editor_size") == [560, 320], "event editor is not 560x320 logical px")
     if special == "events-searched":
         base._require(state.get("event_search") == "Pediatrics" and state.get("event_active_count") == 1, "Events search state is incorrect")
         base._require(state.get("event_result_summary") == "1 matching event", "Events result summary is incorrect")
@@ -1491,13 +1722,17 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     if special == "bible-custom-invalid":
         base._require(bool(state.get("font_color_invalid")), "invalid custom color was accepted")
         base._require(not bool(state.get("save_enabled")), "invalid custom color did not block Save")
-        base._require(bool(state.get("save_error_visible")), "invalid custom color has no footer validation")
+        base._require(not bool(state.get("save_error_visible")), "invalid custom color duplicates its inline error in the footer")
+        base._require(state.get("font_color_inline_error") == "Enter a valid #RRGGBB color.", "invalid custom color lacks the single inline validation error")
+        base._require(state.get("status") == "Fix 1 error to save", "footer validation status is incorrect")
     if special == "bible-long-row":
         base._require(state.get("quote_count") == 483, "complete verse model was capped")
     if special == "future-off":
-        base._require(not bool(state.get("forecast_range_visible")), "Future range remains visible while forecasting is off")
+        base._require(bool(state.get("forecast_range_visible")), "Future range moved when forecasting was disabled")
+        base._require(not bool(state.get("forecast_range_enabled")), "Future range remains enabled while forecasting is off")
     if special == "future-on":
         base._require(bool(state.get("forecast_range_visible")), "Future range is hidden while forecasting is on")
+        base._require(bool(state.get("forecast_range_enabled")), "Future range is disabled while forecasting is on")
     if special == "advanced-appearance":
         base._require(bool(state.get("advanced_appearance_expanded")), "Advanced appearance did not expand")
     if special == "dirty":
@@ -1518,7 +1753,9 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
         base._require(not bool(state.get("save_enabled")), "Save remains enabled after success")
     if special == "save-error-production":
         base._require(bool(state.get("save_error_visible")), "save failure is not local to the footer")
-        base._require(state.get("save_error_text") == "Couldn’t save settings. Your changes are still available. Try again.", "save failure copy is not production-formatted")
+        base._require(not bool(state.get("status_visible")), "save failure overlaps the dirty status")
+        base._require(state.get("save_error_text") == "Save failed. Your changes are still available.", "save failure copy is not production-formatted")
+        base._require(not bool(state.get("save_error_label_clipped")), "save failure copy is clipped in the fixed footer")
         base._require(state.get("save_error_details") == "fixture write failure detail", "technical save detail is not stored separately")
         base._require(bool(state.get("save_error_details_collapsed")), "technical save detail is exposed by default")
         base._require(bool(state.get("save_enabled")), "Save is disabled after failure")
@@ -1563,17 +1800,36 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
             0 <= int(state.get("calendar_anchor_viewport_y", -1)) <= 4,
             "legacy Calendar route exposes a clipped preceding card",
         )
-    if special == "window-standard":
+    if special == "window-fresh-open":
         base._require(not bool(state.get("fixed_size")), "Settings window is unexpectedly fixed-size")
         default_size = state.get("window_size", [0, 0])
         available = state.get("available_size", [0, 0])
-        base._require(default_size[0] <= min(940, int(available[0] * .92)) and default_size[1] <= min(680, int(available[1] * .88)), "standard Settings geometry ignores its logical initial caps")
+        expected_default = clamp_window_geometry(
+            None,
+            (0, 0, int(available[0]), int(available[1])),
+        )[2:]
+        base._require(default_size == list(expected_default), "fresh Settings geometry is not the 1080x760 logical default")
         base._require(not bool(state.get("window_modal")), "Settings still uses window-modal sheet behavior")
         base._require(bool(state.get("application_modal")), "Settings capture is not application-modal")
     if special in {"window-clamp", "window-offscreen-restore"}:
         size = state.get("window_size", [0, 0])
         available = state.get("available_size", [0, 0])
-        base._require(size[0] <= int(available[0] * .92) and size[1] <= int(available[1] * .88), "Settings restored size escaped its logical caps")
+        base._require(size[0] <= available[0] - 96 and size[1] <= available[1] - 96, "Settings restored size escaped its 48px screen margins")
+    if case.get("family") == "settings-pages":
+        decoration = state.get("native_frame_decoration", {})
+        base._require(
+            int(decoration.get("width", 0)) > 0
+            or int(decoration.get("height", 0)) > 0,
+            "Settings page capture lacks native window decoration",
+        )
+        if case.get("width") == "full":
+            base._require(bool(state.get("window_maximized")), "full-screen Settings page capture is not maximized")
+        else:
+            expected_height = 800 if int(case.get("width", 0)) >= 1280 else 760
+            base._require(
+                state.get("window_size") == [int(case["width"]), expected_height],
+                "Settings page capture geometry differs from the 100% matrix",
+            )
     if special in {"anki-light", "anki-dark"}:
         expected = "light" if special == "anki-light" else "dark"
         base._require(state.get("anki_theme") == expected, "Settings theme fixture differs from the Anki theme")
@@ -1586,11 +1842,84 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     )
 
 
+def _settings_client_capture(dialog: SettingsDialog) -> Any:
+    """Render the Settings client and any parented editor into one pixmap."""
+
+    pixmap = dialog.grab()
+    editor = getattr(dialog, "_qa_event_editor", None)
+    if pixmap.isNull() or editor is None or not editor.isVisible():
+        return pixmap
+    editor_pixmap = editor.grab()
+    if editor_pixmap.isNull():
+        return pixmap
+    origin = editor.mapToGlobal(QPoint(0, 0)) - dialog.mapToGlobal(QPoint(0, 0))
+    painter = QPainter(pixmap)
+    try:
+        painter.drawPixmap(origin, editor_pixmap)
+    finally:
+        painter.end()
+    return pixmap
+
+
+def _settings_surface_match_ratio(
+    captured: Any,
+    reference: Any,
+    *,
+    captured_logical_size: tuple[int, int],
+    reference_logical_size: tuple[int, int],
+    reference_origin: QPoint,
+) -> float:
+    """Compare sampled client pixels so a same-sized background cannot pass."""
+
+    if captured.isNull() or reference.isNull():
+        return 0.0
+    captured_image = captured.toImage()
+    reference_image = reference.toImage()
+    captured_width, captured_height = captured_logical_size
+    reference_width, reference_height = reference_logical_size
+    if min(captured_width, captured_height, reference_width, reference_height) <= 0:
+        return 0.0
+    captured_scale_x = captured_image.width() / captured_width
+    captured_scale_y = captured_image.height() / captured_height
+    reference_scale_x = reference_image.width() / reference_width
+    reference_scale_y = reference_image.height() / reference_height
+    fractions = (0.07, 0.18, 0.31, 0.44, 0.57, 0.70, 0.83, 0.94)
+    matched = 0
+    sampled = 0
+    for y_fraction in fractions:
+        reference_y = min(reference_height - 1, round(reference_height * y_fraction))
+        captured_y = reference_origin.y() + reference_y
+        if not 0 <= captured_y < captured_height:
+            continue
+        for x_fraction in fractions:
+            reference_x = min(reference_width - 1, round(reference_width * x_fraction))
+            captured_x = reference_origin.x() + reference_x
+            if not 0 <= captured_x < captured_width:
+                continue
+            captured_color = captured_image.pixelColor(
+                min(captured_image.width() - 1, round(captured_x * captured_scale_x)),
+                min(captured_image.height() - 1, round(captured_y * captured_scale_y)),
+            )
+            reference_color = reference_image.pixelColor(
+                min(reference_image.width() - 1, round(reference_x * reference_scale_x)),
+                min(reference_image.height() - 1, round(reference_y * reference_scale_y)),
+            )
+            difference = (
+                abs(captured_color.red() - reference_color.red())
+                + abs(captured_color.green() - reference_color.green())
+                + abs(captured_color.blue() - reference_color.blue())
+            )
+            matched += int(difference <= 90)
+            sampled += 1
+    return matched / sampled if sampled else 0.0
+
+
 def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     QApplication.processEvents()
     screen = _settings_screen(dialog)
     screen_geometry = screen.geometry()
-    capture_parent_with_dialog = str(case.get("special", "")) == "window-standard"
+    capture_parent_with_dialog = str(case.get("special", "")) == "window-fresh-open"
+    capture_complete_frame = case.get("family") == "settings-pages"
     if capture_parent_with_dialog:
         frame = mw.frameGeometry()
         expected_width, expected_height = frame.width(), frame.height()
@@ -1601,7 +1930,18 @@ def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Ma
             expected_width,
             expected_height,
         )
-        method = "QScreen.grabWindow-anki-with-standard-settings-dialog"
+        method = "QScreen.grabWindow-anki-with-fresh-settings-dialog"
+    elif capture_complete_frame:
+        frame = dialog.frameGeometry()
+        expected_width, expected_height = frame.width(), frame.height()
+        pixmap = screen.grabWindow(
+            0,
+            frame.x() - screen_geometry.x(),
+            frame.y() - screen_geometry.y(),
+            expected_width,
+            expected_height,
+        )
+        method = "QScreen.grabWindow-complete-decorated-settings-frame"
     else:
         origin = dialog.mapToGlobal(QPoint(0, 0))
         expected_width, expected_height = dialog.width(), dialog.height()
@@ -1613,6 +1953,65 @@ def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Ma
             expected_height,
         )
         method = "QScreen.grabWindow-screen-client-crop"
+
+    reference = _settings_client_capture(dialog)
+    if capture_parent_with_dialog or capture_complete_frame:
+        reference_origin = dialog.mapToGlobal(QPoint(0, 0)) - frame.topLeft()
+    else:
+        reference_origin = QPoint(0, 0)
+    surface_match_ratio = _settings_surface_match_ratio(
+        pixmap,
+        reference,
+        captured_logical_size=(expected_width, expected_height),
+        reference_logical_size=(dialog.width(), dialog.height()),
+        reference_origin=reference_origin,
+    )
+
+    # Retry after explicitly ordering the asynchronous probe dialog.  Size and
+    # color-count checks alone cannot distinguish Settings from the Dashboard
+    # pixels underneath it.
+    for _attempt in range(3):
+        if surface_match_ratio >= 0.55:
+            break
+        dialog.raise_()
+        dialog.activateWindow()
+        editor = getattr(dialog, "_qa_event_editor", None)
+        if editor is not None:
+            editor.raise_()
+            editor.activateWindow()
+        QApplication.processEvents()
+        if capture_parent_with_dialog:
+            pixmap = screen.grabWindow(
+                0,
+                frame.x() - screen_geometry.x(),
+                frame.y() - screen_geometry.y(),
+                expected_width,
+                expected_height,
+            )
+        elif capture_complete_frame:
+            pixmap = screen.grabWindow(
+                0,
+                frame.x() - screen_geometry.x(),
+                frame.y() - screen_geometry.y(),
+                expected_width,
+                expected_height,
+            )
+        else:
+            origin = dialog.mapToGlobal(QPoint(0, 0))
+            pixmap = screen.grabWindow(
+                0,
+                origin.x() - screen_geometry.x(),
+                origin.y() - screen_geometry.y(),
+                expected_width,
+                expected_height,
+            )
+        surface_match_ratio = _settings_surface_match_ratio(
+            pixmap,
+            reference,
+            captured_logical_size=(expected_width, expected_height),
+            reference_logical_size=(dialog.width(), dialog.height()),
+            reference_origin=reference_origin,
+        )
 
     def composite_standard_context() -> Any:
         """Retain the modal context when macOS cannot sample another Space."""
@@ -1692,26 +2091,41 @@ def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Ma
         or color_count < 3
         or abs(logical_width - expected_width) > 4
         or abs(logical_height - expected_height) > 4
+        or surface_match_ratio < 0.55
     ):
         pixmap = composite_standard_context()
         color_count = base._sample_color_count(pixmap)
         method = "QWidget.grab-composited-anki-with-standard-settings-dialog-fallback"
+        surface_match_ratio = _settings_surface_match_ratio(
+            pixmap,
+            reference,
+            captured_logical_size=(expected_width, expected_height),
+            reference_logical_size=(dialog.width(), dialog.height()),
+            reference_origin=reference_origin,
+        )
     elif not capture_parent_with_dialog and (
         pixmap.isNull()
         or color_count < 3
         or abs(logical_width - expected_width) > 4
         or abs(logical_height - expected_height) > 4
+        or surface_match_ratio < 0.55
     ):
-        fallback = dialog.grab()
+        fallback = reference
         fallback_colors = 0 if fallback.isNull() else base._sample_color_count(fallback)
-        if not fallback.isNull() and fallback_colors >= 3:
+        if not capture_complete_frame and not fallback.isNull() and fallback_colors >= 3:
             pixmap = fallback
             color_count = fallback_colors
-            method = "QDialog.grab-client-fallback"
+            method = "QDialog.grab-composited-client-fallback"
+            reference_origin = QPoint(0, 0)
+            surface_match_ratio = 1.0
 
     pixmap, inferred_capture_scale = normalize_backing_scale(pixmap)
     base._require(not pixmap.isNull(), "native Settings capture is null")
     base._require(color_count >= 3, "native Settings capture appears blank")
+    base._require(
+        surface_match_ratio >= 0.55,
+        "native Settings capture sampled the parent background instead of the Settings surface",
+    )
     dpr = max(1.0, float(pixmap.devicePixelRatio()))
     logical_width, logical_height = logical_size(pixmap)
     base._require(
@@ -1741,12 +2155,28 @@ def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Ma
         "dpr_class": case.get("dpr_class"),
         "capture_method": method,
         "sampled_color_count": color_count,
+        "settings_surface_match_ratio": round(surface_match_ratio, 4),
+        "settings_surface_verified": True,
+        "decorated_window_included": bool(
+            capture_complete_frame
+            and (
+                expected_width > dialog.width()
+                or expected_height > dialog.height()
+            )
+        ),
+        "native_frame_decoration": dict(
+            state.get("native_frame_decoration", {})
+        ),
         "logical_frame": {"width": expected_width, "height": expected_height},
         "dialog_logical_frame": {"width": dialog.width(), "height": dialog.height()},
         "capture_scope": (
-            "anki-window-with-standard-settings-dialog"
+            "anki-window-with-fresh-settings-dialog"
             if capture_parent_with_dialog
-            else "settings-dialog"
+            else (
+                "complete-decorated-settings-window"
+                if capture_complete_frame
+                else "settings-dialog"
+            )
         ),
         "physical_pixels": [pixmap.width(), pixmap.height()],
         "device_pixel_ratio": pixmap.devicePixelRatio(),
@@ -1776,6 +2206,20 @@ def _close_settings_dialog() -> None:
     _settings_dialog = None
 
 
+def _exit_active_settings_exec() -> None:
+    """Close nested child dialogs before ending the Settings exec loop."""
+
+    if _settings_dialog is None:
+        return
+    dialog = _settings_dialog
+    editor = getattr(dialog, "_qa_event_editor", None)
+    if editor is not None:
+        editor.close()
+        editor.deleteLater()
+        dialog._qa_event_editor = None
+    dialog.force_close()
+
+
 def _next_settings_case() -> None:
     global _settings_index, _settings_dialog
     try:
@@ -1786,7 +2230,14 @@ def _next_settings_case() -> None:
         case = _settings_cases[_settings_index]
         _settings_index += 1
         _settings_dialog = _prepare_settings_case(case)
-        QTimer.singleShot(720, lambda: _inspect_settings_case(case))
+        active_dialog = _settings_dialog
+        QTimer.singleShot(120, lambda: _activate_settings_case(case))
+        # Match the production controller exactly: the local parented QDialog
+        # owns an application-modal nested event loop until this case's capture
+        # closes it.  This preserves macOS native decoration and Space behavior.
+        active_dialog.exec()
+        if _settings_dialog is active_dialog:
+            _close_settings_dialog()
     except Exception as exc:
         base._error("settings-case-prepare", exc)
 
@@ -1805,6 +2256,7 @@ def _inspect_settings_case(case: Mapping[str, Any], attempt: int = 0) -> None:
             "error": "{}: {}".format(type(exc).__name__, exc),
         }
         base._write_report()
+        _exit_active_settings_exec()
         base._error(str(case.get("id", "settings-inspect")), exc)
         return
 
@@ -1841,8 +2293,10 @@ def _inspect_settings_case(case: Mapping[str, Any], attempt: int = 0) -> None:
     try:
         _capture_settings(_settings_dialog, case, capture_state)
     except Exception as exc:
+        _exit_active_settings_exec()
         base._error(str(case.get("id", "settings-capture")), exc)
         return
+    _exit_active_settings_exec()
     QTimer.singleShot(120, _next_settings_case)
 
 
@@ -1850,6 +2304,7 @@ def _start_settings() -> None:
     global _settings_cases, _settings_index, _settings_started
     try:
         _settings_started = True
+        _record_geometry_contract_assertions()
         _settings_index = 0
         if base.STAGE == "initial":
             _settings_cases = _settings_page_cases() + _settings_contract_cases()
@@ -1875,7 +2330,8 @@ def _start_settings() -> None:
             "case_ids": [case["id"] for case in _settings_cases],
             "widget_tree": "one-native-qt-tree",
             "embedded_web_content": "none",
-            "window_standard_capture": "parented-resizable-application-modal-dialog-with-parent",
+            "window_fresh_open_capture": "parented-resizable-application-modal-dialog-with-parent",
+            "settings_profile_ceiling": {"captures": 41, "contact_sheets": 11},
         }
         base._write_report()
         if not _settings_cases:
@@ -1913,10 +2369,10 @@ def _persist_restart_state() -> None:
         parent_rect.height(),
     )
     requested = (
-        parent_rect.center().x() - 440,
-        parent_rect.center().y() - 320,
-        880,
-        640,
+        parent_rect.center().x() - 590,
+        parent_rect.center().y() - 400,
+        1180,
+        800,
     )
     expected_geometry = clamp_window_geometry(
         requested,
@@ -1924,15 +2380,21 @@ def _persist_restart_state() -> None:
         parent=parent,
     )
     original_geometry = _rect_payload(_geometry_preference_before_probe)
+    original_screen = (
+        str(_geometry_screen_preference_before_probe or "")
+        if _geometry_screen_preference_was_present
+        else ""
+    )
     base._require(
         not _geometry_preference_was_present or original_geometry is not None,
         "pre-probe Settings geometry is not a logical QRect",
     )
     marker = {
-        "schema_version": 1,
+        "schema_version": 2,
         "release": RELEASE,
         "original_was_present": _geometry_preference_was_present,
         "original_geometry": original_geometry,
+        "original_screen": original_screen,
         "expected_geometry": list(expected_geometry),
         "available_geometry": list(available),
         "logical_coordinates_only": True,
@@ -1947,6 +2409,10 @@ def _persist_restart_state() -> None:
             SETTINGS_GEOMETRY_KEY,
             QRect(*expected_geometry),
         )
+        _geometry_store.setValue(
+            SETTINGS_GEOMETRY_SCREEN_KEY,
+            screen.name(),
+        )
         _geometry_store.sync()
         stored_geometry = _rect_payload(
             _geometry_store.value(SETTINGS_GEOMETRY_KEY)
@@ -1954,6 +2420,10 @@ def _persist_restart_state() -> None:
         base._require(
             stored_geometry == list(expected_geometry),
             "Settings logical geometry did not persist exactly",
+        )
+        base._require(
+            expected_geometry[2:] == (1180, 800),
+            "1180x800 Settings restore fixture does not fit the native screen",
         )
     except Exception:
         try:

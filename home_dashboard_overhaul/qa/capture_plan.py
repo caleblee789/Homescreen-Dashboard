@@ -365,6 +365,51 @@ class CapturePlan:
                     any(case["stage"] == stage for case in selected),
                     "profile {} has no {} captures".format(profile_id, stage),
                 )
+            expected_counts = profile.get("expected_capture_counts")
+            if expected_counts is not None:
+                _require(
+                    isinstance(expected_counts, Mapping)
+                    and dict(expected_counts) == self.counts(profile_id),
+                    "profile {} capture ceiling differs from its selected cases".format(
+                        profile_id
+                    ),
+                )
+            required_font_percent = profile.get(
+                "required_application_font_percent"
+            )
+            if required_font_percent is not None:
+                _require(
+                    all(
+                        case.get("font_percent") == required_font_percent
+                        for case in selected
+                        if case["component"] == "settings"
+                    ),
+                    "profile {} contains an alternate application-font capture".format(
+                        profile_id
+                    ),
+                )
+            maximum_sheets = profile.get("maximum_contact_sheets")
+            if maximum_sheets is not None:
+                planned_sheet_count = 2 + len(self.detail_groups(profile_id))
+                _require(
+                    isinstance(maximum_sheets, int)
+                    and maximum_sheets > 0
+                    and planned_sheet_count <= maximum_sheets,
+                    "profile {} exceeds its contact-sheet ceiling".format(profile_id),
+                )
+            manual_results = profile.get("required_structured_manual_results", [])
+            _require(
+                isinstance(manual_results, list)
+                and all(
+                    isinstance(result_id, str)
+                    and bool(PLAN_ID_RE.fullmatch(result_id))
+                    for result_id in manual_results
+                )
+                and len(manual_results) == len(set(manual_results)),
+                "profile {} has invalid structured manual-result requirements".format(
+                    profile_id
+                ),
+            )
 
         _require("full" in self._profile_specs, "capture plan requires a full profile")
         _require(
@@ -615,6 +660,20 @@ class CapturePlan:
             and contract.get("required_native_platform_profiles") == planned_platforms,
             "native platform requirements differ from the capture plan",
         )
+        settings_manual_results = tuple(
+            str(value)
+            for value in self._profile_specs.get("settings", {}).get(
+                "required_structured_manual_results", ()
+            )
+        )
+        settings_manual_gate = contract.get("settings_profile_structured_manual_gate")
+        _require(
+            isinstance(settings_manual_gate, Mapping)
+            and settings_manual_gate.get("required_for_acceptance") is True
+            and settings_manual_gate.get("adds_png_frames") is False
+            and settings_manual_results == (str(settings_manual_gate.get("id", "")),),
+            "Settings structured manual acceptance gate differs from the capture plan",
+        )
         derived = contract.get("derived_native_frame_count", {})
         full_counts = self.counts("full")
         _require(
@@ -638,6 +697,14 @@ class CapturePlan:
             "release": self.release,
             "plan_sha256": self.sha256,
             "profiles": {profile_id: self.counts(profile_id) for profile_id in self.profile_ids},
+            "required_structured_manual_results": {
+                profile_id: list(
+                    self._profile_specs[profile_id].get(
+                        "required_structured_manual_results", ()
+                    )
+                )
+                for profile_id in self.profile_ids
+            },
             "authority_files": {name: str(value) for name, value in authorities.items()},
         }
 

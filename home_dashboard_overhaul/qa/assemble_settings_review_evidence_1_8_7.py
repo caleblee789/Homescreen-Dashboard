@@ -43,9 +43,14 @@ def _selected_ids(initial: Mapping[str, Any]) -> list[str]:
     plan_record = initial.get("capture_plan", {})
     require(isinstance(plan_record, Mapping), "initial report lacks capture-plan identity")
     selected = plan_record.get("selected_capture_ids")
-    require(isinstance(selected, list) and selected, "review run is not a focused selection")
+    require(isinstance(selected, list) and selected, "review run has no Settings selection")
     ordered = list(CAPTURE_PLAN.ids("settings", include_ids=selected))
     require(len(ordered) == len(set(ordered)), "selected Settings IDs are not unique")
+    require(
+        ordered == list(CAPTURE_PLAN.ids("settings"))
+        and len(ordered) == 41,
+        "review run must contain the exact 41-case Settings profile",
+    )
     cases = CAPTURE_PLAN.cases("settings", include_ids=ordered)
     require(
         all(int(case.get("font_percent", 100)) == 100 for case in cases),
@@ -86,6 +91,30 @@ def _validate_report(
         set(report.get("captures", {})) == set(expected_stage),
         "{} report does not contain every selected capture".format(stage),
     )
+    captures = report.get("captures", {})
+    cases = {
+        str(case["id"]): case
+        for case in CAPTURE_PLAN.cases(
+            "settings",
+            stage=stage,
+            include_ids=selected,
+        )
+    }
+    for capture_id in expected_stage:
+        record = captures.get(capture_id, {})
+        require(isinstance(record, Mapping), "{} capture record is malformed".format(capture_id))
+        require(
+            record.get("settings_surface_verified") is True
+            and float(record.get("settings_surface_match_ratio", 0)) >= 0.55,
+            "{} did not visibly capture the Settings surface".format(capture_id),
+        )
+        if cases[capture_id].get("family") == "settings-pages":
+            require(
+                record.get("decorated_window_included") is True
+                and record.get("capture_scope") == "complete-decorated-settings-window"
+                and str(record.get("capture_method", "")).startswith("QScreen.grabWindow"),
+                "{} does not contain the complete decorated Settings window".format(capture_id),
+            )
     identity = report.get("identity", {})
     require(isinstance(identity, Mapping), "{} report lacks isolation identity".format(stage))
     candidate = identity.get("candidate", {})
@@ -122,6 +151,94 @@ def _archive_summary(candidate: Path) -> dict[str, Any]:
         "safe_paths": True,
         "members": members,
     }
+
+
+def _validate_fullscreen_report(
+    path: Path,
+    *,
+    candidate_hash: str,
+    allow_unrun: bool = False,
+) -> dict[str, Any]:
+    report = read_json(path.resolve(strict=True))
+    expected_gate_ids = CAPTURE_PLAN.profile("settings").get(
+        "required_structured_manual_results"
+    )
+    require(
+        expected_gate_ids
+        == ["macos-fullscreen-no-space-switch-menu-and-dashboard-gear"],
+        "Settings profile full-screen acceptance requirement drifted",
+    )
+    require(report.get("schema_version") == 1, "full-screen report schema mismatch")
+    require(report.get("id") == expected_gate_ids[0], "full-screen report id mismatch")
+    require(report.get("release") == RELEASE, "full-screen report release mismatch")
+    require(report.get("host_platform") == "macos", "full-screen report is not native macOS evidence")
+    require(report.get("candidate_sha256") == candidate_hash, "full-screen report used another package")
+    require(report.get("capture_plan_sha256") == CAPTURE_PLAN.sha256, "full-screen report plan hash drifted")
+    paths = report.get("opening_paths")
+    require(isinstance(paths, Mapping), "full-screen report lacks opening-path results")
+    require(set(paths) == {"menu", "dashboard-gear"}, "full-screen report must cover menu and Dashboard gear")
+    if report.get("status") == "unrun":
+        require(
+            allow_unrun,
+            "macOS full-screen Space-switch acceptance did not pass",
+        )
+        require(
+            isinstance(report.get("reason"), str) and report["reason"].strip(),
+            "unrun full-screen report lacks a reason",
+        )
+        require(
+            report.get("native_fullscreen") is False,
+            "unrun full-screen report must not claim native full screen",
+        )
+        for path_id, result in paths.items():
+            require(isinstance(result, Mapping), "{} full-screen result is malformed".format(path_id))
+            require(
+                result.get("status") == "unrun"
+                and result.get("settings_opened") is False
+                and result.get("remained_on_anki_fullscreen_space") is None
+                and result.get("desktop_or_space_switch_observed") is None,
+                "{} unrun result claims full-screen observations".format(path_id),
+            )
+        for check in (
+            "all_four_pages",
+            "events_tabs",
+            "resize",
+            "save_close_reopen",
+            "hard_restart_recheck",
+        ):
+            require(
+                report.get(check) is False,
+                "unrun full-screen report claims {}".format(check),
+            )
+        require(
+            report.get("desktop_space_switch_regression") == "unrun",
+            "unrun desktop/Space-switch result is not explicit",
+        )
+        return report
+    require(report.get("status") == "passed", "macOS full-screen Space-switch acceptance did not pass")
+    require(report.get("native_fullscreen") is True, "full-screen report did not use native macOS full screen")
+    for path_id, result in paths.items():
+        require(isinstance(result, Mapping), "{} full-screen result is malformed".format(path_id))
+        require(result.get("status") == "passed", "{} full-screen opening did not pass".format(path_id))
+        require(result.get("settings_opened") is True, "{} did not open Settings".format(path_id))
+        require(
+            result.get("remained_on_anki_fullscreen_space") is True
+            and result.get("desktop_or_space_switch_observed") is False,
+            "{} caused or failed to exclude a desktop/Space switch".format(path_id),
+        )
+    for check in (
+        "all_four_pages",
+        "events_tabs",
+        "resize",
+        "save_close_reopen",
+        "hard_restart_recheck",
+    ):
+        require(report.get(check) is True, "full-screen report did not pass {}".format(check))
+    require(
+        report.get("desktop_space_switch_regression") == "not-observed",
+        "desktop/Space-switch regression was not explicitly excluded",
+    )
+    return report
 
 
 def _copy_captures(
@@ -165,19 +282,26 @@ def _review_report_sheet(
     candidate_hash: str,
     capture_count: int,
     failures: Mapping[str, Any],
+    fullscreen_report: Mapping[str, Any],
 ) -> dict[str, Any]:
     canvas = Image.new("RGB", (1800, 1180), "#111827")
     draw = ImageDraw.Draw(canvas)
     draw.text((64, 54), "Settings review status", font=font(42, True), fill="#f8fafc")
+    fullscreen_passed = fullscreen_report["status"] == "passed"
     lines = [
         ("Exact package SHA-256: {}".format(candidate_hash), "#f8fafc"),
         ("Archive: 24 allowlisted members and safe paths PASS", "#86efac"),
         ("Native Settings captures: {}/{} complete at 100% application font".format(capture_count, capture_count), "#86efac"),
         ("Initial and restart process, window, filesystem, and sync gates PASS", "#86efac"),
         ("Per-frame layout assertion failures: {}".format(len(failures)), "#fbbf24" if failures else "#86efac"),
-        ("150% application-font capture: UNRUN by request", "#fbbf24"),
+        ("Alternate application-font capture: UNRUN by request", "#fbbf24"),
         ("Windows, Linux, DPR 1, and native OS scaling: UNRUN · RELEASE BLOCKED", "#f87171"),
-        ("macOS fullscreen Space-switch acceptance: UNRUN · RELEASE BLOCKED", "#f87171"),
+        (
+            "macOS full-screen menu + Dashboard gear: NO DESKTOP/SPACE SWITCH · PASS"
+            if fullscreen_passed
+            else "macOS full-screen menu + Dashboard gear: UNRUN BY USER DIRECTION · RELEASE BLOCKED",
+            "#86efac" if fullscreen_passed else "#f87171",
+        ),
         ("This sheet set is review evidence, not release approval.", "#f8fafc"),
     ]
     y = 145
@@ -212,7 +336,17 @@ def _make_sheets(
     selected: Sequence[str],
     candidate_hash: str,
     failures: Mapping[str, Any],
+    fullscreen_report: Mapping[str, Any],
 ) -> dict[str, Any]:
+    quality_status = (
+        "review-failed"
+        if failures
+        else (
+            "review-complete-nonrelease"
+            if fullscreen_report["status"] == "passed"
+            else "review-incomplete-nonrelease"
+        )
+    )
     overview = CAPTURE_PLAN.presentation["overview"]
     sheets = [
         make_capture_sheet(
@@ -268,7 +402,13 @@ def _make_sheets(
             candidate_hash=candidate_hash,
             capture_count=len(selected),
             failures=failures,
+            fullscreen_report=fullscreen_report,
         )
+    )
+    maximum_sheets = int(CAPTURE_PLAN.profile("settings")["maximum_contact_sheets"])
+    require(
+        len(sheets) <= maximum_sheets,
+        "Settings review exceeds its {}-sheet ceiling".format(maximum_sheets),
     )
     index = {
         "schema_version": 2,
@@ -282,16 +422,30 @@ def _make_sheets(
         "capture_detail_sheet_count": detail_number - 1,
         "report_sheet_count": 1,
         "each_native_capture_in_details_exactly_once": True,
-        "quality_status": "review-failed" if failures else "review-complete-nonrelease",
+        "quality_status": quality_status,
         "release_ready": False,
         "settings_assertion_failure_count": len(failures),
+        "manual_fullscreen_acceptance": {
+            "status": fullscreen_report["status"],
+            "opening_paths": sorted(fullscreen_report["opening_paths"]),
+            "desktop_space_switch_regression": fullscreen_report[
+                "desktop_space_switch_regression"
+            ],
+        },
         "sheets": sheets,
     }
     write_json(output / "contact-sheets" / "contact-sheet-index.json", index)
     return index
 
 
-def assemble(run_root: Path, candidate: Path, output: Path) -> dict[str, Any]:
+def assemble(
+    run_root: Path,
+    candidate: Path,
+    fullscreen_report_path: Path,
+    output: Path,
+    *,
+    allow_unrun_fullscreen: bool = False,
+) -> dict[str, Any]:
     run_root = run_root.resolve(strict=True)
     candidate = candidate.resolve(strict=True)
     output = output.resolve()
@@ -303,6 +457,11 @@ def assemble(run_root: Path, candidate: Path, output: Path) -> dict[str, Any]:
     selected = _selected_ids(initial)
     archive = _archive_summary(candidate)
     candidate_hash = str(archive["sha256"])
+    fullscreen_report = _validate_fullscreen_report(
+        fullscreen_report_path,
+        candidate_hash=candidate_hash,
+        allow_unrun=allow_unrun_fullscreen,
+    )
     _validate_report(initial, stage="initial", selected=selected, candidate_hash=candidate_hash)
     _validate_report(restart, stage="restart", selected=selected, candidate_hash=candidate_hash)
     failures: dict[str, Any] = {}
@@ -319,6 +478,7 @@ def assemble(run_root: Path, candidate: Path, output: Path) -> dict[str, Any]:
         reports = staging / "reports"
         reports.mkdir()
         write_json(reports / "archive-inspection.json", archive)
+        write_json(reports / "settings-fullscreen-acceptance.json", fullscreen_report)
         write_json(
             reports / "runtime-report-initial.json",
             redact_evidence_paths(initial, run_root=run_root, candidate=candidate),
@@ -326,6 +486,15 @@ def assemble(run_root: Path, candidate: Path, output: Path) -> dict[str, Any]:
         write_json(
             reports / "runtime-report-restart.json",
             redact_evidence_paths(restart, run_root=run_root, candidate=candidate),
+        )
+        quality_status = (
+            "review-failed"
+            if failures
+            else (
+                "review-complete-nonrelease"
+                if fullscreen_report["status"] == "passed"
+                else "review-incomplete-nonrelease"
+            )
         )
         manifest = {
             "schema_version": 1,
@@ -337,7 +506,8 @@ def assemble(run_root: Path, candidate: Path, output: Path) -> dict[str, Any]:
             "capture_count": len(captures),
             "capture_ids": list(captures),
             "settings_case_failures": failures,
-            "quality_status": "review-failed" if failures else "review-complete-nonrelease",
+            "manual_fullscreen_acceptance": fullscreen_report,
+            "quality_status": quality_status,
             "release_ready": False,
             "captures": captures,
         }
@@ -347,29 +517,44 @@ def assemble(run_root: Path, candidate: Path, output: Path) -> dict[str, Any]:
             selected=selected,
             candidate_hash=candidate_hash,
             failures=failures,
+            fullscreen_report=fullscreen_report,
+        )
+        fullscreen_summary = (
+            "The required exact-package macOS full-screen menu and Dashboard-gear checks "
+            "passed without a desktop or Space switch."
+            if fullscreen_report["status"] == "passed"
+            else "The required exact-package macOS full-screen menu and Dashboard-gear checks "
+            "were skipped by explicit user direction and remain unrun; no desktop/Space-switch "
+            "pass is claimed."
         )
         (staging / "README.md").write_text(
             "# Home Screen Dashboard 1.8.7 Settings review evidence\n\n"
             "This directory contains {} native Settings captures at 100% application font "
             "and {} generated contact sheets for exact package `{}`.\n\n"
-            "It is review evidence, not release approval. The 150% Settings matrix was not "
-            "run by request. Windows, Linux, DPR 1, native OS scaling, and macOS fullscreen "
-            "Space-switch acceptance remain release-blocking and unclaimed. Per-frame failures "
+            "It is visual review evidence, not release approval. {} Alternate-font "
+            "Settings capture was not run by request. Windows, Linux, DPR 1, and native OS scaling remain "
+            "release-blocking and unclaimed. Per-frame failures "
             "are retained in `capture-manifest.json` and the runtime reports.\n".format(
                 len(captures),
                 len(sheets["sheets"]),
                 candidate_hash,
+                fullscreen_summary,
             ),
             encoding="utf-8",
         )
         staging.replace(output)
     return {
-        "status": "assembled-review",
+        "status": (
+            "assembled-review"
+            if fullscreen_report["status"] == "passed"
+            else "assembled-review-incomplete"
+        ),
         "output": str(output),
         "candidate_sha256": candidate_hash,
         "capture_count": len(selected),
         "contact_sheet_count": len(sheets["sheets"]),
         "settings_assertion_failure_count": len(failures),
+        "fullscreen_space_switch_status": fullscreen_report["status"],
         "release_ready": False,
     }
 
@@ -378,10 +563,25 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-root", required=True, type=Path)
     parser.add_argument("--candidate", type=Path, default=DEFAULT_CANDIDATE)
+    parser.add_argument("--fullscreen-report", required=True, type=Path)
+    parser.add_argument(
+        "--allow-unrun-fullscreen",
+        action="store_true",
+        help=(
+            "Assemble explicitly non-release review sheets when the structured "
+            "macOS full-screen acceptance result is unrun"
+        ),
+    )
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args(argv)
     try:
-        result = assemble(args.run_root, args.candidate, args.output)
+        result = assemble(
+            args.run_root,
+            args.candidate,
+            args.fullscreen_report,
+            args.output,
+            allow_unrun_fullscreen=args.allow_unrun_fullscreen,
+        )
     except Exception as exc:
         print("ERROR: {}: {}".format(type(exc).__name__, exc))
         return 1

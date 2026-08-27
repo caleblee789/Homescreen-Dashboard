@@ -49,9 +49,9 @@
     },
     {
       "id": "settings-pages",
-      "count": 24,
-      "id_pattern": "SET-PAGE-{DASHBOARD|EVENTS|BIBLE|ABOUT}-{720|940|FULL}-{100|150}",
-      "requirements": ["responsive-sidebar-or-single-line-tab-row", "same-page-tree", "main-page-scroller", "footer-final-row-fully-onscreen", "native-qt-controls-only", "zero-horizontal-scroll-range", "visible-controls-within-content-viewport", "controls-reflow-at-150-percent"]
+      "count": 12,
+      "id_pattern": "SET-PAGE-{DASHBOARD|EVENTS|BIBLE|ABOUT}-{1080|1280|FULL}-100",
+      "requirements": ["complete-decorated-window", "live-settings-surface-sample-match", "184px-vertical-sidebar", "same-page-tree", "single-page-body-scroller", "fixed-header-and-footer-fully-onscreen", "native-qt-controls-only", "zero-horizontal-scroll-range", "visible-controls-within-content-viewport", "rendered-previews-absent"]
     },
     {
       "id": "settings-contract",
@@ -80,13 +80,13 @@
         "SET-SAVE-SUCCESS",
         "SET-SAVE-ERROR",
         "SET-LEGACY-ROUTE",
-        "SET-WINDOW-STANDARD",
+        "SET-WINDOW-FRESH-OPEN",
         "SET-WINDOW-CLAMP",
         "SET-WINDOW-OFFSCREEN-RESTORE",
         "SET-THEME-LIGHT",
         "SET-THEME-DARK"
       ],
-      "requirements": ["clean-legacy-card-anchor", "independent-about-lead-card-heights", "logical-resizable-decorated-window-clamped", "parented-standard-dialog-exec-lifecycle", "set-window-standard-captures-anki-with-dialog", "native-dashboard-and-verse-previews-without-webengine", "event-row-opens-editor-without-persistent-selection", "complete-verse-model-search", "footer-local-save-feedback", "save-failure-retains-draft-and-enables-retry", "dirty-close-requires-explicit-discard", "settings-light-dark-independent-of-dashboard-mode"]
+      "requirements": ["live-settings-surface-sample-match", "clean-legacy-card-anchor", "about-version-support-privacy-legal-backup-recovery", "logical-resizable-decorated-window-clamped", "parented-standard-dialog-exec-lifecycle", "set-window-fresh-open-captures-anki-with-dialog", "dashboard-verse-swatch-and-heatmap-previews-absent", "event-row-opens-editor-without-persistent-selection", "complete-verse-model-search", "footer-local-save-feedback", "save-failure-retains-draft-and-enables-retry", "dirty-close-requires-explicit-discard", "settings-light-dark-independent-of-dashboard-mode"]
     },
     {
       "id": "statistics-accuracy",
@@ -115,9 +115,9 @@
     }
   ],
   "derived_native_frame_count": {
-    "initial": 104,
+    "initial": 92,
     "restart": 2,
-    "total": 106,
+    "total": 94,
     "derivation": "sum(capture_families.count)"
   },
   "runtime_smoke_requirements": {
@@ -147,7 +147,6 @@
       "settings-events-widths",
       "settings-bible-widths",
       "settings-about-widths",
-      "settings-font-150",
       "settings-events-states",
       "settings-bible-states",
       "settings-save-workflow",
@@ -156,7 +155,7 @@
       "restart-persistence",
       "package-and-isolation-reports"
     ],
-    "detail_sheet_count": 18,
+    "detail_sheet_count": 17,
     "native_scale": "100-percent-capture-pixels"
   },
   "required_automated_gates": [
@@ -176,6 +175,13 @@
     "native-platform-bundle-aggregation",
     "macos-fullscreen-space-switch-acceptance"
   ],
+  "settings_profile_structured_manual_gate": {
+    "id": "macos-fullscreen-no-space-switch-menu-and-dashboard-gear",
+    "required_for_acceptance": true,
+    "adds_png_frames": false,
+    "opening_paths": ["menu", "dashboard-gear"],
+    "required_result": "both paths remain on the native Anki full-screen Space with no desktop switch, including hard-restart recheck"
+  },
   "required_native_platform_profiles": [
     {"host_platform": "windows", "os_scale_percent": 100, "dpr_class": "dpr-1"},
     {"host_platform": "windows", "os_scale_percent": 125, "dpr_class": "native"},
@@ -185,6 +191,10 @@
     {"host_platform": "macos", "os_scale_percent": 100, "dpr_class": "retina"}
   ],
   "deferred_unrun": [
+    "windows-native-settings-validation",
+    "linux-native-settings-validation",
+    "alternate-os-scaling-settings-validation",
+    "alternate-application-font-settings-validation",
     "voiceover_review",
     "forced_colors_review"
   ]

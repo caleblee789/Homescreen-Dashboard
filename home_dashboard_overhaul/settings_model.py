@@ -32,10 +32,11 @@ HISTORY_RANGE_VALUES = (
     HISTORY_RANGE_CUSTOM,
 )
 
-SETTINGS_DEFAULT_SIZE = (940, 680)
-SETTINGS_MINIMUM_SIZE = (720, 520)
-SETTINGS_MAXIMUM_WIDTH_RATIO = .92
-SETTINGS_MAXIMUM_HEIGHT_RATIO = .88
+SETTINGS_DEFAULT_SIZE = (1080, 760)
+SETTINGS_MINIMUM_SIZE = (920, 640)
+SETTINGS_NORMAL_SCREEN_MARGIN = 48
+SETTINGS_SMALL_SCREEN_MARGIN = 24
+SETTINGS_MINIMUM_VISIBLE_RATIO = .80
 
 
 def history_range_choice(history_days: object, ignore_before: object) -> str:
@@ -70,17 +71,28 @@ def clamp_window_size(
     *,
     default: Tuple[int, int] = SETTINGS_DEFAULT_SIZE,
     minimum: Tuple[int, int] = SETTINGS_MINIMUM_SIZE,
-    maximum_width_ratio: float = SETTINGS_MAXIMUM_WIDTH_RATIO,
-    maximum_height_ratio: float = SETTINGS_MAXIMUM_HEIGHT_RATIO,
+    normal_margin: int = SETTINGS_NORMAL_SCREEN_MARGIN,
+    small_screen_margin: int = SETTINGS_SMALL_SCREEN_MARGIN,
 ) -> Tuple[int, int]:
-    """Clamp a logical requested size to the usable portion of one screen."""
+    """Clamp a logical size while retaining deliberate screen margins.
+
+    Normal desktop screens reserve ``normal_margin`` on every edge.  When that
+    cannot accommodate the normal minimum, the dialog uses the emergency
+    fallback and reserves ``small_screen_margin`` on every edge instead.
+    """
 
     try:
         available_width, available_height = (int(available[0]), int(available[1]))
     except (TypeError, ValueError, IndexError):
         available_width, available_height = default
-    maximum_width = max(1, int(available_width * maximum_width_ratio))
-    maximum_height = max(1, int(available_height * maximum_height_ratio))
+    available_width = max(1, available_width)
+    available_height = max(1, available_height)
+    normal_width = max(1, available_width - (2 * normal_margin))
+    normal_height = max(1, available_height - (2 * normal_margin))
+    normal_screen = normal_width >= minimum[0] and normal_height >= minimum[1]
+    margin = normal_margin if normal_screen else small_screen_margin
+    maximum_width = max(1, available_width - (2 * margin))
+    maximum_height = max(1, available_height - (2 * margin))
     try:
         requested_width, requested_height = (
             int(requested[0]), int(requested[1])  # type: ignore[index]
@@ -93,6 +105,98 @@ def clamp_window_size(
         min(maximum_width, max(minimum_width, requested_width)),
         min(maximum_height, max(minimum_height, requested_height)),
     )
+
+
+def settings_screen_uses_compact_fallback(
+    available: Sequence[int],
+    *,
+    minimum: Tuple[int, int] = SETTINGS_MINIMUM_SIZE,
+    normal_margin: int = SETTINGS_NORMAL_SCREEN_MARGIN,
+) -> bool:
+    """Return whether a screen cannot host the normal shell and 48 px margins."""
+
+    try:
+        width, height = int(available[0]), int(available[1])
+    except (TypeError, ValueError, IndexError):
+        return False
+    return (
+        width - (2 * normal_margin) < minimum[0]
+        or height - (2 * normal_margin) < minimum[1]
+    )
+
+
+def visible_geometry_ratio(requested: object, screens: Sequence[Sequence[int]]) -> float:
+    """Return the fraction of a logical rectangle visible on connected screens."""
+
+    try:
+        x, y, width, height = (
+            int(requested[0]),  # type: ignore[index]
+            int(requested[1]),  # type: ignore[index]
+            int(requested[2]),  # type: ignore[index]
+            int(requested[3]),  # type: ignore[index]
+        )
+    except (TypeError, ValueError, IndexError):
+        return 0.0
+    if width <= 0 or height <= 0:
+        return 0.0
+    visible_area = 0
+    for raw_screen in screens:
+        try:
+            screen_x, screen_y, screen_width, screen_height = (
+                int(raw_screen[0]),
+                int(raw_screen[1]),
+                int(raw_screen[2]),
+                int(raw_screen[3]),
+            )
+        except (TypeError, ValueError, IndexError):
+            continue
+        intersection_width = max(
+            0,
+            min(x + width, screen_x + max(0, screen_width)) - max(x, screen_x),
+        )
+        intersection_height = max(
+            0,
+            min(y + height, screen_y + max(0, screen_height)) - max(y, screen_y),
+        )
+        visible_area += intersection_width * intersection_height
+    return min(1.0, visible_area / float(width * height))
+
+
+def saved_window_geometry_is_valid(
+    requested: object,
+    screens: Sequence[Sequence[int]],
+    *,
+    saved_screen_exists: bool = True,
+    minimum: Tuple[int, int] = SETTINGS_MINIMUM_SIZE,
+    visible_ratio: float = SETTINGS_MINIMUM_VISIBLE_RATIO,
+) -> bool:
+    """Validate a v3 normal-window rectangle before it can be restored."""
+
+    if not saved_screen_exists:
+        return False
+    try:
+        width, height = int(requested[2]), int(requested[3])  # type: ignore[index]
+    except (TypeError, ValueError, IndexError):
+        return False
+    if width < minimum[0] or height < minimum[1]:
+        return False
+    valid_screens = []
+    for screen in screens:
+        try:
+            parsed = tuple(int(screen[index]) for index in range(4))
+        except (TypeError, ValueError, IndexError):
+            continue
+        if parsed[2] > 0 and parsed[3] > 0:
+            valid_screens.append(parsed)
+    if not valid_screens:
+        return False
+    left = min(screen[0] for screen in valid_screens)
+    top = min(screen[1] for screen in valid_screens)
+    right = max(screen[0] + screen[2] for screen in valid_screens)
+    bottom = max(screen[1] + screen[3] for screen in valid_screens)
+    if width > right - left or height > bottom - top:
+        return False
+    return visible_geometry_ratio(requested, valid_screens) >= visible_ratio
 
 
 def clamp_window_geometry(
@@ -143,6 +247,19 @@ def clamp_window_geometry(
         default=default,
         minimum=minimum,
     )
+    compact_fallback = settings_screen_uses_compact_fallback(
+        (screen_width, screen_height),
+        minimum=minimum,
+    )
+    margin = (
+        SETTINGS_SMALL_SCREEN_MARGIN
+        if compact_fallback
+        else SETTINGS_NORMAL_SCREEN_MARGIN
+    )
+    left = screen_x + margin
+    top = screen_y + margin
+    right = max(left, screen_x + screen_width - margin - width)
+    bottom = max(top, screen_y + screen_height - margin - height)
     center_x = requested_x + requested_width // 2
     center_y = requested_y + requested_height // 2
     saved_screen_is_current = (
@@ -152,8 +269,8 @@ def clamp_window_geometry(
     )
 
     if saved_screen_is_current:
-        x = min(max(requested_x, screen_x), screen_x + screen_width - width)
-        y = min(max(requested_y, screen_y), screen_y + screen_height - height)
+        x = min(max(requested_x, left), right)
+        y = min(max(requested_y, top), bottom)
         return x, y, width, height
 
     try:
@@ -177,12 +294,12 @@ def clamp_window_geometry(
         parent_center_x = screen_x + screen_width // 2
         parent_center_y = screen_y + screen_height // 2
     x = min(
-        max(parent_center_x - width // 2, screen_x),
-        screen_x + screen_width - width,
+        max(parent_center_x - width // 2, left),
+        right,
     )
     y = min(
-        max(parent_center_y - height // 2, screen_y),
-        screen_y + screen_height - height,
+        max(parent_center_y - height // 2, top),
+        bottom,
     )
     return x, y, width, height
 

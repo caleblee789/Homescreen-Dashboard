@@ -404,12 +404,13 @@ def validate_sources() -> dict:
             "self._content_stack.setCurrentWidget(prompt)",
             "def reject(self) -> None:", "def closeEvent(self, event: Any) -> None:",
             "action.triggered.connect(controller.open_settings)",
-            "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)", "self.sidebar_panel.setFixedWidth(152)",
-            "self.compact_nav = QTabBar", "SETTINGS_COMPACT_BODY_WIDTH = 760",
-            "SETTINGS_PAGE_MAX_WIDTH = 940", "ScrollBarAlwaysOff",
+            "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)", "self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)",
+            "self.compact_nav = QTabBar", "SETTINGS_COMPACT_BODY_WIDTH = 820",
+            "SETTINGS_PAGE_MAX_WIDTH = 980", "SETTINGS_HEADER_HEIGHT = 72",
+            "SETTINGS_FOOTER_MIN_HEIGHT = 60", "ScrollBarAlwaysOff",
             "host = grid.parentWidget()", "widget.setParent(host)",
             "widget.show()", "if not widget.isHidden():",
-            'selected_indicator = QLabel("✓", button)',
+            "self.heatmap_preset = QComboBox()", "def _refresh_heatmap_preset_options",
             "def _connect_change_signals(self) -> None:",
             "def _settings_changed(self, *_args: object) -> None:",
             'SettingsCard("Study metrics", "", "Reset")', '"Calendar display",',
@@ -417,8 +418,9 @@ def validate_sources() -> dict:
             "class EventRowWidget", "class VerseLibraryModel", "class VerseLibraryDelegate",
             "def _attach_event_menu", 'self.revert_button = QPushButton("Discard changes")',
             "class SettingsFooter", 'self.error_label.setObjectName("InlineSaveError")',
-            "Couldn’t save settings. Your changes are still available. Try again.",
-            "scope_differs_from_defaults", "DashboardCardPreview", "VerseCardPreview",
+            "Save failed. Your changes are still available.",
+            "scope_differs_from_defaults", 'SettingsCard("Version and support")',
+            'SettingsCard("Privacy and legal")',
         ),
         "web/dashboard.js": (
             "function buildCalendarTooltipRows", "function getSelectedDateCapabilities",
@@ -470,27 +472,11 @@ def validate_sources() -> dict:
         raise ValueError(
             "Settings grid fields must be parented before show and visibility filtering"
         )
-    heatmap_refresh_source = dialog_source.split(
-        "    def _refresh_heatmap_preset_cards(", 1
-    )[1].split("    def _update_color_swatch", 1)[0]
-    heatmap_markers = (
-        'selected_indicator = QLabel("✓", button)',
-        "swatches.addWidget(selected_indicator)",
-        "selected_indicator.setVisible(preset_name == selected)",
-    )
-    if not (
-        heatmap_refresh_source.index(heatmap_markers[0])
-        < heatmap_refresh_source.index(heatmap_markers[1])
-        < heatmap_refresh_source.index(heatmap_markers[2])
-    ):
-        raise ValueError(
-            "Settings heatmap indicator must be parented before visibility changes"
-        )
     apply_theme_source = dialog_source.split("    def _apply_theme(", 1)[1].split(
         "    def _update_forecast_range_visibility", 1
     )[0]
-    if "self._refresh_heatmap_preset_cards()" in apply_theme_source:
-        raise ValueError("generic Settings synchronization must not rebuild heatmap cards")
+    if "self._refresh_heatmap_preset_options()" in apply_theme_source:
+        raise ValueError("generic Settings synchronization must not rebuild heatmap options")
     for forbidden in (
         "clamp_window_size", "self.screen()", "self.move(", "setWindowModality", "setModal(",
         "def showEvent", "AnkiWebView", "QWebEngine", "raise_()",
@@ -541,6 +527,8 @@ def validate_sources() -> dict:
     for retired in (
         "AnkiWebView", "aqt.webview", "stdHtml", "focusChanged",
         "PreviewDock", "_schedule_preview", "_render_preview", "_open_full_preview",
+        "DashboardCardPreview", "VerseCardPreview", "HeatmapPresetCard",
+        "heatmap_preset_cards", "preset_swatch",
     ):
         if retired in sources["settings.py"]:
             raise ValueError("retired Settings preview behavior remains: {}".format(retired))
@@ -596,32 +584,37 @@ def validate_sources() -> dict:
         raise ValueError("focused Settings contract must match the manifest version")
     if (
         settings_window_contract.get("reference_addons") != ["Progress Bar", "PronounceIt"]
-        or settings_window_contract.get("minimum_size") != [720, 520]
-        or settings_window_contract.get("default_size") != [940, 680]
-        or settings_window_contract.get("initial_size_caps")
-        != {"available_width_ratio": .92, "available_height_ratio": .88}
+        or settings_window_contract.get("minimum_size") != [920, 640]
+        or settings_window_contract.get("default_size") != [1080, 760]
+        or settings_window_contract.get("screen_margins")
+        != {"normal": 48, "small_screen_fallback": 24}
+        or settings_window_contract.get("minimum_saved_visible_ratio") != .8
         or settings_window_contract.get("native_window") is not True
         or settings_window_contract.get("logical_coordinates") is not True
         or settings_window_contract.get("movable") is not True
         or settings_window_contract.get("resizable") is not True
         or settings_window_contract.get("default_window_flags") is not True
         or settings_window_contract.get("initial_placement")
-        != "restored logical QRect clamped to active screen or centered on parent before first visibility"
+        != "restore a valid logical v3 QRect on its connected screen or center on the active parent screen before first visibility"
         or settings_window_contract.get("pre_exec_geometry") is not True
         or settings_window_contract.get("reposition_after_open") is not False
         or settings_window_contract.get("saved_geometry")
-        != "versioned UI-only QSettings non-maximized QRect"
+        != "versioned UI-only QSettings normal logical QRect plus screen identity; reject undersized offscreen disconnected and compact records"
         or settings_window_contract.get("geometry_key")
-        != "home_dashboard_overhaul/settings_dialog_geometry/v2"
+        != "home_dashboard_overhaul/settings_dialog_geometry/v3"
+        or settings_window_contract.get("geometry_screen_key")
+        != "home_dashboard_overhaul/settings_dialog_geometry/v3_screen"
         or settings_window_contract.get("active_screen_order")
         != ["parent window handle", "screen containing parent center", "primary screen"]
-        or settings_window_contract.get("shell_maximum_width") != 1120
-        or settings_window_contract.get("page_maximum_width") != 940
-        or settings_window_contract.get("rail_width") != 152
-        or settings_window_contract.get("rail_gap") != 24
-        or settings_window_contract.get("dynamic_badge_mount")
-        != "parent heatmap indicators before visibility changes; verse rows use one delegate"
-        or settings_window_contract.get("generic_theme_sync_rebuilds_heatmap") is not False
+        or settings_window_contract.get("shell_maximum_width") != 1240
+        or settings_window_contract.get("page_maximum_width") != 980
+        or settings_window_contract.get("rail_width") != 184
+        or settings_window_contract.get("header_height") != 72
+        or settings_window_contract.get("footer_height") != 60
+        or settings_window_contract.get("rendered_previews")
+        != "none; dashboard verse palette swatch and heatmap preview surfaces are absent"
+        or settings_window_contract.get("settings_profile_acceptance_gate")
+        != "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 41 PNGs cannot satisfy or waive this gate"
         or settings_window_contract.get("programmatic_lifecycle_focus") is not False
         or settings_window_contract.get("retained_dialog_object") is not False
     ):
@@ -639,8 +632,31 @@ def validate_sources() -> dict:
     wide_counts = capture_plan.counts("wide-100")
     if not (0 < wide_counts["initial"] <= full_counts["initial"] and wide_counts["restart"] <= full_counts["restart"]):
         raise ValueError("wide 100 percent profile is not a valid subset of the full capture plan")
-    if full_counts != {"initial": 104, "restart": 2, "total": 106}:
-        raise ValueError("corrected 1.8.7 full capture count must be 106")
+    if full_counts != {"initial": 92, "restart": 2, "total": 94}:
+        raise ValueError("corrected 1.8.7 full capture count must be 94")
+    settings_counts = capture_plan.counts("settings")
+    if settings_counts != {"initial": 40, "restart": 1, "total": 41}:
+        raise ValueError("minimal 1.8.7 Settings capture count must be exactly 41")
+    if 2 + len(capture_plan.detail_groups("settings")) > 11:
+        raise ValueError("minimal 1.8.7 Settings evidence exceeds 11 sheets")
+    structured_gate_id = "macos-fullscreen-no-space-switch-menu-and-dashboard-gear"
+    if capture_plan.profile("settings").get("required_structured_manual_results") != [
+        structured_gate_id
+    ]:
+        raise ValueError("minimal Settings profile lacks its full-screen no-switch gate")
+    if capture_contract.get("settings_profile_structured_manual_gate") != {
+        "id": structured_gate_id,
+        "required_for_acceptance": True,
+        "adds_png_frames": False,
+        "opening_paths": ["menu", "dashboard-gear"],
+        "required_result": "both paths remain on the native Anki full-screen Space with no desktop switch, including hard-restart recheck",
+    }:
+        raise ValueError("Settings full-screen structured acceptance contract drifted")
+    if (
+        "macos-fullscreen-menu-and-dashboard-gear-open-without-desktop-space-switch"
+        not in visual_matrix.get("settings_quality_assertions", [])
+    ):
+        raise ValueError("visual matrix does not prevent the desktop/Space-switch regression")
     if capture_contract.get("required_native_platform_profiles") != capture_plan.raw.get("native_platform_matrix"):
         raise ValueError("release-blocking native platform matrix drifted")
 

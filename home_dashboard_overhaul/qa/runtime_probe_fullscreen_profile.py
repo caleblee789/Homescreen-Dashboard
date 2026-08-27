@@ -109,7 +109,7 @@ def _prepare_settings_case(case: Mapping[str, Any]) -> Any:
         "capture display cannot support the wide Settings profile with safe margins",
     )
     special = str(case.get("special", ""))
-    if special in {"window-standard", "window-clamp"}:
+    if special in {"window-fresh-open", "window-clamp"}:
         dialog.setMaximumSize(16777215, 16777215)
         dialog.resize(target_width, target_height)
     else:
@@ -145,7 +145,7 @@ def _capture_settings(
     base._require(bool(mw.isFullScreen()), "Settings parent lost fullscreen state")
     base._require(state.get("font_percent") == 100, "Settings capture is not 100 percent text")
     base._require(state.get("display_class") == "wide", "Settings capture is not wide")
-    if str(case.get("special", "")) == "window-standard":
+    if str(case.get("special", "")) == "window-fresh-open":
         _release_capture_settings(dialog, case, state)
         record = base.REPORT["captures"][str(case["id"])]
         record["capture_profile"] = PROFILE_ID

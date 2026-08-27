@@ -63,12 +63,12 @@ def _validate_palette_matrix(errors: List[str], matrix: Mapping[str, Any]) -> No
     axes = matrix.get("settings_page_axes", {})
     if axes != {
         "page": ["dashboard", "events", "bible_verse", "about_support"],
-        "window_width": [720, 940, "full-screen"],
-        "application_font_percent": [100, 150],
+        "window_width": [1080, 1280, "full-screen"],
+        "application_font_percent": [100],
     }:
-        errors.append("Settings page axes must use 720, 940, full-screen and 100/150 percent")
-    if matrix.get("settings_page_case_count") != 24:
-        errors.append("Settings page matrix must contain 24 derived cases")
+        errors.append("Settings page axes must use 1080, 1280, full-screen and 100 percent")
+    if matrix.get("settings_page_case_count") != 12:
+        errors.append("Settings page matrix must contain 12 derived cases")
 
 
 def validate(root: Path = ROOT) -> List[str]:
@@ -105,14 +105,16 @@ def validate(root: Path = ROOT) -> List[str]:
 
     settings = surface.get("settings_architecture", {})
     expected_settings = {
-        "default_window": [940, 680],
-        "minimum_normal_window": [720, 520],
-        "initial_available_geometry_caps": {"width": .92, "height": .88},
-        "maximum_inner_width": 1120,
-        "maximum_page_width": 940,
-        "rail_width": 152,
-        "rail_to_page_gap": 24,
-        "compact_navigation_threshold": 760,
+        "default_window": [1080, 760],
+        "minimum_normal_window": [920, 640],
+        "screen_margins": {"normal": 48, "small_screen_fallback": 24},
+        "minimum_saved_visible_ratio": .8,
+        "maximum_inner_width": 1240,
+        "maximum_page_width": 980,
+        "rail_width": 184,
+        "fixed_header_height": 72,
+        "fixed_footer_height": 60,
+        "compact_navigation_threshold": 820,
     }
     if not isinstance(settings, Mapping) or any(settings.get(key) != value for key, value in expected_settings.items()):
         errors.append("native Settings geometry and responsive architecture drifted")
@@ -140,17 +142,64 @@ def validate(root: Path = ROOT) -> List[str]:
         derived = capture.get("derived_native_frame_count", {})
         if {key: derived.get(key) for key in ("initial", "restart", "total")} != plan.counts("full"):
             errors.append("derived native frame counts differ from the declarative plan")
-        if plan.counts("full") != {"initial": 104, "restart": 2, "total": 106}:
-            errors.append("corrected full capture plan must contain 106 frames")
+        if plan.counts("full") != {"initial": 92, "restart": 2, "total": 94}:
+            errors.append("corrected full capture plan must contain 94 frames")
+        if plan.counts("settings") != {"initial": 40, "restart": 1, "total": 41}:
+            errors.append("minimal Settings capture plan must contain exactly 41 frames")
+        if 2 + len(plan.detail_groups("settings")) > 11:
+            errors.append("minimal Settings capture plan exceeds 11 sheets")
+        required_manual_results = [
+            "macos-fullscreen-no-space-switch-menu-and-dashboard-gear"
+        ]
+        if (
+            plan.profile("settings").get("required_structured_manual_results")
+            != required_manual_results
+        ):
+            errors.append("Settings profile does not require the no-Space-switch result")
+        gate = capture.get("settings_profile_structured_manual_gate")
+        if gate != {
+            "id": required_manual_results[0],
+            "required_for_acceptance": True,
+            "adds_png_frames": False,
+            "opening_paths": ["menu", "dashboard-gear"],
+            "required_result": "both paths remain on the native Anki full-screen Space with no desktop switch, including hard-restart recheck",
+        }:
+            errors.append("Settings structured full-screen acceptance gate drifted")
+        if (
+            "macos-fullscreen-menu-and-dashboard-gear-open-without-desktop-space-switch"
+            not in matrix.get("settings_quality_assertions", [])
+        ):
+            errors.append("visual matrix does not prohibit the desktop/Space-switch regression")
+        if (
+            "every-png-sample-matches-live-settings-surface"
+            not in matrix.get("settings_quality_assertions", [])
+        ):
+            errors.append("visual matrix does not reject background-only Settings PNGs")
+        settings_families = {
+            item.get("id"): item
+            for item in capture.get("capture_families", [])
+        }
+        for family_id in ("settings-pages", "settings-contract"):
+            if "live-settings-surface-sample-match" not in settings_families.get(
+                family_id, {}
+            ).get("requirements", []):
+                errors.append("{} lacks live Settings surface verification".format(family_id))
         platform_matrix = plan.raw.get("native_platform_matrix")
         if capture.get("required_native_platform_profiles") != platform_matrix:
             errors.append("capture platform matrix differs from the execution plan")
         if matrix.get("required_native_platform_profiles") != platform_matrix:
             errors.append("visual platform matrix differs from the execution plan")
 
-    expected_unrun = {"voiceover_review", "forced_colors_review"}
+    expected_unrun = {
+        "windows-native-settings-validation",
+        "linux-native-settings-validation",
+        "alternate-os-scaling-settings-validation",
+        "alternate-application-font-settings-validation",
+        "voiceover_review",
+        "forced_colors_review",
+    }
     if set(capture.get("deferred_unrun", [])) != expected_unrun:
-        errors.append("only VoiceOver and forced colors may remain nonblocking")
+        errors.append("Settings unrun gates are not explicit")
     if set(matrix.get("deferred_unrun", [])) != expected_unrun:
         errors.append("visual nonblocking boundaries are incorrect")
     if capture.get("status") != "required-before-release":
@@ -160,10 +209,14 @@ def validate(root: Path = ROOT) -> List[str]:
         'self.setWindowTitle("Home Screen Dashboard Settings")',
         "self.setMinimumSize(*SETTINGS_MINIMUM_SIZE)",
         "self._apply_initial_window_geometry(parent)",
-        "clamp_window_geometry(saved, available, parent=parent_rect)",
+        "saved_valid = saved_window_geometry_is_valid(",
+        "SETTINGS_GEOMETRY_SCREEN_KEY",
         "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)",
-        "SETTINGS_PAGE_MAX_WIDTH = 940",
-        "SETTINGS_COMPACT_BODY_WIDTH = 760",
+        "SETTINGS_PAGE_MAX_WIDTH = 980",
+        "SETTINGS_COMPACT_BODY_WIDTH = 820",
+        "SETTINGS_SIDEBAR_WIDTH = 184",
+        "SETTINGS_HEADER_HEIGHT = 72",
+        "SETTINGS_FOOTER_MIN_HEIGHT = 60",
         "self.compact_nav = QTabBar",
         "ScrollBarPolicy.ScrollBarAlwaysOff",
         "class SettingsFooter(QWidget)",
@@ -171,10 +224,10 @@ def validate(root: Path = ROOT) -> List[str]:
         "class DisclosureHeader(QPushButton)",
         "class VerseLibraryModel(QAbstractListModel)",
         "class VerseLibraryDelegate(QStyledItemDelegate)",
-        "DashboardCardPreview",
-        "VerseCardPreview",
+        "self.heatmap_preset = QComboBox()",
+        'SettingsCard("Version and support")',
         "scope_differs_from_defaults",
-        "Couldn’t save settings. Your changes are still available. Try again.",
+        "Save failed. Your changes are still available.",
         '"Discard unsaved changes?"',
         '("Keep editing", "primary"',
         '("Discard and close", "danger"',
@@ -183,8 +236,11 @@ def validate(root: Path = ROOT) -> List[str]:
         '"Export verse edits"',
     ))
     _require_markers(errors, "settings_model.py", (
-        "SETTINGS_DEFAULT_SIZE = (940, 680)",
-        "SETTINGS_MINIMUM_SIZE = (720, 520)",
+        "SETTINGS_DEFAULT_SIZE = (1080, 760)",
+        "SETTINGS_MINIMUM_SIZE = (920, 640)",
+        "SETTINGS_NORMAL_SCREEN_MARGIN = 48",
+        "SETTINGS_SMALL_SCREEN_MARGIN = 24",
+        "def saved_window_geometry_is_valid(",
         "def clamp_window_geometry(",
         "def scope_differs_from_defaults(",
         '"calendar_display": (',
@@ -218,6 +274,11 @@ def validate(root: Path = ROOT) -> List[str]:
         "activateWindow()",
         "AnkiWebView",
         "QWebEngine",
+        "DashboardCardPreview",
+        "VerseCardPreview",
+        "HeatmapPresetCard",
+        "heatmap_preset_cards",
+        "preset_swatch",
         "class VerseRowWidget",
         "Showing 100",
         "LOAD_MORE_BATCH",

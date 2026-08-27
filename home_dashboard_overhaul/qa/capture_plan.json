@@ -33,11 +33,17 @@
     },
     {
       "id": "settings",
-      "description": "All Settings pages, interaction states, and Settings restart persistence.",
+      "description": "Minimal native Settings acceptance: exactly 41 captures at 100 percent application font, including restart persistence.",
       "output_directory": "hdo-settings-evidence-1.8.7",
       "families": ["settings-pages", "settings-contract", "restart"],
       "components": ["settings"],
-      "full_screen": false
+      "full_screen": false,
+      "expected_capture_counts": {"initial": 40, "restart": 1, "total": 41},
+    "maximum_contact_sheets": 11,
+    "required_application_font_percent": 100,
+    "required_structured_manual_results": [
+      "macos-fullscreen-no-space-switch-menu-and-dashboard-gear"
+    ]
     },
     {
       "id": "wide-100",
@@ -170,19 +176,18 @@
         {"id": "ABOUT", "page": "about_support", "sheet_group": "settings-about-widths"}
       ],
       "widths": [
-        {"id": "720", "value": 720},
-        {"id": "940", "value": 940},
-        {"id": "FULL", "value": "full"}
-      ],
-      "font_percents": [100, 150],
-      "large_font_sheet_group": "settings-font-150"
+      {"id": "1080", "value": 1080},
+      {"id": "1280", "value": 1280},
+      {"id": "FULL", "value": "full"}
+    ],
+    "font_percents": [100]
     },
     {
       "id": "settings-contract",
       "stage": "initial",
       "component": "settings",
       "defaults": {
-        "width": 940,
+      "width": 1080,
         "font_percent": 100,
         "anki_theme": "dark",
         "host_platform": "native",
@@ -213,7 +218,7 @@
         {"id": "SET-SAVE-SUCCESS", "page": "dashboard", "special": "save-success", "sheet_group": "settings-save-workflow"},
         {"id": "SET-SAVE-ERROR", "page": "dashboard", "special": "save-error-production", "sheet_group": "settings-save-workflow"},
         {"id": "SET-LEGACY-ROUTE", "page": "calendar", "special": "legacy-route", "sheet_group": "settings-window-route"},
-        {"id": "SET-WINDOW-STANDARD", "page": "dashboard", "special": "window-standard", "sheet_group": "settings-window-route"},
+      {"id": "SET-WINDOW-FRESH-OPEN", "page": "dashboard", "special": "window-fresh-open", "sheet_group": "settings-window-route"},
         {"id": "SET-WINDOW-CLAMP", "page": "dashboard", "special": "window-clamp", "sheet_group": "settings-window-route"},
         {"id": "SET-WINDOW-OFFSCREEN-RESTORE", "page": "dashboard", "special": "window-offscreen-restore", "sheet_group": "settings-window-route"},
         {"id": "SET-THEME-LIGHT", "page": "dashboard", "special": "anki-light", "anki_theme": "light", "sheet_group": "settings-window-route"},
@@ -277,7 +282,7 @@
           "id": "SET-RESTART-PERSISTENCE",
           "component": "settings",
           "page": "dashboard",
-          "width": 940,
+        "width": 1080,
           "font_percent": 100,
           "anki_theme": "dark",
           "host_platform": "native",
@@ -304,11 +309,10 @@
       {"id": "settings-events-widths", "title": "Settings Events · 100% application font"},
       {"id": "settings-bible-widths", "title": "Settings Bible verse · 100% application font"},
       {"id": "settings-about-widths", "title": "Settings About · 100% application font"},
-      {"id": "settings-font-150", "title": "Settings pages · 150% application font"},
       {"id": "settings-events-states", "title": "Settings Events states"},
       {"id": "settings-bible-states", "title": "Settings Bible states"},
       {"id": "settings-save-workflow", "title": "Settings dirty, discard, save, and error"},
-      {"id": "settings-window-route", "title": "Settings About bottom, legacy route, standard window, and clamp"},
+      {"id": "settings-window-route", "title": "Settings About bottom, legacy route, fresh open, and clamp"},
       {"id": "statistics-accuracy", "title": "Statistics accuracy · responsive shells"},
       {"id": "restart-persistence", "title": "Controlled restart persistence"}
     ]

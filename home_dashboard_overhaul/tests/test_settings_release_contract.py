@@ -56,6 +56,14 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertEqual(self.settings_window_contract["release"], "1.8.7")
         self.assertEqual(self.settings_window_contract["schema_version"], 8)
         self.assertEqual(
+            self.settings_window_contract["settings_profile_acceptance_gate"],
+            "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 41 PNGs cannot satisfy or waive this gate",
+        )
+        self.assertEqual(
+            self.settings_window_contract["capture_surface_verification"],
+            "every PNG must sample-match the live Settings client so a same-sized Dashboard background cannot pass; all 12 page captures must use the complete decorated native Settings frame",
+        )
+        self.assertEqual(
             self.settings_window_contract["pages"],
             ["dashboard", "events", "bible_verse", "about_support"],
         )
@@ -114,20 +122,23 @@ class SettingsReleaseContractTests(unittest.TestCase):
     def test_settings_use_one_canonical_native_shell(self) -> None:
         for marker in (
             "class SettingsDialog(QDialog):",
-            "SETTINGS_SHELL_MAX_WIDTH = 1120",
-            "SETTINGS_PAGE_MAX_WIDTH = 940",
-            "SETTINGS_COMPACT_BODY_WIDTH = 760",
-            "SETTINGS_PREVIEW_WIDTH = 900",
+            "SETTINGS_SHELL_MAX_WIDTH = 1240",
+            "SETTINGS_PAGE_MAX_WIDTH = 980",
+            "SETTINGS_COMPACT_BODY_WIDTH = 820",
+            "SETTINGS_SIDEBAR_WIDTH = 184",
+            "SETTINGS_HEADER_HEIGHT = 72",
+            "SETTINGS_FOOTER_MIN_HEIGHT = 60",
             "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)",
             "self.settings_shell.setSizePolicy(",
             "self._update_settings_shell_margins()",
             "inset = max(0, (self.width() - SETTINGS_SHELL_MAX_WIDTH) // 2)",
-            "self.sidebar_panel.setFixedWidth(152)",
-            "self.body_grid.setHorizontalSpacing(24)",
+            "self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)",
+            "self.header_stack.setFixedHeight(SETTINGS_HEADER_HEIGHT)",
+            "outer.addWidget(self.sidebar_panel, 0, 0, 3, 1)",
             "outer.setRowStretch(1, 1)",
-            "outer.addWidget(self.header_shell, 0, 0)",
-            "outer.addWidget(self.body_shell, 1, 0)",
-            "outer.addWidget(self.footer_shell, 2, 0)",
+            "outer.addWidget(self.header_shell, 0, 1)",
+            "outer.addWidget(self.body_shell, 1, 1)",
+            "outer.addWidget(self.footer_shell, 2, 1)",
             "scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
             "page.setMaximumWidth(SETTINGS_PAGE_MAX_WIDTH)",
             'self._add_page("dashboard", page)',
@@ -158,11 +169,14 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'self.setWindowTitle("Home Screen Dashboard Settings")',
             "self.setMinimumSize(*SETTINGS_MINIMUM_SIZE)",
             "self._apply_initial_window_geometry(parent)",
-            "SETTINGS_GEOMETRY_KEY = \"home_dashboard_overhaul/settings_dialog_geometry/v2\"",
+            "SETTINGS_GEOMETRY_KEY = \"home_dashboard_overhaul/settings_dialog_geometry/v3\"",
+            "SETTINGS_GEOMETRY_SCREEN_KEY = \"home_dashboard_overhaul/settings_dialog_geometry/v3_screen\"",
             "saved = self._rect_tuple(self._geometry_settings.value(SETTINGS_GEOMETRY_KEY))",
-            "geometry = clamp_window_geometry(saved, available, parent=parent_rect)",
+            "saved_valid = saved_window_geometry_is_valid(",
+            "geometry = clamp_window_geometry(",
             "self.setGeometry(QRect(*geometry))",
-            "rect = self.normalGeometry() if self.isMaximized() else self.geometry()",
+            "or self.isMaximized()",
+            "or self.isFullScreen()",
             "self._settle_initial_scroll_top()",
         ):
             self.assertIn(marker, self.settings)
@@ -233,20 +247,42 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired_window_marker, self.settings)
         self.assertNotIn("settingsWindowSize", json.dumps(self.config))
-        self.assertEqual(self.settings_window_contract["minimum_size"], [720, 520])
-        self.assertEqual(self.settings_window_contract["default_size"], [940, 680])
+        self.assertEqual(self.settings_window_contract["minimum_size"], [920, 640])
+        self.assertEqual(self.settings_window_contract["default_size"], [1080, 760])
         self.assertEqual(
-            self.settings_window_contract["initial_size_caps"],
-            {"available_width_ratio": 0.92, "available_height_ratio": 0.88},
+            self.settings_window_contract["screen_margins"],
+            {"normal": 48, "small_screen_fallback": 24},
         )
+        self.assertEqual(self.settings_window_contract["minimum_saved_visible_ratio"], .8)
         self.assertTrue(self.settings_window_contract["native_window"])
         self.assertTrue(self.settings_window_contract["logical_coordinates"])
         self.assertTrue(self.settings_window_contract["movable"])
         self.assertTrue(self.settings_window_contract["resizable"])
         self.assertEqual(
             self.settings_window_contract["initial_placement"],
-            "restored logical QRect clamped to active screen or centered on parent before first visibility",
+            "restore a valid logical v3 QRect on its connected screen or center on the active parent screen before first visibility",
         )
+
+    def test_native_capture_cannot_accept_the_dashboard_background(self) -> None:
+        dialog_source = self.settings.split("class SettingsDialog(QDialog):", 1)[1].split(
+            "def _object_name", 1
+        )[0]
+        for marker in (
+            "settings_surface_match_ratio",
+            "settings_surface_verified",
+            "decorated_window_included",
+            "native_frame_decoration",
+            "active_dialog.exec()",
+            "Settings page capture lacks native window decoration",
+            "native Settings capture sampled the parent background instead of the Settings surface",
+        ):
+            self.assertIn(marker, self.release_probe)
+        for marker in (
+            'record.get("settings_surface_verified") is True',
+            'record.get("capture_scope") == "complete-decorated-settings-window"',
+            'str(record.get("capture_method", "")).startswith("QScreen.grabWindow")',
+        ):
+            self.assertIn(marker, self.settings_review_assembler)
         self.assertTrue(self.settings_window_contract["pre_exec_geometry"])
         self.assertFalse(self.settings_window_contract["reposition_after_open"])
         self.assertEqual(
@@ -294,6 +330,14 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertIn('"Discard unsaved changes?"', self.settings)
         self.assertIn('"Settings changed elsewhere"', self.settings)
         self.assertIn("self._show_prompt(", self.settings)
+        self.assertIn(
+            'expected_visible_scrollers = 0 if special == "close-confirmation" else 1',
+            self.release_probe,
+        )
+        self.assertGreaterEqual(
+            self.release_probe.count('if special != "close-confirmation":'),
+            3,
+        )
         primary_source = self.settings.split("    def _save(self) -> None:", 1)[1].split(
             "def _object_name", 1
         )[0]
@@ -344,7 +388,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "dialog.move(dialog.x()",
             "dialog.setFixedSize(",
         ):
-            self.assertNotIn(forbidden, self.settings + self.release_probe)
+            self.assertNotIn(forbidden, self.settings)
+        self.assertNotIn("WindowStaysOnTopHint", self.release_probe)
 
     def test_fixed_settings_rail_wraps_without_eliding_large_font_labels(self) -> None:
         for marker in (
@@ -354,9 +399,9 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "max(36, metrics.lineSpacing() + self._ITEM_VERTICAL_INSET)",
             "def labels_fit(self) -> bool:",
             "metrics.horizontalAdvance(self.item(row).text()) <= available",
-            "self.compact_nav = QTabBar(self.body_shell)",
+            "self.compact_nav = QTabBar(self.header_shell)",
             "self.compact_nav.setElideMode(Qt.TextElideMode.ElideNone)",
-            "compact = body_width < SETTINGS_COMPACT_BODY_WIDTH or not self.nav.labels_fit()",
+            "compact = self._screen_compact_fallback or shell_width < SETTINGS_COMPACT_BODY_WIDTH",
             "self.nav.refresh_item_sizes()",
         ):
             self.assertIn(marker, self.settings)
@@ -413,11 +458,23 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "complete 100%-font Settings review sheets",
             '"settings-100-review"',
             '"each_native_capture_in_details_exactly_once": True',
-            '"review-failed" if failures else "review-complete-nonrelease"',
+            'else "review-incomplete-nonrelease"',
             '"release_ready": False',
             "refusing to overwrite review evidence",
+            "def _validate_fullscreen_report(",
+            'parser.add_argument("--fullscreen-report", required=True',
+            '"--allow-unrun-fullscreen"',
+            'report.get("status") == "unrun"',
+            '"unrun full-screen report lacks a reason"',
+            'UNRUN BY USER DIRECTION',
+            '"settings-fullscreen-acceptance.json"',
+            'result.get("remained_on_anki_fullscreen_space") is True',
+            'result.get("desktop_or_space_switch_observed") is False',
+            'report.get("desktop_space_switch_regression") == "not-observed"',
+            '"resize",',
         ):
             self.assertIn(marker, self.settings_review_assembler)
+        self.assertNotIn('"move_resize"', self.settings_review_assembler)
 
     def test_report_sheet_distinguishes_new_limit_from_total_restart_workload(self) -> None:
         self.assertIn(
@@ -450,15 +507,15 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertIn('"repository_tracking": "current-only"', self.evidence_assembler)
         self.assertIn("retained with this current evidence set", self.evidence_assembler)
 
-    def test_settings_is_native_only_and_previews_are_qt_widgets(self) -> None:
-        for marker in (
-            "class DashboardCardPreview(QWidget):",
-            "class VerseCardPreview(QWidget):",
-            "self.appearance_preview = DashboardCardPreview()",
-            "self.verse_preview = VerseCardPreview()",
-        ):
-            self.assertIn(marker, self.settings)
+    def test_settings_is_native_only_and_rendered_previews_are_absent(self) -> None:
         for forbidden in (
+            "class DashboardCardPreview",
+            "class VerseCardPreview",
+            "DashboardCardPreview()",
+            "VerseCardPreview()",
+            "HeatmapPresetCard",
+            "heatmap_preset_cards",
+            "preset_swatch",
             "AnkiWebView",
             "aqt.webview",
             "QWebEngine",
@@ -473,7 +530,9 @@ class SettingsReleaseContractTests(unittest.TestCase):
         section_source = self.settings.split("    def _show_section", 1)[1].split(
             "    def _schedule_dashboard_anchor", 1
         )[0]
-        self.assertIn("self.stack.setCurrentIndex(self.page_indices[section_id])", section_source)
+        self.assertIn("page_index = self.page_indices[section_id]", section_source)
+        self.assertIn("self.stack.setCurrentIndex(page_index)", section_source)
+        self.assertIn("self.header_stack.setCurrentIndex(page_index)", section_source)
         self.assertNotIn("QTimer", section_source)
         self.assertNotIn("SettingsDialog", section_source)
         self.assertNotIn("_settings_changed", section_source)
@@ -545,7 +604,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertIn("self.blur_field.setVisible(enabled)", source)
         self.assertNotIn("setValue", source)
 
-    def test_dynamic_badges_are_parented_before_visibility_changes(self) -> None:
+    def test_verse_rows_are_semantic_and_preview_fixtures_are_absent(self) -> None:
         verse_source = self.settings.split("class VerseLibraryDelegate", 1)[1].split(
             "class VerseLibraryView", 1
         )[0]
@@ -559,28 +618,20 @@ class SettingsReleaseContractTests(unittest.TestCase):
             self.assertIn(marker, verse_source)
         self.assertNotIn("class VerseRowWidget", self.settings)
 
-        heatmap_source = self.settings.split(
-            "def _refresh_heatmap_preset_cards", 1
-        )[1].split("def _update_color_swatch", 1)[0]
-        indicator_creation = 'selected_indicator = QLabel("✓", button)'
-        indicator_insertion = "swatches.addWidget(selected_indicator)"
-        indicator_visibility = "selected_indicator.setVisible(preset_name == selected)"
-        self.assertIn(indicator_creation, heatmap_source)
-        self.assertLess(
-            heatmap_source.index(indicator_creation),
-            heatmap_source.index(indicator_insertion),
-        )
-        self.assertLess(
-            heatmap_source.index(indicator_insertion),
-            heatmap_source.index(indicator_visibility),
-        )
+        self.assertIn("def _refresh_heatmap_preset_options", self.settings)
+        self.assertIn("self.heatmap_preset = QComboBox()", self.settings)
+        for retired in (
+            "def _refresh_heatmap_preset_cards",
+            "selected_indicator",
+            "swatches.addWidget",
+        ):
+            self.assertNotIn(retired, self.settings)
 
-    def test_heatmap_rebuilds_only_on_explicit_heatmap_paths(self) -> None:
+    def test_heatmap_text_options_refresh_only_on_explicit_paths(self) -> None:
         apply_theme_source = self.settings.split("def _apply_theme", 1)[1].split(
             "def _update_forecast_range_visibility", 1
         )[0]
-        self.assertNotIn("_refresh_heatmap_preset_cards", apply_theme_source)
-        self.assertIn("self._update_preset_swatch()", apply_theme_source)
+        self.assertNotIn("_refresh_heatmap_preset_options", apply_theme_source)
         self.assertIn("self._update_color_swatch()", apply_theme_source)
 
         appearance_source = self.settings.split("def _create_appearance_card", 1)[1].split(
@@ -591,19 +642,19 @@ class SettingsReleaseContractTests(unittest.TestCase):
             appearance_source,
         )
         self.assertIn(
-            "self.mode.connect_changed(self._refresh_heatmap_preset_cards)",
+            "self.mode.connect_changed(self._refresh_heatmap_preset_options)",
             appearance_source,
         )
 
         theme_source = self.settings.split("def _dashboard_theme_changed", 1)[1].split(
             "def _update_glass_controls", 1
         )[0]
-        self.assertIn("self._refresh_heatmap_preset_cards()", theme_source)
+        self.assertIn("self._refresh_heatmap_preset_options()", theme_source)
 
         config_source = self.settings.split("def _apply_config_to_widgets", 1)[1].split(
             "def _walk_deck_items", 1
         )[0]
-        self.assertIn("self._refresh_heatmap_preset_cards()", config_source)
+        self.assertIn("self._refresh_heatmap_preset_options()", config_source)
 
     def test_compact_grid_adopts_fields_before_visibility_filtering(self) -> None:
         module = ast.parse(self.settings)
@@ -714,13 +765,15 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'button.setToolTip("Event actions")',
             'self.event_tabs.addTab(self.active_events, "Active (0)")',
             'self.event_tabs.addTab(self.archived_events, "Archived (0)")',
-            'self.event_empty_add = QPushButton("Add event")',
+            'self.event_add = QPushButton("Add event")',
+            "page._hdo_header_actions.addWidget(self.event_add)",
             '_stacked_field("Sort by", "", self.event_sort)',
             'self.event_search_clear = QPushButton("Clear")',
             'self.event_empty_clear = QPushButton("Clear search")',
-            'self.event_surface.setMinimumHeight(300)',
-            'tree.setMinimumHeight(240)',
-            'tree.setMaximumHeight(420)',
+            'self.event_surface.setMinimumHeight(360)',
+            'tree.setMinimumHeight(260)',
+            'tree.setMaximumHeight(16777215)',
+            'QSize(max(1, tree.viewport().width()), 54)',
             '("Name", "name")',
             'if sort_value == "name"',
             'str(item.get("name", "")).casefold()',
@@ -731,6 +784,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             '"No events match “{}”.".format(query)',
         ):
             self.assertIn(marker, self.settings)
+        self.assertNotIn('self.event_empty_add = QPushButton("Add event")', self.settings)
         self.assertNotIn('QWidget#HomeDashboardSettings QWidget#EventRow[selected="true"]', self.settings)
 
     def test_bible_library_uses_reference_excerpt_badges_and_incremental_rows(self) -> None:
@@ -749,10 +803,10 @@ class SettingsReleaseContractTests(unittest.TestCase):
             '"{} matching verse{}".format',
             'SettingsCard(\n            "Rotation"',
             'SettingsCard(\n            "Verse library"',
-            "self.verse_preview = VerseCardPreview()",
         ):
             self.assertIn(marker, self.settings)
         for retired in (
+            "VerseCardPreview",
             "class VerseRowWidget",
             "_quote_render_limit",
             "Load more",
@@ -768,17 +822,12 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "of Tyndale House Publishers. All rights reserved."
         )
         for marker in (
-            'SettingsCard("Version & compatibility")',
-            'SettingsCard("Help")',
-            "self.about_top_grid.setAlignment(Qt.AlignmentFlag.AlignTop)",
-            "self.about_top_grid.setColumnStretch(0, 3)",
-            "self.about_top_grid.setColumnStretch(1, 2)",
-            "def _reflow_about_cards(self) -> None:",
+            'SettingsCard("Version and support")',
             "QSizePolicy.Policy.Maximum",
             'self.copy_diagnostics.setText("Copied")',
             'ExternalLinkButton("Documentation", PROJECT_URL)',
             'ExternalLinkButton("Report an issue", ISSUES_URL)',
-            'SettingsCard("Privacy & legal")',
+            'SettingsCard("Privacy and legal")',
             'SettingsCard("Backup and recovery")',
             '"Dashboard data stays on this device and is not sent to external services."',
             'recovery_export = QPushButton("Export verse edits")',
@@ -793,8 +842,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
             self.assertNotIn(forbidden, recovery_source.casefold())
 
     def test_footer_has_action_local_dirty_success_and_error_states(self) -> None:
-        footer_index = self.settings.index("outer.addWidget(self.footer_shell, 2, 0)")
-        body_index = self.settings.index("outer.addWidget(self.body_shell, 1, 0)")
+        footer_index = self.settings.index("outer.addWidget(self.footer_shell, 2, 1)")
+        body_index = self.settings.index("outer.addWidget(self.body_shell, 1, 1)")
         self.assertLess(body_index, footer_index)
         for marker in (
             'self.revert_button = QPushButton("Discard changes")',
@@ -810,7 +859,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "self.saved_status_timer.setInterval(2000)",
             'self._set_status("saved", "✓ Saved")',
             "self.save_button.setEnabled(False)",
-            '"Couldn’t save settings. Your changes are still available. Try again."',
+            '"Save failed. Your changes are still available."',
             "self._last_save_error_detail = detail",
             "self.draft.baseline = deepcopy(dict(failure_baseline))",
             "self.draft.values = deepcopy(dict(failure_values))",
@@ -819,10 +868,17 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "self.draft.replace_all(latest_saved)",
             "self._footer_clearance_timer = QTimer(self)",
             "self._footer_clearance_timer.timeout.connect(",
-            "clearance = max(footer_heights) + 16",
+            "clearance = 36",
+            'self._set_status("validation-error", "Fix 1 error to save")',
+            '"Enter a valid #RRGGBB color."',
             "self._schedule_settings_footer_clearance()",
+            "self.footer.error_panel.isHidden()",
         ):
             self.assertIn(marker, self.settings)
+        self.assertNotIn(
+            "bool(text) and not self.footer.error_panel.isVisible()",
+            self.settings,
+        )
         self.assertNotIn("simulated transactional write failure", self.settings)
 
     def test_controls_grow_with_application_font_without_an_alternate_layout(self) -> None:
@@ -831,11 +887,11 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "return max(INTERACTION_TARGET_MIN_PX, view.fontMetrics().lineSpacing() + 12)",
             "max(56, (2 * view.fontMetrics().lineSpacing()) + 20)",
             "self.setFixedSize(44, 36)",
-            "combo.setMaximumWidth(260)",
-            "spin.setMaximumWidth(92)",
+            "combo.setMaximumWidth(420)",
+            "spin.setMaximumWidth(120)",
             "QFormLayout.RowWrapPolicy.WrapLongRows",
             "def _apply_role_fonts(root: QWidget) -> None:",
-            '"PageTitle": role_font(18, QFont.Weight.DemiBold)',
+            '"PageTitle": role_font(20, QFont.Weight.DemiBold)',
             '"CardTitle": role_font(14, QFont.Weight.DemiBold)',
             '"PageHelp": role_font(12)',
             '"FieldHelp": role_font(12)',

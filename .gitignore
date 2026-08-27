@@ -10,8 +10,8 @@ qa-runs/
 # Disposable Anki launch records contain machine-local paths and ephemeral keys.
 **/QA_IDENTITY.json
 
-# Disposable live-run and capture staging stays local. The newest complete
-# release evidence set is retained explicitly under home_dashboard_overhaul/qa/.
+# Disposable live-run and capture staging stays local. Intentionally retained
+# release or review evidence is committed explicitly under home_dashboard_overhaul/qa/.
 docs/acceptance_report*.md
 docs/settings_menu_audit.md
 home_dashboard_overhaul/qa/calendar-polish-before-comparison-*/

@@ -11,7 +11,7 @@
   "capture_profile_authority": "capture_plan.json#profiles",
   "helper_builder": "prepare_capture_helper.py",
   "base_probe": "runtime_probe_release_1_8_4.py",
-  "components": ["production-dashboard", "canonical-settings", "standard-parented-settings-dialog", "native-statistics-parity", "logical-window-geometry", "responsive-settings-layout-assertions", "footer-local-save-state", "complete-verse-library-model"],
+  "components": ["production-dashboard", "canonical-settings", "standard-parented-settings-dialog", "native-statistics-parity", "screen-aware-geometry-v3", "responsive-settings-layout-assertions", "fixed-footer-local-save-state", "preview-free-settings-controls", "complete-verse-library-model", "minimal-41-frame-settings-profile"],
   "capture_count_authority": "capture_plan.json#profiles[id=full]",
   "release_probe": "runtime_probe_release_1_8_7.py",
   "required_platform_matrix": "capture_plan.json#native_platform_matrix",

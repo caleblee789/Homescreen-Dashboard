@@ -8,11 +8,12 @@ Browser or statistics classes.
 ## What changed in 1.8.7
 
 - Settings remains a normal parented `QDialog` with default flags and a local
-  `exec()` lifetime. It opens at 940×680 logical pixels, has a 720×520 minimum,
-  and caps initial geometry to 92%×88% of the active screen.
-- A versioned UI-only `QSettings` key preserves the non-maximized logical
-  `QRect`. Each launch clamps it to the active screen and recenters an
-  off-screen or disconnected-monitor restore before first visibility.
+  `exec()` lifetime. It opens at 1080×760 logical pixels, has a 920×640 normal
+  minimum, and uses 48 px normal or 24 px constrained-screen margins.
+- The UI-only `settings_dialog_geometry/v3` record preserves a deliberate
+  non-transient logical rectangle and screen identity. Invalid, off-screen,
+  disconnected, compact-triggering, maximized, and full-screen records are
+  rejected, and the retired v2 record is never restored.
 - The Caleb menu constructs and executes the dialog synchronously. Deck Browser
   bridge requests alone remain deferred and coalesced until their callback
   returns. Primary Save and dirty-close confirmations remain stacked child
@@ -54,16 +55,16 @@ Browser or statistics classes.
 
 - Settings has one native Qt widget tree at every size: fixed header, a body
   with one vertical scroller per page, and a true final-row footer. The
-  centered shell is capped at 1,120 px and the page column at 940 px.
-- A 152 px sidebar becomes a synchronized single-line tab row below 760
-  logical body pixels, or earlier when the live application font would wrap a
-  label. Forms, toolbars, previews, heatmap palettes, and footer actions reflow
-  without horizontal scrolling.
-- Dashboard uses scoped Reset actions, responsive Calendar display and Local
-  data disclosures, and a native wide preview. Events uses a bounded list and
-  row clicks open the editor without persistent selection. Bible verse uses a
-  complete filtered model with delegate-painted two-line rows and a native
-  preview. About uses top-aligned independently sized Version and Help cards.
+  shell is capped near 1,240 px, the sidebar is 184 px, the page header is
+  72 px, the footer is 60 px, and the page column is capped at 980 px.
+- Compact top navigation activates below 820 logical pixels only on a screen
+  that cannot accommodate the normal 920×640 minimum. Forms and toolbars
+  remain horizontally contained without rendered Settings previews.
+- Dashboard groups Appearance, Dashboard sections, Study metrics, and Calendar
+  display. Events uses a flexible searchable/sortable Active/Archived list,
+  54 px rows, and a parented 560×320 editor. Bible verse uses a flexible
+  filtered library with two-line clamped excerpts and one inline hex error.
+  About groups Version and support, Privacy and legal, and Backup and recovery.
 - Dirty, saving, saved, validation, and persistence feedback is action-local
   in the footer. A failed save retains all staged values, enables retry, and
   keeps technical details behind a disclosure. All controls remain native Qt
@@ -110,9 +111,10 @@ baseline, while each visible **Reset** affects only its own default scope. The
 baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
-appearance. Dashboard themes affect only swatches and production rendering.
-Settings is a movable, resizable `QDialog(mw)` with a 940×680 logical default,
-720×520 minimum, default Qt flags, and a local `exec()` call. It resolves the
+appearance. Dashboard themes affect only production rendering; Settings shows
+text selectors and retains the custom-color input well without preview cards.
+Settings is a movable, resizable `QDialog(mw)` with a 1080×760 logical default,
+920×640 normal minimum, default Qt flags, and a local `exec()` call. It resolves the
 parent window's active screen, falls back to the screen containing the parent
 center and then the primary screen, and applies a clamped logical geometry
 before first visibility. It never calls `winId()`, repositions after opening,
@@ -122,12 +124,9 @@ inside the existing stack.
 
 Responsive field grids mount every new field under its Settings card before
 changing visibility or filtering layout rows. This prevents a parentless field
-from being realized as a temporary native window during dialog construction
-and keeps all initial Appearance, Bible, and heatmap fields visible. Heatmap
-selection indicators and verse status badges are also created as explicit
-children before their visibility changes. Ordinary staged-setting updates do
-not tear down or rebuild the heatmap-card subtree; only theme, color-mode, and
-configuration-load paths refresh it.
+from being realized as a temporary native window during dialog construction.
+No Dashboard card, verse card, palette, theme, or heatmap preview widget is
+constructed in Settings.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source
@@ -155,13 +154,19 @@ python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 
 The builder creates one 24-file allowlisted archive, checks its version and
 safe paths, validates the 1.8.7 release authorities, and verifies every
-packaged byte against source. The canonical plan contains 106 native frames,
-including 53 Settings frames and two controlled-restart states.
+packaged byte against source. The canonical plan contains 94 native frames,
+including exactly 41 Settings frames at 100% application font and two total
+controlled-restart states. Settings presentation is capped at 11 sheets.
+The focused Settings assembler additionally requires a structured exact-package
+native macOS result proving that both the full-screen menu and Dashboard-gear
+paths remain on Anki's full-screen Space without switching to the desktop,
+including after hard restart. This required result adds no PNG frames.
 
-VoiceOver and forced-colors remain explicitly unrun and nonblocking. Windows,
-Linux, DPR 1, native OS display scaling, and macOS full-screen Space behavior
-are release-blocking and remain unclaimed until their native reports pass
-against one exact package and capture-plan hash.
+VoiceOver and forced-colors remain explicitly unrun and nonblocking. The macOS
+full-screen no-switch result is mandatory for Settings acceptance. Windows,
+Linux, DPR 1, and native OS display scaling remain separate release-blocking
+gates and remain unclaimed until their native reports pass against one exact
+package and capture-plan hash.
 
 Copyright 2026. Licensed under AGPL-3.0-or-later. See
 `THIRD_PARTY_NOTICES.md` for Scripture and upstream notices.

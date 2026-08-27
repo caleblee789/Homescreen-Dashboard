@@ -1,0 +1,32 @@
+{
+  "member_count": 24,
+  "members": [
+    "__init__.py",
+    "analytics.py",
+    "insights.py",
+    "config.json",
+    "config.md",
+    "config_schema.py",
+    "controller.py",
+    "default_verses.json",
+    "LICENSE.txt",
+    "manifest.json",
+    "migration.py",
+    "models.py",
+    "README.md",
+    "CHANGELOG.md",
+    "renderer.py",
+    "settings.py",
+    "settings_model.py",
+    "themes.py",
+    "THIRD_PARTY_NOTICES.md",
+    "ui_primitives.py",
+    "verse.py",
+    "web/dashboard.css",
+    "web/dashboard.js",
+    "user_files/README.txt"
+  ],
+  "safe_paths": true,
+  "sha256": "7bf8bff3099699bca4d1922d429fea5d81e971accd7b73ed84cf9cc7c321a4fe",
+  "status": "passed"
+}

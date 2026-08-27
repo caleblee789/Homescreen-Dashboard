@@ -15,10 +15,15 @@ The current machine-readable authorities are:
 - `qa/settings_window_contract_1_8_7.json`
 - `qa/runtime_probe_release_1_8_7_manifest.json`
 
-The completed `qa/release-evidence-1.8.6-2026-08-25` directory and the
-untracked 41-frame `qa/settings-evidence-1.8.7-2026-08-26-b995fec` review set
-are immutable provenance. A corrected candidate must write a new evidence
-directory; neither retained set may be overwritten, regenerated, or deleted.
+The completed `qa/release-evidence-1.8.6-2026-08-25` directory is the retained
+product-wide evidence. The current exact-package Settings set is
+`qa/settings-evidence-1.8.7-2026-08-27-7bf8bff3-review-100`; it contains all 41
+100%-font frames but remains `review-incomplete-nonrelease` because the native
+macOS full-screen opening-path check was explicitly skipped. A corrected
+candidate must always write a new evidence directory and never overwrite an
+existing result. Superseded or failed local Settings sets may be removed only
+after the retained current set is identified and a recoverable safety snapshot
+has captured every deletion target.
 
 ## Production composition
 
@@ -37,44 +42,46 @@ and must be captured from the same exact candidate as Settings.
 - Production opens `SettingsDialog(mw, controller, …).exec()` with the parented
   native Qt lifecycle and no WebEngine content, custom window flags, `winId()`,
   post-show movement, activation, or focus manipulation.
-- Geometry uses logical coordinates: 940×680 default, 720×520 minimum, and
-  initial caps of 92% available width and 88% available height.
-- A versioned UI-only `QSettings` key stores the non-maximized logical `QRect`.
-  Launch restores a valid position, clamps it to the active screen, and
-  recenters an off-screen or disconnected-monitor rectangle before visibility.
+- Geometry uses logical coordinates: 1080×760 default, 920×640 normal minimum,
+  48 px normal margins, and a 24 px constrained-screen fallback.
+- `settings_dialog_geometry/v3` stores a valid deliberate non-transient logical
+  rectangle and screen identity. The dialog never reads v2 and rejects records
+  that are undersized, less than 80% visible, off-screen, disconnected,
+  compact-triggering, maximized, full-screen, or produced during Space changes.
 - The shell is a fixed header, `min-height: 0` body, and fixed footer. Each page
   owns one vertical `QScrollArea`; horizontal scrolling is disabled; page
   bottom padding equals the live footer height plus 16 logical pixels.
-- The centered shell is capped at 1,120 px. The desktop body uses a 152 px
-  sidebar, 24 px gap, and a centered page column capped at 940 px.
-- Below 760 logical body pixels, or before live font metrics would wrap a rail
-  label, a synchronized single-line, non-eliding `QTabBar` replaces the rail.
-- Cards and toolbars reflow from two columns to one using their current width
-  and font metrics. Wide native previews appear only when the main page column
-  is at least 900 px. Navigation never changes native window geometry.
+- The shell is capped near 1,240 px. A 184 px sidebar spans the fixed 72 px
+  page header, scrolling page body, and fixed 60 px footer; the page column is
+  capped at 980 px.
+- Vertical navigation remains active in normal operation. A synchronized top
+  navigation activates below 820 logical pixels only on a screen that cannot
+  accommodate the normal 920×640 minimum.
+- Cards and toolbars reflow using current width and font metrics. Settings has
+  no rendered preview cards or preview-only reflow branch. Navigation never
+  changes native window geometry.
 
 ## Settings surfaces and behavior
 
 - Dark and light Settings roles follow Anki's live palette only. Dashboard
-  Color mode changes dashboard output and native previews, not dialog chrome.
+  Color mode changes production output, not dialog chrome or a Settings preview.
 - Role fonts are application-relative, visible text is at least 12 px at the
   100% baseline, ordinary controls are at least 36 px high, list rows are
-  48–54 px or taller, and the footer is at least 52 px high.
+  54 px or taller where specified, and the action footer is fixed at 60 px.
 - Selected navigation and verse rows use accent-soft surfaces and a substantial
   accent edge. Events tabs use neutral graphite surfaces. Event rows have no
   persistent selection; activation opens the editor.
-- Dashboard contains responsive Appearance, sections, Study metrics, Calendar
-  display/range, and Local data groups. Reset is visible only when its scope
-  differs from defaults and never saves immediately.
-- Events contains one bounded list surface with search clearing, explicit Sort
-  by labeling, result counts, Active/Archived tabs, internal scrolling,
-  distinct empty and no-results states, and contained 32 px action menus.
-- Bible verse contains a native preview, attached Custom color controls,
-  blocking hex validation, nonblocking contrast warning, dynamic Rotation
-  copy, and a complete filtered model with delegate-painted two-line rows.
-- About uses top-aligned, independently sized 60/40 Version and Help cards,
-  manifest-derived compatibility copy, local two-second diagnostics feedback,
-  standardized disclosures, and Export verse edits wording.
+- Dashboard contains Appearance, Dashboard sections, Study metrics, and
+  Calendar display. Text selectors replace palette/theme/heatmap previews;
+  Reset is scoped and never saves immediately.
+- Events contains a header-level Add event action, flexible list surface,
+  search/sort toolbar, Active/Archived tabs, 54 px rows, internal scrolling,
+  distinct empty/no-results states, and a parented 560×320 editor.
+- Bible verse contains Appearance, Rotation, and a flexible Verse library;
+  equal-width color-source segments; the retained custom-color well; one
+  blocking inline hex error; and clamped two-line library excerpts.
+- About contains Version and support, Privacy and legal, and Backup and recovery,
+  with manifest-derived `Supports Anki Desktop 26.8` compatibility copy.
 - Dirty, saving, success, validation, and persistence feedback is local to the
   footer. Failed saves retain all staged values and expose the generic release
   copy with raw details collapsed. Dirty close requires Keep editing or
@@ -85,16 +92,29 @@ and must be captured from the same exact candidate as Settings.
 Before every Settings frame, the native probe requires zero horizontal scroll
 range; all visible interactive widgets inside their content viewport; no
 footer/final-card overlap; no unintended title, navigation, or button elision;
-no clipping at 150% application font; legible selected text; action-local
+preview absence; legible selected text at 100% application font; action-local
 feedback; Save enabled after failure; and Save disabled after success.
 
-The plan contains 106 native frames: 104 initial and two controlled-restart
-states. It includes all four Settings pages at 720/default/full widths and
-100%/150% application font, Anki light/dark representatives, custom-color
-validation, event and verse long rows, future off/on, Advanced appearance,
-dirty close, saving, production-safe failure, geometry restore, legacy route,
-and restart-clean states. Every frame must appear exactly once in validated
-detail-sheet coverage.
+The Settings profile is a hard ceiling of exactly 41 frames: 40 initial states
+and one controlled restart. Twelve page frames cover all four pages at
+1080×760, 1280×800, and full screen, all at 100% application font. The other
+28 initial frames replace obsolete preview assertions with preview-absence
+assertions and rename the standard window state to fresh-open. Every frame must
+appear exactly once across no more than 11 validated compact sheets. The 720,
+940, and 150%-font Settings page matrices are not part of this profile.
+Every PNG must also sample-match the live Settings client so a same-sized
+Dashboard background cannot pass. The 12 page frames must come from the screen
+compositor and include the complete decorated native Settings window.
+
+Small-screen fallback, two legacy geometry sizes, valid 1180×800 restore,
+secondary/disconnected screen handling, 80% visibility, and no post-show shrink
+are structured assertions rather than additional PNGs. Full-screen behavior is
+a mandatory structured native macOS acceptance result because a still frame
+cannot prove it. The exact package must open Settings from both the menu and
+Dashboard gear while remaining on Anki's full-screen Space, with no desktop or
+Space switch, and repeat the check after hard restart. The focused assembler
+rejects a missing, failed, candidate-mismatched, or plan-mismatched report; the
+41 PNGs cannot waive this gate.
 
 ## Exact-package release gate
 
@@ -103,7 +123,9 @@ filesystem, profile, sync-disabled, statistics, save, and controlled-restart
 gates against one 24-member candidate. The assembler rejects evidence unless
 all reports reference that package hash and the same capture-plan hash.
 
-Six native platform profiles are mandatory:
+The minimal Settings overhaul does not run the expanded platform or
+alternate-scale matrices. These release gates remain explicitly unrun rather
+than being inferred from the 41-frame visual acceptance set:
 
 - Windows at 100%, 125%, and 150% OS display scaling
 - Linux at 100% and 150% OS display scaling
@@ -112,7 +134,7 @@ Six native platform profiles are mandatory:
 Environment-variable scale substitutes do not count. Each report records OS,
 Anki version, Qt platform, logical and physical geometry, DPI, DPR, application
 font coverage, package hash, and plan hash. The macOS report additionally must
-pass both full-screen opening paths, all four pages, Events tabs, move/resize,
+pass both full-screen opening paths, all four pages, Events tabs, resizing,
 save/close/reopen, and hard restart without a Space switch.
 
 VoiceOver and forced-colors may remain explicitly unrun and nonblocking. Any

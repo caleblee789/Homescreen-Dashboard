@@ -77,6 +77,31 @@ class CapturePlanTests(unittest.TestCase):
         )
         self.assertEqual(len(full), len(self.plan.ids("full")))
 
+    def test_settings_profile_is_the_exact_minimal_100_percent_contract(self) -> None:
+        cases = self.plan.cases("settings")
+        page_cases = [case for case in cases if case["family"] == "settings-pages"]
+        self.assertEqual(self.plan.counts("settings"), {
+            "initial": 40,
+            "restart": 1,
+            "total": 41,
+        })
+        self.assertEqual(len(page_cases), 12)
+        self.assertEqual(
+            {case["width"] for case in page_cases},
+            {1080, 1280, "full"},
+        )
+        self.assertTrue(all(case["font_percent"] == 100 for case in cases))
+        self.assertIn("SET-WINDOW-FRESH-OPEN", self.plan.ids("settings"))
+        self.assertNotIn("SET-WINDOW-STANDARD", self.plan.ids("settings"))
+        self.assertTrue(all("-720-" not in case["id"] for case in page_cases))
+        self.assertTrue(all("-940-" not in case["id"] for case in page_cases))
+        self.assertTrue(all(not case["id"].endswith("-150") for case in page_cases))
+        self.assertLessEqual(2 + len(self.plan.detail_groups("settings")), 11)
+        self.assertEqual(
+            self.plan.profile("settings")["required_structured_manual_results"],
+            ["macos-fullscreen-no-space-switch-menu-and-dashboard-gear"],
+        )
+
     def test_each_profile_has_exactly_once_presentation_coverage(self) -> None:
         for profile_id in self.plan.profile_ids:
             with self.subTest(profile=profile_id):
@@ -139,6 +164,7 @@ class CapturePlanTests(unittest.TestCase):
                 "restart": 0,
                 "total": 2,
             })
+            self.assertEqual(manifest["required_structured_manual_results"], [])
             self.assertEqual(request["plan_sha256"], self.plan.sha256)
             self.assertEqual(
                 set(path.name for path in output.iterdir()),
@@ -219,7 +245,7 @@ class CapturePlanTests(unittest.TestCase):
                     "dpr_class": entry["dpr_class"],
                     "native_display_scaling": True,
                     "environment_scale_substitute": False,
-                    "application_font_percents": [100, 150],
+                    "application_font_percents": [100],
                     "os": "fixture OS",
                     "anki_version": "26.8",
                     "qt_platform": "fixture",

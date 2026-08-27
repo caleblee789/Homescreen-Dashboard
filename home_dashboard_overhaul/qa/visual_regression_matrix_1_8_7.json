@@ -50,10 +50,10 @@
   ],
   "settings_page_axes": {
     "page": ["dashboard", "events", "bible_verse", "about_support"],
-    "window_width": [720, 940, "full-screen"],
-    "application_font_percent": [100, 150]
+    "window_width": [1080, 1280, "full-screen"],
+    "application_font_percent": [100]
   },
-  "settings_page_case_count": 24,
+  "settings_page_case_count": 12,
   "statistics_accuracy_cases": [
     {"id": "PROD-STATS-WIDE-MONTH", "layout": "wide-2x2", "view": "month"},
     {"id": "PROD-STATS-WIDE-YEAR", "layout": "wide-2x2", "view": "year"},
@@ -62,18 +62,21 @@
   ],
   "settings_quality_assertions": [
     "decorated-window-and-footer-fully-onscreen",
+    "every-png-sample-matches-live-settings-surface",
     "standard-parented-dialog-in-anki-full-screen-space",
     "native-qt-settings-without-webengine",
-    "responsive-sidebar-or-single-line-tab-row",
+    "184px-sidebar-and-small-screen-only-single-line-tab-row",
     "timer-free-sidebar-page-switching",
     "legacy-calendar-card-clean-top-alignment",
-    "about-lead-cards-independent-top-aligned-heights",
+    "about-version-support-privacy-legal-backup-recovery",
     "zero-horizontal-scroll-range",
     "visible-interactive-controls-inside-content-viewport",
     "footer-does-not-overlap-final-card",
     "footer-local-dirty-saving-success-and-error-feedback",
+    "macos-fullscreen-menu-and-dashboard-gear-open-without-desktop-space-switch",
     "selection-primary-and-secondary-text-legible",
-    "settings-theme-follows-anki-not-dashboard-mode"
+    "settings-theme-follows-anki-not-dashboard-mode",
+    "rendered-settings-previews-absent"
   ],
   "required_native_platform_profiles": [
     {"host_platform": "windows", "os_scale_percent": 100, "dpr_class": "dpr-1"},
@@ -85,6 +88,10 @@
   ],
   "host_backgrounds": ["white", "black", "purple", "image"],
   "deferred_unrun": [
+    "windows-native-settings-validation",
+    "linux-native-settings-validation",
+    "alternate-os-scaling-settings-validation",
+    "alternate-application-font-settings-validation",
     "voiceover_review",
     "forced_colors_review"
   ]

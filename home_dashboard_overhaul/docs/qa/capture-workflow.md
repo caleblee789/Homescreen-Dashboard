@@ -51,6 +51,9 @@ requested. Never overwrite a partial or completed output in place.
    the probe still requires `HDO_RELEASE_RUN_ROOT`, `HDO_RELEASE_PROFILE`,
    `HDO_RELEASE_CANDIDATE_SHA256`, `HDO_RELEASE_INSTANCE_KEY`,
    `HDO_RELEASE_EXCLUDED_PID`, and `HDO_RELEASE_PROBE_STAGE`.
+   Keep the macOS session unlocked for native compositor capture. The probe
+   rejects any frame whose sampled pixels do not match the live Settings client,
+   and page cases additionally require the complete decorated window.
 6. Assemble into a new output path. The assembler reads the same plan and
    derives capture order and contact-sheet groups without offsets:
 
@@ -75,8 +78,15 @@ requested. Never overwrite a partial or completed output in place.
 ## Profiles and focused revision
 
 - `full` is the complete release gate.
-- `settings` covers every current Settings page, interaction state, and
-  Settings restart state.
+- `settings` is the minimal 100%-font Settings authority: exactly 40 initial
+  states plus one controlled restart, capped at 11 contact sheets. It contains
+  12 page cases (four pages at 1080×760, 1280×800, and full screen), 28 existing
+  interaction/window/state cases, and one restart case. It does not include
+  720, 940, 150%-font, alternate-scale, or expanded full-release cases.
+  Acceptance additionally requires the structured exact-package native macOS
+  result `macos-fullscreen-no-space-switch-menu-and-dashboard-gear`. Both
+  opening paths must remain on Anki's full-screen Space without a desktop or
+  Space switch, including the hard-restart recheck. It adds no PNG frames.
 - `wide-100` selects cases semantically: wide production layouts, full-width
   Settings at 100% application font, and both relevant restart states. Its
   full-screen adapter contains only window/capture behavior; it does not own a
@@ -97,6 +107,17 @@ Focused output is diagnostic evidence, not a complete release gate. The final
 assembler accepts only a complete named profile with its required initial and
 restart reports, exact candidate hash, plan identity, isolation gates, and
 exact-once raw capture set.
+
+The focused Settings assembler also fails closed unless the native macOS
+full-screen report passes for the exact candidate and capture-plan hashes:
+
+```sh
+python3 home_dashboard_overhaul/qa/assemble_settings_review_evidence_1_8_7.py \
+  --run-root /private/tmp/anki-release-qa.EXAMPLE \
+  --candidate home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon \
+  --fullscreen-report /path/to/settings-fullscreen-acceptance.json \
+  --output /path/to/new/settings-evidence
+```
 
 The assembler has an explicit `--allow-legacy-unversioned-reports` escape hatch
 only for reconstructing externally archived 1.8.6 reports created before
