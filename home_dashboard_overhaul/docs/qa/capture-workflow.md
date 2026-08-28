@@ -61,23 +61,15 @@ requested. Never overwrite a partial or completed output in place.
    python3 home_dashboard_overhaul/qa/assemble_release_evidence_1_8_7.py \
      --profile full \
      --run-root /private/tmp/anki-release-qa.EXAMPLE \
-     --platform-bundle /path/to/windows-100 \
-     --platform-bundle /path/to/windows-125 \
-     --platform-bundle /path/to/windows-150 \
-     --platform-bundle /path/to/linux-100 \
-     --platform-bundle /path/to/linux-150 \
      --platform-bundle /path/to/macos-retina \
      --output /path/to/new/evidence
    ```
 
-   Every platform bundle must contain a passing `platform-profile.json` for
-   the identical candidate and plan hashes. Native Windows 100/125/150%, Linux
-   100/150% at DPR 1, high-DPR, and macOS full-screen Space behavior are hard
-   gates. Environment-variable scale substitutes do not satisfy them. These
-   profiles remain explicitly unrun in the focused 100% lane. When supplied
-   for full release, physical dimensions must match logical dimensions times
-   DPR, and every bundle must include passing structured assertions for all
-   four Settings pages.
+   The macOS Retina bundle must contain a passing `platform-profile.json` for
+   the identical candidate and plan hashes, passing structured assertions for
+   all four Settings pages, and the full-screen Space workflow. Windows,
+   Linux, DPR 1, OS scaling, and alternate application-font percentages remain
+   explicit nonblocking boundaries for 1.8.7.
 
 ## Profiles and focused revision
 

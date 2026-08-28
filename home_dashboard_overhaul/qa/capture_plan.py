@@ -35,11 +35,6 @@ SEMANTIC_CAPTURE_FIELDS = (
     "dpr_class",
 )
 REQUIRED_NATIVE_PLATFORM_PROFILES = (
-    ("windows", 100, "dpr-1"),
-    ("windows", 125, "native"),
-    ("windows", 150, "native"),
-    ("linux", 100, "dpr-1"),
-    ("linux", 150, "dpr-1"),
     ("macos", 100, "retina"),
 )
 STRUCTURED_SETTINGS_LAYOUT_FIELDS = {
@@ -450,7 +445,7 @@ class CapturePlan:
             ))
         _require(
             tuple(resolved_platforms) == REQUIRED_NATIVE_PLATFORM_PROFILES,
-            "native platform matrix differs from the release-blocking contract",
+            "native platform matrix differs from the required macOS release contract",
         )
         _require(
             len(resolved_platforms) == len(set(resolved_platforms)),

@@ -134,7 +134,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "SETTINGS_COMPACT_BODY_WIDTH = SETTINGS_SIDEBAR_WIDTH + 680",
             "SETTINGS_SIDEBAR_WIDTH = 184",
             "SETTINGS_HEADER_HEIGHT = 72",
-            "SETTINGS_FOOTER_MIN_HEIGHT = 60",
+            "SETTINGS_FOOTER_MIN_HEIGHT = 56",
             "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)",
             "self.settings_shell.setSizePolicy(",
             "self._update_settings_shell_margins()",
@@ -275,7 +275,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired_window_marker, self.settings)
         self.assertNotIn("settingsWindowSize", json.dumps(self.config))
-        self.assertEqual(self.settings_window_contract["minimum_size"], [820, 600])
+        self.assertEqual(self.settings_window_contract["minimum_size"], [860, 640])
         self.assertEqual(self.settings_window_contract["default_size"], [1080, 760])
         self.assertEqual(
             self.settings_window_contract["screen_margins"],
@@ -502,7 +502,9 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )
         self.assertIn('expected_new=10', self.release_probe_base)
         self.assertIn('expected_total=(RESTART_MULTI_DECK_EXPECTED_TOTAL if STAGE == "restart" else 10)', self.release_probe_base)
-        self.assertIn("expected_progress = _progress_presentation(snapshot).label", self.release_probe_base)
+        self.assertIn("progress = _progress_presentation(snapshot)", self.release_probe_base)
+        self.assertIn('"{}%".format(progress.fill_percent)', self.release_probe_base)
+        self.assertIn("[data-hdo-progress-value]", self.release_probe_base)
         self.assertIn('state.get("progressLabel") != expected_progress', self.release_probe_base)
 
     def test_statistics_probe_keeps_clock_relative_eta_out_of_exact_parity(self) -> None:
@@ -1722,15 +1724,15 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'self.event_add = QPushButton("Add event")',
             "page._hdo_header_actions.addWidget(self.event_add)",
             'self.event_toolbar_add = QPushButton("Add event")',
-            "self.event_add.setVisible(not has_events)",
+            "self.event_add.hide()",
             "self.event_toolbar_add.setVisible(has_events)",
             '_stacked_field("Sort by", "", self.event_sort)',
             'self.event_search_clear = _icon_button("clear", "Clear event search")',
             'self.event_empty_add = QPushButton("Add event")',
             'self.event_empty_icon.setPixmap(_settings_vector_icon("calendar", 32).pixmap(32, 32))',
             'self.event_empty_clear = QPushButton("Clear search")',
-            "self.event_empty_state.setMinimumHeight(220)",
-            "self.event_empty_state.setMaximumHeight(260)",
+            "self.event_empty_state.setMinimumHeight(156)",
+            "self.event_empty_state.setMaximumHeight(190)",
             "tree.setMinimumHeight(54 + 8)",
             "tree.setMaximumHeight((6 * 54) + 8)",
             "visible_rows = min(6, max(1, tree.topLevelItemCount()))",
@@ -1745,6 +1747,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
             '"No events match “{}”.".format(query)',
             '"Delete permanently" if archived else "Delete"',
             'edit_action = None if archived else menu.addAction("Edit")',
+            'button.setText("Restore")',
+            'self.title.setWordWrap(True)',
         ):
             self.assertIn(marker, self.settings)
         event_source = self.settings.split("    def _build_events_page", 1)[1].split(
@@ -1791,7 +1795,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'SettingsCard(\n            "Verse library"',
             'self.quote_search_clear = _icon_button("clear", "Clear verse search")',
             "self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)",
-            'save_button.setText("Add" if title.startswith("Add") else "Apply changes")',
+            'save_button.setText("Add verse" if title.startswith("Add") else "Update verse")',
             "serialize_quote_reference(",
         ):
             self.assertIn(marker, self.settings)

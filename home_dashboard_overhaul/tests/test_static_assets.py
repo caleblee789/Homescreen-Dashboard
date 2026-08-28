@@ -59,20 +59,14 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn('class="hdo-calendar-footer"', calendar)
         self.assertIn('data-hdo-date-state', calendar)
         self.assertIn('data-hdo-context-date', calendar)
-        self.assertIn('data-hdo-open-events', calendar)
-        self.assertIn('data-hdo-event-meta', calendar)
+        self.assertIn('data-hdo-event-rows', calendar)
+        self.assertIn('data-hdo-context-event-label', calendar)
         self.assertIn('data-hdo-event-empty', calendar)
-        self.assertIn('data-hdo-edit-event', calendar)
         self.assertIn('data-hdo-primary-action', calendar)
         self.assertIn('data-hdo-most-missed hidden', calendar)
-        self.assertRegex(
-            self.css,
-            r"\.hdo-next-event-line\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;",
-        )
-        self.assertRegex(
-            self.css,
-            r"\.hdo-event-summary\s*\{[^}]*flex:\s*1 1 auto;",
-        )
+        self.assertIn('link.dataset.hdoOpenEvents = ""', self.js)
+        self.assertIn('edit.dataset.hdoEditEvent = ""', self.js)
+        self.assertIn("items.slice(0, 2)", self.js)
         self.assertIn("text-overflow: clip", self.css)
 
     def test_compact_surfaces_omit_internal_boundary_copy_and_placeholders(self) -> None:
@@ -80,7 +74,6 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         for forbidden in (
             "Outside due forecast",
             "Outside study history",
-            "No events",
             "Placeholder —",
         ):
             self.assertNotIn(forbidden, sources)
@@ -150,11 +143,10 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertNotIn("heat-due-bg", future_rule)
         self.assertIn("aspect-ratio: 1 / 1", self.css)
         selected_rule = self.css.split(".hdo-calendar-day.is-selected {", 1)[1].split("}", 1)[0]
-        self.assertIn("background-image: linear-gradient", selected_rule)
-        self.assertIn("var(--calendar-selected-ring) 16%", selected_rule)
-        self.assertNotIn("box-shadow", selected_rule)
+        self.assertIn("outline: 2px solid var(--calendar-selected-ring)", selected_rule)
+        self.assertNotIn("background", selected_rule)
         today_rule = self.css.split(".hdo-calendar-day.is-today {", 1)[1].split("}", 1)[0]
-        self.assertIn("outline: 2px solid var(--calendar-today-ring) !important", today_rule)
+        self.assertIn("box-shadow: inset 0 0 0 2px var(--calendar-today-ring)", today_rule)
         self.assertIn("var(--calendar-ring-halo)", today_rule)
         self.assertIn(".hdo-calendar-day.is-selected:focus-visible", self.css)
         for height in ("block-size: 3px", "block-size: 4px"):
@@ -181,8 +173,9 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("grid-template-columns: minmax(0, 1fr);", self.css)
         self.assertIn("@container hdo-dashboard (min-width: 420px)", self.css)
         self.assertIn("repeat(auto-fit, minmax(min(100%, 180px), 1fr))", self.css)
-        self.assertIn("@container hdo-dashboard (min-width: 1040px)", self.css)
-        self.assertIn("grid-template-columns: minmax(0, 2.05fr) minmax(372px, .95fr);", self.css)
+        self.assertIn("@container hdo-dashboard (min-width: 1000px)", self.css)
+        self.assertIn("minmax(var(--calendar-min-width), 1fr)", self.css)
+        self.assertIn("minmax(var(--sidebar-min-width), var(--sidebar-preferred-width))", self.css)
         self.assertIn("@container hdo-calendar (max-width: 419px)", self.css)
         for retired in ("640px", "900px", "1220px"):
             self.assertNotIn("hdo-dashboard (min-width: {})".format(retired), self.css)
@@ -200,14 +193,14 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         )[1].split("}", 1)[0]
         self.assertIn("flex-wrap: wrap", progress_header_rule)
         progress_chip_rule = self.css.split(
-            ".hdo-progress-status-chip {", 1
+            ".hdo-progress-heading-value {", 1
         )[1].split("}", 1)[0]
         self.assertIn("max-width: 100%", progress_chip_rule)
-        self.assertIn("overflow-wrap: anywhere", progress_chip_rule)
-        self.assertIn("white-space: normal", progress_chip_rule)
+        self.assertIn("white-space: nowrap", progress_chip_rule)
         progress_rule = self.css.split(".hdo-progress-track {", 1)[1].split("}", 1)[0]
         self.assertIn("min-block-size: 14px", progress_rule)
-        self.assertEqual(self.html.count("data-hdo-progress-label"), 2)
+        self.assertEqual(self.html.count("data-hdo-progress-label"), 0)
+        self.assertEqual(self.html.count("data-hdo-progress-value"), 1)
 
     def test_live_canvas_is_transparent_while_cards_and_preview_remain_themed(self) -> None:
         root_rule = self.css.split("#hdo-dashboard {", 1)[1].split("}", 1)[0]
@@ -265,13 +258,13 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("18px repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))", compact)
         self.assertIn("column-gap: 1px", compact)
         self.assertIn("row-gap: 1px", compact)
-        narrow = self.css.split("@container hdo-dashboard (max-width: 479px)", 1)[1]
-        frame_rule = narrow.split(
-            '#hdo-dashboard[data-hdo-calendar-view="year"] .hdo-calendar-grid-frame {', 1
+        frame_rule = self.css.split(
+            '.hdo-calendar-shell[data-hdo-calendar-view="year"] .hdo-calendar-grid-frame {', 1
         )[1].split("}", 1)[0]
         self.assertIn("overflow-x: auto", frame_rule)
-        self.assertIn("overflow-y: hidden", frame_rule)
-        self.assertIn("min-width: 580px", narrow)
+        narrow = self.css.split("@container hdo-dashboard (max-width: 479px)", 1)[1]
+        self.assertIn("overflow-y: hidden", narrow)
+        self.assertIn("min-width: 620px", self.css)
         self.assertNotIn("grid-template-columns", narrow)
         self.assertNotIn("transform: scale", narrow)
 
@@ -284,8 +277,7 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn('"date date"', smallest)
         self.assertIn('"event event"', smallest)
         self.assertIn('". actions"', smallest)
-        self.assertIn("overflow-wrap: anywhere", compact)
-        self.assertIn("white-space: normal", compact)
+        self.assertIn("hdo-event-row", self.css)
         label_rule = self.css.split(".hdo-context-label {", 1)[1].split("}", 1)[0]
         self.assertIn("white-space: nowrap", label_rule)
         action_rule = self.css.split(".hdo-calendar-card-action {", 1)[1].split("}", 1)[0]

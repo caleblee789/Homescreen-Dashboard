@@ -519,7 +519,7 @@ METRIC_REPORT_SCRIPT = r"""
     var node = root.querySelector('[data-hdo-metric="' + key + '"]');
     metrics[key] = node ? node.textContent.trim() : '';
   });
-  var progress = root.querySelector('[data-hdo-progress-label]');
+  var progress = root.querySelector('[data-hdo-progress-value]');
   return {ready:true, metrics:metrics, progress:progress ? progress.textContent.trim() : ''};
 })()
 """ % json.dumps(STATISTIC_METRIC_KEYS)
@@ -611,7 +611,7 @@ base.DOM_REPORT_SCRIPT = r"""
   var selectedStyle=selected?getComputedStyle(selected):null;
   var metricValues={};
   %s.forEach(function(key){var n=q('[data-hdo-metric="'+key+'"]');metricValues[key]=n?n.textContent.trim():'';});
-  var progress=q('[data-hdo-progress-label]');
+  var progress=q('[data-hdo-progress-value]');
   return {
     ready:true,
     loading:root.classList.contains('hdo-dashboard--loading'),
@@ -652,7 +652,9 @@ base.DOM_REPORT_SCRIPT = r"""
     eventMarkerCount:qa('.hdo-calendar-day .hdo-event-marker').length,
     completionCount:qa('.hdo-calendar-day[data-level]:not([data-level="0"])').length,
     selectedOutline:selectedStyle?selectedStyle.outlineWidth:'',
-    cellShadowCount:cells.filter(function(n){return getComputedStyle(n).boxShadow!=='none';}).length,
+    cellShadowCount:cells.filter(function(n){
+      return !n.classList.contains('is-today') && getComputedStyle(n).boxShadow!=='none';
+    }).length,
     verseFontSize:verse?getComputedStyle(verse).fontSize:'',
     verseFontFamily:verse?getComputedStyle(verse).fontFamily:'',
     verseColor:verse?getComputedStyle(verse).color:'',
@@ -1353,7 +1355,7 @@ def _previsibility_capture_resize(
     if target_width == "full":
         return
     else:
-        width = min(max(820, int(target_width)), available.width() - 96)
+        width = min(max(860, int(target_width)), available.width() - 96)
         target_height = 800 if int(target_width) >= 1280 else 760
         height = min(max(600, target_height), available.height() - 96)
     dialog.resize(width, height)
@@ -1513,7 +1515,13 @@ def _activate_settings_case(case: Mapping[str, Any]) -> None:
                 )
         _position_visible_target(dialog, case)
         QApplication.processEvents()
-        QTimer.singleShot(720, lambda: _inspect_settings_case(case))
+        delay_ms = 720
+        if _settings_index == 1:
+            delay_ms = max(
+                delay_ms,
+                int(os.environ.get("HDO_RELEASE_FIRST_SETTINGS_DELAY_MS", "0") or 0),
+            )
+        QTimer.singleShot(delay_ms, lambda: _inspect_settings_case(case))
     except Exception as exc:
         _exit_active_settings_exec()
         base._error("{}-activate".format(case.get("id", "settings")), exc)
@@ -2424,7 +2432,7 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     special = str(case.get("special", ""))
     base._require(state.get("window_title") == "Home Screen Dashboard Settings", "Settings window title is incorrect")
     if not bool(state.get("screen_compact_fallback")):
-        base._require(state.get("minimum_size") == [820, 600], "Settings minimum size is not 820x600 logical px")
+        base._require(state.get("minimum_size") == [860, 640], "Settings minimum size is not 860x640 logical px")
     base._require(state.get("nav_width") == 184, "Settings rail is not 184px")
     base._require(not bool(state.get("nav_word_wrap")), "Settings rail wraps labels")
     base._require(bool(state.get("nav_elision_disabled")), "Settings rail elides long labels")
@@ -2510,7 +2518,7 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
             ),
         )
     base._require(state.get("header_height") == 72, "Settings page header is not fixed at 72px")
-    base._require(state.get("footer_minimum_height") == 60, "Settings footer is not fixed at a 60px minimum")
+    base._require(state.get("footer_minimum_height") == 56, "Settings footer is not fixed at a 56px minimum")
     if special != "close-confirmation" and bool(state.get("nav_visible")):
         base._require(bool(state.get("sidebar_spans_shell")), "Settings sidebar does not span header body and footer")
     expected_page_maximum = 840 if state.get("section") == "about_support" else 920
@@ -2651,9 +2659,9 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     if special == "event-long-title":
         target = state.get("visible_target", {})
         base._require(
-            state.get("window_size", [0, 0])[0] == 820
+            state.get("window_size", [0, 0])[0] == 860
             and bool(state.get("compact_layout")),
-            "long event title is not proven at the 820px responsive minimum",
+            "long event title is not proven at the 860px responsive minimum",
         )
         base._require(
             int(state.get("event_active_count", 0)) == 7
@@ -2956,6 +2964,15 @@ def _grab_screen_logical_rect(screen: Any, rect: QRect) -> QPixmap:
     if full_screen.isNull():
         return full_screen
     dpr = max(1.0, float(full_screen.devicePixelRatio()))
+    width_scale = full_screen.width() / max(1, screen_geometry.width())
+    height_scale = full_screen.height() / max(1, screen_geometry.height())
+    inferred_scale = (width_scale + height_scale) / 2.0
+    if (
+        abs(width_scale - height_scale) <= 0.03
+        and abs(inferred_scale - round(inferred_scale)) <= 0.03
+        and inferred_scale > dpr + 0.25
+    ):
+        dpr = float(round(inferred_scale))
     local_x = rect.x() - screen_geometry.x()
     local_y = rect.y() - screen_geometry.y()
     physical_rect = QRect(
@@ -3076,6 +3093,28 @@ def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Ma
             surface_match_ratio = 1.0
 
     pixmap, inferred_capture_scale = normalize_backing_scale(pixmap)
+    if pixmap.isNull() or surface_match_ratio < 0.55:
+        diagnostic_root = OUTPUT_ROOT / "capture-diagnostics"
+        diagnostic_root.mkdir(parents=True, exist_ok=True)
+        pixmap_path = diagnostic_root / "{}-screen.png".format(case["id"])
+        reference_path = diagnostic_root / "{}-client.png".format(case["id"])
+        if not pixmap.isNull():
+            pixmap.save(str(pixmap_path), "PNG")
+        if not reference.isNull():
+            reference.save(str(reference_path), "PNG")
+        base.REPORT.setdefault("capture_diagnostics", {})[str(case["id"])] = {
+            "surface_match_ratio": surface_match_ratio,
+            "screen_capture": str(pixmap_path),
+            "screen_capture_pixels": [pixmap.width(), pixmap.height()],
+            "screen_capture_dpr": float(pixmap.devicePixelRatio()) if not pixmap.isNull() else None,
+            "client_reference": str(reference_path),
+            "client_reference_pixels": [reference.width(), reference.height()],
+            "client_reference_dpr": float(reference.devicePixelRatio()) if not reference.isNull() else None,
+            "dialog_frame": [frame.x(), frame.y(), frame.width(), frame.height()] if capture_complete_frame else None,
+            "dialog_client": [dialog.x(), dialog.y(), dialog.width(), dialog.height()],
+            "screen_geometry": [screen.geometry().x(), screen.geometry().y(), screen.geometry().width(), screen.geometry().height()],
+        }
+        base._write_report()
     base._require(not pixmap.isNull(), "native Settings capture is null")
     base._require(color_count >= 3, "native Settings capture appears blank")
     base._require(
@@ -3376,7 +3415,7 @@ def _structured_page_assertions(
         and state.get("decorated_frame_inside_available") is True
         and navigation_is_unique
         and int(state.get("header_height", 0)) >= 72
-        and int(state.get("footer_minimum_height", 0)) >= 60
+        and int(state.get("footer_minimum_height", 0)) >= 56
         and int(state.get("page_maximum_width", 0)) == expected_page_cap
         and int(state.get("settings_shell_maximum", 0)) == 1120
         and list(state.get("window_size", [])) == [resolved[2], resolved[3]]

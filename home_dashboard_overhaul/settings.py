@@ -156,10 +156,10 @@ SETTINGS_PAGE_MAX_WIDTH = 920
 SETTINGS_ABOUT_MAX_WIDTH = 840
 SETTINGS_SIDEBAR_WIDTH = 184
 # Retain the sidebar only while it leaves at least 680 logical pixels for the
-# main region. This makes the 820 px supported minimum use compact navigation.
+# main region. This makes the 860 px supported minimum use compact navigation.
 SETTINGS_COMPACT_BODY_WIDTH = SETTINGS_SIDEBAR_WIDTH + 680
 SETTINGS_HEADER_HEIGHT = 72
-SETTINGS_FOOTER_MIN_HEIGHT = 60
+SETTINGS_FOOTER_MIN_HEIGHT = 56
 SETTINGS_SPACING = {
     "tight": 4,
     "control": 8,
@@ -1871,8 +1871,12 @@ class EventRowWidget(QWidget):
         copy = QVBoxLayout()
         copy.setContentsMargins(0, 0, 0, 0)
         copy.setSpacing(1)
-        self.title = ElidingLabel(title)
+        self.title = QLabel(title)
         self.title.setObjectName("EventRowTitle")
+        self.title.setWordWrap(True)
+        self.title.setMaximumHeight((2 * self.title.fontMetrics().lineSpacing()) + 2)
+        self.title.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.title.setToolTip(title)
         self.metadata = QLabel(metadata)
         self.metadata.setObjectName("EventRowMeta")
         for label in (self.title, self.metadata):
@@ -2445,7 +2449,8 @@ class TextEditDialog(SettingsEditorDialog):
         self._reference_required = title.startswith("Add")
         body_value, reference_value = split_quote_reference(value)
         label = QLabel(
-            "Body and reference are staged here. Simple bold or italic emphasis is sanitized before display."
+            "Body and reference are staged here. Simple bold or italic emphasis is sanitized before display. "
+            "This verse will be saved when you choose Save changes."
         )
         label.setTextFormat(Qt.TextFormat.PlainText)
         label.setObjectName("EditorHelp")
@@ -2486,7 +2491,7 @@ class TextEditDialog(SettingsEditorDialog):
         self.apply_button = save_button
         if save_button is not None:
             save_button.setObjectName("PrimaryButton")
-            save_button.setText("Add" if title.startswith("Add") else "Apply changes")
+            save_button.setText("Add verse" if title.startswith("Add") else "Update verse")
         buttons.accepted.connect(self._accept_if_valid)
         buttons.rejected.connect(self.reject)
         self.body_layout.addWidget(buttons)
@@ -2569,7 +2574,8 @@ class EventEditDialog(SettingsEditorDialog):
         self.name.setCursorPosition(0)
         _set_accessibility(self.name, "Event name", "Required. Up to 160 characters.")
         self.name_help = QLabel(
-            "Calendar cells display an event marker. The full event name appears in the integrated calendar footer and calendar tooltip."
+            "Calendar cells display an event marker. The full event name appears in the calendar details. "
+            "This event will be saved when you choose Save changes."
         )
         self.name_help.setObjectName("EditorHelp")
         self.name_help.setWordWrap(True)
@@ -2611,17 +2617,17 @@ class EventEditDialog(SettingsEditorDialog):
         self.apply_button = save_button
         if save_button is not None:
             save_button.setObjectName("PrimaryButton")
-            save_button.setText("Apply changes" if item else "Add")
+            save_button.setText("Update event" if item else "Add event")
         buttons.accepted.connect(self._accept_if_valid)
         buttons.rejected.connect(self.reject)
         self.body_layout.addWidget(buttons)
         self._update_name_count(self.name.text())
         self._fit_editor(60, 42, 16, 12)
         screen = self.screen()
-        available = screen.availableGeometry() if screen is not None else QRect(0, 0, 560, 320)
-        width = max(320, min(440, available.width() - 96))
+        available = screen.availableGeometry() if screen is not None else QRect(0, 0, 620, 360)
+        width = max(400, min(500, available.width() - 96))
         height = max(240, min(320, available.height() - 96))
-        self.setMinimumSize(min(440, width), min(320, height))
+        self.setMinimumSize(min(400, width), min(280, height))
         self.resize(width, height)
 
     def _update_name_count(self, value: str) -> None:
@@ -4099,8 +4105,8 @@ class SettingsDialog(QDialog):
         self.event_surface.add_widget(self.event_tabs, 1)
         self.event_empty_state = QWidget()
         self.event_empty_state.setObjectName("EmptyState")
-        self.event_empty_state.setMinimumHeight(220)
-        self.event_empty_state.setMaximumHeight(260)
+        self.event_empty_state.setMinimumHeight(156)
+        self.event_empty_state.setMaximumHeight(190)
         self.event_empty_state.setSizePolicy(
             QSizePolicy.Policy.Preferred,
             QSizePolicy.Policy.Minimum,
@@ -4842,16 +4848,14 @@ class SettingsDialog(QDialog):
             else:
                 self.font_color_warning.setProperty("state", "warning")
                 low_modes = [
-                    "{} ({:.1f}:1)".format(variant.capitalize(), value)
+                    (variant.capitalize(), value)
                     for variant, value in dashboard_contrast.items()
                     if value < 4.5
                 ]
                 self.font_color_warning.setVisible(custom_enabled and bool(low_modes))
                 self.font_color_warning.setText(
-                    "Low contrast on the {} dashboard background{}. The selected color will not be replaced.".format(
-                        " and ".join(low_modes),
-                        "s" if len(low_modes) != 1 else "",
-                    )
+                    "Low contrast on the current {} dashboard background, {:.2f}:1.\n"
+                    "The dashboard will keep this color.".format(*low_modes[0])
                     if custom_enabled and low_modes
                     else ""
                 )
@@ -6016,6 +6020,20 @@ class SettingsDialog(QDialog):
         archived: bool,
     ) -> None:
         button = row_widget.overflow
+        if archived:
+            button.setText("Restore")
+            button.setIcon(QIcon())
+            button.setFixedWidth(76)
+            button.setToolTip("Restore event")
+            _set_accessibility(
+                button,
+                "Restore {}".format(item.data(0, EVENT_NAME_ROLE)),
+                "Restore this event to the Active tab.",
+            )
+            button.clicked.connect(
+                lambda: self._invoke_event_action(event_id, True, "archive")
+            )
+            return
         button.setToolTip("Event actions")
         _set_accessibility(
             button,
@@ -6127,7 +6145,7 @@ class SettingsDialog(QDialog):
         else:
             self.event_empty_state.hide()
         has_events = bool(self.staged["events"]["items"])
-        self.event_add.setVisible(not has_events)
+        self.event_add.hide()
         self.event_toolbar_add.setVisible(has_events)
         self._fit_header_height()
         self._event_selection_changed()

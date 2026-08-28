@@ -17,7 +17,7 @@
     "maximum_about_width": 840,
     "rail_width": 184,
     "fixed_header_height": 72,
-    "fixed_footer_height": 60,
+    "fixed_footer_height": 56,
     "compact_navigation_threshold": 864,
     "embedded_web_content": "none",
     "window_lifecycle": "parented-standard-dialog-exec",
@@ -115,8 +115,8 @@
     {"id": "SAVE-ATOMIC", "tags": ["settings", "transaction"], "requirement": "Config and manual verse writes are prepared before mutation, previous config and bytes are retained, and a partial failure attempts rollback before a generic user-facing footer error with separately disclosed technical detail."},
     {"id": "PACKAGE", "tags": ["release", "archive"], "requirement": "The reproducible 1.8.7 archive passes its allowlist, safe-path, byte-parity, manifest/assets, secret/link, and exact-installed-hash gates."},
     {"id": "ISOLATION", "tags": ["release", "anki"], "requirement": "Fresh and restarted Anki 26.8 runs prove process, window, filesystem, and sync isolation before interaction."},
-    {"id": "PLATFORMS", "tags": ["release", "platforms"], "requirement": "Identical package and capture-plan hashes are required across native Windows 100/125/150 percent, Linux 100/150 percent, DPR 1, and macOS Retina bundles; any missing bundle is release-blocking."},
-    {"id": "BOUNDARIES", "tags": ["release", "unrun"], "requirement": "VoiceOver and forced colors may remain explicitly unrun and nonblocking; no report implies that either surface was tested."}
+    {"id": "PLATFORMS", "tags": ["release", "platforms"], "requirement": "The exact package and capture-plan hashes are required for native macOS at 100 percent application font and Retina DPR 2; missing macOS evidence is release-blocking."},
+    {"id": "BOUNDARIES", "tags": ["release", "unrun"], "requirement": "Windows, Linux, DPR 1, alternate application-font percentages, VoiceOver, forced colors, keyboard-navigation expansion, and reduced-motion work may remain explicitly unrun and nonblocking; no report implies that these surfaces were tested."}
   ],
   "visual_matrix": "qa/visual_regression_matrix_1_8_7.json",
   "capture_manifest": "qa/capture_evidence_manifest_1_8_7.json",

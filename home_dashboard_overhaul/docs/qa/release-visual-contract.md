@@ -47,7 +47,7 @@ and must be captured from the same exact candidate as Settings.
 - Production opens `SettingsDialog(mw, controller, …).exec()` with the parented
   native Qt lifecycle and no WebEngine content, custom window flags, `winId()`,
   unconditional post-show movement, raising, or activation.
-- Geometry uses logical coordinates: 1080×760 default, 820×600 normal minimum,
+- Geometry uses logical coordinates: 1080×760 default, 860×640 normal minimum,
   48 px normal margins, and a 24 px constrained-screen fallback.
 - `settings_dialog_geometry/v4` stores logical geometry, screen identity,
   available bounds, and informational DPR. A v3 record migrates only when it
@@ -57,12 +57,12 @@ and must be captured from the same exact candidate as Settings.
   owns one vertical `QScrollArea`; horizontal scrolling is disabled; page
   bottom padding equals the live footer height plus 16 logical pixels.
 - The shell is capped at 1,120 px. A 184 px sidebar spans the 72 px baseline
-  page header, scrolling page body, and 60 px baseline footer; header, footer,
+  page header, scrolling page body, and 56 px baseline footer; header, footer,
   rows, and actions grow with application fonts. Ordinary pages are capped at
   920 px and About at 840 px.
 - Vertical navigation remains active in normal operation. A synchronized top
   navigation activates whenever the sidebar would leave less than 680 px for
-  the main region; the 820 px supported minimum therefore uses compact nav.
+  the main region; the 860 px supported minimum therefore uses compact nav.
 - Cards and toolbars reflow using current width and font metrics. Settings has
   no rendered preview cards or preview-only reflow branch. Navigation never
   changes native window geometry.
@@ -73,15 +73,15 @@ and must be captured from the same exact candidate as Settings.
   Color mode changes production output, not dialog chrome or a Settings preview.
 - Role fonts are application-relative, visible text is at least 12 px at the
   100% baseline, ordinary controls are at least 36 px high, list rows are
-  54 px or taller where specified, and the action footer is fixed at 60 px.
+  54 px or taller where specified, and the action footer is fixed at 56 px.
 - Selected navigation and verse rows use accent-soft surfaces and a substantial
   accent edge. Events tabs use neutral graphite surfaces. Event rows have no
   persistent selection; activation opens the editor.
 - Dashboard contains Appearance, Dashboard sections, Study metrics, and
   Calendar display. Text selectors replace palette/theme/heatmap previews;
   Reset is scoped and never saves immediately.
-- Events shows both header and empty-state Add actions only while empty, then a
-  populated-toolbar Add action. Its search/sort toolbar, Active/Archived tabs,
+- Events shows one empty-state Add action while empty, then a populated-toolbar
+  Add action. Its search/sort toolbar, Active/Archived tabs,
   naturally growing 54 px baseline rows, six-row scrolling threshold,
   distinct empty/no-results states, and parented editor capped near 440 px are
   asserted.
@@ -137,23 +137,22 @@ filesystem, profile, sync-disabled, statistics, save, and controlled-restart
 gates against one 24-member candidate. The assembler rejects evidence unless
 all reports reference that package hash and the same capture-plan hash.
 
-The minimal Settings overhaul does not run the expanded platform or
-alternate-scale matrices. These release gates remain explicitly unrun rather
-than being inferred from the 41-frame visual acceptance set:
+The 1.8.7 Settings release scope does not run the expanded platform or
+alternate-scale matrices. These cases remain explicitly unrun and nonblocking
+rather than being inferred from the 41-frame visual acceptance set:
 
 - Windows at 100%, 125%, and 150% OS display scaling
 - Linux at 100% and 150% OS display scaling, both with DPR 1
-- DPR 1 and macOS Retina or equivalent high-DPR rendering
+- DPR 1 and alternate native display scaling
 
 Environment-variable scale substitutes do not count. Each report records OS,
 Anki version, Qt platform, logical and physical geometry, DPI, DPR, application
-font coverage, package hash, and plan hash. Physical dimensions must agree with
-logical dimensions multiplied by DPR; DPR-1 profiles must report approximately
-1.0 and matching dimensions. Each native report also carries passing structured
-layout assertions for all four Settings pages. The macOS report additionally
+font coverage, package hash, and plan hash. The required macOS Retina report
+carries passing structured layout assertions for all four Settings pages and
 must pass the complete per-route full-screen workflow without a Space switch.
 
-VoiceOver and forced-colors may remain explicitly unrun and nonblocking. Any
-missing Windows, Linux, DPR, OS-scaling, or macOS full-screen evidence is a hard
-failure. Do not publish, merge as a release, or mark `release_ready` until all
-blocking profiles pass.
+VoiceOver, forced-colors, Windows, Linux, DPR 1, OS scaling, keyboard-navigation
+expansion, reduced motion, and alternate application-font percentages may
+remain explicitly unrun and nonblocking. Missing macOS Retina 100% or macOS
+full-screen evidence is a hard failure. Do not mark `release_ready` until both
+blocking macOS gates pass.

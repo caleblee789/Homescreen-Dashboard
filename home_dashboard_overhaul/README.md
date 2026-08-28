@@ -8,7 +8,7 @@ Browser or statistics classes.
 ## What changed in 1.8.7
 
 - Settings remains a normal parented `QDialog` with default flags and a local
-  `exec()` lifetime. It opens at 1080×760 logical pixels, has an 820×600 normal
+  `exec()` lifetime. It opens at 1080×760 logical pixels, has an 860×640 normal
   minimum, and uses 48 px normal or 24 px constrained-screen margins.
 - The UI-only `settings_dialog_geometry/v4` record preserves logical geometry,
   screen identity, available bounds, and informational DPR. A valid v3 record
@@ -57,10 +57,10 @@ Browser or statistics classes.
 - Settings has one native Qt widget tree at every size: fixed header, a body
   with one vertical scroller per page, and a true final-row footer. The
   shell is capped at 1,120 px, the sidebar is 184 px, the page header is at
-  least 72 px, the footer is at least 60 px, and ordinary pages are capped at
+  least 72 px, the footer is at least 56 px, and ordinary pages are capped at
   920 px (About at 840 px).
 - Compact top navigation activates whenever retaining the sidebar would leave
-  less than 680 px for the main region, so the 820 px minimum is compact. Forms and toolbars
+  less than 680 px for the main region, so the 860 px minimum is compact. Forms and toolbars
   remain horizontally contained without rendered Settings previews.
 - Dashboard groups Appearance, Dashboard sections, Study metrics, and Calendar
   display. Events uses a searchable/sortable Active/Archived list bounded to
@@ -119,7 +119,7 @@ The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only production rendering; Settings shows
 text selectors and retains the custom-color input well without preview cards.
 Settings is a movable, resizable `QDialog(mw)` with a 1080×760 logical default,
-820×600 normal minimum, default Qt flags, and a local `exec()` call. It resolves the
+860×640 normal minimum, default Qt flags, and a local `exec()` call. It resolves the
 parent window's active screen, falls back to the screen containing the parent
 center and then the primary screen, and applies a clamped logical geometry
 before first visibility. After showing, it corrects only a decorated frame that
@@ -170,11 +170,10 @@ while separately completing all pages, Events tabs, resize, event and verse
 edits, save, close/reopen, and controlled restart through each route. Every
 step records current-Space retention. This required result adds no PNG frames.
 
-VoiceOver and forced-colors remain explicitly unrun and nonblocking. The macOS
-full-screen no-switch result is mandatory for Settings acceptance. Windows,
-Linux, DPR 1, and native OS display scaling remain separate release-blocking
-gates and remain unclaimed until their native reports pass against one exact
-package and capture-plan hash.
+The macOS Retina 100% profile and full-screen no-switch result are mandatory
+for Settings acceptance. VoiceOver, forced-colors, Windows, Linux, DPR 1,
+alternate application-font percentages, and native OS display scaling remain
+explicitly unrun, unclaimed, and nonblocking for 1.8.7.
 
 Copyright 2026. Licensed under AGPL-3.0-or-later. See
 `THIRD_PARTY_NOTICES.md` for Scripture and upstream notices.

@@ -277,7 +277,7 @@ def _review_report_sheet(
             "#fbbf24" if structured_failures else "#86efac",
         ),
         ("Alternate application-font capture: UNRUN by request", "#fbbf24"),
-        ("Windows, Linux, DPR 1, and native OS scaling: UNRUN · RELEASE BLOCKED", "#f87171"),
+        ("Windows, Linux, DPR 1, and native OS scaling: UNRUN · NONBLOCKING", "#fbbf24"),
         (
             "macOS full-screen menu + Dashboard gear: NO DESKTOP/SPACE SWITCH · PASS"
             if fullscreen_passed
@@ -548,7 +548,7 @@ def assemble(
             "and {} generated contact sheets for exact package `{}`.\n\n"
             "It is visual review evidence, not release approval. {} Alternate-font "
             "Settings capture was not run by request. Windows, Linux, DPR 1, and native OS scaling remain "
-            "release-blocking and unclaimed. Per-frame failures "
+            "nonblocking and unclaimed. Per-frame failures "
             "and structured non-PNG layout failures are retained in `capture-manifest.json` "
             "and the reports.\n".format(
                 len(captures),

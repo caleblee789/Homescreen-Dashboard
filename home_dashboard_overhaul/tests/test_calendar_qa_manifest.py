@@ -50,7 +50,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(settings["maximum_about_width"], 840)
         self.assertEqual(settings["rail_width"], 184)
         self.assertEqual(settings["fixed_header_height"], 72)
-        self.assertEqual(settings["fixed_footer_height"], 60)
+        self.assertEqual(settings["fixed_footer_height"], 56)
         self.assertEqual(settings["compact_navigation_threshold"], 864)
         self.assertEqual(settings["embedded_web_content"], "none")
         self.assertEqual(settings["window_lifecycle"], "parented-standard-dialog-exec")

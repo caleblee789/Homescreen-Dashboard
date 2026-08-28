@@ -467,13 +467,13 @@ class SettingsUtilityTests(unittest.TestCase):
         self.assertEqual(clamp_window_size(None, (1440, 900)), (1080, 760))
 
     def test_requested_settings_size_is_clamped_to_minimum_and_screen(self) -> None:
-        self.assertEqual(clamp_window_size((700, 500), (1440, 900)), (820, 600))
+        self.assertEqual(clamp_window_size((700, 500), (1440, 900)), (860, 640))
         self.assertEqual(clamp_window_size((4000, 3000), (1440, 900)), (1344, 804))
 
     def test_physically_small_screen_uses_same_shell_inside_available_geometry(self) -> None:
-        self.assertEqual(clamp_window_size((1200, 800), (800, 600)), (752, 600))
-        self.assertEqual(clamp_window_size((1080, 760), (850, 620)), (820, 600))
-        self.assertEqual(clamp_window_size((1080, 760), (820, 600)), (820, 600))
+        self.assertEqual(clamp_window_size((1200, 800), (800, 600)), (752, 552))
+        self.assertEqual(clamp_window_size((1080, 760), (850, 620)), (802, 572))
+        self.assertEqual(clamp_window_size((1080, 760), (820, 600)), (772, 552))
         self.assertEqual(
             clamp_window_geometry(None, (0, 0, 819, 599)),
             (24, 24, 771, 551),
@@ -519,9 +519,9 @@ class SettingsUtilityTests(unittest.TestCase):
         primary = (0, 0, 1600, 1000)
         secondary = (1600, 0, 1920, 1080)
         self.assertFalse(saved_window_geometry_is_valid((100, 100, 720, 520), [primary]))
-        self.assertFalse(saved_window_geometry_is_valid((100, 100, 819, 600), [primary]))
-        self.assertFalse(saved_window_geometry_is_valid((100, 100, 820, 599), [primary]))
-        self.assertTrue(saved_window_geometry_is_valid((100, 100, 820, 600), [primary]))
+        self.assertFalse(saved_window_geometry_is_valid((100, 100, 859, 640), [primary]))
+        self.assertFalse(saved_window_geometry_is_valid((100, 100, 860, 639), [primary]))
+        self.assertTrue(saved_window_geometry_is_valid((100, 100, 860, 640), [primary]))
         self.assertTrue(saved_window_geometry_is_valid((100, 100, 940, 680), [primary]))
         self.assertTrue(saved_window_geometry_is_valid((100, 100, 1180, 800), [primary]))
         self.assertTrue(saved_window_geometry_is_valid((-236, 100, 1180, 800), [primary]))

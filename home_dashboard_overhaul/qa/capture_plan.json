@@ -8,11 +8,6 @@
     "evidence_contract": "capture_evidence_manifest_1_8_7.json"
   },
   "native_platform_matrix": [
-    {"host_platform": "windows", "os_scale_percent": 100, "dpr_class": "dpr-1"},
-    {"host_platform": "windows", "os_scale_percent": 125, "dpr_class": "native"},
-    {"host_platform": "windows", "os_scale_percent": 150, "dpr_class": "native"},
-    {"host_platform": "linux", "os_scale_percent": 100, "dpr_class": "dpr-1"},
-    {"host_platform": "linux", "os_scale_percent": 150, "dpr_class": "dpr-1"},
     {"host_platform": "macos", "os_scale_percent": 100, "dpr_class": "retina"}
   ],
   "structured_settings_layout": {

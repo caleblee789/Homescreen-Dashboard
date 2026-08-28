@@ -56,13 +56,13 @@ assert.strictEqual(model.getNextUpcomingEvent(events, "2026-09-02"), null);
 assert.deepStrictEqual(model.getContextEvent(events, "2026-08-28", "2026-08-17"), {
   event: { id: "a", date: "2026-08-28", name: "Alpha" },
   additional: 1,
-  relationship: "On this date",
+  relationship: "Events on this date",
   kind: "selected"
 });
 assert.deepStrictEqual(model.getContextEvent(events, "2026-08-22", "2026-08-17"), {
   event: null,
   additional: 0,
-  relationship: "No event on this date",
+  relationship: "Events on this date",
   kind: "empty_selected",
   upcoming: {
     event: { id: "a", date: "2026-08-28", name: "Alpha" },
@@ -222,7 +222,7 @@ assert.strictEqual(model.intensityLevel(1000, thresholds), 5);
 // Source guards cover the shared interaction/performance architecture.
 const js = fs.readFileSync(path.join(__dirname, "../web/dashboard.js"), "utf8");
 const css = fs.readFileSync(path.join(__dirname, "../web/dashboard.css"), "utf8");
-for (const forbidden of ["Outside due forecast", "Outside study history", "No events", "Select a date for details", "Expand preview"]) {
+for (const forbidden of ["Outside due forecast", "Outside study history", "Select a date for details", "Expand preview"]) {
   assert(!js.includes(forbidden));
 }
 assert(js.includes('calendar.addEventListener("pointerover"'));
@@ -236,19 +236,20 @@ assert(css.includes("pointer-events: none"));
 assert(css.includes("min-width: min(190px"));
 assert(css.includes("max-width: min(220px"));
 assert(css.includes("width: min(1120px, calc(100% - 40px))"));
-assert(css.includes("grid-template-columns: minmax(0, 2.05fr) minmax(372px, .95fr)"));
+assert(css.includes("minmax(var(--calendar-min-width), 1fr)"));
+assert(css.includes("minmax(var(--sidebar-min-width), var(--sidebar-preferred-width))"));
 assert(css.includes("@container hdo-dashboard (min-width: 420px)"));
-assert(css.includes("@container hdo-dashboard (min-width: 1040px)"));
+assert(css.includes("@container hdo-dashboard (min-width: 1000px)"));
 assert(css.includes("@container hdo-calendar (max-width: 419px)"));
 assert(css.includes("@container hdo-dashboard (max-width: 479px)"));
 assert(css.includes("28px repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))"));
 assert(css.includes("18px repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))"));
-assert(css.includes("min-width: 580px"));
+assert(css.includes("min-width: 620px"));
 assert(!css.includes("clamp(10px, 1cqi, 12px)"));
 assert(js.includes('monthLabel.style.setProperty("--hdo-month-start-week"'));
 assert(js.includes('primaryAction.textContent = "Reviewed cards"'));
 assert(js.includes('primaryAction.textContent = "Due cards"'));
-assert(js.includes('relationship: "On this date"'));
+assert(js.includes('relationship: "Events on this date"'));
 assert(js.includes("setButtonHidden(primaryAction, !capabilities.primaryEnabled)"));
 assert(!js.includes("getDueOverlayHeight"));
 assert(!js.includes("hdo-due-hatch"));
@@ -259,7 +260,8 @@ assert(css.includes("block-size: 4px"));
 assert(css.includes("block-size: 3px"));
 assert(css.includes("block-size: 4px"));
 assert(css.includes("background: var(--calendar-empty-bg)"));
-assert(css.includes("outline: 2px solid var(--calendar-today-ring)"));
+assert(css.includes("box-shadow: inset 0 0 0 2px var(--calendar-today-ring)"));
+assert(css.includes("outline: 2px solid var(--calendar-selected-ring)"));
 assert(js.includes('weekdayLabel.className = "hdo-year-weekday-label"'));
 assert(js.includes("setYearScrollPosition"));
 assert(js.includes("new Date(calendarToday.getFullYear(), calendarToday.getMonth(), 15)"));
@@ -272,9 +274,8 @@ assert(js.includes("visibleBottomActionContainer"));
 assert(js.includes("new global.ResizeObserver(update)"));
 assert(js.includes("var footerHeight = candidate ? measured : 60"));
 assert(js.includes("hdoFooterClearanceSource"));
-assert(js.includes('relationship: "No event on this date"'));
-assert(js.includes('editEvent.title = "Edit event"'));
-assert(js.includes('editEvent.title = "Add event"'));
+assert(js.includes('eventEmpty.textContent = eventContext.kind === "empty_today"'));
+assert(js.includes('items.slice(0, 2)'));
 assert(js.includes("root.querySelector(\".hdo-refresh-warning\")"));
 assert(js.includes("root.dataset.hdoLastUpdatedAt"));
 assert(js.includes("global.ResizeObserver"));

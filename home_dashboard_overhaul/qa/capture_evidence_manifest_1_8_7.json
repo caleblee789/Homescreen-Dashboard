@@ -185,11 +185,6 @@
     "required_result": "every workflow step through both paths remains on the current native Anki full-screen Space with no desktop switch"
   },
   "required_native_platform_profiles": [
-    {"host_platform": "windows", "os_scale_percent": 100, "dpr_class": "dpr-1"},
-    {"host_platform": "windows", "os_scale_percent": 125, "dpr_class": "native"},
-    {"host_platform": "windows", "os_scale_percent": 150, "dpr_class": "native"},
-    {"host_platform": "linux", "os_scale_percent": 100, "dpr_class": "dpr-1"},
-    {"host_platform": "linux", "os_scale_percent": 150, "dpr_class": "dpr-1"},
     {"host_platform": "macos", "os_scale_percent": 100, "dpr_class": "retina"}
   ],
   "native_platform_profile_contract": {

@@ -8,7 +8,7 @@ Browser or statistics classes.
 ## 1.8.7 highlights
 
 - Settings remains a parented native `QDialog(mw)` with a local `exec()`
-  lifetime. Its logical default is 1080×760, its normal minimum is 820×600,
+  lifetime. Its logical default is 1080×760, its normal minimum is 860×640,
   and it keeps 48 px normal screen margins or 24 px on a constrained screen.
 - The UI-only `settings_dialog_geometry/v4` record stores logical geometry,
   screen identity, available bounds, and informational DPR. A valid v3 record
@@ -42,10 +42,10 @@ Browser or statistics classes.
   narrow shells, and hard restart are contractually checked
   against identical values from the same collection snapshot.
 - Settings uses a fixed header, vertically scrollable native page body, and
-  fixed 60 px footer. A shell capped near 1,240 px contains a 184 px sidebar,
+  fixed 56 px footer. A shell capped near 1,240 px contains a 184 px sidebar,
   fixed 72 px page header, and page column capped at 980 px. Compact top
-  navigation is reserved for screens that cannot accommodate the 920×640
-  normal minimum and activates below 820 logical pixels.
+  navigation is reserved for screens that cannot accommodate the normal
+  860×640 window and activates when the sidebar would compress the form.
 - Responsive Settings grids parent every field to its card before showing or
   filtering it. Settings renders no Dashboard, verse, palette, theme, or
   heatmap previews; selector text carries those choices and the custom-color
@@ -151,9 +151,10 @@ contact sheets. Its status remains `review-incomplete-nonrelease`: capture and
 structured-layout checks passed without recorded failures, but the
 exact-package full-screen macOS menu and Dashboard-gear opening paths were
 explicitly skipped and remain unrun. These two 1.8.7 sets are review evidence,
-not release approval. VoiceOver and forced-colors remain explicitly unrun and
-nonblocking. Windows, Linux, DPR 1, and true OS display scaling remain separate
-release-blocking gates until run successfully.
+not release approval. VoiceOver, forced-colors, Windows, Linux, DPR 1,
+alternate application-font percentages, and true OS display scaling remain
+explicitly unrun and nonblocking for 1.8.7. The blocking native profile is
+macOS Retina at 100% application font, including both full-screen opening routes.
 
 ## Project layout
 

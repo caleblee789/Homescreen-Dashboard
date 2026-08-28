@@ -53,7 +53,7 @@ def main() -> int:
     _require(errors, contract.get("release") == "1.8.7", "window contract release differs")
     _require(errors, capture_plan.get("release") == "1.8.7", "capture plan release differs")
     _require(errors, config.get("schema_version") == 8, "configuration schema changed")
-    _require(errors, contract.get("minimum_size") == [820, 600], "minimum geometry differs")
+    _require(errors, contract.get("minimum_size") == [860, 640], "minimum geometry differs")
     _require(errors, contract.get("default_size") == [1080, 760], "default geometry differs")
     _require(
         errors,
@@ -101,7 +101,7 @@ def main() -> int:
     _require(errors, contract.get("about_page_maximum_width") == 840, "About cap differs")
     _require(errors, contract.get("rail_width") == 184, "rail width differs")
     _require(errors, contract.get("header_height") == 72, "header height differs")
-    _require(errors, contract.get("footer_height") == 60, "footer height differs")
+    _require(errors, contract.get("footer_height") == 56, "footer height differs")
     _require(
         errors,
         contract.get("settings_profile_acceptance_gate")
@@ -141,7 +141,7 @@ def main() -> int:
 
     for marker in (
         "SETTINGS_DEFAULT_SIZE = (1080, 760)",
-        "SETTINGS_MINIMUM_SIZE = (820, 600)",
+        "SETTINGS_MINIMUM_SIZE = (860, 640)",
         "SETTINGS_NORMAL_SCREEN_MARGIN = 48",
         "SETTINGS_SMALL_SCREEN_MARGIN = 24",
         "SETTINGS_MINIMUM_VISIBLE_RATIO = .80",
@@ -184,8 +184,8 @@ def main() -> int:
         '"{} of {} verses".format(total, len(self.quotes))',
         "target = max(180, min(520, viewport_height - 300))",
         "class SuffixNumberField(QWidget):",
-        'save_button.setText("Add" if title.startswith("Add") else "Apply changes")',
-        'save_button.setText("Apply changes" if item else "Add")',
+        'save_button.setText("Add verse" if title.startswith("Add") else "Update verse")',
+        'save_button.setText("Update event" if item else "Add event")',
         'SETTINGS_GEOMETRY_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v4"',
         'SETTINGS_GEOMETRY_SCREEN_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v4_screen"',
         'SETTINGS_GEOMETRY_AVAILABLE_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v4_available"',

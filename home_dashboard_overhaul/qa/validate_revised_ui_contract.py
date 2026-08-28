@@ -107,7 +107,7 @@ def validate(root: Path = ROOT) -> List[str]:
 
     expected_settings = {
         "default_size": [1080, 760],
-        "minimum_size": [820, 600],
+        "minimum_size": [860, 640],
         "screen_margins": {"normal": 48, "small_screen_fallback": 24},
         "minimum_saved_visible_ratio": .8,
         "geometry_version": 4,
@@ -117,8 +117,8 @@ def validate(root: Path = ROOT) -> List[str]:
         "about_page_maximum_width": 840,
         "rail_width": 184,
         "header_height": 72,
-        "footer_height": 60,
-        "compact_navigation": "single-line synchronized QTabBar whenever retaining the 184 px rail would leave less than 680 logical pixels for the main region; the 820 px supported minimum is compact",
+        "footer_height": 56,
+        "compact_navigation": "single-line synchronized QTabBar whenever retaining the 184 px rail would leave less than 680 logical pixels for the main region; the 860 px supported minimum is compact",
         "reposition_after_open": "one decoration-only clamp when the decorated frame is outside the active screen; never move an already-contained frame",
     }
     if not isinstance(settings, Mapping) or any(settings.get(key) != value for key, value in expected_settings.items()):
@@ -253,7 +253,7 @@ def validate(root: Path = ROOT) -> List[str]:
         "SETTINGS_COMPACT_BODY_WIDTH = SETTINGS_SIDEBAR_WIDTH + 680",
         "SETTINGS_SIDEBAR_WIDTH = 184",
         "SETTINGS_HEADER_HEIGHT = 72",
-        "SETTINGS_FOOTER_MIN_HEIGHT = 60",
+        "SETTINGS_FOOTER_MIN_HEIGHT = 56",
         "self.compact_nav = QTabBar",
         "ScrollBarPolicy.ScrollBarAlwaysOff",
         "class SettingsFooter(QWidget)",
@@ -282,7 +282,7 @@ def validate(root: Path = ROOT) -> List[str]:
     ))
     _require_markers(errors, "settings_model.py", (
         "SETTINGS_DEFAULT_SIZE = (1080, 760)",
-        "SETTINGS_MINIMUM_SIZE = (820, 600)",
+        "SETTINGS_MINIMUM_SIZE = (860, 640)",
         "SETTINGS_NORMAL_SCREEN_MARGIN = 48",
         "SETTINGS_SMALL_SCREEN_MARGIN = 24",
         "SETTINGS_GEOMETRY_VERSION = 4",

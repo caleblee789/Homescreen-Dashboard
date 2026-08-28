@@ -233,7 +233,7 @@
       return {
         event: selected[0],
         additional: selected.length - 1,
-        relationship: "On this date",
+        relationship: "Events on this date",
         kind: "selected"
       };
     }
@@ -241,7 +241,7 @@
     return {
       event: null,
       additional: 0,
-      relationship: "No event on this date",
+      relationship: "Events on this date",
       kind: "empty_selected",
       upcoming: upcoming
     };
@@ -609,12 +609,8 @@
     var contextDate = root.querySelector("[data-hdo-context-date]");
     var contextEvent = root.querySelector("[data-hdo-context-event]");
     var contextEventLabel = root.querySelector("[data-hdo-context-event-label]");
-    var contextEventMarker = root.querySelector("[data-hdo-event-marker]");
-    var eventLink = root.querySelector("[data-hdo-open-events]");
-    var eventMeta = root.querySelector("[data-hdo-event-meta]");
-    var eventMore = root.querySelector("[data-hdo-event-more]");
+    var eventRows = root.querySelector("[data-hdo-event-rows]");
     var eventEmpty = root.querySelector("[data-hdo-event-empty]");
-    var editEvent = root.querySelector("[data-hdo-edit-event]");
     var primaryAction = root.querySelector("[data-hdo-primary-action]");
     var mostMissed = root.querySelector("[data-hdo-most-missed]");
     var liveStatus = root.querySelector("[data-hdo-calendar-status]");
@@ -708,6 +704,53 @@
       send("date_insight", { date: day.date, request_id: state.requestId });
     }
 
+    function renderEventRows(target, items, relationship, todayIso) {
+      target.replaceChildren();
+      items.slice(0, 2).forEach(function (item) {
+        var row = document.createElement("div");
+        row.className = "hdo-event-row";
+        var marker = document.createElement("span");
+        marker.className = "hdo-context-event-marker";
+        marker.setAttribute("aria-hidden", "true");
+        var copy = document.createElement("span");
+        copy.className = "hdo-event-copy";
+        var link = document.createElement("button");
+        link.type = "button";
+        link.className = "hdo-event-title";
+        link.dataset.hdoOpenEvents = "";
+        link.dataset.eventDate = item.date;
+        link.textContent = item.name;
+        link.title = relationship + ": " + item.name;
+        var meta = document.createElement("span");
+        meta.className = "hdo-event-meta";
+        var countdown = eventCountdown(item.date, todayIso, locale);
+        meta.textContent = formatEventDate(item.date, todayIso, locale) + (countdown ? " · " + countdown : "");
+        copy.appendChild(link);
+        copy.appendChild(meta);
+        var edit = document.createElement("button");
+        edit.type = "button";
+        edit.className = "hdo-event-edit";
+        edit.dataset.hdoEditEvent = "";
+        edit.dataset.eventId = String(item.id || "");
+        edit.dataset.eventDate = item.date;
+        edit.textContent = "Edit";
+        edit.setAttribute("aria-label", "Edit event: " + item.name);
+        row.appendChild(marker);
+        row.appendChild(copy);
+        row.appendChild(edit);
+        target.appendChild(row);
+      });
+      if (items.length > 2) {
+        var more = document.createElement("button");
+        more.type = "button";
+        more.className = "hdo-event-more";
+        more.dataset.hdoOpenEvents = "";
+        more.dataset.eventDate = items[0].date;
+        more.textContent = "+" + formatNumber(items.length - 2, locale) + " more";
+        target.appendChild(more);
+      }
+    }
+
     function updateContext() {
       var todayIso = String(state.payload.calendar_date || state.payload.scheduling_date || "");
       if (contextDate) {
@@ -716,70 +759,53 @@
       }
       if (dateState) {
         var selectedIsToday = state.selected === todayIso;
-        dateState.textContent = selectedIsToday ? "Today" : "Selected";
+        dateState.textContent = selectedIsToday ? "Today" : "Selected date";
         dateState.classList.toggle("is-today", selectedIsToday);
         dateState.classList.toggle("is-selected", !selectedIsToday);
       }
       var eventContext = getContextEvent(state.events, state.selected, todayIso);
-      if (contextEvent && contextEventMarker && eventLink && eventMeta && eventMore && eventEmpty && editEvent) {
-        var calendarCard = root.querySelector(".hdo-calendar-card");
-        var compactFooter = (calendarCard ? calendarCard.clientWidth : root.clientWidth) < 760;
+      if (contextEvent && eventRows && eventEmpty) {
+        contextEvent.querySelectorAll("[data-hdo-generated-event-section]").forEach(function (section) {
+          section.remove();
+        });
         var selectedEvent = eventContext && eventContext.event;
-        var secondaryUpcoming = eventContext && eventContext.kind === "empty_selected" && !compactFooter
+        var secondaryUpcoming = eventContext && eventContext.kind === "empty_selected"
           ? eventContext.upcoming
           : null;
-        var displayedEvent = selectedEvent || (secondaryUpcoming && secondaryUpcoming.event) || null;
-        var additionalEvents = selectedEvent
-          ? eventContext.additional
-          : secondaryUpcoming ? secondaryUpcoming.additional : 0;
         if (contextEventLabel) contextEventLabel.textContent = eventContext.relationship;
-        if (displayedEvent) {
-          var countdown = compactFooter
-            ? eventCountdownCompact(displayedEvent.date, todayIso, locale)
-            : eventCountdown(displayedEvent.date, todayIso, locale);
-          var eventDate = compactFooter
-            ? formatCompactEventDate(displayedEvent.date, todayIso, locale)
-            : formatEventDate(displayedEvent.date, todayIso, locale);
-          var eventMetaText = eventDate + (countdown ? " · " + countdown : "");
-          var eventTitle = secondaryUpcoming
-            ? "Next upcoming: " + displayedEvent.name
-            : displayedEvent.name;
-          var eventDescription = eventContext.relationship + ": " + eventTitle + (eventMetaText ? " · " + eventMetaText : "");
-          contextEventMarker.hidden = false;
-          eventLink.hidden = false;
-          eventLink.textContent = eventTitle;
-          eventLink.title = eventDescription;
-          eventLink.dataset.eventDate = displayedEvent.date;
-          eventMeta.hidden = !eventMetaText;
-          eventMeta.textContent = eventMetaText;
-          eventMore.hidden = additionalEvents <= 0;
-          eventMore.textContent = additionalEvents > 0
-            ? "+" + formatNumber(additionalEvents, locale)
-            : "";
+        eventRows.replaceChildren();
+        if (selectedEvent) {
+          renderEventRows(
+            eventRows,
+            state.eventsByDate[selectedEvent.date] || [selectedEvent],
+            eventContext.relationship,
+            todayIso
+          );
           eventEmpty.hidden = true;
         } else {
-          contextEventMarker.hidden = true;
-          eventLink.hidden = true;
-          eventLink.textContent = "";
-          eventLink.removeAttribute("title");
-          eventLink.dataset.eventDate = "";
-          eventMeta.hidden = true;
-          eventMeta.textContent = "";
-          eventMore.hidden = true;
-          eventMore.textContent = "";
-          eventEmpty.textContent = eventContext.kind === "empty_today" ? "No upcoming events" : "";
-          eventEmpty.hidden = !eventEmpty.textContent;
+          eventEmpty.textContent = eventContext.kind === "empty_today"
+            ? "No upcoming events"
+            : "No events on this date";
+          eventEmpty.hidden = false;
         }
-        var canEditEvents = state.payload.events_enabled !== false;
-        editEvent.hidden = !canEditEvents;
-        editEvent.dataset.eventId = selectedEvent ? String(selectedEvent.id || "") : "";
-        editEvent.dataset.eventDate = selectedEvent ? selectedEvent.date : state.selected;
-        if (selectedEvent) {
-          editEvent.setAttribute("aria-label", "Edit event: " + selectedEvent.name);
-          editEvent.title = "Edit event";
-        } else {
-          editEvent.setAttribute("aria-label", "Add event on " + formatSelectedDate(state.selected, locale));
-          editEvent.title = "Add event";
+        if (secondaryUpcoming && secondaryUpcoming.event) {
+          var nextSection = document.createElement("section");
+          nextSection.className = "hdo-event-section";
+          nextSection.dataset.hdoGeneratedEventSection = "";
+          var nextLabel = document.createElement("p");
+          nextLabel.className = "hdo-context-label";
+          nextLabel.textContent = "Next event";
+          var nextRows = document.createElement("div");
+          nextRows.className = "hdo-event-rows";
+          renderEventRows(
+            nextRows,
+            state.eventsByDate[secondaryUpcoming.event.date] || [secondaryUpcoming.event],
+            "Next event",
+            todayIso
+          );
+          nextSection.appendChild(nextLabel);
+          nextSection.appendChild(nextRows);
+          contextEvent.appendChild(nextSection);
         }
       }
       var day = state.days[state.selected];
@@ -1140,15 +1166,20 @@
       });
     });
 
-    if (eventLink) eventLink.addEventListener("click", function () {
-      send("settings", { page: "events" });
-    });
-    if (editEvent) editEvent.addEventListener("click", function () {
-      send("settings", {
-        page: "events",
-        date: editEvent.dataset.eventDate || "",
-        event_id: editEvent.dataset.eventId || ""
-      });
+    if (contextEvent) contextEvent.addEventListener("click", function (event) {
+      var link = event.target && event.target.closest ? event.target.closest("[data-hdo-open-events]") : null;
+      if (link) {
+        send("settings", { page: "events", date: link.dataset.eventDate || state.selected });
+        return;
+      }
+      var edit = event.target && event.target.closest ? event.target.closest("[data-hdo-edit-event]") : null;
+      if (edit) {
+        send("settings", {
+          page: "events",
+          date: edit.dataset.eventDate || state.selected,
+          event_id: edit.dataset.eventId || ""
+        });
+      }
     });
     if (primaryAction) primaryAction.addEventListener("click", function () {
       if (!primaryAction.hidden && !primaryAction.disabled) send("open_day", { date: state.selected });
@@ -1244,10 +1275,8 @@
   function updateProgressComposition(root, _statistics, presentation, _locale) {
     var track = root.querySelector("[data-hdo-progress-track]");
     var fill = root.querySelector("[data-hdo-progress-fill]");
-    var label = root.querySelector("[data-hdo-progress-label]");
-    var fillLabel = root.querySelector("[data-hdo-progress-label-fill]");
-    var chip = root.querySelector("[data-hdo-progress-chip]");
-    if (!track || !fill || !label || !chip) return;
+    var value = root.querySelector("[data-hdo-progress-value]");
+    if (!track || !fill || !value) return;
     var progress = presentation && presentation.progress && typeof presentation.progress === "object"
       ? presentation.progress
       : { status: "unavailable", fill_percent: null };
@@ -1264,16 +1293,14 @@
           : state === "in_progress"
             ? Math.round(percent) + "% complete"
             : "Unavailable";
-    chip.hidden = hasFill;
-    chip.textContent = statusLabel;
-    chip.dataset.hdoProgressState = state;
+    value.hidden = false;
+    value.textContent = hasFill ? Math.round(percent) + "%" : statusLabel;
+    value.dataset.hdoProgressState = state;
     track.hidden = !hasFill;
     track.dataset.hdoProgressState = state;
     track.setAttribute("aria-valuenow", String(percent));
     track.setAttribute("aria-valuetext", statusLabel);
     track.style.setProperty("--hdo-progress-percent", percent + "%");
-    label.textContent = statusLabel;
-    if (fillLabel) fillLabel.textContent = statusLabel;
   }
 
   function updateMetricSemanticRole(root, key, role) {

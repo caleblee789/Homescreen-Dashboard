@@ -91,7 +91,7 @@ class RendererTests(unittest.TestCase):
         html = render_dashboard(self.snapshot, self.config)
         completion = html[html.index("hdo-completion-legend"):html.index("hdo-due-legend")]
         due = html[html.index("hdo-legend-due"):html.index("hdo-calendar-context-bar")]
-        self.assertEqual(completion.count("data-level="), 5)
+        self.assertEqual(completion.count("data-level="), 6)
         self.assertEqual(due.count("data-due-level="), 3)
         self.assertIn("Due cards", due)
         self.assertIn("Completed reviews", html)
@@ -118,24 +118,21 @@ class RendererTests(unittest.TestCase):
         self.assertIn("hdo-date-state-chip", context)
         self.assertIn("data-hdo-date-state", context)
         self.assertIn("data-hdo-context-date", context)
-        self.assertIn("data-hdo-open-events", context)
-        self.assertIn("data-hdo-event-meta", context)
+        self.assertIn("data-hdo-event-rows", context)
+        self.assertIn("data-hdo-context-event-label", context)
         self.assertIn("No upcoming event", context)
-        self.assertIn("data-hdo-edit-event", context)
         self.assertIn("data-hdo-primary-action", context)
         self.assertIn("data-hdo-most-missed", context)
         self.assertNotIn("<strong>Selected date:</strong>", context)
-        self.assertIn("aria-label=\"Edit event\"", context)
-        self.assertIn("<svg", context)
         script = (Path(__file__).resolve().parents[1] / "web" / "dashboard.js").read_text()
         self.assertIn('primaryAction.textContent = "Reviewed cards"', script)
         self.assertIn('primaryAction.textContent = "Due cards"', script)
         self.assertIn("getContextEvent(state.events, state.selected, todayIso)", script)
         self.assertIn('relationship: "Next event"', script)
-        self.assertIn('relationship: "On this date"', script)
-        self.assertIn('relationship: "No event on this date"', script)
-        self.assertIn('editEvent.title = "Edit event"', script)
-        self.assertIn('editEvent.title = "Add event"', script)
+        self.assertIn('relationship: "Events on this date"', script)
+        self.assertIn('edit.dataset.hdoEditEvent = ""', script)
+        self.assertIn('items.slice(0, 2)', script)
+        self.assertIn('" more"', script)
 
     def test_refresh_failure_uses_one_last_updated_banner(self) -> None:
         html = render_dashboard(
@@ -170,7 +167,8 @@ class RendererTests(unittest.TestCase):
         self.assertIn("data-hdo-progress-track", html)
         self.assertNotIn("data-hdo-progress-segment=", html)
         self.assertRegex(html, r'data-hdo-progress-state="in_progress"[^>]*aria-valuenow="77"')
-        self.assertIn(">77% complete</span>", html)
+        self.assertIn(">77%</span>", html)
+        self.assertNotIn("data-hdo-progress-label", html)
         session = html[html.index("Today’s Session"):html.index("Last 7 Days")]
         for label in (
             "Cards studied", "New cards studied", "Cards buried",
@@ -213,7 +211,7 @@ class RendererTests(unittest.TestCase):
         complete = rendered(TodayStats(7), ValueState.available(QueueStats()))
         self.assertIn('data-hdo-progress-state="complete"', complete)
         self.assertIn('aria-valuenow="100"', complete)
-        self.assertIn('>100% complete</span>', complete)
+        self.assertIn('>100%</span>', complete)
 
         tiny = rendered(
             TodayStats(999),

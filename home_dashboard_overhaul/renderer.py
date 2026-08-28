@@ -187,6 +187,35 @@ def _style(config: Mapping[str, Any], anki_dark: bool) -> str:
         for key, value in theme.items()
         if key not in {"theme_name", "color_mode", "heatmap_preset"}
     })
+    declarations.update({
+        "--hd-surface-root": theme["ui_canvas"],
+        "--hd-surface-card": card_background,
+        "--hd-surface-elevated": theme["ui_surface_2"],
+        "--hd-surface-hover": theme["ui_control_hover"],
+        "--hd-surface-pressed": theme["ui_control_pressed"],
+        "--hd-border-subtle": theme["ui_border_subtle"],
+        "--hd-border-strong": theme["ui_border_strong"],
+        "--hd-text-primary": theme["ui_text_primary"],
+        "--hd-text-secondary": theme["ui_text_secondary"],
+        "--hd-text-muted": theme["ui_text_tertiary"],
+        "--hd-accent": theme["ui_accent"],
+        "--hd-accent-hover": theme["ui_accent_hover"],
+        "--hd-accent-pressed": theme["ui_accent_pressed"],
+        "--hd-focus-ring": theme["ui_focus"],
+        "--hd-shadow": theme["ui_shadow_card"],
+        "--hd-new": theme["status_new_fill"],
+        "--hd-learning": theme["status_learning_fill"],
+        "--hd-reviews": theme["status_review_fill"],
+        "--hd-success": theme["status_success_fill"],
+        "--hd-warning": theme["status_warning_fill"],
+        "--hd-danger": theme["status_danger_fill"],
+        "--hd-event": theme["status_event_fill"],
+        "--hd-due": theme["heat_due_mark_2"],
+        **{
+            "--hd-heat-{}".format(level): theme["heat_complete_{}".format(level)]
+            for level in range(6)
+        },
+    })
     return ";".join("{}:{}".format(key, value) for key, value in declarations.items())
 
 
@@ -332,31 +361,26 @@ def _progress_group(snapshot: DashboardSnapshot) -> str:
     presentation = _progress_presentation(snapshot)
     has_fill = presentation.fill_percent is not None
     percent = presentation.fill_percent if has_fill else 0
+    heading_label = "{}%".format(percent) if has_fill else presentation.label
     heading_meta = (
-        '<span class="hdo-progress-status-chip" data-hdo-progress-chip '
-        'data-hdo-progress-state="{}"{}>{}</span>'
+        '<span class="hdo-progress-heading-value" data-hdo-progress-value '
+        'data-hdo-progress-state="{}">{}</span>'
     ).format(
         _escape(presentation.state.value),
-        " hidden" if has_fill else "",
-        _escape(presentation.label),
+        _escape(heading_label),
     )
     lead = (
         '<div class="hdo-progress-track" data-hdo-progress-track '
         'data-hdo-progress-state="{}" role="progressbar" aria-valuemin="0" '
         'aria-valuemax="100" aria-valuenow="{}" aria-valuetext="{}"{} '
         'style="--hdo-progress-percent:{}%">'
-        '<span class="hdo-progress-fill" data-hdo-progress-fill></span>'
-        '<span class="hdo-progress-label hdo-progress-label--track" data-hdo-progress-label>{}</span>'
-        '<span class="hdo-progress-label hdo-progress-label--fill" '
-        'data-hdo-progress-label-fill aria-hidden="true">{}</span></div>'
+        '<span class="hdo-progress-fill" data-hdo-progress-fill></span></div>'
     ).format(
         _escape(presentation.state.value),
         percent,
         _escape(presentation.label),
         "" if has_fill else " hidden",
         percent,
-        _escape(presentation.label),
-        _escape(presentation.label),
     )
     if queue_state.is_available:
         queue: QueueStats = queue_state.value
@@ -846,23 +870,12 @@ def _calendar(
         else ""
     )
     event_summary = (
-        '<div class="hdo-next-event-line hdo-calendar-footer__event" data-hdo-context-event>'
-        '<span class="hdo-context-event-marker" data-hdo-event-marker aria-hidden="true" hidden></span>'
-        '<span class="hdo-event-summary">'
-        '<button type="button" class="hdo-event-title" data-hdo-open-events hidden></button>'
-        '<span class="hdo-event-meta" data-hdo-event-meta hidden></span>'
-        '<span class="hdo-event-more" data-hdo-event-more hidden></span>'
-        '<span class="hdo-event-empty" data-hdo-event-empty>No upcoming events</span></span></div>'
-        if config.get("visibility", {}).get("events", True)
-        else ""
-    )
-    event_edit = (
-        '<button type="button" class="hdo-edit-event-button hdo-icon-button" data-hdo-edit-event '
-        'aria-label="Edit event" title="Edit event" hidden>'
-        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
-        '<path d="m4 16.8-.8 4 4-.8L18.6 8.6l-3.2-3.2L4 16.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
-        '<path d="m13.8 7 3.2 3.2M3.8 20.2h16.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'
-        '</svg></button>'
+        '<div class="hdo-event-sections hdo-calendar-footer__event" data-hdo-context-event>'
+        '<section class="hdo-event-section" data-hdo-event-section>'
+        '<p class="hdo-context-label" data-hdo-context-event-label>Next event</p>'
+        '<div class="hdo-event-rows" data-hdo-event-rows></div>'
+        '<p class="hdo-event-empty" data-hdo-event-empty>No upcoming events</p>'
+        '</section></div>'
         if config.get("visibility", {}).get("events", True)
         else ""
     )
@@ -886,14 +899,14 @@ def _calendar(
         '<span class="hdo-legend-title">Completed reviews</span>'
         '<span class="hdo-legend-endpoint">Low</span>'
         '<span class="hdo-legend-scale hdo-completion-legend" aria-hidden="true">'
-        '<i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i><i data-level="5"></i>'
+        '<i data-level="0"></i><i data-level="1"></i><i data-level="2"></i>'
+        '<i data-level="3"></i><i data-level="4"></i><i data-level="5"></i>'
         '</span><span class="hdo-legend-endpoint">High</span></div>{}{}</div>'
         '<div class="hdo-calendar-context hdo-calendar-context-bar{}" aria-live="polite">'
         '<div class="hdo-selected-date-line hdo-calendar-footer__date-context">'
         '<span class="hdo-date-state-chip" data-hdo-date-state>Today</span>'
         '<time data-hdo-context-date></time></div>{}'
         '<div class="hdo-context-actions hdo-calendar-footer__actions">'
-        '{}'
         '<button type="button" class="hdo-context-action hdo-calendar-card-action hdo-context-action--primary" data-hdo-primary-action hidden></button>'
         '<button type="button" class="hdo-context-action" data-hdo-most-missed hidden>Most missed</button>'
         '</div></div></footer>'
@@ -912,7 +925,6 @@ def _calendar(
         event_legend,
         " hdo-calendar-context--no-event" if not event_summary else "",
         event_summary,
-        event_edit,
         _safe_json(payload),
     )
 
