@@ -6852,6 +6852,7 @@ class SettingsDialog(QDialog):
         )
         if not enabled:
             self._mutation_enabled_states.clear()
+            mutation_controls: List[QWidget] = []
             for widget in self.settings_shell.findChildren(QWidget):
                 if not isinstance(widget, control_types):
                     continue
@@ -6862,7 +6863,16 @@ class SettingsDialog(QDialog):
                     self.quote_list,
                 }:
                     continue
-                self._mutation_enabled_states[widget] = widget.isEnabled()
+                mutation_controls.append(widget)
+            # Capture every effective state before disabling any parent. Qt
+            # combo boxes own popup list views beneath the combo itself; a
+            # one-pass snapshot observes those views as disabled immediately
+            # after their parent is locked and leaves the popup unusable when
+            # saving finishes.
+            self._mutation_enabled_states.update(
+                (widget, widget.isEnabled()) for widget in mutation_controls
+            )
+            for widget in mutation_controls:
                 widget.setEnabled(False)
             return
         for widget, was_enabled in list(self._mutation_enabled_states.items()):

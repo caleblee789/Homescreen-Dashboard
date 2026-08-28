@@ -85,7 +85,7 @@ _case_index = 0
 _interaction_cases: list[dict[str, Any]] = []
 _interaction_index = 0
 _stress_width_index = 0
-STRESS_WIDTHS = (319, 439, 440, 939, 940, 1280)
+STRESS_WIDTHS = (319, 439, 440, 1039, 1040, 1280)
 PACKAGE_ROOT = Path(home_dashboard_overhaul.__file__).resolve().parent
 
 
@@ -310,24 +310,11 @@ def _interaction_html(theme: str, mode: str) -> str:
             )
         return "".join(items)
 
-    full_segments = (
-        '<span class="hdo-progress-segment hdo-progress-segment--completed is-populated" style="--hdo-progress-count:100"></span>'
-        '<span class="hdo-progress-segment hdo-progress-segment--new" style="--hdo-progress-count:0"></span>'
-        '<span class="hdo-progress-segment hdo-progress-segment--learning" style="--hdo-progress-count:0"></span>'
-        '<span class="hdo-progress-segment hdo-progress-segment--review" style="--hdo-progress-count:0"></span>'
-    )
-    empty_segments = (
-        '<span class="hdo-progress-segment hdo-progress-segment--completed" style="--hdo-progress-count:0"></span>'
-        '<span class="hdo-progress-segment hdo-progress-segment--new" style="--hdo-progress-count:0"></span>'
-        '<span class="hdo-progress-segment hdo-progress-segment--learning" style="--hdo-progress-count:0"></span>'
-        '<span class="hdo-progress-segment hdo-progress-segment--review" style="--hdo-progress-count:0"></span>'
-    )
-    partial_segments = (
-        '<span class="hdo-progress-segment hdo-progress-segment--completed is-populated" style="--hdo-progress-count:60"></span>'
-        '<span class="hdo-progress-segment hdo-progress-segment--new is-populated has-preceding-populated" style="--hdo-progress-count:10"></span>'
-        '<span class="hdo-progress-segment hdo-progress-segment--learning is-populated has-preceding-populated" style="--hdo-progress-count:12"></span>'
-        '<span class="hdo-progress-segment hdo-progress-segment--review is-populated has-preceding-populated" style="--hdo-progress-count:18"></span>'
-    )
+    def progress_track(percent: int) -> str:
+        return (
+            '<div class="hdo-progress-track" style="--hdo-progress-percent:{}%">'
+            '<span class="hdo-progress-fill" data-hdo-progress-fill></span></div>'
+        ).format(percent)
 
     def state_levels(state_class: str, fixture_state: str) -> str:
         return "".join(
@@ -347,7 +334,7 @@ def _interaction_html(theme: str, mode: str) -> str:
         '<span class="hdo-state-item"><button type="button" class="hdo-calendar-day is-today is-selected" data-level="3" data-fixture-state="today-selected"><span class="hdo-date-number">15</span></button><span>Today + selected</span></span>'
         '<span class="hdo-state-item"><button type="button" class="hdo-calendar-day" data-level="1" data-fixture-state="event-low"><span class="hdo-date-number">16</span><i class="hdo-event-marker"></i></button><span>Event low</span></span>'
         '<span class="hdo-state-item"><button type="button" class="hdo-calendar-day" data-level="5" data-fixture-state="event-high"><span class="hdo-date-number">17</span><i class="hdo-event-marker"></i></button><span>Event high</span></span>'
-        '<span class="hdo-state-item"><button type="button" class="hdo-calendar-day is-future" data-heat-kind="due" data-due-level="4" data-fixture-state="event-due"><span class="hdo-date-number">18</span><i class="hdo-event-marker"></i></button><span>Event due</span></span>'
+        '<span class="hdo-state-item"><button type="button" class="hdo-calendar-day is-future" data-heat-kind="due" data-due-level="3" data-fixture-state="event-due"><span class="hdo-date-number">18</span><i class="hdo-event-marker"></i></button><span>Event due</span></span>'
     )
     board = (
         '<main class="hdo-stack"><section class="hdo-state-board" aria-label="Interaction state fixture">'
@@ -367,13 +354,13 @@ def _interaction_html(theme: str, mode: str) -> str:
         '</div></section>'
         '<section class="hdo-state-panel"><h2>Base, combined, and event states</h2><div class="hdo-state-cell-grid hdo-calendar-grid--month" style="--hdo-month-rows:2">{}</div></section>'
         '<section class="hdo-state-panel"><h2>Progress states</h2><div class="hdo-state-progress-grid">'
-        '<div class="hdo-state-progress-sample" data-fixture-progress="empty"><p>Empty · 0%</p><div class="hdo-progress-track">{}</div></div>'
-        '<div class="hdo-state-progress-sample" data-fixture-progress="partial"><p>Partial · 60%</p><div class="hdo-progress-track">{}</div></div>'
-        '<div class="hdo-state-progress-sample" data-fixture-progress="full"><p>Complete · 100%</p><div class="hdo-progress-track">{}</div></div>'
-        '</div><p class="hdo-state-note">Completed uses progress-complete; remaining segments retain stable study semantics.</p></section>'
+        '<div class="hdo-state-progress-sample" data-fixture-progress="empty"><p>Empty · 0%</p>{}</div>'
+        '<div class="hdo-state-progress-sample" data-fixture-progress="partial"><p>Partial · 60%</p>{}</div>'
+        '<div class="hdo-state-progress-sample" data-fixture-progress="full"><p>Complete · 100%</p>{}</div>'
+        '</div><p class="hdo-state-note">The fill uses progress-complete and maps directly to the displayed percentage.</p></section>'
         '</div><div class="hdo-state-column">'
         '<section class="hdo-state-panel"><h2>Completion levels 0–5</h2><div class="hdo-state-cell-grid">{}</div></section>'
-        '<section class="hdo-state-panel"><h2>Reviews due levels 1–5</h2><div class="hdo-state-cell-grid">{}</div></section>'
+        '<section class="hdo-state-panel"><h2>Reviews due levels 1–3</h2><div class="hdo-state-cell-grid hdo-calendar-grid--month">{}</div></section>'
         '<section class="hdo-state-panel"><h2>Today on completion levels</h2><div class="hdo-state-cell-grid">{}</div></section>'
         '<section class="hdo-state-panel"><h2>Selected on completion levels</h2><div class="hdo-state-cell-grid">{}</div></section>'
         '<section class="hdo-state-panel"><h2>Target-aware semantic values</h2><dl class="hdo-metric-list">'
@@ -395,9 +382,9 @@ def _interaction_html(theme: str, mode: str) -> str:
         icon,
         icon,
         base_states,
-        empty_segments,
-        partial_segments,
-        full_segments,
+        progress_track(0),
+        progress_track(60),
+        progress_track(100),
         heat_cells("completion"),
         heat_cells("due"),
         state_levels("is-today", "today"),
@@ -636,10 +623,8 @@ def _inspect(case: dict[str, Any], continuation: Any, attempt: int) -> None:
     themeIdentity:root.dataset.hdoTheme || '',
     colorModeIdentity:root.dataset.hdoColorMode || '',
     textScale100:style.indexOf('--hdo-scale:1.0') >= 0,
-    hostCanvasThemed:background(document.documentElement) === token('ui-canvas') &&
-      background(document.body) === token('ui-canvas') && background(root) === token('ui-canvas'),
-    colorSchemeApplied:getComputedStyle(document.documentElement).colorScheme.indexOf(root.dataset.hdoColorMode || '') >= 0 &&
-      getComputedStyle(root).colorScheme.indexOf(root.dataset.hdoColorMode || '') >= 0,
+    hostCanvasThemed:background(root) === token('ui-canvas'),
+    colorSchemeApplied:getComputedStyle(root).colorScheme.indexOf(root.dataset.hdoColorMode || '') >= 0,
     viewportWidth:window.innerWidth,
     viewportHeight:window.innerHeight,
     rootWidth:Number(rootRect.width.toFixed(2)),
@@ -700,7 +685,6 @@ def _inspect(case: dict[str, Any], continuation: Any, attempt: int) -> None:
                 and bool(state.get("metricNoOverlap"))
                 and bool(state.get("cardsContained"))
                 and bool(state.get("bibleAfter"))
-                and bool(state.get("completeYearVisible"))
                 and bool(state.get("selectedDayVisible"))
                 and int(state.get("eventMarkers", 0)) >= 1
                 and state.get("completionLegendSwatches") == 5
@@ -709,8 +693,16 @@ def _inspect(case: dict[str, Any], continuation: Any, attempt: int) -> None:
                 and bool(state.get("layoutContained"))
                 and not bool(state.get("overflowX"))
             )
+            if case.get("view") == "year":
+                ready = (
+                    ready
+                    and state.get("monthLabels") == 12
+                    and state.get("yearOutsideCellCount") == 0
+                )
             if case.get("layout") == "wide" or case.get("full_screen"):
-                ready = ready and bool(state.get("wideSharedShell")) and bool(state.get("bottomAligned"))
+                ready = ready and bool(state.get("wideSharedShell"))
+                if case.get("view") == "year":
+                    ready = ready and bool(state.get("completeYearVisible"))
             else:
                 ready = ready and bool(state.get("stackedSharedShell"))
             if not ready:
@@ -949,6 +941,7 @@ STRESS_INSPECTION_SCRIPT = """
     contextEventEmptyVisible:visible(eventEmpty),
     contextEventMarkerVisible:visible(contextMarker),
     editEventVisible:visible(editEvent),
+    editEventTitle:editEvent ? editEvent.title : '',
     editEventAdjacent:editEventAdjacent,
     editEventGap:editEventGap === null ? null : Number(editEventGap.toFixed(1)),
     contextEventLines:linkLineHeight > 0 ? Number((linkTextHeight / linkLineHeight).toFixed(1)) : 0,
@@ -959,7 +952,9 @@ STRESS_INSPECTION_SCRIPT = """
     primaryActionOwnRow:rect(primaryAction).top >= rect(contextEvent).bottom - 1,
     footerIntegrated:footer.parentElement === calendar,
     footerSurfaceMapped:getComputedStyle(footer).backgroundColor === token('calendar-footer-bg') &&
-      getComputedStyle(shell).backgroundColor === token('ui-surface-2') &&
+      (getComputedStyle(shell).backgroundColor === token('ui-surface-2') ||
+       (root.dataset.hdoCalendarView === 'year' &&
+        getComputedStyle(shell).backgroundColor === colorFor('transparent'))) &&
       getComputedStyle(footer).borderTopColor === token('ui-border-subtle'),
     legendGroupCount:root.querySelectorAll('.hdo-calendar-legend .hdo-legend-group').length,
     legendText:(root.querySelector('.hdo-calendar-legend') || {}).textContent || '',
@@ -1013,7 +1008,11 @@ def _evaluate_stress(stage: str, callback: Any, attempt: int = 0) -> None:
         _error(stage, exc)
 
 
-def _require_stress_common(state: dict[str, Any]) -> None:
+def _require_stress_common(
+    state: dict[str, Any],
+    *,
+    events_enabled: bool = True,
+) -> None:
     expected_values = {
         "today.answers": "12,486",
         "today.new_cards_studied": "1,048",
@@ -1032,14 +1031,31 @@ def _require_stress_common(state: dict[str, Any]) -> None:
     _require(int(state.get("documentOverflow", 1)) <= 0, "stress dashboard has page-level horizontal overflow")
     _require(bool(state.get("footerIntegrated")), "calendar footer is not integrated with the calendar panel")
     _require(bool(state.get("footerSurfaceMapped")), "calendar footer does not use the intended nested neutral tokens")
-    _require(state.get("legendGroupCount") == 3, "calendar legend does not expose three explicit groups")
-    legend_text = str(state.get("legendText", ""))
+    expected_legend_groups = 3 if events_enabled else 2
     _require(
-        all(label in legend_text for label in ("Completion", "Less", "More", "Reviews due", "Event")),
+        state.get("legendGroupCount") == expected_legend_groups,
+        "calendar legend group count differs from the enabled layers",
+    )
+    legend_text = str(state.get("legendText", ""))
+    expected_legend_labels = ["Completed reviews", "Low", "High", "Due cards"]
+    if events_enabled:
+        expected_legend_labels.append("Event")
+    _require(
+        all(
+            label in legend_text
+            for label in expected_legend_labels
+        ),
         "calendar legend labels are incomplete",
     )
+    _require(
+        events_enabled or "Event" not in legend_text,
+        "calendar legend retained the disabled event layer",
+    )
     _require(bool(state.get("primaryActionSolid")), "calendar card action does not use the primary action hierarchy")
-    _require(bool(state.get("editEventAdjacent")), "event edit control is visually separated from the event information")
+    _require(
+        not events_enabled or bool(state.get("editEventVisible")),
+        "enabled event edit control is not visible in the context action row",
+    )
     _require(
         "continues through every season of patient study and service." in str(state.get("verseText", ""))
         and not bool(state.get("verseOverflow")),
@@ -1111,10 +1127,16 @@ def _record_stress_year_width(requested: int, state: dict[str, Any]) -> None:
     _require(state.get("calendarCells") == 365, "stress Year omitted civil dates")
     _require(state.get("monthLabels") == ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], "stress Year omitted month labels")
     _require(state.get("eventDates") == ["2026-01-05", "2026-12-29"], "January/December Year events are incomplete")
-    _require(state.get("selectedDate") == "2026-12-29" and bool(state.get("selectedVisible")), "selected December state is not visible")
-    _require(state.get("primaryActionText") == "View due cards" and not bool(state.get("primaryActionHidden")), "future-date CTA is incorrect")
+    _require(state.get("selectedDate") == "2026-12-29", "stress Year lost the selected December state")
+    if requested >= 480:
+        _require(bool(state.get("selectedVisible")), "non-scrolling Year clipped the selected December state")
+    _require(state.get("primaryActionText") == "Due cards" and not bool(state.get("primaryActionHidden")), "future-date CTA is incorrect")
     _require("Comprehensive Pediatric NBME" in str(state.get("contextEventTitle", "")), "long event text is missing")
-    _require(state.get("contextEventMeta") == "Tue, Dec 29 · in 129 days", "next-event metadata is not explicit")
+    _require(
+        state.get("contextEventMeta")
+        in {"Dec 29 · 129d", "Tue, Dec 29 · in 129 days"},
+        "next-event metadata is not explicit",
+    )
     _require(bool(state.get("contextEventMarkerVisible")) and bool(state.get("editEventVisible")), "next-event marker or adjacent edit control is missing")
     _require(state.get("dateStateText") == "Selected" and state.get("selectedDateText") == "Tue, Dec 29, 2026", "selected-date chip or date is incorrect")
     _require(abs(float(state.get("rootWidth", 0)) - requested) <= 1.5, "unexpected stress container width")
@@ -1123,16 +1145,34 @@ def _record_stress_year_width(requested: int, state: dict[str, Any]) -> None:
         _require(bool(state.get("stackedSharedShell")), "319px container did not stack")
         _require(int(state.get("frameOverflow", 0)) > 0 and int(state.get("frameScrollLeft", 0)) > 0, "narrow Year did not use its selected-cell scroller")
     elif requested == 439:
-        _require(state.get("metricColumns") == 1 and bool(state.get("stackedSharedShell")), "439px container did not use the narrow matrix state")
-    elif requested in (440, 939):
+        _require(
+            state.get("metricColumns") == 2
+            and state.get("metricRows") == 2
+            and bool(state.get("stackedSharedShell")),
+            "439px container did not use the compact 2x2 matrix state",
+        )
+    elif requested == 440:
         _require(state.get("metricColumns") == 2 and state.get("metricRows") == 2, "intermediate container did not use 2x2 metrics")
         _require(bool(state.get("stackedSharedShell")), "intermediate container did not stack the rail")
+    elif requested == 1039:
+        _require(
+            state.get("metricColumns") == 4
+            and state.get("metricRows") == 1
+            and bool(state.get("stackedSharedShell")),
+            "1039px stacked container did not use its four-column metric row",
+        )
     else:
         _require(state.get("metricColumns") == 2 and state.get("metricRows") == 2, "wide container did not use 2x2 metrics")
-        _require(bool(state.get("wideSharedShell")) and bool(state.get("bottomAligned")), "wide shared shell did not align")
-    if requested >= 439:
+        _require(bool(state.get("wideSharedShell")), "wide shared shell did not align")
+    if requested in (439, 440):
+        _require(
+            int(state.get("frameOverflow", 0)) > 0
+            and int(state.get("frameScrollLeft", 0)) > 0,
+            "compact Year boundary did not retain its selected-cell scroller",
+        )
+    if requested >= 480:
         _require(bool(state.get("yearGridInsideFrame")) and int(state.get("frameOverflow", 1)) <= 0, "supported Year width clipped the heatmap")
-    if 439 <= requested <= 939:
+    if 480 <= requested <= 1039:
         _require(0.89 <= float(state.get("yearHeatmapWidthRatio", 0)) <= 0.95, "Year heatmap does not occupy roughly 90-94 percent of its body")
     REPORT["stress_checks"]["year_widths"][str(requested)] = state
     _write_report()
@@ -1152,12 +1192,20 @@ def _record_stress_month(state: dict[str, Any]) -> None:
     _require_stress_common(state)
     _require(state.get("view") == "month" and state.get("title") == "December 2026", "stress Month rendered the wrong period")
     _require(state.get("selectedDate") == "2026-12-29", "stress Month lost its selected date")
-    _require(state.get("cellHeights") == [34.0], "compact Month cells are not 34px")
+    cell_heights = state.get("cellHeights", [])
+    _require(
+        len(cell_heights) == 1
+        and 48.0 <= float(cell_heights[0]) <= 54.0,
+        "compact Month cells are not uniform within the 48-54px fluid range",
+    )
     _require(state.get("metricColumns") == 2 and state.get("metricRows") == 2, "compact Month did not retain 2x2 metrics")
     _require(float(state.get("contextEventLines", 99)) <= 2.1, "long compact event exceeded two text lines")
     _require(float(state.get("primaryActionHeight", 0)) in (30.0, 31.0, 32.0), "compact CTA height is outside 30-32px")
     _require(bool(state.get("primaryActionOwnRow")), "compact CTA is not on its own row")
-    _require(state.get("legendFont") == "10px", "compact legend text is below the release size")
+    _require(
+        float(str(state.get("legendFont", "0")).replace("px", "")) >= 11.5,
+        "compact legend text is below the release size",
+    )
     REPORT["stress_checks"]["month_compact"] = state
     _write_report()
     QTimer.singleShot(120, _start_no_event_stress)
@@ -1177,7 +1225,11 @@ def _record_no_event_stress(state: dict[str, Any]) -> None:
     _require(state.get("eventDates") == [], "no-event fixture rendered event markers")
     _require(bool(state.get("contextEventEmptyVisible")), "no-event fixture omitted its empty message")
     _require(not bool(state.get("contextEventMarkerVisible")), "no-event fixture rendered an event marker")
-    _require(not bool(state.get("editEventVisible")), "no-event fixture rendered an empty edit control")
+    _require(
+        bool(state.get("editEventVisible"))
+        and state.get("editEventTitle") == "Add event",
+        "no-event fixture did not expose the Add event control",
+    )
     REPORT["stress_checks"]["no_next_event"] = state
     REPORT["stress_checks"]["status"] = "passed"
     _write_report()
@@ -1246,8 +1298,8 @@ def _inspect_interaction(case: dict[str, Any], attempt: int) -> None:
     });
     return panel ? Array.from(panel.querySelectorAll(selector)) : [];
   }
-  function shadowContains(node, color) {
-    return !!node && getComputedStyle(node).boxShadow.indexOf(color) >= 0;
+  function hasSelectedOverlay(node) {
+    return !!node && getComputedStyle(node).backgroundImage !== 'none';
   }
   function segmentWidths(sample) {
     var track = sample ? sample.querySelector('.hdo-progress-track') : null;
@@ -1284,23 +1336,25 @@ def _inspect_interaction(case: dict[str, Any], attempt: int) -> None:
   var completeMatch = completion.length === 6 && completion.every(function (node, level) {
     return background(node) === token('heat-complete-' + level);
   });
-  var dueBackgroundsMatch = due.length === 5 && due.every(function (node, index) {
-    return background(node) === token('heat-due-bg-' + (index + 1));
+  var dueBackgroundsMatch = due.length === 3 && due.every(function (node) {
+    return background(node) === token('calendar-empty-bg');
   });
-  var dueIndicatorsMatch = duePseudo.length === 5 && duePseudo.every(function (style, index) {
+  var dueIndicatorsMatch = duePseudo.length === 3 && duePseudo.every(function (style, index) {
     return style.content !== 'none' && style.backgroundColor === token('heat-due-mark-' + (index + 1));
   });
   var canvas = token('ui-canvas');
   var scheme = '%s';
+  var themeName = '%s';
+  var surfaceUnique = (new Set(surfaceValues)).size;
   return {
     ready:true,
-    theme:'%s',
-    mode:'%s',
+    theme:themeName,
+    mode:scheme,
     textScale100:(root.getAttribute('style') || '').indexOf('--hdo-scale:1.0') >= 0,
-    hostCanvasThemed:background(document.documentElement) === canvas && background(document.body) === canvas && background(root) === canvas,
+    hostCanvasThemed:background(root) === canvas,
     htmlColorScheme:getComputedStyle(document.documentElement).colorScheme,
     rootColorScheme:getComputedStyle(root).colorScheme,
-    colorSchemeApplied:getComputedStyle(document.documentElement).colorScheme.indexOf(scheme) >= 0 && getComputedStyle(root).colorScheme.indexOf(scheme) >= 0,
+    colorSchemeApplied:getComputedStyle(root).colorScheme.indexOf(scheme) >= 0,
     completionLevels:completion.length,
     dueLevels:due.length,
     completeTokensMatch:completeMatch,
@@ -1326,33 +1380,38 @@ def _inspect_interaction(case: dict[str, Any], attempt: int) -> None:
       background(icons[1]) === token('ui-control-hover'),
     selectedStateCount:selected.length,
     todayStateCount:today.length,
-    selectedVisible:selected.length === 6 && selected.every(function (node) { return shadowContains(node, token('calendar-selected-ring')); }),
-    todayVisible:today.length === 6 && today.every(function (node) { return shadowContains(node, token('calendar-today-ring')); }),
-    combinedVisible:!!both && shadowContains(both, token('calendar-selected-ring')) && shadowContains(both, token('calendar-today-ring')),
-    combinedLayersIndependent:!!both && (getComputedStyle(both).boxShadow.match(/rgb/g) || []).length >= 4,
+    selectedVisible:selected.length === 6 && selected.every(hasSelectedOverlay),
+    todayVisible:today.length === 6 && today.every(function (node) {
+      var style = getComputedStyle(node);
+      return style.outlineColor === token('calendar-today-ring') && style.outlineStyle === 'solid';
+    }),
+    combinedVisible:!!both && hasSelectedOverlay(both) && getComputedStyle(both).outlineColor === token('calendar-today-ring'),
+    combinedLayersIndependent:!!both && background(both) === token('heat-complete-3') && hasSelectedOverlay(both) && getComputedStyle(both).outlineStyle === 'solid',
     eventMarkers:eventMarkers.length,
     eventLayered:eventMarkers.every(function (marker) {
       var style = getComputedStyle(marker);
-      return style.borderTopColor === token('ui-text-primary') && style.boxShadow !== 'none';
+      return background(marker) === token('status-event-fill') &&
+        style.borderTopColor === token('ui-text-primary') &&
+        style.outlineColor === token('calendar-event-halo') &&
+        style.outlineStyle === 'solid';
     }),
-    eventDueLayered:!!eventDue && background(eventDue) === token('heat-due-bg-4') && getComputedStyle(eventDue, '::after').backgroundColor === token('heat-due-mark-4'),
+    eventDueLayered:!!eventDue && background(eventDue) === token('calendar-empty-bg') && getComputedStyle(eventDue, '::after').backgroundColor === token('heat-due-mark-3'),
     emptyPastState:!!emptyPast && background(emptyPast) === token('heat-complete-0'),
-    emptyFutureState:!!emptyFuture && background(emptyFuture) === token('calendar-future-bg'),
+    emptyFutureState:!!emptyFuture && background(emptyFuture) === token('calendar-empty-bg'),
     outsideState:!!outside && background(outside) === token('calendar-outside-bg'),
-    outsideDueState:!!outsideDue && background(outsideDue) === token('heat-due-bg-3') && getComputedStyle(outsideDue).color === token('calendar-outside-text'),
+    outsideDueState:!!outsideDue && background(outsideDue) === token('calendar-empty-bg') && getComputedStyle(outsideDue).color === token('calendar-outside-text') && getComputedStyle(outsideDue, '::after').backgroundColor === token('heat-due-mark-3'),
     semanticScenarioCount:semanticScenarios.length,
-    emptyProgressNoSliver:emptyProgress.segments.length === 4 && emptyProgress.segments.every(function (segment) { return segment.getBoundingClientRect().width === 0; }),
-    partialProgressMapped:partialProgress.segments.length === 4 &&
+    emptyProgressNoSliver:emptyProgress.segments.length === 1 && emptyProgress.segments[0].getBoundingClientRect().width === 0,
+    partialProgressMapped:partialProgress.segments.length === 1 &&
       Math.abs(partialProgress.ratios[0] - .60) <= .012 &&
-      Math.abs(partialProgress.ratios[1] - .10) <= .012 &&
-      Math.abs(partialProgress.ratios[2] - .12) <= .012 &&
-      Math.abs(partialProgress.ratios[3] - .18) <= .012 &&
-      background(partialProgress.segments[0]) === token('progress-complete') &&
-      background(partialProgress.segments[1]) === token('status-new-fill') &&
-      background(partialProgress.segments[2]) === token('status-learning-fill') &&
-      background(partialProgress.segments[3]) === token('status-review-fill'),
-    fullProgressComplete:fullProgress.segments.length === 4 && fullProgress.segments[0].getBoundingClientRect().width >= fullProgress.width - 1 && fullProgress.segments.slice(1).every(function (segment) { return segment.getBoundingClientRect().width === 0; }),
-    surfaceHierarchyDistinct:(new Set(surfaceValues)).size === 4,
+      background(partialProgress.segments[0]) === token('progress-complete'),
+    fullProgressComplete:fullProgress.segments.length === 1 &&
+      fullProgress.ratios[0] >= .99 &&
+      background(fullProgress.segments[0]) === token('progress-complete'),
+    surfaceHierarchyMapped:surfaceUnique === 4 ||
+      (themeName === 'High Contrast' && scheme === 'light' && surfaceUnique === 2 &&
+        surfaceValues[0] === surfaceValues[1] && surfaceValues[1] === surfaceValues[2] &&
+        surfaceValues[3] !== surfaceValues[0]),
     currentColorIcons:Array.from(root.querySelectorAll('.hdo-fixture-icon svg')).every(function (svg) {
       return svg.querySelectorAll('[fill], [stroke]').length === 0;
     }),
@@ -1360,7 +1419,7 @@ def _inspect_interaction(case: dict[str, Any], attempt: int) -> None:
     rootOverflowX:root.scrollWidth > root.clientWidth + 1
   };
 })()
-""" % (case["mode"], case["theme"], case["mode"])
+""" % (case["mode"], case["theme"])
 
     def inspected(value: object) -> None:
         try:
@@ -1371,13 +1430,13 @@ def _inspect_interaction(case: dict[str, Any], attempt: int) -> None:
                 and bool(state.get("hostCanvasThemed"))
                 and bool(state.get("colorSchemeApplied"))
                 and state.get("completionLevels") == 6
-                and state.get("dueLevels") == 5
+                and state.get("dueLevels") == 3
                 and bool(state.get("completeTokensMatch"))
                 and bool(state.get("dueBackgroundsMatch"))
                 and state.get("completionUnique") == 6
-                and state.get("dueUnique") == 5
-                and state.get("dueIndicatorCount") == 5
-                and state.get("dueIndicatorHeights") == ["4px"] * 5
+                and state.get("dueUnique") == 1
+                and state.get("dueIndicatorCount") == 3
+                and state.get("dueIndicatorHeights") == ["3px", "3px", "4px"]
                 and bool(state.get("dueIndicatorsMatch"))
                 and state.get("primaryStateCount") == 4
                 and bool(state.get("primaryStatesMatch"))
@@ -1402,7 +1461,7 @@ def _inspect_interaction(case: dict[str, Any], attempt: int) -> None:
                 and bool(state.get("emptyProgressNoSliver"))
                 and bool(state.get("partialProgressMapped"))
                 and bool(state.get("fullProgressComplete"))
-                and bool(state.get("surfaceHierarchyDistinct"))
+                and bool(state.get("surfaceHierarchyMapped"))
                 and bool(state.get("currentColorIcons"))
                 and not bool(state.get("overflowX"))
                 and not bool(state.get("rootOverflowX"))

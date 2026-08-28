@@ -1443,12 +1443,18 @@ def _prepare_settings_case(case: Mapping[str, Any]) -> SettingsDialog:
                     if pending in dialog.quotes
                     else None
                 )
-                dialog._staged_edited_event_ids.add("evt-a")
+                staged_event = next(
+                    item
+                    for item in dialog.staged["events"]["items"]
+                    if str(item.get("id", "")) == "evt-a"
+                )
+                staged_event["name"] = "{} (edited)".format(staged_event["name"])
+                dialog._sync_draft()
                 dialog._qa_failure_baseline_before = deepcopy(dialog.draft.baseline)
                 dialog._qa_failure_values_before = deepcopy(dialog.draft.values)
                 dialog._qa_failure_manual_before = dialog.pending_manual_quote
-                dialog._qa_failure_event_ids_before = set(
-                    dialog._staged_edited_event_ids
+                dialog._qa_failure_events_before = deepcopy(
+                    dialog.staged["events"]["items"]
                 )
                 external_latest = deepcopy(dialog.draft.baseline)
                 current_sort = str(external_latest["events"].get("sort", "ascending"))
@@ -2266,9 +2272,9 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
             or dialog.pending_manual_quote == dialog._qa_failure_manual_before
         ),
         "failure_event_stage_retained": (
-            not hasattr(dialog, "_qa_failure_event_ids_before")
-            or dialog._staged_edited_event_ids
-            == dialog._qa_failure_event_ids_before
+            not hasattr(dialog, "_qa_failure_events_before")
+            or dialog.staged["events"]["items"]
+            == dialog._qa_failure_events_before
         ),
         "event_active_count": active_tree.topLevelItemCount() if active_tree is not None else 0,
         "event_archived_count": archived_tree.topLevelItemCount() if archived_tree is not None else 0,

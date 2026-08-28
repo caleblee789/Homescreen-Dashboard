@@ -71,6 +71,9 @@ Browser or statistics classes.
   in the footer. A failed save retains all staged values, enables retry, and
   keeps technical details behind a disclosure. All controls remain native Qt
   and staged state writes nothing until Save.
+- Dashboard theme and Heatmap palette share one responsive Appearance row.
+  Their layout-changing staged updates run after the native combo popup closes,
+  and save locking restores both selectors and their nested popup views.
 - Month is always 42 cells. Year always uses one responsive 53-week tree that
   stays inside the dashboard without horizontal scrolling at 480 px and above;
   only the heatmap may scroll below that boundary. Calendar legend and

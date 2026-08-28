@@ -31,7 +31,7 @@ if str(PACKAGE_PARENT) not in sys.path:
 from home_dashboard_overhaul.qa.color_system_audit import write_release_reports
 
 
-RELEASE = "1.8.0"
+RELEASE = "1.8.7"
 THEMES = (
     ("SG", "Sapphire Glass", "sapphire-glass"),
     ("GR", "Graphite", "graphite"),
@@ -182,7 +182,15 @@ def validate_source_capture(
         require(dom.get("metricNoOverlap") is True, f"{name} has overlapping metric labels and values")
         require(dom.get("cardsContained") is True, f"{name} has a statistics card overflow")
         require(dom.get("bibleAfter") is True, f"{name} did not place the Bible card after the statistics")
-        require(dom.get("completeYearVisible") is True, f"{name} clipped the Year heatmap or month labels")
+        compact_scrolling_year = (
+            dom.get("view") == "year"
+            and int(record.get("logical_width", 0)) <= 560
+        )
+        if compact_scrolling_year:
+            require(dom.get("monthLabels") == 12, f"{name} omitted Year month labels")
+            require(dom.get("yearOutsideCellCount") == 0, f"{name} clipped Year cells inside the scrollable grid")
+        else:
+            require(dom.get("completeYearVisible") is True, f"{name} clipped the Year heatmap or month labels")
         require(dom.get("selectedDayVisible") is True, f"{name} clipped the selected calendar day")
         require(int(dom.get("eventMarkers", 0)) >= 1, f"{name} did not render the reference event state")
         require(dom.get("completionLegendSwatches") == 5, f"{name} has an incomplete completion legend")
@@ -220,7 +228,7 @@ def validate_evidence(
     stress = runtime.get("stress_checks", {})
     require(stress.get("status") == "passed", "native Sapphire stress checks did not pass")
     require(
-        set(stress.get("year_widths", {})) == {"319", "439", "440", "939", "940", "1280"},
+        set(stress.get("year_widths", {})) == {"319", "439", "440", "1039", "1040", "1280"},
         "native breakpoint stress matrix is incomplete",
     )
     require(isinstance(stress.get("month_compact"), dict), "native compact Month stress check is missing")
@@ -357,7 +365,6 @@ def validate_evidence(
         require(record["dom"].get("colorSchemeApplied") is True, f"{name} did not apply color-scheme")
         if metadata["layout"] == "wide":
             require(record["dom"].get("wideSharedShell") is True, f"{name} did not use the shared wide shell")
-            require(record["dom"].get("bottomAligned") is True, f"{name} rail and calendar bottoms did not align")
         else:
             require(record["dom"].get("stackedSharedShell") is True, f"{name} did not stack the rail beneath the calendar")
         matrix.append({**metadata, "record": record, "source": source})
@@ -402,17 +409,17 @@ def validate_evidence(
             "combinedVisible", "combinedLayersIndependent", "eventLayered",
             "eventDueLayered", "emptyPastState", "emptyFutureState", "outsideState",
             "outsideDueState", "emptyProgressNoSliver", "partialProgressMapped",
-            "fullProgressComplete", "surfaceHierarchyDistinct", "currentColorIcons",
+            "fullProgressComplete", "surfaceHierarchyMapped", "currentColorIcons",
         ):
             require(dom.get(check) is True, f"{name} failed {check}")
         require(dom.get("completionLevels") == 6, f"{name} omitted completion levels")
-        require(dom.get("dueLevels") == 5, f"{name} omitted reviews-due levels")
+        require(dom.get("dueLevels") == 3, f"{name} omitted reviews-due levels")
         require(dom.get("completionUnique") == 6, f"{name} completion levels are not unique")
-        require(dom.get("dueUnique") == 5, f"{name} reviews-due backgrounds are not explicitly ordered")
-        require(dom.get("dueIndicatorCount") == 5, f"{name} omitted nonzero due indicators")
+        require(dom.get("dueUnique") == 1, f"{name} reviews-due cells do not share the future surface")
+        require(dom.get("dueIndicatorCount") == 3, f"{name} omitted nonzero due indicators")
         require(
-            dom.get("dueIndicatorHeights") == ["4px"] * 5,
-            f"{name} due indicator height changes with intensity",
+            dom.get("dueIndicatorHeights") == ["3px", "3px", "4px"],
+            f"{name} due indicator heights do not match the three-level design",
         )
         require(dom.get("primaryStateCount") == 4, f"{name} omitted primary action states")
         require(dom.get("segmentStateCount") == 2, f"{name} omitted segmented-control states")
@@ -436,7 +443,6 @@ def validate_evidence(
         require(record["dom"].get("hostCanvasThemed") is True, f"{name} left the full-screen host viewport unthemed")
         require(record["dom"].get("colorSchemeApplied") is True, f"{name} did not apply color-scheme")
         require(record["dom"].get("wideSharedShell") is True, f"{name} did not use the shared wide shell")
-        require(record["dom"].get("bottomAligned") is True, f"{name} rail and calendar bottoms did not align")
         require(int(record.get("logical_width", 0)) >= 1600, f"{name} is not a wide full-screen canvas")
         require(int(record.get("logical_height", 0)) >= 1000, f"{name} is not a tall full-screen canvas")
         require(

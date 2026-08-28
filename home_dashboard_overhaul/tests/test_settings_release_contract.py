@@ -1905,6 +1905,142 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertNotIn('self.save_button.setText("Saving…")', save_source)
         self.assertNotIn('self._set_status("saved", "✓ Saved")', save_source)
 
+    def test_save_lock_restores_nested_theme_and_palette_popup_controls(self) -> None:
+        module = ast.parse(self.settings)
+        dialog = next(
+            node
+            for node in module.body
+            if isinstance(node, ast.ClassDef) and node.name == "SettingsDialog"
+        )
+        function = next(
+            node
+            for node in dialog.body
+            if isinstance(node, ast.FunctionDef)
+            and node.name == "_set_mutation_controls_enabled"
+        )
+        function.decorator_list = []
+        function.returns = None
+        for argument in function.args.args:
+            argument.annotation = None
+
+        class FakeWidget:
+            def __init__(
+                self,
+                parent: "FakeWidget | None" = None,
+                enabled: bool = True,
+            ) -> None:
+                self.parent = parent
+                self.explicitly_enabled = enabled
+                self.children: list[FakeWidget] = []
+                if parent is not None:
+                    parent.children.append(self)
+
+            def isEnabled(self) -> bool:
+                return self.explicitly_enabled and (
+                    self.parent is None or self.parent.isEnabled()
+                )
+
+            def setEnabled(self, enabled: bool) -> None:
+                self.explicitly_enabled = enabled
+
+            def findChildren(self, _kind: object) -> list["FakeWidget"]:
+                found: list[FakeWidget] = []
+                pending = list(self.children)
+                while pending:
+                    child = pending.pop(0)
+                    found.append(child)
+                    pending[0:0] = child.children
+                return found
+
+        class QWidget(FakeWidget):
+            pass
+
+        class QPushButton(QWidget):
+            pass
+
+        class QLineEdit(QWidget):
+            pass
+
+        class QComboBox(QWidget):
+            pass
+
+        class QDateEdit(QWidget):
+            pass
+
+        class QSlider(QWidget):
+            pass
+
+        class QCheckBox(QWidget):
+            pass
+
+        class QPlainTextEdit(QWidget):
+            pass
+
+        class QListView(QWidget):
+            pass
+
+        class QTreeWidget(QWidget):
+            pass
+
+        namespace: dict[str, object] = {
+            "QWidget": QWidget,
+            "QPushButton": QPushButton,
+            "QLineEdit": QLineEdit,
+            "QComboBox": QComboBox,
+            "QDateEdit": QDateEdit,
+            "QSlider": QSlider,
+            "QCheckBox": QCheckBox,
+            "QPlainTextEdit": QPlainTextEdit,
+            "QListView": QListView,
+            "QTreeWidget": QTreeWidget,
+            "List": list,
+        }
+        exec(
+            compile(
+                ast.fix_missing_locations(
+                    ast.Module(body=[function], type_ignores=[])
+                ),
+                str(ROOT / "settings.py"),
+                "exec",
+            ),
+            namespace,
+        )
+        set_mutation_controls_enabled = namespace[
+            "_set_mutation_controls_enabled"
+        ]
+
+        class FakeDialog:
+            def __init__(self) -> None:
+                self.settings_shell = QWidget()
+                self.preset = QComboBox(self.settings_shell)
+                self.theme_popup = QListView(self.preset)
+                self.heatmap_preset = QComboBox(self.settings_shell)
+                self.palette_popup = QListView(self.heatmap_preset)
+                self.disabled_dependency = QLineEdit(
+                    self.settings_shell,
+                    enabled=False,
+                )
+                self.nav = QWidget(self.settings_shell)
+                self.active_events = QTreeWidget(self.settings_shell)
+                self.archived_events = QTreeWidget(self.settings_shell)
+                self.quote_list = QListView(self.settings_shell)
+                self._mutation_enabled_states: dict[FakeWidget, bool] = {}
+
+        fake = FakeDialog()
+        for _cycle in range(2):
+            set_mutation_controls_enabled(fake, False)
+            self.assertFalse(fake.preset.isEnabled())
+            self.assertFalse(fake.theme_popup.isEnabled())
+            self.assertFalse(fake.heatmap_preset.isEnabled())
+            self.assertFalse(fake.palette_popup.isEnabled())
+
+            set_mutation_controls_enabled(fake, True)
+            self.assertTrue(fake.preset.isEnabled())
+            self.assertTrue(fake.theme_popup.isEnabled())
+            self.assertTrue(fake.heatmap_preset.isEnabled())
+            self.assertTrue(fake.palette_popup.isEnabled())
+            self.assertFalse(fake.disabled_dependency.isEnabled())
+
     def test_controls_grow_with_application_font_without_an_alternate_layout(self) -> None:
         for marker in (
             "target = max(INTERACTION_TARGET_MIN_PX, widget.fontMetrics().lineSpacing() + 10)",

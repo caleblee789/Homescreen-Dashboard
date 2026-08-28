@@ -15,11 +15,16 @@ The current machine-readable authorities are:
 - `qa/settings_window_contract_1_8_7.json`
 - `qa/runtime_probe_release_1_8_7_manifest.json`
 
-The completed `qa/release-evidence-1.8.6-2026-08-25` directory is the retained
-product-wide evidence. The current exact-package Settings set is
-`qa/settings-evidence-1.8.7-2026-08-27-7bf8bff3-review-100`; it contains all 41
-100%-font frames but remains `review-incomplete-nonrelease` because the native
-macOS full-screen opening-path check was explicitly skipped. A corrected
+The completed `qa/release-evidence-1.8.6-2026-08-25` directory remains the
+retained full 94-frame baseline. The current 1.8.7 review candidate is
+`c4b794f0b4e1bcf4c380b0092c9436f0594f7f26d12ae9af2345a03e2eb39a3f`.
+Its `qa/home-dashboard-evidence-1.8.7-2026-08-27-c4b794f0-fresh-100`
+directory contains 42 native Dashboard and interaction-state frames at 100%,
+and `qa/settings-evidence-1.8.7-2026-08-27-c4b794f0-fresh-100` contains all 41
+100%-font Settings frames. The Settings set remains
+`review-incomplete-nonrelease` because the native macOS full-screen menu and
+Dashboard-gear opening-path checks were explicitly skipped. These focused
+1.8.7 sets are not a replacement for the complete release gate. A corrected
 candidate must always write a new evidence directory and never overwrite an
 existing result. Superseded or failed local Settings sets may be removed only
 after the retained current set is identified and a recoverable safety snapshot

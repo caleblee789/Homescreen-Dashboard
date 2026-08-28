@@ -1,0 +1,102 @@
+{
+  "adds_png_frames": false,
+  "capture_plan_sha256": "59bc334ec24a6df460de18e75c5e99b3483341c1efb5caa258f8b381e1f1c482",
+  "generated_png_count": 0,
+  "package_sha256": "c4b794f0b4e1bcf4c380b0092c9436f0594f7f26d12ae9af2345a03e2eb39a3f",
+  "release": "1.8.7",
+  "reports": [
+    {
+      "application_font_percent": 100,
+      "fixture_kind": "logical-work-area-equivalence",
+      "id": "settings-font-100",
+      "kind": "application-font-layout",
+      "pages": [
+        {
+          "assertions": {
+            "body_footer_disjoint": true,
+            "footer_actions_visible": true,
+            "horizontal_scroll_zero": true,
+            "labels_unclipped_or_approved": true,
+            "page_bottom_reachable": true,
+            "segmented_selection_matches_model": true,
+            "target_fully_visible": true,
+            "visible_controls_contained": true
+          },
+          "id": "dashboard",
+          "status": "passed"
+        },
+        {
+          "assertions": {
+            "body_footer_disjoint": true,
+            "footer_actions_visible": true,
+            "horizontal_scroll_zero": true,
+            "labels_unclipped_or_approved": true,
+            "page_bottom_reachable": true,
+            "segmented_selection_matches_model": true,
+            "target_fully_visible": true,
+            "visible_controls_contained": true
+          },
+          "id": "events",
+          "status": "passed"
+        },
+        {
+          "assertions": {
+            "body_footer_disjoint": true,
+            "footer_actions_visible": true,
+            "horizontal_scroll_zero": true,
+            "labels_unclipped_or_approved": true,
+            "page_bottom_reachable": true,
+            "segmented_selection_matches_model": true,
+            "target_fully_visible": true,
+            "visible_controls_contained": true
+          },
+          "id": "bible_verse",
+          "status": "passed"
+        },
+        {
+          "assertions": {
+            "body_footer_disjoint": true,
+            "footer_actions_visible": true,
+            "horizontal_scroll_zero": true,
+            "labels_unclipped_or_approved": true,
+            "page_bottom_reachable": true,
+            "segmented_selection_matches_model": true,
+            "target_fully_visible": true,
+            "visible_controls_contained": true
+          },
+          "id": "about_support",
+          "status": "passed"
+        }
+      ],
+      "resolved_window_geometry_logical": [
+        143,
+        48,
+        1080,
+        672
+      ],
+      "status": "passed",
+      "work_area_logical": [
+        0,
+        0,
+        1366,
+        768
+      ]
+    },
+    {
+      "application_font_percent": 100,
+      "assertions": {
+        "centered_on_parent_screen_before_visibility": true,
+        "decorated_frame_inside_available": true,
+        "logical_geometry_not_dpr_multiplied": true,
+        "saved_record_rejected": true,
+        "saved_screen_not_connected": true
+      },
+      "id": "disconnected-monitor-v4",
+      "kind": "geometry-restoration",
+      "status": "passed"
+    }
+  ],
+  "schema_version": 1,
+  "stage": "initial",
+  "status": "passed"
+}

@@ -8,15 +8,16 @@ Browser or statistics classes.
 ## 1.8.7 highlights
 
 - Settings remains a parented native `QDialog(mw)` with a local `exec()`
-  lifetime. Its logical default is 1080×760, its normal minimum is 920×640,
+  lifetime. Its logical default is 1080×760, its normal minimum is 820×600,
   and it keeps 48 px normal screen margins or 24 px on a constrained screen.
-- The UI-only `settings_dialog_geometry/v3` record stores a non-transient
-  logical rectangle plus screen identity. Invalid, compact-triggering,
-  off-screen, disconnected-screen, maximized, and full-screen geometry is
-  never restored or persisted; the retired v2 record is never read.
-- The Caleb menu opens Settings directly and synchronously. Calendar/WebEngine
-  requests alone wait one coalesced event-loop turn so the bridge callback can
-  return before the dialog opens.
+- The UI-only `settings_dialog_geometry/v4` record stores logical geometry,
+  screen identity, available bounds, and informational DPR. A valid v3 record
+  migrates only when it meets the current minimum and remains at least 80%
+  visible; disconnected, undersized, maximized, and full-screen records are
+  rejected.
+- The Caleb menu opens Settings directly and synchronously. Deck Browser
+  bridge requests alone wait one coalesced event-loop turn so the callback can
+  return first, and re-entry routes to the live modal dialog.
 - Dashboard-specific workspace insertion, backing-view hiding, menu-dismissal
   timers, focus retries, focus restoration, and activation handling have been
   removed. Qt owns the window and focus lifecycle.
@@ -49,6 +50,9 @@ Browser or statistics classes.
   filtering it. Settings renders no Dashboard, verse, palette, theme, or
   heatmap previews; selector text carries those choices and the custom-color
   well remains an input.
+- Dashboard theme and Heatmap palette share one responsive Appearance row.
+  Their layout-changing staged updates run after the native combo popup closes,
+  and save locking restores both the combo boxes and their nested popup views.
 
 - Dashboard groups Appearance, Dashboard sections, Study metrics, and Calendar
   display. Events has a header Add action, flexible searchable/sortable
@@ -130,26 +134,26 @@ documents how to extend coverage, generate a named profile, run focused
 diagnostic recaptures, and assemble fresh evidence from the shared plan.
 
 The completed [1.8.6 native release evidence](home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-25/README.md)
-contains the exact 24-member archive, 94 contract-owned native captures,
-passing restart-persistence and archive-parity reports, and four-gate isolation
-proof repeated after restart. Its 19 generated presentation sheets were
-reviewed locally and remain the latest product-wide evidence. Seventeen
-capture-detail sheets cover every native frame exactly once, with one overview
-and one package/isolation report sheet. The
-[evidence manifest](home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-25/capture-evidence-manifest.json)
-records the sheet counts, exact package hash, and deferred gates.
+remains the retained full 94-frame baseline. It contains the exact 24-member
+archive, passing restart-persistence and archive-parity reports, four-gate
+isolation proof repeated after restart, and 19 reviewed presentation sheets.
 
-The retained [1.8.7 Settings review evidence](home_dashboard_overhaul/qa/settings-evidence-1.8.7-2026-08-27-7bf8bff3-review-100/README.md)
-matches the current package and contains exactly 41 native Settings captures
-at 100% application font plus 11 contact sheets. Its status is
-`review-incomplete-nonrelease`: capture cases completed without per-frame
-failures, but the exact-package full-screen macOS opening-path check was
-explicitly skipped and remains unrun. Superseded and failed 1.8.7 Settings
-capture directories were removed after a recoverable safety snapshot; the
-broader 1.8.6 set remains because a Settings-only review is not a replacement
-for product-wide evidence. VoiceOver and forced-colors remain explicitly unrun
-and nonblocking. Windows, Linux, DPR 1, and true OS display scaling remain
-separate release-blocking gates until run successfully.
+The current 1.8.7 candidate is `c4b794f0b4e1bcf4c380b0092c9436f0594f7f26d12ae9af2345a03e2eb39a3f`.
+Its [Dashboard review evidence](home_dashboard_overhaul/qa/home-dashboard-evidence-1.8.7-2026-08-27-c4b794f0-fresh-100/README.md)
+contains 42 native 100% captures and six contact sheets: 32 theme/layout
+states, eight interaction-state fixtures, and two exact-package full-screen
+Dashboard frames. Runtime, archive parity, color-hardcoding, and all 582 gated
+contrast-pair checks passed.
+
+The matching [Settings review evidence](home_dashboard_overhaul/qa/settings-evidence-1.8.7-2026-08-27-c4b794f0-fresh-100/README.md)
+contains exactly 41 native Settings captures at 100% application font plus 11
+contact sheets. Its status remains `review-incomplete-nonrelease`: capture and
+structured-layout checks passed without recorded failures, but the
+exact-package full-screen macOS menu and Dashboard-gear opening paths were
+explicitly skipped and remain unrun. These two 1.8.7 sets are review evidence,
+not release approval. VoiceOver and forced-colors remain explicitly unrun and
+nonblocking. Windows, Linux, DPR 1, and true OS display scaling remain separate
+release-blocking gates until run successfully.
 
 ## Project layout
 
