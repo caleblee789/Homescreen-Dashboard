@@ -1,0 +1,12 @@
+{
+  "archive": "../package/home-dashboard-overhaul-1.8.7.ankiaddon",
+  "archive_file_count": 24,
+  "archive_sha256": "c4b794f0b4e1bcf4c380b0092c9436f0594f7f26d12ae9af2345a03e2eb39a3f",
+  "candidate": "<disposable-base>/addons21/home_dashboard_overhaul",
+  "candidate_payload_matches_archive": true,
+  "probe": "<disposable-base>/addons21/zz_hdo_contact_sheet_probe/__init__.py",
+  "probe_sha256": "fe320ed30129e6f37c39dae7b90539fa74ba918e9babc423e44f21bbd7fd51c0",
+  "run_root": "<disposable-base>",
+  "sync_boundary": "disabled-and-disconnected disposable profile",
+  "ui_scale_percent": 100
+}
