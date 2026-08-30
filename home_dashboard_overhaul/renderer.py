@@ -160,6 +160,7 @@ def _style(config: Mapping[str, Any], anki_dark: bool) -> str:
     theme = _resolved_theme(config, anki_dark)
 
     glass = theme["theme_name"] == "Sapphire Glass"
+    high_contrast = theme["theme_name"] == "High Contrast"
     safe_opacity = max(94, min(100, int(appearance.get("opacity", 96)))) / 100
     blur = max(0, min(16, int(appearance.get("blur", 12)))) if glass else 0
     if glass:
@@ -170,12 +171,14 @@ def _style(config: Mapping[str, Any], anki_dark: bool) -> str:
             )
         else:
             card_background = rgba_color(theme["ui_surface_1"], safe_opacity)
-    else:
+    elif high_contrast:
         card_background = theme["ui_surface_1"]
+    else:
+        card_background = rgba_color(theme["ui_surface_1"], safe_opacity)
     declarations = {
         "--ui-card-background": card_background,
         "--hdo-card-backdrop-filter": "blur({}px) saturate(1.08)".format(blur) if blur else "none",
-        "--hdo-card-surface-opacity": "{:.2f}".format(safe_opacity if glass else 1.0),
+        "--hdo-card-surface-opacity": "{:.2f}".format(1.0 if high_contrast else safe_opacity),
         "--hdo-target-size": "{}px".format(INTERACTION_TARGET_MIN_PX),
         "--hdo-control-visual": "{}px".format(VISUAL_CHROME_PX),
         "--hdo-focus-ring": "{}px".format(FOCUS_RING_PX),
@@ -361,26 +364,32 @@ def _progress_group(snapshot: DashboardSnapshot) -> str:
     presentation = _progress_presentation(snapshot)
     has_fill = presentation.fill_percent is not None
     percent = presentation.fill_percent if has_fill else 0
-    heading_label = "{}%".format(percent) if has_fill else presentation.label
     heading_meta = (
-        '<span class="hdo-progress-heading-value" data-hdo-progress-value '
-        'data-hdo-progress-state="{}">{}</span>'
+        '<span class="hdo-progress-status-chip" data-hdo-progress-chip '
+        'data-hdo-progress-state="{}"{}>{}</span>'
     ).format(
         _escape(presentation.state.value),
-        _escape(heading_label),
+        " hidden" if has_fill else "",
+        _escape(presentation.label),
     )
     lead = (
         '<div class="hdo-progress-track" data-hdo-progress-track '
         'data-hdo-progress-state="{}" role="progressbar" aria-valuemin="0" '
         'aria-valuemax="100" aria-valuenow="{}" aria-valuetext="{}"{} '
         'style="--hdo-progress-percent:{}%">'
-        '<span class="hdo-progress-fill" data-hdo-progress-fill></span></div>'
+        '<span class="hdo-progress-fill" data-hdo-progress-fill></span>'
+        '<span class="hdo-progress-label hdo-progress-label--track" '
+        'data-hdo-progress-label>{}</span>'
+        '<span class="hdo-progress-label hdo-progress-label--fill" '
+        'data-hdo-progress-label-fill aria-hidden="true">{}</span></div>'
     ).format(
         _escape(presentation.state.value),
         percent,
         _escape(presentation.label),
         "" if has_fill else " hidden",
         percent,
+        _escape(presentation.label),
+        _escape(presentation.label),
     )
     if queue_state.is_available:
         queue: QueueStats = queue_state.value
@@ -512,24 +521,23 @@ def _retention_role(value: RateMetric, target: int | None) -> str:
     return "hdo-value--danger"
 
 
-def _again_role(
-    value: RateMetric,
-    retention_target: int | None,
-    display_percent: int | None = None,
-) -> str:
-    if value.status != RateStatus.AVAILABLE or value.percent is None or retention_target is None:
-        return ""
-    percent = value.percent if display_percent is None else display_percent
-    target = max(0, 100 - retention_target)
-    if percent <= target:
-        return "hdo-value--success"
-    if percent <= min(100, target + 10):
-        return "hdo-value--warning"
-    return "hdo-value--danger"
+def _last_seven_presentation(snapshot: DashboardSnapshot) -> dict[str, str]:
+    state = _facts_state(snapshot, "last_seven_days")
+    if not state.is_available:
+        return {
+            "time_spent": UNAVAILABLE_TEXT,
+            "time_spent_compact": UNAVAILABLE_TEXT,
+        }
+    stats: LastSevenDaysStats = state.value
+    return {
+        "time_spent": _duration(stats.seconds),
+        "time_spent_compact": _duration_compact(stats.seconds),
+    }
 
 
 def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
     state = _facts_state(snapshot, "last_seven_days")
+    presentation = _last_seven_presentation(snapshot)
     if not state.is_available:
         return _stats_group(
             "Last 7 Days",
@@ -540,7 +548,14 @@ def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
                     ("Cards studied", "last_seven_days.cards_studied", ""),
                     ("New cards studied", "last_seven_days.new_cards_studied", "new"),
                     ("Retention", "last_seven_days.retention", ""),
-                    ("Again rate", "last_seven_days.again_rate", ""),
+                )
+            ] + [
+                _metric(
+                    "Time spent",
+                    presentation["time_spent"],
+                    "last_seven_days.time_spent",
+                    unavailable=True,
+                    compact_value=presentation["time_spent_compact"],
                 )
             ],
         )
@@ -557,22 +572,12 @@ def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
         _retention_role(stats.retention, target),
         unavailable=retention == UNAVAILABLE_TEXT,
     ))
-    again_percent = (
-        100 - int(stats.retention.percent)
-        if (
-            stats.retention.status == RateStatus.AVAILABLE
-            and stats.retention.percent is not None
-            and stats.again_rate.status == RateStatus.AVAILABLE
-        )
-        else None
-    )
-    again = "{}%".format(again_percent) if again_percent is not None else _rate_text(stats.again_rate)
     rows.append(_metric(
-        "Again rate",
-        again,
-        "last_seven_days.again_rate",
-        _again_role(stats.again_rate, target, again_percent),
-        unavailable=again == UNAVAILABLE_TEXT,
+        "Time spent",
+        presentation["time_spent"],
+        "last_seven_days.time_spent",
+        unavailable=False,
+        compact_value=presentation["time_spent_compact"],
     ))
     return _stats_group("Last 7 Days", "hdo-last-seven", rows)
 
@@ -778,6 +783,7 @@ def dashboard_facts_payload(
     progress = _progress_presentation(snapshot)
     session = _today_session_presentation(snapshot)
     session.pop("time_spent_compact", None)
+    recent = _last_seven_presentation(snapshot)
     return {
         "activity": range_payload["activity"],
         "events": _event_state_payload(facts.events),
@@ -810,6 +816,7 @@ def dashboard_facts_payload(
                 "fill_percent": progress.fill_percent,
             },
             "today_session": session,
+            "last_seven_days": recent,
         },
         "retention_target": retention_target,
         "view": view,
@@ -864,7 +871,7 @@ def _calendar(
         '<div class="hdo-legend-group hdo-legend-due">'
         '<span class="hdo-legend-title">Due cards</span>'
         '<span class="hdo-legend-scale hdo-due-legend" aria-hidden="true">'
-        '<i data-due-level="1"></i><i data-due-level="2"></i><i data-due-level="3"></i>'
+        '<i data-due-level="2"></i>'
         '</span></div>'
         if config.get("heatmap", {}).get("show_due_forecast", True)
         else ""
@@ -938,8 +945,12 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
     except (TypeError, ValueError):
         configured_size = 28
     plain_verse = html.unescape(re.sub(r"<[^>]+>", " ", snapshot.verse.body_html))
-    character_count = len(" ".join(plain_verse.split()))
-    if character_count <= 90:
+    normalized_verse = " ".join(plain_verse.split())
+    character_count = len(normalized_verse)
+    has_verse = bool(normalized_verse)
+    if not has_verse:
+        verse_class = "hdo-verse hdo-verse--empty"
+    elif character_count <= 90:
         verse_class = "hdo-verse hdo-verse--short"
     elif character_count <= 180:
         verse_class = "hdo-verse hdo-verse--medium"
@@ -947,8 +958,13 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
         verse_class = "hdo-verse hdo-verse--long"
     reference = (
         '<footer class="hdo-verse-reference">{}</footer>'.format(snapshot.verse.reference_html)
-        if snapshot.verse.reference_html
+        if has_verse and snapshot.verse.reference_html
         else ""
+    )
+    verse_body = (
+        snapshot.verse.body_html
+        if has_verse
+        else '<span class="hdo-verse-empty-state">No verse selected</span>'
     )
     return (
         '<section class="hdo-card hdo-dashboard-panel hdo-bible-card" data-hdo-primitive="{}" '
@@ -963,7 +979,7 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
         custom_color,
         _escape(bible.get("font_family", "Georgia, serif")),
         configured_size,
-        snapshot.verse.body_html,
+        verse_body,
         reference,
     )
 

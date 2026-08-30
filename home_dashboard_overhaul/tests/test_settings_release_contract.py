@@ -45,7 +45,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             (
                 ROOT
                 / "qa"
-                / "release-evidence-1.8.6-2026-08-25"
+                / "release-evidence-1.8.7-2026-08-30-4d0a4107-ui-readiness-100"
                 / "capture-evidence-manifest.json"
             ).read_text(encoding="utf-8")
         )
@@ -80,6 +80,92 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertEqual(
             tuple(PRESETS),
             ("Sapphire Glass", "Graphite", "Emerald", "High Contrast"),
+        )
+
+    def _verse_import_reader(self):
+        tree = ast.parse(self.settings)
+        selected_nodes = []
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and any(
+                isinstance(target, ast.Name)
+                and target.id == "MAX_VERSE_IMPORT_BYTES"
+                for target in node.targets
+            ):
+                selected_nodes.append(node)
+            elif (
+                isinstance(node, ast.FunctionDef)
+                and node.name == "_read_verse_import_text"
+            ):
+                selected_nodes.append(node)
+        self.assertEqual(len(selected_nodes), 2)
+        namespace = {"Path": lambda value: value}
+        module = ast.Module(body=selected_nodes, type_ignores=[])
+        ast.fix_missing_locations(module)
+        exec(compile(module, str(ROOT / "settings.py"), "exec"), namespace)
+        return namespace["MAX_VERSE_IMPORT_BYTES"], namespace["_read_verse_import_text"]
+
+    def test_oversized_verse_import_is_rejected_before_opening_the_file(self) -> None:
+        maximum, read_import = self._verse_import_reader()
+
+        class OversizedPath:
+            opened = False
+
+            @staticmethod
+            def stat():
+                return SimpleNamespace(st_size=maximum + 1)
+
+            def open(self, _mode):
+                self.opened = True
+                raise AssertionError("oversized import must not be opened")
+
+        selected = OversizedPath()
+        with self.assertRaisesRegex(ValueError, "16 MB import limit"):
+            read_import(selected)
+        self.assertFalse(selected.opened)
+
+    def test_verse_import_read_remains_bounded_if_file_grows_after_stat(self) -> None:
+        maximum, read_import = self._verse_import_reader()
+
+        class OversizedChunk:
+            def __len__(self):
+                return maximum + 1
+
+        class GrowingPath:
+            requested = None
+
+            @staticmethod
+            def stat():
+                return SimpleNamespace(st_size=maximum)
+
+            def open(self, mode):
+                self.assert_mode = mode
+                return self
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self, requested):
+                self.requested = requested
+                return OversizedChunk()
+
+        selected = GrowingPath()
+        with self.assertRaisesRegex(ValueError, "16 MB import limit"):
+            read_import(selected)
+        self.assertEqual(selected.assert_mode, "rb")
+        self.assertEqual(selected.requested, maximum + 1)
+
+    def test_verse_import_ui_uses_bounded_reader_and_existing_error_surface(self) -> None:
+        import_source = self.settings.split("    def _import_quotes(self) -> None:", 1)[1].split(
+            "    def _export_quotes(self) -> None:", 1
+        )[0]
+        self.assertIn("text = _read_verse_import_text(path)", import_source)
+        self.assertNotIn("read_text", import_source)
+        self.assertIn(
+            'QMessageBox.critical(self, "Import failed", str(exc)); return',
+            import_source,
         )
 
     def test_saved_heatmap_ids_have_distinct_authored_light_and_dark_ladders(self) -> None:
@@ -122,16 +208,17 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "def _color_contrast", 1
         )[0]
         self.assertIn("del config", theme_source)
-        self.assertIn('SETTINGS_COLOR_TOKENS["dark" if anki_dark else "light"]', theme_source)
+        self.assertIn("_settings_palette_source(bool(anki_dark))", theme_source)
         self.assertNotIn("resolve_theme", theme_source)
 
     def test_settings_use_one_canonical_native_shell(self) -> None:
         for marker in (
             "class SettingsDialog(QDialog):",
-            "SETTINGS_SHELL_MAX_WIDTH = 1120",
-            "SETTINGS_PAGE_MAX_WIDTH = 920",
-            "SETTINGS_ABOUT_MAX_WIDTH = 840",
-            "SETTINGS_COMPACT_BODY_WIDTH = SETTINGS_SIDEBAR_WIDTH + 680",
+            "SETTINGS_SHELL_MAX_WIDTH = 1264",
+            "SETTINGS_PAGE_MAX_WIDTH = 1080",
+            "SETTINGS_ABOUT_MAX_WIDTH = 1080",
+            "SETTINGS_COMPACT_BODY_WIDTH = 860",
+            "SETTINGS_TWO_COLUMN_CONTENT_WIDTH = 760",
             "SETTINGS_SIDEBAR_WIDTH = 184",
             "SETTINGS_HEADER_HEIGHT = 72",
             "SETTINGS_FOOTER_MIN_HEIGHT = 56",
@@ -141,17 +228,18 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "inset = max(0, (self.width() - SETTINGS_SHELL_MAX_WIDTH) // 2)",
             "self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)",
             "self.header_stack.setMinimumHeight(SETTINGS_HEADER_HEIGHT)",
-            "outer.addWidget(self.sidebar_panel, 0, 0, 3, 1)",
+            "outer.addWidget(self.sidebar_panel, 0, 0, 4, 1)",
             "outer.setRowStretch(1, 1)",
             "outer.addWidget(self.header_shell, 0, 1)",
             "outer.addWidget(self.body_shell, 1, 1)",
-            "outer.addWidget(self.footer_shell, 2, 1)",
+            "outer.addWidget(self.footer.error_panel, 2, 1)",
+            "outer.addWidget(self.footer_shell, 3, 1)",
             "scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
             "page.setMaximumWidth(",
             "if page is getattr(self, \"about_page\", None)",
             "else SETTINGS_PAGE_MAX_WIDTH",
             "SETTINGS_ABOUT_MAX_WIDTH",
-            "page_padding = 20",
+            'page_padding = SETTINGS_SPACING["compact_page"] if compact else SETTINGS_SPACING["page"]',
             'self._add_page("dashboard", page)',
             'self._add_page("events", page)',
             'self._add_page("bible_verse", page)',
@@ -314,7 +402,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
         for marker in (
             'record.get("settings_surface_verified") is True',
             'record.get("capture_scope") == "complete-decorated-settings-window"',
-            'str(record.get("capture_method", "")).startswith("QScreen.grabWindow")',
+            'DECORATED_SETTINGS_CAPTURE_METHOD_PREFIXES',
+            '_complete_decorated_capture(record)',
         ):
             self.assertIn(marker, self.settings_review_assembler)
         self.assertTrue(self.settings_window_contract["pre_exec_geometry"])
@@ -370,7 +459,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertIn('"Unsaved changes"', self.settings)
         self.assertIn('"Save your changes before closing?"', self.settings)
         self.assertIn('("Cancel", "secondary", lambda: None)', self.settings)
-        self.assertIn('("Discard", "danger", self._close_dialog)', self.settings)
+        self.assertIn('("Discard changes", "danger", self._close_dialog)', self.settings)
         self.assertIn('("Save and close", "primary", self._save_and_close)', self.settings)
         self.assertIn('"Settings changed elsewhere"', self.settings)
         self.assertIn("self._show_prompt(", self.settings)
@@ -379,7 +468,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             self.release_probe,
         )
         self.assertIn(
-            'state.get("close_prompt_actions") == ["Cancel", "Discard", "Save and close"]',
+            'state.get("close_prompt_actions") == ["Cancel", "Discard changes", "Save and close"]',
             self.release_probe,
         )
         primary_source = self.settings.split("    def _save(self) -> None:", 1)[1].split(
@@ -476,7 +565,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "metrics.horizontalAdvance(self.item(row).text()) <= available",
             "self.compact_nav = QTabBar(self.header_shell)",
             "self.compact_nav.setElideMode(Qt.TextElideMode.ElideNone)",
-            "compact = self._screen_compact_fallback or shell_width < SETTINGS_COMPACT_BODY_WIDTH",
+            "compact = self._screen_compact_fallback or shell_width <= SETTINGS_COMPACT_BODY_WIDTH",
             "self.nav.refresh_item_sizes()",
         ):
             self.assertIn(marker, self.settings)
@@ -503,8 +592,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertIn('expected_new=10', self.release_probe_base)
         self.assertIn('expected_total=(RESTART_MULTI_DECK_EXPECTED_TOTAL if STAGE == "restart" else 10)', self.release_probe_base)
         self.assertIn("progress = _progress_presentation(snapshot)", self.release_probe_base)
-        self.assertIn('"{}%".format(progress.fill_percent)', self.release_probe_base)
-        self.assertIn("[data-hdo-progress-value]", self.release_probe_base)
+        self.assertIn("expected_progress = progress.label", self.release_probe_base)
+        self.assertIn("[data-hdo-progress-label]", self.release_probe_base)
         self.assertIn('state.get("progressLabel") != expected_progress', self.release_probe_base)
 
     def test_statistics_probe_keeps_clock_relative_eta_out_of_exact_parity(self) -> None:
@@ -678,10 +767,11 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )
         self.assertIn('"total": len(contact_sheets["sheets"])', self.evidence_assembler)
 
-    def test_generated_1_8_6_contact_sheets_are_retained_with_current_evidence(self) -> None:
+    def test_generated_current_contact_sheets_are_retained_with_current_evidence(self) -> None:
         current_directory = (
             "home_dashboard_overhaul/qa/"
-            "release-evidence-1.8.6-2026-08-25/contact-sheets/"
+            "release-evidence-1.8.7-2026-08-30-4d0a4107-ui-readiness-100/"
+            "contact-sheets/"
         )
         self.assertNotIn(current_directory, self.repository_ignore)
         self.assertEqual(
@@ -705,10 +795,16 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "QWebEngine",
             "stdHtml",
             "focusChanged",
-            "setWindowModality",
-            "setModal(",
         ):
             self.assertNotIn(forbidden, self.settings)
+        for marker in (
+            "class HeatmapPalettePreview(QWidget):",
+            "class BibleAppearancePreview(QWidget):",
+            "class SettingsEditorDialog(QDialog):",
+            "self.setWindowModality(Qt.WindowModality.WindowModal)",
+        ):
+            self.assertIn(marker, self.settings)
+        self.assertNotIn("self.setModal(True)", self.settings)
 
     def test_page_changes_are_timer_free_and_controls_sync_immediately(self) -> None:
         section_source = self.settings.split("    def _show_section", 1)[1].split(
@@ -743,10 +839,10 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, self.settings)
         for token in (
-            '"ui_bg": "#0D131A"',
-            '"ui_sidebar": "#0A1016"',
-            '"ui_surface": "#151D25"',
-            '"ui_surface_raised": "#1A242E"',
+            '"ui_bg": "#0B1118"',
+            '"ui_sidebar": "#090F15"',
+            '"ui_surface": "#151D26"',
+            '"ui_surface_raised": "#1B2631"',
             '"ui_accent_soft": "#263B4D"',
         ):
             self.assertIn(token, (ROOT / "themes.py").read_text(encoding="utf-8"))
@@ -774,7 +870,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "Changes how pace is displayed.",
             "Used to color retention status.",
             "Counts the first qualifying answer after a manual reschedule.",
-            "Calendar totals update after saving.",
+            "Changes apply after you save.",
         ):
             self.assertIn(copy, self.settings)
 
@@ -783,9 +879,11 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "def _select_heatmap_preset", 1
         )[0]
         self.assertIn('== "Sapphire Glass"', source)
-        self.assertIn("self.opacity_field.setVisible(enabled)", source)
-        self.assertIn("self.blur_field_label.setVisible(enabled)", source)
-        self.assertIn("self.blur_field.setVisible(enabled)", source)
+        self.assertIn("self.opacity_field.setVisible(True)", source)
+        self.assertIn("widget.setEnabled(enabled)", source)
+        self.assertIn("self.blur_field_label.setVisible(True)", source)
+        self.assertIn("self.blur_field.setVisible(True)", source)
+        self.assertIn("self.blur_availability.setVisible(not enabled)", source)
         self.assertNotIn("setValue", source)
 
     def test_verse_rows_are_semantic_and_preview_fixtures_are_absent(self) -> None:
@@ -1721,21 +1819,19 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'button.setToolTip("Event actions")',
             'self.event_tabs.addTab(self.active_events, "Active (0)")',
             'self.event_tabs.addTab(self.archived_events, "Archived (0)")',
-            'self.event_add = QPushButton("Add event")',
-            "page._hdo_header_actions.addWidget(self.event_add)",
             'self.event_toolbar_add = QPushButton("Add event")',
-            "self.event_add.hide()",
             "self.event_toolbar_add.setVisible(has_events)",
             '_stacked_field("Sort by", "", self.event_sort)',
-            'self.event_search_clear = _icon_button("clear", "Clear event search")',
+            "self.event_search_clear = self.event_search.addAction(",
             'self.event_empty_add = QPushButton("Add event")',
             'self.event_empty_icon.setPixmap(_settings_vector_icon("calendar", 32).pixmap(32, 32))',
             'self.event_empty_clear = QPushButton("Clear search")',
-            "self.event_empty_state.setMinimumHeight(156)",
-            "self.event_empty_state.setMaximumHeight(190)",
+            "self.event_empty_state.setMinimumHeight(180)",
+            "self.event_empty_state.setMaximumHeight(200)",
+            "self.event_empty_add.show()",
             "tree.setMinimumHeight(54 + 8)",
-            "tree.setMaximumHeight((6 * 54) + 8)",
-            "visible_rows = min(6, max(1, tree.topLevelItemCount()))",
+            "tree.setMaximumHeight((5 * 54) + 8)",
+            "visible_rows = min(5, max(1, tree.topLevelItemCount()))",
             "target = (visible_rows * _event_row_target_height(tree, row_widget)) + 8",
             '("Name", "name")',
             'if sort_value == "name"',
@@ -1826,7 +1922,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'version_form.addRow("Version", QLabel(version))',
             'version_form.addRow("Compatibility", QLabel(compatibility))',
             "QSizePolicy.Policy.Maximum",
-            'self.copy_diagnostics.setText("Diagnostics copied")',
+            'self.copy_diagnostics.setText("Copied")',
             'ExternalLinkButton("Documentation", PROJECT_URL)',
             'ExternalLinkButton("Report an issue", ISSUES_URL)',
             'SettingsCard("Privacy and legal")',
@@ -1838,7 +1934,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "self.recovery_export = recovery_export",
             'recovery_export.clicked.connect(self._export_quotes)',
             '"Verse library edits exported to {}.".format(path)',
-            '"Could not export verse library edits. Your staged settings were not changed."',
+            '"Could not export verse library edits. Your settings changes were not affected."',
             'self.export_copy_error = QPushButton("Copy error")',
             attribution,
         ):
@@ -1855,7 +1951,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertNotIn("_sync_draft", export_source)
 
     def test_footer_has_action_local_dirty_success_and_error_states(self) -> None:
-        footer_index = self.settings.index("outer.addWidget(self.footer_shell, 2, 1)")
+        footer_index = self.settings.index("outer.addWidget(self.footer_shell, 3, 1)")
         body_index = self.settings.index("outer.addWidget(self.body_shell, 1, 1)")
         self.assertLess(body_index, footer_index)
         for marker in (
@@ -1871,11 +1967,11 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "def _revert_changes(self)",
             "baseline = deepcopy(self.draft.baseline)",
             'self._set_status("discarded", "Changes discarded")',
-            'self._set_status("saving", "Saving changes...")',
+            'self._set_status("saving", "Saving changes…")',
             'self.save_button.setText("Save changes")',
             "self._set_mutation_controls_enabled(False)",
             "self.saved_status_timer.timeout.connect(self._clear_saved_status)",
-            "self.saved_status_timer.setInterval(2000)",
+            "self.saved_status_timer.setInterval(5000)",
             'self._set_status("saved", "Saved")',
             "self.save_button.setEnabled(False)",
             '"Could not save changes. Your draft is still available."',
@@ -1888,13 +1984,11 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'if self._state == "saving":',
             "self.draft.replace_all(latest_saved)",
             "self._pending_close_after_save = False",
-            "self._footer_clearance_timer = QTimer(self)",
-            "self._footer_clearance_timer.timeout.connect(",
-            "clearance = 36",
+            "outer.addWidget(self.footer.error_panel, 2, 1)",
+            "self.footer.setFixedHeight(SETTINGS_FOOTER_MIN_HEIGHT)",
             '"validation-error",',
             '"Fix {} error{} to save".format(',
             '"Enter a valid #RRGGBB color."',
-            "self._schedule_settings_footer_clearance()",
             "self.error_panel.isHidden()",
         ):
             self.assertIn(marker, self.settings)
@@ -2050,7 +2144,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "target = max(INTERACTION_TARGET_MIN_PX, widget.fontMetrics().lineSpacing() + 10)",
             "return max(INTERACTION_TARGET_MIN_PX, view.fontMetrics().lineSpacing() + 12)",
             "max(56, (2 * view.fontMetrics().lineSpacing()) + 20)",
-            "self.setFixedSize(44, 36)",
+            "self.setFixedSize(44, 34)",
             "class SuffixNumberField(QWidget):",
             "QIntValidator(self._minimum, self._maximum, self.editor)",
             'self.editor.setProperty("invalid", invalid)',
@@ -2064,9 +2158,9 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "QFormLayout.RowWrapPolicy.WrapLongRows",
             "def _apply_role_fonts(root: QWidget) -> None:",
             '"PageTitle": role_font(20, QFont.Weight.DemiBold)',
-            '"CardTitle": role_font(14, QFont.Weight.DemiBold)',
+            '"CardTitle": role_font(13, QFont.Weight.DemiBold)',
             '"PageHelp": role_font(12)',
-            '"FieldHelp": role_font(12)',
+            '"FieldHelp": role_font(11)',
             "large_text = self.fontMetrics().lineSpacing() >= 22",
         ):
             self.assertIn(marker, self.settings)

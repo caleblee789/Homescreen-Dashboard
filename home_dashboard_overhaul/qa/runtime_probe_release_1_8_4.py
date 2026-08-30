@@ -395,11 +395,7 @@ def _show_live_snapshot(
         _require(queue["new"] == expected_new, "{} analytics New remaining mismatch".format(label))
         _require(queue["total"] == expected_total, "{} analytics Total remaining mismatch".format(label))
         progress = _progress_presentation(snapshot)
-        expected_progress = (
-            "{}%".format(progress.fill_percent)
-            if progress.fill_percent is not None
-            else progress.label
-        )
+        expected_progress = progress.label
         _controller.config = config
         _controller.snapshot = snapshot
         _controller.cache_key = _controller._key()
@@ -440,7 +436,7 @@ def _inspect_live_snapshot(
             "(function(){var r=document.getElementById('hdo-dashboard');"
             "function value(k){var n=r&&r.querySelector('[data-hdo-metric=\"'+k+'\"]');"
             "return n?n.textContent.trim():'';}"
-            "var p=r&&r.querySelector('[data-hdo-progress-value]');"
+            "var p=r&&r.querySelector('[data-hdo-progress-label]');"
             "return {mounted:!!r,newText:value('queue.new'),totalText:value('queue.total'),"
             "progressLabel:p?p.textContent.trim():''};})()"
         )
@@ -783,6 +779,7 @@ def _stress_snapshot() -> DashboardSnapshot:
                 LastSevenDaysStats(
                     cards_studied=98_765,
                     new_cards_studied=8_765,
+                    seconds=98_765 * 25.1,
                     retention=RateMetric.from_counts(90_864, 98_765),
                     again_rate=RateMetric.from_counts(7_901, 98_765),
                 )
@@ -1285,8 +1282,8 @@ DOM_REPORT_SCRIPT = r"""
     layoutSideBySide:!!calendar&&!!rail&&rect(calendar).right<=rect(rail).left+1,
     layoutStacked:!!calendar&&!!rail&&rect(calendar).bottom<=rect(rail).top+1,
     railWidth:rail?rect(rail).width:0,
-    progressText:text('[data-hdo-progress-value]'),
-    progressLabelCount:qa('[data-hdo-progress-value]').length,
+    progressText:text('[data-hdo-progress-label]'),
+    progressLabelCount:qa('[data-hdo-progress-label]').length,
     calendarCellCount:cells.length,
     selectedCount:selected.length,
     yearMonthLabels:qa('.hdo-year-month-label').map(function(node){return node.textContent.trim();}),

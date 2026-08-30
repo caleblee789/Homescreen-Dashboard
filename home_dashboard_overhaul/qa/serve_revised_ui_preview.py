@@ -94,6 +94,7 @@ def stress_snapshot(reference: date, *, events_enabled: bool = True):
         last_seven_days=ValueState.available(LastSevenDaysStats(
             cards_studied=12_486,
             new_cards_studied=1_048,
+            seconds=12_486 * 125.4,
             retention=RateMetric.from_counts(11_237, 12_486),
             again_rate=RateMetric.from_counts(1_249, 12_486),
         )),

@@ -22,8 +22,8 @@ Browser or statistics classes.
 - The retired central workspace, backing-view hiding, focus handoff/retries,
   focus restoration, application event filter, and menu-dismissal timer are
   removed. Qt manages the same dialog lifecycle as the two working add-ons.
-- The corrected statistics, schema 8, configuration keys, bridge
-  commands, and all four Settings pages remain unchanged.
+- The corrected scheduler and retention semantics, schema 8, configuration
+  keys, bridge commands, and all four Settings pages remain unchanged.
 
 - Every study-derived value is computed from one scheduler-authoritative
   snapshot. Today uses `[next rollover − 86,400 seconds, next rollover)`, and
@@ -33,8 +33,9 @@ Browser or statistics classes.
   retention. Eligible rows have `ease > 0`, exclude filtered cram rows with
   `type = 3` and `factor = 0`, and are review-kind or have a prior interval of
   at least one day. Again fails and Hard/Good/Easy pass. The visible integer
-  Retention is rounded half-up once and Again is displayed as
-  `100 − Retention`; later suspension or burial does not erase past answers.
+  Retention is rounded half-up once; later suspension or burial does not erase
+  past answers. Last 7 Days displays elapsed review time from the same exact
+  seven-period scope instead of displaying Again rate.
 - Today’s Progress is collection-wide minus excluded deck descendants. It
   applies each included top-level head's native due-tree limits independently,
   and the selected deck cannot change the result. Queue 0 is New, queues 1/3/4
@@ -55,40 +56,46 @@ Browser or statistics classes.
   8, all existing labels/order/JSON/DOM keys, and bridge commands are unchanged.
 
 - Settings has one native Qt widget tree at every size: fixed header, a body
-  with one vertical scroller per page, and a true final-row footer. The
-  shell is capped at 1,120 px, the sidebar is 184 px, the page header is at
-  least 72 px, the footer is at least 56 px, and ordinary pages are capped at
-  920 px (About at 840 px).
-- Compact top navigation activates whenever retaining the sidebar would leave
-  less than 680 px for the main region, so the 860 px minimum is compact. Forms and toolbars
-  remain horizontally contained without rendered Settings previews.
-- Dashboard groups Appearance, Dashboard sections, Study metrics, and Calendar
-  display. Events uses a searchable/sortable Active/Archived list bounded to
-  six naturally growing rows and a parented editor capped near 440 px. Bible verse uses a flexible
-  filtered library with two-line clamped excerpts and one inline hex error.
+  with one vertical scroller per page, a reserved error region, and a true
+  final-row 56 px action footer. The centered shell is capped at 1,264 px, the
+  sidebar is 184 px, and every page is capped at 1,080 px.
+- Compact top navigation activates at the 860 px minimum, with the page title
+  consistently above one row of tabs. At 760 px of page content, the existing
+  cards reflow into deliberate pairs while Appearance remains full width.
+- Dashboard groups Appearance, Dashboard sections, Study metrics, Calendar
+  display, and Calendar range. Events uses one content-sized Add event action,
+  a searchable/sortable Active/Archived list bounded to five naturally growing
+  rows, and a shared parented window-modal editor 480–540 px wide and at most
+  80% of the Settings body. Bible verse uses a flexible filtered library with
+  two-line clamped excerpts and one inline hex error.
   About groups Version and support, Privacy and legal, and Backup and recovery.
-- Dirty, saving, saved, validation, and persistence feedback is action-local
-  in the footer. A failed save retains all staged values, enables retry, and
-  keeps technical details behind a disclosure. All controls remain native Qt
-  and staged state writes nothing until Save.
-- Dashboard theme and Heatmap palette share one responsive Appearance row.
+- Dirty, saving, saved, and discard feedback stays in the fixed action footer;
+  validation and save failures use the reserved region above it. A failed save
+  retains the complete draft for retry and keeps technical details behind a
+  disclosure. All controls remain native Qt and draft state writes nothing
+  until Save.
+- Dashboard theme and Calendar heatmap palette share one responsive Appearance
+  row.
   Their layout-changing staged updates run after the native combo popup closes,
   and save locking restores both selectors and their nested popup views.
-- Month is always 42 cells. Year always uses one responsive 53-week tree that
-  stays inside the dashboard without horizontal scrolling at 480 px and above;
-  only the heatmap may scroll below that boundary. Calendar legend and
-  event-summary groups disappear when their features are disabled.
+- Month is always 42 cells. Year always uses one responsive 53-week tree with
+  readable 6–8 px cells; when they do not fit, horizontal scrolling is confined
+  to the heatmap. Calendar legend and event-summary groups disappear when their
+  features are disabled.
 - The production root is transparent and in normal document flow at a 1,120 px
-  maximum. It measures Anki's visible fixed/sticky bottom action container and
-  maintains a 24 px clearance, using 60 px only as the missing-height fallback.
+  maximum. It measures Anki's visible normally positioned, fixed, or sticky
+  bottom action container and maintains a 24 px clearance, using 60 px only as
+  the missing-height fallback.
 - The 16 existing completion-palette IDs now resolve to distinct, separately
   authored light and dark ladders.
 - `events.sort` additionally accepts `name`, ordered case-insensitively by
   name, date, and stable ID. Schema remains 8 and all other keys retain their
   meanings.
 - Saving prepares both config and manual-verse writes, replaces atomically
-  where supported, and rolls back best-effort if only one succeeds. Errors are
-  specific and inline, and the dialog remains open.
+  where supported, and rolls back best-effort if only one succeeds. Save
+  failures show generic user-facing copy in the reserved error region, retain
+  the complete draft for retry, expose technical details separately, and leave
+  the dialog open.
 - New, Learning, and Reviews remaining use Anki's scheduler-authoritative due
   tree with scoped deck exclusions. Independent top-level head limits are
   summed without selected-deck reconciliation, so changing the selected deck
@@ -100,9 +107,10 @@ Browser or statistics classes.
 Month and Year share one persistent controller-owned view. Today's Progress
 contains New, Learning, Reviews, and Total remaining. Today's Session contains
 Cards studied, New cards studied, Cards buried, Time spent, Pace, and ETA. Last
-7 Days and All Time use Anki-native eligible retention over their exact
-scheduler periods. The configured Bible verse is rendered at its exact font,
-size, and color.
+7 Days contains Cards studied, New cards studied, Retention, and Time spent;
+All Time retains its Anki-native eligible retention metrics. The configured
+Bible verse is rendered at its exact font, size, and color. While work remains,
+Today's Progress displays `N% complete` inside the filled progress bar.
 
 The compact calendar footer retains date selection, tooltip, Browser routing,
 event edit/add, and Most Missed behavior. Due and event legend/summary groups
@@ -117,7 +125,8 @@ baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only production rendering; Settings shows
-text selectors and retains the custom-color input well without preview cards.
+the five-step heatmap palette and compact Bible appearance previews while
+retaining the custom-color input well.
 Settings is a movable, resizable `QDialog(mw)` with a 1080×760 logical default,
 860×640 normal minimum, default Qt flags, and a local `exec()` call. It resolves the
 parent window's active screen, falls back to the screen containing the parent
@@ -131,8 +140,6 @@ inside the existing stack.
 Responsive field grids mount every new field under its Settings card before
 changing visibility or filtering layout rows. This prevents a parentless field
 from being realized as a temporary native window during dialog construction.
-No Dashboard card, verse card, palette, theme, or heatmap preview widget is
-constructed in Settings.
 
 The dashboard remains inactive while a legacy source add-on is enabled, which
 prevents duplicate panels and load-order conflicts. External-calendar source
@@ -158,7 +165,7 @@ python3 home_dashboard_overhaul/qa/validate_settings_window_contract_1_8_7.py
 python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
-The builder creates one 24-file allowlisted archive, checks its version and
+The builder creates one 24-member allowlisted archive, checks its version and
 safe paths, validates the 1.8.7 release authorities, and verifies every
 packaged byte against source. The canonical plan contains 94 native frames,
 including exactly 41 Settings frames at 100% application font and two total

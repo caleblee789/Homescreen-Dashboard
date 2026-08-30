@@ -43,11 +43,25 @@ NATIVE_SETTINGS_LAYOUT_ASSERTIONS = (
     "page_bottom_reachable",
     "target_fully_visible",
 )
+DECORATED_SETTINGS_CAPTURE_METHOD_PREFIXES = (
+    "QScreen.grabWindow",
+    "NSView.cacheDisplayInRect+QDialog.grab-composited-",
+    "NSView.dataWithPDFInsideRect+QDialog.grab-composited-",
+)
 
 
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise RuntimeError(message)
+
+
+def complete_decorated_settings_capture(record: Mapping[str, Any]) -> bool:
+    method = str(record.get("capture_method", ""))
+    return (
+        record.get("decorated_window_included") is True
+        and record.get("capture_scope") == "complete-decorated-settings-window"
+        and method.startswith(DECORATED_SETTINGS_CAPTURE_METHOD_PREFIXES)
+    )
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -651,12 +665,7 @@ def validate_runtime(
                     or case.get("special") == "window-fresh-open"
                 ):
                     require(
-                        record.get("decorated_window_included") is True
-                        and record.get("capture_scope")
-                        == "complete-decorated-settings-window"
-                        and str(record.get("capture_method", "")).startswith(
-                            "QScreen.grabWindow"
-                        ),
+                        complete_decorated_settings_capture(record),
                         "{} omits the complete decorated Settings window".format(
                             capture_id
                         ),
@@ -1107,8 +1116,8 @@ This immutable evidence set was assembled from the exact reproducible package
   hashes and records both fullscreen Space-switch opening paths.
 
 Windows, Linux, DPR 1, alternate application-font percentages, VoiceOver,
-forced-colors, keyboard-navigation expansion, and reduced-motion work were not
-run and are not claimed; they are explicitly nonblocking for this release.
+forced-colors, and reduced-motion work were not run and are not claimed; they
+are explicitly nonblocking for this release.
 {legacy_note}
 """.format(
         release=RELEASE,

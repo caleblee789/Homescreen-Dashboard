@@ -282,8 +282,8 @@
 
   function dashboardDensity(width) {
     var resolved = Math.max(0, Number(width) || 0);
-    if (resolved >= 1040) return "wide";
-    if (resolved >= 420) return "intermediate";
+    if (resolved >= 860) return "wide";
+    if (resolved >= 620) return "intermediate";
     return "narrow";
   }
 
@@ -519,7 +519,9 @@
     var scrollOwner = applyDocumentScrollClearance(root);
 
     function updateDensity() {
-      root.dataset.hdoContentMode = dashboardDensity(root.getBoundingClientRect().width);
+      var width = Math.max(0, Number(root.getBoundingClientRect().width) || 0);
+      root.dataset.hdoContentMode = dashboardDensity(width);
+      root.dataset.hdoMetricColumns = width >= 308 ? "2" : "1";
     }
 
     updateDensity();
@@ -811,8 +813,14 @@
       var day = state.days[state.selected];
       var capabilities = getSelectedDateCapabilities(day, String(state.payload.scheduling_date || ""));
       if (primaryAction) {
-        if (capabilities.primary === "reviewed") primaryAction.textContent = "Reviewed cards";
-        if (capabilities.primary === "due") primaryAction.textContent = "Due cards";
+        if (capabilities.primary === "reviewed") {
+          primaryAction.textContent = "Reviewed cards";
+          primaryAction.setAttribute("aria-label", "View reviewed cards");
+        }
+        if (capabilities.primary === "due") {
+          primaryAction.textContent = "Due cards";
+          primaryAction.setAttribute("aria-label", "View due cards");
+        }
         primaryAction.dataset.action = capabilities.primary;
         setButtonHidden(primaryAction, !capabilities.primaryEnabled);
         primaryAction.disabled = false;
@@ -964,8 +972,9 @@
         marker.setAttribute("aria-hidden", "true");
         if (view === "month" && model.events.length > 1) {
           var count = document.createElement("span");
+          count.className = "hdo-event-count";
           count.textContent = String(model.events.length);
-          marker.appendChild(count);
+          cell.appendChild(count);
         }
         cell.appendChild(marker);
       }
@@ -1275,8 +1284,10 @@
   function updateProgressComposition(root, _statistics, presentation, _locale) {
     var track = root.querySelector("[data-hdo-progress-track]");
     var fill = root.querySelector("[data-hdo-progress-fill]");
-    var value = root.querySelector("[data-hdo-progress-value]");
-    if (!track || !fill || !value) return;
+    var label = root.querySelector("[data-hdo-progress-label]");
+    var fillLabel = root.querySelector("[data-hdo-progress-label-fill]");
+    var chip = root.querySelector("[data-hdo-progress-chip]");
+    if (!track || !fill || !label || !chip) return;
     var progress = presentation && presentation.progress && typeof presentation.progress === "object"
       ? presentation.progress
       : { status: "unavailable", fill_percent: null };
@@ -1293,14 +1304,16 @@
           : state === "in_progress"
             ? Math.round(percent) + "% complete"
             : "Unavailable";
-    value.hidden = false;
-    value.textContent = hasFill ? Math.round(percent) + "%" : statusLabel;
-    value.dataset.hdoProgressState = state;
+    chip.hidden = hasFill;
+    chip.textContent = statusLabel;
+    chip.dataset.hdoProgressState = state;
     track.hidden = !hasFill;
     track.dataset.hdoProgressState = state;
     track.setAttribute("aria-valuenow", String(percent));
     track.setAttribute("aria-valuetext", statusLabel);
     track.style.setProperty("--hdo-progress-percent", percent + "%");
+    label.textContent = statusLabel;
+    if (fillLabel) fillLabel.textContent = statusLabel;
   }
 
   function updateMetricSemanticRole(root, key, role) {
@@ -1336,6 +1349,7 @@
     var recent = availableValue(statistics.last_seven_days);
     var longTerm = availableValue(statistics.long_term);
     var todayPresentation = presentation && presentation.today_session || {};
+    var recentPresentation = presentation && presentation.last_seven_days || {};
     if (today) {
       setMetric(root, "today.answers", todayPresentation.cards_studied || formatNumber(today.answers, locale), today.answers);
       setMetric(root, "today.new_cards_studied", todayPresentation.new_cards_studied || formatNumber(today.new_cards_studied, locale), today.new_cards_studied);
@@ -1369,14 +1383,16 @@
     } else setMetric(root, "today.cards_buried", UNAVAILABLE_TEXT, null);
     if (recent) {
       var retentionAvailable = recent.retention && recent.retention.status === "available";
-      var againAvailable = recent.again_rate && recent.again_rate.status === "available";
-      var displayedAgainPercent = retentionAvailable && againAvailable
-        ? 100 - Number(recent.retention.percent)
-        : (againAvailable ? Number(recent.again_rate.percent) : null);
       setMetric(root, "last_seven_days.cards_studied", formatNumber(recent.cards_studied, locale), recent.cards_studied);
       setMetric(root, "last_seven_days.new_cards_studied", formatNumber(recent.new_cards_studied, locale), recent.new_cards_studied);
       setMetric(root, "last_seven_days.retention", retentionAvailable ? recent.retention.percent + "%" : N_A_TEXT, recent.retention && recent.retention.percent);
-      setMetric(root, "last_seven_days.again_rate", againAvailable ? displayedAgainPercent + "%" : N_A_TEXT, displayedAgainPercent);
+      setMetric(
+        root,
+        "last_seven_days.time_spent",
+        recentPresentation.time_spent || UNAVAILABLE_TEXT,
+        recent.seconds,
+        recentPresentation.time_spent_compact || UNAVAILABLE_TEXT
+      );
       updateMetricSemanticRole(
         root,
         "last_seven_days.retention",
@@ -1384,25 +1400,11 @@
           ? rateSemanticRole(recent.retention.percent, retentionTarget, false)
           : ""
       );
-      updateMetricSemanticRole(
-        root,
-        "last_seven_days.again_rate",
-        againAvailable
-          ? rateSemanticRole(
-              displayedAgainPercent,
-              retentionTarget === null || retentionTarget === undefined || retentionTarget === ""
-                ? null
-                : 100 - Number(retentionTarget),
-              true
-            )
-          : ""
-      );
     } else {
-      ["last_seven_days.cards_studied", "last_seven_days.new_cards_studied", "last_seven_days.retention", "last_seven_days.again_rate"].forEach(function (key) {
+      ["last_seven_days.cards_studied", "last_seven_days.new_cards_studied", "last_seven_days.retention", "last_seven_days.time_spent"].forEach(function (key) {
         setMetric(root, key, UNAVAILABLE_TEXT, null);
       });
       updateMetricSemanticRole(root, "last_seven_days.retention", "");
-      updateMetricSemanticRole(root, "last_seven_days.again_rate", "");
     }
     if (longTerm) {
       setMetric(root, "long_term.average_reviews_per_active_day", formatNumber(longTerm.average_reviews_per_active_day, locale), longTerm.average_reviews_per_active_day);
@@ -1471,39 +1473,121 @@
 
   function visibleBottomActionContainer(root) {
     if (!root || typeof document === "undefined" || !document.body) return null;
-    var controls = document.querySelectorAll(
-      "button, [role='button'], input[type='button'], input[type='submit']"
-    );
+    var actionSelector = "button, [role='button'], input[type='button'], input[type='submit'], a[href], a[onclick]";
+    var controls = document.querySelectorAll(actionSelector);
     var candidates = [];
+
+    function addCandidate(node, normalFlow) {
+      if (!node || node === document.body || root.contains(node)) return;
+      var existing = candidates.find(function (entry) { return entry.node === node; });
+      if (existing) {
+        existing.normalFlow = existing.normalFlow || Boolean(normalFlow);
+      } else {
+        candidates.push({ node: node, normalFlow: Boolean(normalFlow) });
+      }
+    }
+
+    function controlSignature(control) {
+      var attribute = function (name) {
+        return control && typeof control.getAttribute === "function"
+          ? String(control.getAttribute(name) || "")
+          : "";
+      };
+      return [
+        control.textContent,
+        control.value,
+        control.id,
+        typeof control.className === "string" ? control.className : "",
+        attribute("aria-label"),
+        attribute("title"),
+        attribute("onclick"),
+        attribute("href")
+      ].join(" ").toLowerCase();
+    }
+
+    function visibleControl(control) {
+      if (!control || root.contains(control)) return false;
+      var style = global.getComputedStyle ? global.getComputedStyle(control) : null;
+      if (style && (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0)) return false;
+      var rect = control.getBoundingClientRect();
+      return Boolean(rect && rect.width > 0 && rect.height > 0);
+    }
+
+    function structuralActionRow(control) {
+      var candidate = control && control.parentElement;
+      var depth = 0;
+      while (candidate && candidate !== document.body && depth < 5) {
+        if (root.contains(candidate)) return null;
+        var style = global.getComputedStyle ? global.getComputedStyle(candidate) : null;
+        var position = style ? style.position : "";
+        if (position === "fixed" || position === "sticky") return null;
+        var rect = candidate.getBoundingClientRect();
+        if (rect && rect.width >= 80 && rect.height > 0 && rect.height <= 160) {
+          var grouped = Array.prototype.filter.call(
+            candidate.querySelectorAll(actionSelector),
+            visibleControl
+          );
+          if (grouped.length >= 2 && grouped.length <= 12) {
+            var controlRects = grouped.map(function (item) { return item.getBoundingClientRect(); });
+            var tallest = Math.max.apply(null, controlRects.map(function (item) { return item.height; }));
+            var centers = controlRects.map(function (item) { return item.top + item.height / 2; });
+            var centerSpread = Math.max.apply(null, centers) - Math.min.apply(null, centers);
+            if (centerSpread <= Math.max(12, tallest * .75)) return candidate;
+          }
+        }
+        candidate = candidate.parentElement;
+        depth += 1;
+      }
+      return null;
+    }
+
+    var normalActions = [];
     Array.prototype.forEach.call(controls, function (control) {
       if (root.contains(control)) return;
+      var signature = controlSignature(control);
+      if (
+        /\b(get shared|create deck|import file)\b/.test(signature) ||
+        /pycmd\s*\([^)]*\b(shared|add|create|import)\b/.test(signature)
+      ) normalActions.push(control);
+      var structural = structuralActionRow(control);
+      if (structural) addCandidate(structural, true);
       var candidate = control;
       while (candidate && candidate !== document.body) {
         var style = global.getComputedStyle ? global.getComputedStyle(candidate) : null;
         var position = style ? style.position : "";
         if (position === "fixed" || position === "sticky") {
-          candidates.push(candidate);
+          addCandidate(candidate, false);
           break;
         }
         candidate = candidate.parentElement;
       }
     });
+
+    if (normalActions.length) {
+      var common = normalActions[0].parentElement || normalActions[0];
+      while (
+        common && common !== document.body &&
+        !normalActions.every(function (control) { return common.contains(control); })
+      ) common = common.parentElement;
+      addCandidate(common, true);
+    }
+
     var viewportHeight = Math.max(0, Number(global.innerHeight) || 0);
     var best = null;
     var bestHeight = 0;
-    candidates.forEach(function (candidate) {
+    var bestBottom = -Infinity;
+    candidates.forEach(function (entry) {
+      var candidate = entry.node;
       if (!candidate || !candidate.isConnected) return;
       var style = global.getComputedStyle ? global.getComputedStyle(candidate) : null;
       if (style && (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0)) return;
       var rect = candidate.getBoundingClientRect();
       if (!rect || rect.width < 80 || rect.height <= 0 || rect.height > 240) return;
-      if (viewportHeight && rect.bottom < viewportHeight - 8) return;
-      var visibleHeight = viewportHeight
-        ? Math.max(0, Math.min(viewportHeight, rect.bottom) - Math.max(0, rect.top))
-        : rect.height;
-      if (visibleHeight > bestHeight) {
+      if (!entry.normalFlow && viewportHeight && rect.bottom < viewportHeight - 8) return;
+      if (rect.bottom > bestBottom || (rect.bottom === bestBottom && rect.height > bestHeight)) {
         best = candidate;
-        bestHeight = visibleHeight;
+        bestHeight = rect.height;
+        bestBottom = rect.bottom;
       }
     });
     return best;
@@ -1521,11 +1605,7 @@
       var measured = 60;
       if (candidate) {
         var rect = candidate.getBoundingClientRect();
-        var viewportHeight = Math.max(0, Number(global.innerHeight) || rect.bottom);
-        measured = Math.max(
-          0,
-          Math.ceil(Math.min(viewportHeight, rect.bottom) - Math.max(0, rect.top))
-        );
+        measured = Math.max(0, Math.ceil(Number(rect.height) || 0));
       }
       var footerHeight = candidate ? measured : 60;
       var clearance = footerHeight + 24;

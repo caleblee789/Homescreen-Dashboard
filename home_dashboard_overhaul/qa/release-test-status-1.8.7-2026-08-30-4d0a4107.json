@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "release": "1.8.7",
+  "generated_at_utc": "2026-08-30T19:38:41Z",
+  "quality_status": "review-required",
+  "release_ready": false,
+  "blocking_gate": {
+    "id": "independent-human-review",
+    "status": "unrun",
+    "required": true,
+    "reason": "The implementation, package, exact-package native capture, persistence, isolation, and pointer-only macOS full-screen checks passed, but independent human review has not been recorded."
+  },
+  "repository_release_blockers": {
+    "packaged_documentation_alignment": {
+      "status": "failed",
+      "required": true,
+      "blocking": true,
+      "reason": "Packaged config.md, user_files/README.txt, and README.md retain legacy Settings-layout, rotation-state, and native-scaling wording. Correcting packaged members changes the candidate hash and requires a new exact-package validation and evidence cycle."
+    }
+  },
+  "candidate": {
+    "archive": "home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon",
+    "archive_sha256": "4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994",
+    "capture_plan_sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+    "package_member_allowlist_count": 24,
+    "evidence_bundle": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-08-30-4d0a4107-ui-readiness-100",
+    "invalidation_rule": "Any shipping UI or explicit release-input change after this candidate requires a new package and evidence set."
+  },
+  "contract": {
+    "status": "passed",
+    "settings_default_logical_size": [1080, 760],
+    "settings_minimum_logical_size": [860, 640],
+    "settings_footer_height_px": 56,
+    "settings_shell_cap_px": 1264,
+    "settings_page_cap_px": 1080,
+    "settings_geometry_schema": 4,
+    "progress_copy": "N% complete",
+    "progress_copy_location": "inside-progress-bar",
+    "last_seven_days_visible_metric": "Time spent",
+    "again_rate_visible": false,
+    "configuration_schema": 8,
+    "full_capture_count": 94
+  },
+  "gates": {
+    "automated": {
+      "status": "passed",
+      "python": {
+        "tests_run": 317,
+        "passed": 299,
+        "expected_skips": 18,
+        "failures": 0,
+        "errors": 0
+      },
+      "javascript_calendar": "passed",
+      "revised_ui_validator": "passed",
+      "settings_window_validator": "passed",
+      "capture_plan_validation": "passed",
+      "color_contrast_audit": {
+        "status": "passed",
+        "contrast_checks": 582,
+        "failures": 0,
+        "hardcoded_component_colors": 0
+      },
+      "shipping_python_compilation": "passed",
+      "git_diff_check": "passed"
+    },
+    "package": {
+      "status": "passed",
+      "deterministic_builds": 2,
+      "byte_identical": true,
+      "sha256_sidecar": "passed",
+      "zip_integrity": "passed",
+      "safe_member_paths": "passed",
+      "fixed_member_allowlist": "passed",
+      "member_count": 24,
+      "source_archive_byte_parity": "passed",
+      "archive_installed_byte_parity": "passed"
+    },
+    "native_isolation": {
+      "status": "passed",
+      "anki_version": "26.8.1",
+      "host": "macOS 26.6.2 Retina DPR 2",
+      "application_font_percent": 100,
+      "sync_identity": "disabled-and-disconnected",
+      "normal_profile_touched": false,
+      "process_window_filesystem_sync_gates_before_interaction": "passed",
+      "process_window_filesystem_sync_gates_after_restart": "passed"
+    },
+    "macos_native_fullscreen": {
+      "status": "passed",
+      "native_fullscreen": true,
+      "input_method": "pointer-only",
+      "keyboard_testing": "omitted-not-a-release-gate",
+      "desktop_space_switch_regression": "not-observed",
+      "menu_route": "passed",
+      "dashboard_gear_route": "passed",
+      "controlled_restart": "passed",
+      "evidence": "home_dashboard_overhaul/qa/macos-retina-platform-1.8.7-2026-08-30-4d0a4107-ui-readiness/fullscreen-space-switch.json"
+    },
+    "exact_package_capture": {
+      "status": "passed",
+      "run_root": "<disposable-run-root>",
+      "profile": "Codex QA HDO 1.8.7 20260830-4d0a4107",
+      "instance_key_fingerprint": "d6195d44b2a9",
+      "initial_frames": 92,
+      "restart_frames": 2,
+      "total_frames": 94,
+      "contact_sheets": 18,
+      "initial_runtime_report": "passed",
+      "restart_runtime_report": "passed",
+      "restart_persistence": "passed"
+    },
+    "model_assisted_visual_review": {
+      "status": "passed",
+      "scope": "Representative dashboard, Settings, editor, save-state, theme, responsive, and restart frames plus structured layout diagnostics.",
+      "blocking_defects": 0,
+      "substitutes_for_required_human_review": false
+    },
+    "independent_human_review": {
+      "status": "unrun",
+      "required": true,
+      "blocking": true,
+      "scope": "Review every generated contact sheet and the live native interaction result."
+    }
+  },
+  "scope_decisions": {
+    "keyboard_testing": "omitted-not-a-release-gate",
+    "not_claimed": [
+      "Windows",
+      "Linux",
+      "DPR 1",
+      "alternate OS scaling",
+      "alternate application-font scaling",
+      "VoiceOver",
+      "forced colors",
+      "reduced motion"
+    ]
+  },
+  "evidence_history": {
+    "superseded_capture_and_platform_bundles_retired_after_replacement_validation": 11,
+    "retained_current_bundle": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-08-30-4d0a4107-ui-readiness-100",
+    "recovery_snapshot": "release cleanup safety snapshot 20260830-225744Z",
+    "historical_hashes_can_approve_candidate": false
+  },
+  "outside_scope_of_the_capture_validation_run": [
+    "publication",
+    "cleanup",
+    "commit",
+    "push",
+    "pull request",
+    "merge"
+  ]
+}

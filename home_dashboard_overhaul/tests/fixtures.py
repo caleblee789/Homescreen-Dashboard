@@ -131,6 +131,7 @@ def sample_snapshot(today: date | None = None) -> DashboardSnapshot:
         last_seven_days=ValueState.available(LastSevenDaysStats(
             cards_studied=1_754,
             new_cards_studied=312,
+            seconds=45_120,
             retention=RateMetric.from_counts(1_368, 1_754),
             again_rate=RateMetric.from_counts(386, 1_754),
         )),

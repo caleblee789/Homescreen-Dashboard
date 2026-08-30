@@ -539,7 +539,7 @@ class CapturePlan:
                     "structured Settings restore scenario has invalid {}".format(label),
                 )
             _require(
-                geometry[2] >= 820 and geometry[3] >= 600,
+                geometry[2] >= 860 and geometry[3] >= 640,
                 "structured Settings restore geometry is below the supported minimum",
             )
             _require(

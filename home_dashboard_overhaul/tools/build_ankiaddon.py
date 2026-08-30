@@ -69,6 +69,30 @@ RELEASE_CONTRACT_FILES = (
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 FIXED_TIMESTAMP = (2026, 8, 26, 0, 0, 0)
+EXPECTED_PACKAGE_MEMBER_COUNT = 24
+EXPECTED_PACKAGE_LINKS = frozenset({
+    "https://fsf.org/",
+    "https://github.com/caleblee789/Homescreen-Dashboard",
+    "https://github.com/caleblee789/Homescreen-Dashboard/issues",
+    "https://github.com/glutanimate/review-heatmap",
+    "https://www.gnu.org/licenses/",
+    "https://www.tyndale.com/permissions",
+})
+SECRET_PATTERNS = (
+    ("private key", re.compile(r"-----BEGIN (?:RSA |DSA |EC |OPENSSH )?PRIVATE KEY-----")),
+    ("AWS access key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    ("GitHub token", re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b")),
+    ("Slack token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b")),
+    (
+        "assigned credential",
+        re.compile(
+            r"\b(?:api[_-]?key|access[_-]?token|auth[_-]?token|client[_-]?secret|password)"
+            r"\b\s*[:=]\s*[\"'][^\"'\n]{8,}[\"']",
+            re.IGNORECASE,
+        ),
+    ),
+    ("credential-bearing URL", re.compile(r"https?://[^\s/@:]+:[^\s/@]+@")),
+)
 
 
 def _json(relative: str) -> dict:
@@ -76,6 +100,77 @@ def _json(relative: str) -> dict:
     if not isinstance(value, dict):
         raise ValueError("{} must contain a JSON object".format(relative))
     return value
+
+
+def _archive_path_is_safe(name: str) -> bool:
+    if not name or "\x00" in name or "\\" in name or name.startswith("/"):
+        return False
+    raw_parts = name.split("/")
+    if any(part in {"", ".", "..", "__pycache__"} for part in raw_parts):
+        return False
+    if ":" in raw_parts[0]:
+        return False
+    path = PurePosixPath(name)
+    return not path.is_absolute() and str(path) == name
+
+
+def _validate_no_packaged_secrets(sources: dict[str, str]) -> None:
+    for relative, source in sources.items():
+        for label, pattern in SECRET_PATTERNS:
+            if pattern.search(source):
+                raise ValueError("{} detected in packaged source {}".format(label, relative))
+
+
+def _validate_package_inputs() -> None:
+    if len(PACKAGE_FILES) != EXPECTED_PACKAGE_MEMBER_COUNT:
+        raise ValueError("package allowlist must contain exactly 24 members")
+    if len(PACKAGE_FILES) != len(set(PACKAGE_FILES)):
+        raise ValueError("package allowlist contains duplicate members")
+    unsafe = [name for name in PACKAGE_FILES if not _archive_path_is_safe(name)]
+    if unsafe:
+        raise ValueError("unsafe package allowlist path: {}".format(", ".join(unsafe)))
+    deferred = [
+        name for name in PACKAGE_FILES
+        if name in DEFERRED_SOURCE_FILES or name.startswith(DEFERRED_SOURCE_PREFIXES)
+    ]
+    if deferred:
+        raise ValueError("deferred calendar sources cannot be packaged: {}".format(", ".join(deferred)))
+
+    sources = {
+        relative: (ROOT / relative).read_text(encoding="utf-8")
+        for relative in PACKAGE_FILES
+    }
+    for relative, source in sources.items():
+        if relative.endswith(".py"):
+            try:
+                compile(source, relative, "exec", dont_inherit=True)
+            except SyntaxError as exc:
+                raise ValueError("packaged Python source does not compile: {}".format(relative)) from exc
+
+    license_text = sources["LICENSE.txt"]
+    notice_text = sources["THIRD_PARTY_NOTICES.md"]
+    for marker in (
+        "GNU AFFERO GENERAL PUBLIC LICENSE",
+        "Version 3, 19 November 2007",
+    ):
+        if marker not in license_text:
+            raise ValueError("packaged AGPLv3 license text is incomplete")
+    for marker in (
+        "# Third-party notices and acknowledgements",
+        "## Review Heatmap concept acknowledgement",
+        "## Bible verse data",
+    ):
+        if marker not in notice_text:
+            raise ValueError("packaged third-party notices are incomplete")
+
+    _validate_no_packaged_secrets(sources)
+    links = frozenset(
+        match
+        for source in sources.values()
+        for match in re.findall(r"https?://[^\s<>\]\)\}\"']+", source)
+    )
+    if links != EXPECTED_PACKAGE_LINKS or any(not link.startswith("https://") for link in links):
+        raise ValueError("packaged external link allowlist drifted")
 
 
 def _quoted_verse_count(entries: list[object]) -> int:
@@ -290,18 +385,13 @@ def _validate_visual_matrix(matrix: dict) -> None:
 
 
 def validate_sources() -> dict:
-    deferred = [
-        name for name in PACKAGE_FILES
-        if name in DEFERRED_SOURCE_FILES or name.startswith(DEFERRED_SOURCE_PREFIXES)
-    ]
-    if deferred:
-        raise ValueError("deferred calendar sources cannot be packaged: {}".format(", ".join(deferred)))
     missing = [
         name for name in (*PACKAGE_FILES, *RELEASE_CONTRACT_FILES)
         if not (ROOT / name).is_file()
     ]
     if missing:
         raise FileNotFoundError("missing release source files: {}".format(", ".join(missing)))
+    _validate_package_inputs()
 
     manifest = _json("manifest.json")
     config = _json("config.json")
@@ -395,6 +485,7 @@ def validate_sources() -> dict:
             "hdo-calendar-footer", "hdo-date-state-chip", "hdo-event-rows",
             "hdo-context-event-label", "hdo-summary-metrics-grid", "hdo-bible-card",
             "New cards studied", "Cards buried", "Time spent", "hdo-progress-fill",
+            "last_seven_days.time_spent", "data-hdo-progress-label",
             "retention_target", "day_insight_payload",
             "hdo-loading-region--calendar", "Dashboard could not load",
             "hdo-context-action--primary", "dashboard-scroll-surface",
@@ -415,13 +506,17 @@ def validate_sources() -> dict:
             "def reject(self) -> None:", "def closeEvent(self, event: Any) -> None:",
             "action.triggered.connect(controller.open_settings)",
             "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)", "self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)",
-            "self.compact_nav = QTabBar", "SETTINGS_COMPACT_BODY_WIDTH = SETTINGS_SIDEBAR_WIDTH + 680",
-            "SETTINGS_SHELL_MAX_WIDTH = 1120", "SETTINGS_PAGE_MAX_WIDTH = 920",
-            "SETTINGS_ABOUT_MAX_WIDTH = 840", "SETTINGS_HEADER_HEIGHT = 72",
+            "self.compact_nav = QTabBar", "SETTINGS_COMPACT_BODY_WIDTH = 860",
+            "SETTINGS_TWO_COLUMN_CONTENT_WIDTH = 760",
+            "SETTINGS_SHELL_MAX_WIDTH = 1264", "SETTINGS_PAGE_MAX_WIDTH = 1080",
+            "SETTINGS_ABOUT_MAX_WIDTH = 1080", "SETTINGS_HEADER_HEIGHT = 72",
             "SETTINGS_FOOTER_MIN_HEIGHT = 56", "ScrollBarAlwaysOff",
+            "self.footer.setFixedHeight(SETTINGS_FOOTER_MIN_HEIGHT)",
             "host = grid.parentWidget()", "widget.setParent(host)",
             "widget.show()", "if not widget.isHidden():",
             "self.heatmap_preset = QComboBox()", "def _refresh_heatmap_preset_options",
+            "class HeatmapPalettePreview(QWidget):", "class BibleAppearancePreview(QWidget):",
+            "class SettingsEditorDialog(QDialog):",
             "def _connect_change_signals(self) -> None:",
             "def _settings_changed(self, *_args: object) -> None:",
             'SettingsCard("Study metrics", "", "Reset")', '"Calendar display",',
@@ -430,7 +525,7 @@ def validate_sources() -> dict:
             "def _attach_event_menu", 'self.revert_button = QPushButton("Discard changes")',
             "class SettingsFooter", 'self.error_label.setObjectName("InlineSaveError")',
             "Could not save changes. Your draft is still available.",
-            'self._set_status("saving", "Saving changes...")',
+            'self._set_status("saving", "Saving changes…")',
             'self.save_button.setText("Save changes")',
             "self._set_mutation_controls_enabled(False)",
             '"Unsaved changes"', '("Save and close", "primary", self._save_and_close)',
@@ -440,6 +535,8 @@ def validate_sources() -> dict:
             "self.move(self.pos() + QPoint(dx, dy))",
             "scope_differs_from_defaults", 'SettingsCard("Version and support")',
             'SettingsCard("Privacy and legal")',
+            "MAX_VERSE_IMPORT_BYTES = 16 * 1024 * 1024",
+            "source.read(MAX_VERSE_IMPORT_BYTES + 1)",
         ),
         "web/dashboard.js": (
             "function buildCalendarTooltipRows", "function getSelectedDateCapabilities",
@@ -448,6 +545,7 @@ def validate_sources() -> dict:
             'calendar.addEventListener("pointerover"', 'send("open_most_missed"',
             "function mountLoadingState", "Still loading your study data...",
             "progress.fill_percent", "today.cards_buried", "today.time_spent",
+            "last_seven_days.time_spent", "data-hdo-progress-label",
             'send("diagnostics", {})', "document.scrollingElement",
             "function visibleBottomActionContainer(root)",
             "var clearance = footerHeight + 24", "new global.ResizeObserver(update)",
@@ -460,14 +558,15 @@ def validate_sources() -> dict:
             "width: min(1120px, calc(100% - 40px))", "margin: 24px auto 0",
             "padding: 0 0 var(--hdo-bottom-clearance)", "pointer-events: none",
             "min-width: min(190px", "max-width: min(220px",
-            "@container hdo-dashboard (min-width: 420px)",
-            "@container hdo-dashboard (min-width: 1000px)",
+            "@container hdo-dashboard (min-width: 308px)",
+            "@container hdo-dashboard (min-width: 860px)",
+            "@container hdo-dashboard (max-width: 619px)",
             "@container hdo-calendar (max-width: 419px)",
-            "repeat(6, clamp(48px, 4.8cqi, 54px))",
-            "28px repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))",
-            "18px repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))",
-            "min-width: 620px",
-            "min-block-size: 14px", "var(--heat-due-mark-3)", "var(--progress-complete)",
+            "repeat(6, clamp(38px, 5cqi, 44px))",
+            "24px repeat(var(--hdo-year-weeks, 53), var(--hdo-year-cell-size))",
+            "--hdo-year-cell-size: 7px",
+            "min-block-size: 18px", "hdo-progress-label--fill",
+            "var(--heat-due-mark-3)", "var(--progress-complete)",
             "hdo-event-marker", "hdo-loading-layout", "backdrop-filter",
             "hdo-year-weekday-label", "background: transparent",
         ),
@@ -630,19 +729,19 @@ def validate_sources() -> dict:
             "screen containing parent center",
             "primary screen",
         ],
-        "shell_maximum_width": 1120,
-        "page_maximum_width": 920,
-        "about_page_maximum_width": 840,
+        "shell_maximum_width": 1264,
+        "page_maximum_width": 1080,
+        "about_page_maximum_width": 1080,
         "rail_width": 184,
         "header_height": 72,
         "footer_height": 56,
         "compact_navigation": "single-line synchronized QTabBar whenever retaining the 184 px rail would leave less than 680 logical pixels for the main region; the 860 px supported minimum is compact",
-        "rendered_previews": "none; dashboard verse palette swatch and heatmap preview surfaces are absent",
+        "rendered_previews": "compact five-step calendar palette ramp and live Bible appearance preview only; no embedded dashboard preview",
         "active_dialog_reference": "one temporary controller reference exists only during modal exec for re-entry routing and is cleared in finally",
         "primary_prompts": "stacked overlay children keep the Settings shell visible beneath a tokenized scrim and never create another window",
-        "auxiliary_dialogs": "single-title event and verse editors plus native file and color pickers remain parented dialogs",
-        "editor_titles": "event and verse editors use one native title only and stage Add event, Update event, Add verse, or Update verse into the global draft",
-        "save_close": "stable Save changes label during saving; mutation controls and close are disabled; failures preserve the draft; dirty close offers Cancel Discard and Save and close with pending-close cleared on failure",
+        "auxiliary_dialogs": "single-title 480-to-540 px event and verse editors are parented window-modal dialogs clamped to 80 percent of the Settings body; native file and color pickers remain parented",
+        "editor_titles": "event and verse editors use one native title only, are parented and window-modal, and stage Add event, Update event, Add verse, or Update verse into the global draft",
+        "save_close": "stable Save changes label during saving; mutation controls and close are disabled; failures preserve the draft; dirty close offers Cancel, Discard changes, and Save and close with pending-close cleared on failure",
         "settings_profile_acceptance_gate": "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 41 PNGs cannot satisfy or waive this gate",
         "programmatic_lifecycle_focus": False,
         "retained_dialog_object": False,
@@ -741,8 +840,7 @@ def verify_archive(artifact: Path) -> None:
         if archive.testzip() is not None:
             raise ValueError("archive contains corrupt data")
         for name in names:
-            path = PurePosixPath(name)
-            if path.is_absolute() or ".." in path.parts or "__pycache__" in path.parts:
+            if not _archive_path_is_safe(name):
                 raise ValueError("unsafe archive path: {}".format(name))
             if archive.read(name) != (ROOT / name).read_bytes():
                 raise ValueError("archive differs from source: {}".format(name))

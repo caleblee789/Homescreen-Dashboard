@@ -112,17 +112,73 @@ def validate(root: Path = ROOT) -> List[str]:
         "minimum_saved_visible_ratio": .8,
         "geometry_version": 4,
         "previous_geometry_version": 3,
-        "shell_maximum_width": 1120,
-        "page_maximum_width": 920,
-        "about_page_maximum_width": 840,
+        "shell_maximum_width": 1264,
+        "page_maximum_width": 1080,
+        "about_page_maximum_width": 1080,
         "rail_width": 184,
         "header_height": 72,
         "footer_height": 56,
+        "rendered_previews": "compact five-step calendar palette ramp and live Bible appearance preview only; no embedded dashboard preview",
         "compact_navigation": "single-line synchronized QTabBar whenever retaining the 184 px rail would leave less than 680 logical pixels for the main region; the 860 px supported minimum is compact",
         "reposition_after_open": "one decoration-only clamp when the decorated frame is outside the active screen; never move an already-contained frame",
     }
     if not isinstance(settings, Mapping) or any(settings.get(key) != value for key, value in expected_settings.items()):
         errors.append("focused v4 Settings geometry and responsive architecture drifted")
+
+    surface_settings = surface.get("settings_architecture", {})
+    expected_surface_settings = {
+        "default_window": settings.get("default_size"),
+        "minimum_normal_window": settings.get("minimum_size"),
+        "screen_margins": settings.get("screen_margins"),
+        "minimum_saved_visible_ratio": settings.get("minimum_saved_visible_ratio"),
+        "maximum_inner_width": settings.get("shell_maximum_width"),
+        "maximum_page_width": settings.get("page_maximum_width"),
+        "maximum_about_width": settings.get("about_page_maximum_width"),
+        "rail_width": settings.get("rail_width"),
+        "fixed_header_height": settings.get("header_height"),
+        "fixed_footer_height": settings.get("footer_height"),
+        "embedded_web_content": "none",
+    }
+    if (
+        not isinstance(surface_settings, Mapping)
+        or any(
+            surface_settings.get(key) != value
+            for key, value in expected_surface_settings.items()
+        )
+    ):
+        errors.append("surface authority differs from the focused Settings contract")
+    persistence = surface.get("persistence_contract", {})
+    if (
+        not isinstance(persistence, Mapping)
+        or persistence.get("qt_window_preference")
+        != "home_dashboard_overhaul/settings_dialog_geometry/v4 logical geometry screen identity available bounds and informational DPR with valid v3 migration"
+        or persistence.get("settings_preview")
+        != "compact five-step calendar palette ramp and live Bible appearance preview only; no embedded dashboard preview"
+    ):
+        errors.append("surface persistence or preview contract drifted")
+
+    expected_window_fixture = (
+        "logical-1080x760-default-860x640-minimum-v4-screen-aware-restored-"
+        "clamped-parented-dialog-exec"
+    )
+    canonical_by_id = {
+        str(item.get("id")): item
+        for item in surface.get("canonical_surfaces", [])
+        if isinstance(item, Mapping)
+    }
+    if canonical_by_id.get("SET-WINDOW", {}).get("fixture") != expected_window_fixture:
+        errors.append("SET-WINDOW fixture differs from the implemented v4 geometry")
+    prohibited_fixtures = set(registry.get("prohibited_fixture_kinds", []))
+    if "settings-fixed-footer" in prohibited_fixtures:
+        errors.append("surface registry incorrectly prohibits the implemented fixed footer")
+    if "settings-footer-overlay" not in prohibited_fixtures:
+        errors.append("surface registry must prohibit footer overlays")
+    if not {
+        "DashboardCardPreview",
+        "preview-only-calendar-markup",
+        "preview-only-verse-markup",
+    } <= prohibited_fixtures:
+        errors.append("surface registry does not prohibit every retired rendered preview")
 
     criteria = surface.get("acceptance_criteria", [])
     criteria_ids = [item.get("id") for item in criteria if isinstance(item, Mapping)]
@@ -130,6 +186,29 @@ def validate(root: Path = ROOT) -> List[str]:
         errors.append("acceptance criteria must contain unique implementation-owned IDs")
     if any(not item.get("tags") or not str(item.get("requirement", "")).strip() for item in criteria):
         errors.append("every acceptance criterion needs tags and a requirement")
+    criteria_by_id = {
+        str(item.get("id")): str(item.get("requirement", ""))
+        for item in criteria
+        if isinstance(item, Mapping)
+    }
+    if "fixed 56 px footer" not in criteria_by_id.get("SET-ONE-TREE", ""):
+        errors.append("Settings structure criterion differs from the 56 px footer")
+    geometry_requirement = criteria_by_id.get("SET-GEOMETRY", "")
+    for marker in (
+        "1080x760 logical px",
+        "860x640 normal minimum",
+        "logical v4 geometry",
+        "maximum-1264 shell",
+        "maximum-1080 page",
+    ):
+        if marker not in geometry_requirement:
+            errors.append("Settings geometry criterion is missing: {}".format(marker))
+    retention_requirement = criteria_by_id.get("STAT-RETENTION", "")
+    if (
+        "Last 7 Days displays Time spent" not in retention_requirement
+        or "instead of Again rate" not in retention_requirement
+    ):
+        errors.append("visible Last 7 Days metric criterion drifted")
 
     _validate_palette_matrix(errors, matrix)
     if plan is not None:
@@ -151,6 +230,26 @@ def validate(root: Path = ROOT) -> List[str]:
             errors.append("corrected full capture plan must contain 94 frames")
         if plan.counts("settings") != {"initial": 40, "restart": 1, "total": 41}:
             errors.append("minimal Settings capture plan must contain exactly 41 frames")
+        settings_contract_spec = next(
+            (
+                family
+                for family in plan.raw.get("families", [])
+                if family.get("id") == "settings-contract"
+            ),
+            {},
+        )
+        settings_contract_cases = {
+            str(case.get("id")): case
+            for case in settings_contract_spec.get("cases", [])
+            if isinstance(case, Mapping)
+        }
+        long_title = settings_contract_cases.get("SET-EVENT-LONG-TITLE", {})
+        if (
+            long_title.get("width") != 860
+            or long_title.get("caption")
+            != "Events · long title at the 860 px responsive minimum"
+        ):
+            errors.append("long-title Settings case is not captured at the supported minimum")
         if 2 + len(plan.detail_groups("settings")) > 11:
             errors.append("minimal Settings capture plan exceeds 11 sheets")
         required_manual_results = [
@@ -213,6 +312,16 @@ def validate(root: Path = ROOT) -> List[str]:
             item.get("id"): item
             for item in capture.get("capture_families", [])
         }
+        statistics_requirements = set(
+            settings_families.get("statistics-accuracy", {}).get("requirements", [])
+        )
+        if not {
+            "active-progress-N-percent-complete-inside-track",
+            "86-percent-retention-and-seven-day-time-spent-no-visible-again-rate",
+        } <= statistics_requirements:
+            errors.append("statistics evidence does not enforce current visible metrics")
+        if "86-percent-retention-and-14-percent-again" in statistics_requirements:
+            errors.append("statistics evidence still requires a visible Again rate")
         for family_id in ("settings-pages", "settings-contract"):
             if "live-settings-surface-sample-match" not in settings_families.get(
                 family_id, {}
@@ -239,6 +348,26 @@ def validate(root: Path = ROOT) -> List[str]:
     if capture.get("status") != "required-before-release":
         errors.append("fresh 1.8.7 evidence must remain required before release")
 
+    renderer_source = _source("renderer.py")
+    dashboard_js = _source("web/dashboard.js")
+    for marker in (
+        'label = "{}% complete".format(percent)',
+        "data-hdo-progress-label",
+        '"last_seven_days.time_spent"',
+    ):
+        if marker not in renderer_source:
+            errors.append("renderer is missing current visible metric marker: {}".format(marker))
+    for marker in (
+        'Math.round(percent) + "% complete"',
+        "[data-hdo-progress-label]",
+        '"last_seven_days.time_spent"',
+    ):
+        if marker not in dashboard_js:
+            errors.append("live dashboard is missing current visible metric marker: {}".format(marker))
+    for source_name, source in (("renderer", renderer_source), ("live dashboard", dashboard_js)):
+        if '"last_seven_days.again_rate"' in source:
+            errors.append("{} still exposes Last 7 Days Again rate".format(source_name))
+
     _require_markers(errors, "settings.py", (
         'self.setWindowTitle("Home Screen Dashboard Settings")',
         "self.setMinimumSize(\n            min(SETTINGS_MINIMUM_SIZE[0], geometry[2])",
@@ -247,10 +376,11 @@ def validate(root: Path = ROOT) -> List[str]:
         "saved_valid = migrated is not None",
         "SETTINGS_GEOMETRY_SCREEN_KEY",
         "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)",
-        "SETTINGS_SHELL_MAX_WIDTH = 1120",
-        "SETTINGS_PAGE_MAX_WIDTH = 920",
-        "SETTINGS_ABOUT_MAX_WIDTH = 840",
-        "SETTINGS_COMPACT_BODY_WIDTH = SETTINGS_SIDEBAR_WIDTH + 680",
+        "SETTINGS_SHELL_MAX_WIDTH = 1264",
+        "SETTINGS_PAGE_MAX_WIDTH = 1080",
+        "SETTINGS_ABOUT_MAX_WIDTH = 1080",
+        "SETTINGS_COMPACT_BODY_WIDTH = 860",
+        "SETTINGS_TWO_COLUMN_CONTENT_WIDTH = 760",
         "SETTINGS_SIDEBAR_WIDTH = 184",
         "SETTINGS_HEADER_HEIGHT = 72",
         "SETTINGS_FOOTER_MIN_HEIGHT = 56",
@@ -267,9 +397,12 @@ def validate(root: Path = ROOT) -> List[str]:
         "Could not save changes. Your draft is still available.",
         '"Unsaved changes"',
         '("Cancel", "secondary", lambda: None)',
-        '("Discard", "danger", self._close_dialog)',
+        '("Discard changes", "danger", self._close_dialog)',
         '("Save and close", "primary", self._save_and_close)',
-        'self._set_status("saving", "Saving changes...")',
+        'self._set_status("saving", "Saving changes…")',
+        "class SettingsEditorDialog(QDialog)",
+        "class HeatmapPalettePreview(QWidget)",
+        "class BibleAppearancePreview(QWidget)",
         'self.save_button.setText("Save changes")',
         "self._set_mutation_controls_enabled(False)",
         'SettingsCard("Study metrics", "", "Reset")',
@@ -310,9 +443,9 @@ def validate(root: Path = ROOT) -> List[str]:
         "def _persist_settings_transaction(",
     ))
     _require_markers(errors, "themes.py", (
-        '"ui_sidebar": "#0A1016"',
+        '"ui_sidebar": "#090F15"',
         '"ui_accent_soft": "#263B4D"',
-        '"ui_sidebar": "#E9EEF3"',
+        '"ui_sidebar": "#E9EFF4"',
         '"ui_accent_soft": "#DFEAF3"',
     ))
 

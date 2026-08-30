@@ -228,7 +228,7 @@ def validate_evidence(
     stress = runtime.get("stress_checks", {})
     require(stress.get("status") == "passed", "native Sapphire stress checks did not pass")
     require(
-        set(stress.get("year_widths", {})) == {"319", "439", "440", "1039", "1040", "1280"},
+        set(stress.get("year_widths", {})) == {"307", "308", "619", "620", "859", "860"},
         "native breakpoint stress matrix is incomplete",
     )
     require(isinstance(stress.get("month_compact"), dict), "native compact Month stress check is missing")
