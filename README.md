@@ -8,7 +8,7 @@ Browser or statistics classes.
 ## 1.8.7 highlights
 
 - Settings remains a parented native `QDialog(mw)` with a local `exec()`
-  lifetime. Its logical default is 1080×760, its normal minimum is 820×600,
+  lifetime. Its logical default is 1080×760, its normal minimum is 860×640,
   and it keeps 48 px normal screen margins or 24 px on a constrained screen.
 - The UI-only `settings_dialog_geometry/v4` record stores logical geometry,
   screen identity, available bounds, and informational DPR. A valid v3 record
@@ -21,8 +21,8 @@ Browser or statistics classes.
 - Dashboard-specific workspace insertion, backing-view hiding, menu-dismissal
   timers, focus retries, focus restoration, and activation handling have been
   removed. Qt owns the window and focus lifecycle.
-- Schema 8, all Settings fields, dashboard rendering, and the corrected 1.8.6
-  statistics calculations remain unchanged.
+- Schema 8, all Settings fields, and the corrected scheduler and retention
+  calculations remain unchanged.
 
 - Every study-derived value now uses one collection-wide analytics scope.
   Today and historical facts use exact rollover-relative periods; New,
@@ -31,41 +31,48 @@ Browser or statistics classes.
   forecasting matches Anki's non-new, non-suspended future-due rules.
 - Last 7 Days and All Time Retention now match Anki 26.8.1 native eligible
   retention instead of all-answer success. The visible Retention is rounded
-  half-up once and Again is its exact complement, so the 80% all-answer
-  regression correctly displays 86% Retention and 14% Again.
+  half-up once. Last 7 Days now displays Time spent from those same seven
+  rollover-relative periods instead of displaying Again rate.
 - Remaining categories follow scheduler queues rather than card types: queue 0
   is New, queues 1/3/4 are Learning, and queue 2 is Review. Suspended and
   explicitly buried queues are excluded; Cards buried reports only scoped
   queues -2/-3 that are New or currently due/overdue. Future Learning and
-  Review cards and transient queue-hidden siblings are excluded.
+  Review cards and transient queue-hidden siblings are excluded. While work
+  remains, the progress bar displays `N% complete` inside the progress bar.
 - Initial HTML, live refresh, wide Month and Year 2×2 layouts, intermediate and
   narrow shells, and hard restart are contractually checked
   against identical values from the same collection snapshot.
-- Settings uses a fixed header, vertically scrollable native page body, and
-  fixed 60 px footer. A shell capped near 1,240 px contains a 184 px sidebar,
-  fixed 72 px page header, and page column capped at 980 px. Compact top
-  navigation is reserved for screens that cannot accommodate the 920×640
-  normal minimum and activates below 820 logical pixels.
+- Settings uses a fixed header, vertically scrollable native page body, a
+  reserved error region, and a separate fixed 56 px action footer. A centered
+  shell capped at 1,264 px contains a 184 px sidebar and a page column capped
+  at 1,080 px. At the supported 860×640 minimum, the page title remains above
+  a single-row tab bar.
 - Responsive Settings grids parent every field to its card before showing or
-  filtering it. Settings renders no Dashboard, verse, palette, theme, or
-  heatmap previews; selector text carries those choices and the custom-color
-  well remains an input.
-- Dashboard theme and Heatmap palette share one responsive Appearance row.
+  filtering it. At 760 px of page content, Dashboard sections pair with Study
+  metrics, Calendar display pairs with Calendar range, Bible Appearance pairs
+  with Rotation, and About uses two deliberate columns. Appearance stays full
+  width. The heatmap selector includes a five-step palette preview and Bible
+  Appearance includes a compact live preview.
+- Dashboard theme and Calendar heatmap palette share one responsive Appearance
+  row.
   Their layout-changing staged updates run after the native combo popup closes,
   and save locking restores both the combo boxes and their nested popup views.
 
-- Dashboard groups Appearance, Dashboard sections, Study metrics, and Calendar
-  display. Events has a header Add action, flexible searchable/sortable
-  Active/Archived list with 54 px rows, and a parented 560×320 editor. Bible
-  verse has Appearance, Rotation, and a flexible clamped Verse library. About
-  groups Version and support, Privacy and legal, and Backup and recovery.
-- Dirty, saving, success, validation, and persistence feedback now lives in
-  the footer beside Close and Save. Failed saves retain every staged value and
-  expose generic user-facing copy with technical details collapsed separately.
-- Settings colors follow only Anki's live palette. Dark and light graphite
-  tokens, accent-soft selection, neutral Events tabs, relative role fonts,
-  36 px controls, and the shared 4/8/12/16/20/24/32 spacing scale are applied
-  consistently at the canonical 100% application font.
+- Dashboard groups Appearance, Dashboard sections, Study metrics, Calendar
+  display, and Calendar range. Events has one content-sized Add event action,
+  a searchable/sortable Active/Archived list bounded to five rows, and a shared
+  parented window-modal editor 480–540 px wide and at most 80% of the Settings
+  body. Bible verse has Appearance, Rotation, and a flexible clamped Verse
+  library. About groups Version and support, Privacy and legal, and Backup and
+  recovery.
+- Dirty, saving, success, and discard feedback remains in the fixed action
+  footer; validation and save failures use the reserved region above it.
+  Failed saves retain the complete draft for lossless retry and expose
+  technical details separately.
+- Settings colors follow only Anki's live palette: light `#F3F6F8`/`#E9EFF4`
+  surfaces with `#C7D1DB` borders and dark `#0B1118`/`#151D26` surfaces with
+  `#2B3948` borders. Native controls use 34 px targets and the shared
+  4/8/12/16/24 spacing scale at the canonical 100% application font.
 - Month is a stable 42-cell grid and Year remains a true 53-week grid. The
   production dashboard is capped at 1,120 px and measures Anki's visible
   bottom actions to maintain 24 px of clearance in normal document flow.
@@ -82,8 +89,10 @@ Browser or statistics classes.
 The local 1.8.7 candidate is built as
 `home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon` for
 installation through **Tools → Add-ons → Install from file**. The builder
-writes the candidate checksum beside the archive. This candidate remains local
-until the native platform matrix and macOS full-screen Space checks pass.
+writes the candidate checksum beside the archive. The frozen `4d0a4107…`
+candidate passed the required macOS Retina 100% native checks and the
+pointer-only full-screen menu and Dashboard-gear workflows. It remains
+`review-required`, with independent human review still unrun.
 Disable any legacy source add-ons named by the activation card.
 
 The manifest supports Anki Desktop 26.8 (`min_point_version` and
@@ -133,27 +142,29 @@ The [capture workflow](home_dashboard_overhaul/docs/qa/capture-workflow.md)
 documents how to extend coverage, generate a named profile, run focused
 diagnostic recaptures, and assemble fresh evidence from the shared plan.
 
-The completed [1.8.6 native release evidence](home_dashboard_overhaul/qa/release-evidence-1.8.6-2026-08-25/README.md)
-remains the retained full 94-frame baseline. It contains the exact 24-member
-archive, passing restart-persistence and archive-parity reports, four-gate
-isolation proof repeated after restart, and 19 reviewed presentation sheets.
+The current [1.8.7 exact-package native evidence](home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-08-30-4d0a4107-ui-readiness-100/README.md)
+is bound to candidate SHA-256
+`4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994`
+and capture-plan SHA-256
+`e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45`.
+It retains 94 native frames, 18 contact sheets, the exact 24-member archive,
+source/archive byte parity, restart persistence, and isolation proof. The
+[overview sheet](home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-08-30-4d0a4107-ui-readiness-100/contact-sheets/contact-sheet-00-overview.png)
+covers the complete Dashboard and Settings profile.
 
-The current 1.8.7 candidate is `c4b794f0b4e1bcf4c380b0092c9436f0594f7f26d12ae9af2345a03e2eb39a3f`.
-Its [Dashboard review evidence](home_dashboard_overhaul/qa/home-dashboard-evidence-1.8.7-2026-08-27-c4b794f0-fresh-100/README.md)
-contains 42 native 100% captures and six contact sheets: 32 theme/layout
-states, eight interaction-state fixtures, and two exact-package full-screen
-Dashboard frames. Runtime, archive parity, color-hardcoding, and all 582 gated
-contrast-pair checks passed.
-
-The matching [Settings review evidence](home_dashboard_overhaul/qa/settings-evidence-1.8.7-2026-08-27-c4b794f0-fresh-100/README.md)
-contains exactly 41 native Settings captures at 100% application font plus 11
-contact sheets. Its status remains `review-incomplete-nonrelease`: capture and
-structured-layout checks passed without recorded failures, but the
-exact-package full-screen macOS menu and Dashboard-gear opening paths were
-explicitly skipped and remain unrun. These two 1.8.7 sets are review evidence,
-not release approval. VoiceOver and forced-colors remain explicitly unrun and
-nonblocking. Windows, Linux, DPR 1, and true OS display scaling remain separate
-release-blocking gates until run successfully.
+Automated checks, exact-package capture, and the pointer-only macOS full-screen
+menu and Dashboard-gear routes passed before and after controlled restart.
+This evidence remains `quality_status: review-required` and
+`release_ready: false` until an independent human reviews every contact sheet
+and the native interaction result. VoiceOver, forced colors, reduced motion,
+Windows, Linux, DPR 1, alternate application-font percentages, and alternate
+native OS display scaling remain explicitly unrun, unclaimed, and nonblocking
+for 1.8.7. The packaged documentation still contains legacy Settings-layout,
+rotation-state, and native-scaling wording. Correcting those packaged members
+changes the candidate hash and therefore requires a new exact-package
+validation and evidence cycle.
+Superseded capture sets were retired only after their replacement hashes and
+exact-once coverage were verified and a recoverable safety snapshot was made.
 
 ## Project layout
 

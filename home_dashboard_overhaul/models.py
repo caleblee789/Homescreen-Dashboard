@@ -264,6 +264,7 @@ class LongTermStats:
 class LastSevenDaysStats:
     cards_studied: int = 0
     new_cards_studied: int = 0
+    seconds: float = 0.0
     retention: RateMetric = field(default_factory=RateMetric)
     again_rate: RateMetric = field(default_factory=RateMetric)
 

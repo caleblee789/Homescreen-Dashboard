@@ -1,0 +1,47 @@
+{
+  "schema_version": 2,
+  "id": "macos-fullscreen-no-space-switch-menu-and-dashboard-gear",
+  "release": "1.8.7",
+  "host_platform": "macos",
+  "candidate_sha256": "4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994",
+  "capture_plan_sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+  "status": "passed",
+  "native_fullscreen": true,
+  "input_method": "pointer-only",
+  "keyboard_testing": "omitted-not-a-release-gate",
+  "desktop_space_switch_regression": "not-observed",
+  "opening_paths": {
+    "menu": {
+      "status": "passed",
+      "settings_opened": true,
+      "remained_on_anki_fullscreen_space": true,
+      "desktop_or_space_switch_observed": false,
+      "workflow_steps": {
+        "all-four-pages": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "events-tabs": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "resize": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "event-edit": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "verse-edit": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "save": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "close-reopen": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "controlled-restart": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false}
+      }
+    },
+    "dashboard-gear": {
+      "status": "passed",
+      "settings_opened": true,
+      "remained_on_anki_fullscreen_space": true,
+      "desktop_or_space_switch_observed": false,
+      "workflow_steps": {
+        "all-four-pages": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "events-tabs": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "resize": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "event-edit": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "verse-edit": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "save": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "close-reopen": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+        "controlled-restart": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false}
+      }
+    }
+  }
+}

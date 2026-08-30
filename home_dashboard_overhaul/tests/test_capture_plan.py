@@ -620,9 +620,9 @@ class CapturePlanTests(unittest.TestCase):
 
     def test_platform_bundle_gate_requires_one_exact_native_report_per_profile(self) -> None:
         candidate_hash = "a" * 64
-        self.assertIn(
-            {"host_platform": "linux", "os_scale_percent": 150, "dpr_class": "dpr-1"},
+        self.assertEqual(
             self.plan.raw["native_platform_matrix"],
+            [{"host_platform": "macos", "os_scale_percent": 100, "dpr_class": "retina"}],
         )
         with self.assertRaisesRegex(RuntimeError, "every required native platform bundle"):
             assemble_release_evidence_1_8_7.validate_platform_bundles([], candidate_hash)
@@ -671,7 +671,7 @@ class CapturePlanTests(unittest.TestCase):
                 paths, candidate_hash
             )
             self.assertEqual(result["status"], "passed")
-            self.assertEqual(result["required_profile_count"], 6)
+            self.assertEqual(result["required_profile_count"], 1)
 
             first_report = json.loads(
                 (paths[0] / "platform-profile.json").read_text(encoding="utf-8")
@@ -750,10 +750,11 @@ class CapturePlanTests(unittest.TestCase):
             first["physical_geometry"] = [0, 0, 1440, 900]
             first["device_pixel_ratio"] = 2.0
             first_path.write_text(json.dumps(first), encoding="utf-8")
-            with self.assertRaisesRegex(RuntimeError, "does not match logical geometry and DPR|DPR-1"):
+            with self.assertRaisesRegex(RuntimeError, "does not match logical geometry and DPR|Retina"):
                 assemble_release_evidence_1_8_7.validate_platform_bundles(paths, candidate_hash)
 
-            first["device_pixel_ratio"] = 1.0
+            first["device_pixel_ratio"] = 2.0
+            first["physical_geometry"] = [0, 0, 2880, 1800]
             first["settings_page_layout"]["pages"][0]["assertions"][
                 "horizontal_scroll_zero"
             ] = False

@@ -26,6 +26,13 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         cls.registry = json.loads(
             (qa / "ui-surface-registry_1_8_7.json").read_text(encoding="utf-8")
         )
+        cls.settings_contract = json.loads(
+            (qa / "settings_window_contract_1_8_7.json").read_text(encoding="utf-8")
+        )
+        cls.renderer = (ROOT / "renderer.py").read_text(encoding="utf-8")
+        cls.dashboard_js = (ROOT / "web" / "dashboard.js").read_text(
+            encoding="utf-8"
+        )
         plan_namespace = runpy.run_path(str(qa / "capture_plan.py"))
         cls.plan = plan_namespace["load_capture_plan"](qa / "capture_plan.json")
 
@@ -42,27 +49,155 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         )
         settings = self.manifest["settings_architecture"]
         self.assertEqual(settings["default_window"], [1080, 760])
-        self.assertEqual(settings["minimum_normal_window"], [820, 600])
+        self.assertEqual(settings["minimum_normal_window"], [860, 640])
         self.assertEqual(settings["screen_margins"], {"normal": 48, "small_screen_fallback": 24})
         self.assertEqual(settings["minimum_saved_visible_ratio"], .8)
-        self.assertEqual(settings["maximum_inner_width"], 1120)
-        self.assertEqual(settings["maximum_page_width"], 920)
-        self.assertEqual(settings["maximum_about_width"], 840)
+        self.assertEqual(settings["maximum_inner_width"], 1264)
+        self.assertEqual(settings["maximum_page_width"], 1080)
+        self.assertEqual(settings["maximum_about_width"], 1080)
         self.assertEqual(settings["rail_width"], 184)
         self.assertEqual(settings["fixed_header_height"], 72)
-        self.assertEqual(settings["fixed_footer_height"], 60)
-        self.assertEqual(settings["compact_navigation_threshold"], 864)
+        self.assertEqual(settings["fixed_footer_height"], 56)
+        self.assertEqual(settings["compact_navigation_threshold"], 860)
         self.assertEqual(settings["embedded_web_content"], "none")
         self.assertEqual(settings["window_lifecycle"], "parented-standard-dialog-exec")
         self.assertEqual(settings["page_switching"], "native-stacked-widget-only-no-render-timer")
         dashboard = self.manifest["dashboard_architecture"]
         self.assertEqual(dashboard["maximum_width"], 1120)
-        self.assertEqual(dashboard["month_cells"], 42)
+        self.assertEqual(dashboard["month_cell_height_range"], [38, 44])
         self.assertEqual(dashboard["month_rows"], 6)
         self.assertEqual(dashboard["year_weeks"], 53)
         self.assertEqual(dashboard["year_weekday_column"], 28)
-        self.assertEqual(dashboard["year_cell_range"], [10, 12])
-        self.assertEqual(dashboard["year_gap"], 3)
+        self.assertEqual(dashboard["year_cell_range"], [6, 8])
+        self.assertEqual(dashboard["year_gap"], 2)
+
+    def test_settings_authorities_share_the_implemented_v4_geometry(self) -> None:
+        architecture = self.manifest["settings_architecture"]
+        contract = self.settings_contract
+        self.assertEqual(architecture["default_window"], contract["default_size"])
+        self.assertEqual(
+            architecture["minimum_normal_window"], contract["minimum_size"]
+        )
+        self.assertEqual(architecture["screen_margins"], contract["screen_margins"])
+        self.assertEqual(
+            architecture["minimum_saved_visible_ratio"],
+            contract["minimum_saved_visible_ratio"],
+        )
+        self.assertEqual(
+            architecture["maximum_inner_width"], contract["shell_maximum_width"]
+        )
+        self.assertEqual(
+            architecture["maximum_page_width"], contract["page_maximum_width"]
+        )
+        self.assertEqual(
+            architecture["maximum_about_width"],
+            contract["about_page_maximum_width"],
+        )
+        self.assertEqual(architecture["rail_width"], contract["rail_width"])
+        self.assertEqual(
+            architecture["fixed_header_height"], contract["header_height"]
+        )
+        self.assertEqual(
+            architecture["fixed_footer_height"], contract["footer_height"]
+        )
+        self.assertEqual(contract["geometry_version"], 4)
+
+        expected_window_fixture = (
+            "logical-1080x760-default-860x640-minimum-v4-screen-aware-restored-"
+            "clamped-parented-dialog-exec"
+        )
+        surfaces = {item["id"]: item for item in self.manifest["canonical_surfaces"]}
+        self.assertEqual(surfaces["SET-WINDOW"]["fixture"], expected_window_fixture)
+        self.assertEqual(self.registry["surfaces"], self.manifest["canonical_surfaces"])
+
+        criteria = {
+            item["id"]: item["requirement"]
+            for item in self.manifest["acceptance_criteria"]
+        }
+        self.assertIn("fixed 56 px footer", criteria["SET-ONE-TREE"])
+        for marker in (
+            "1080x760 logical px",
+            "860x640 normal minimum",
+            "logical v4 geometry",
+            "maximum-1264 shell",
+            "maximum-1080 page",
+        ):
+            self.assertIn(marker, criteria["SET-GEOMETRY"])
+
+        long_title = next(
+            case
+            for family in self.plan.raw["families"]
+            if family["id"] == "settings-contract"
+            for case in family["cases"]
+            if case["id"] == "SET-EVENT-LONG-TITLE"
+        )
+        self.assertEqual(long_title["width"], 860)
+        self.assertEqual(
+            long_title["caption"],
+            "Events · long title at the 860 px responsive minimum",
+        )
+
+    def test_preview_and_visible_metric_contracts_cannot_drift(self) -> None:
+        self.assertEqual(
+            self.settings_contract["rendered_previews"],
+            "compact five-step calendar palette ramp and live Bible appearance preview only; no embedded dashboard preview",
+        )
+        self.assertEqual(
+            self.manifest["persistence_contract"]["settings_preview"],
+            "compact five-step calendar palette ramp and live Bible appearance preview only; no embedded dashboard preview",
+        )
+        prohibited = set(self.registry["prohibited_fixture_kinds"])
+        self.assertNotIn("settings-fixed-footer", prohibited)
+        self.assertIn("settings-footer-overlay", prohibited)
+        self.assertTrue({
+            "DashboardCardPreview",
+            "preview-only-calendar-markup",
+            "preview-only-verse-markup",
+        } <= prohibited)
+        self.assertNotIn("VerseCardPreview", prohibited)
+        self.assertNotIn("HeatmapPresetCard", prohibited)
+
+        statistics = next(
+            family
+            for family in self.capture["capture_families"]
+            if family["id"] == "statistics-accuracy"
+        )
+        requirements = set(statistics["requirements"])
+        self.assertIn("active-progress-N-percent-complete-inside-track", requirements)
+        self.assertIn(
+            "86-percent-retention-and-seven-day-time-spent-no-visible-again-rate",
+            requirements,
+        )
+        self.assertNotIn("86-percent-retention-and-14-percent-again", requirements)
+        retention = next(
+            item
+            for item in self.manifest["acceptance_criteria"]
+            if item["id"] == "STAT-RETENTION"
+        )["requirement"]
+        self.assertIn("Last 7 Days displays Time spent", retention)
+        self.assertIn("instead of Again rate", retention)
+
+        for source, expected_markers in (
+            (
+                self.renderer,
+                (
+                    'label = "{}% complete".format(percent)',
+                    "data-hdo-progress-label",
+                    '"last_seven_days.time_spent"',
+                ),
+            ),
+            (
+                self.dashboard_js,
+                (
+                    'Math.round(percent) + "% complete"',
+                    "[data-hdo-progress-label]",
+                    '"last_seven_days.time_spent"',
+                ),
+            ),
+        ):
+            for marker in expected_markers:
+                self.assertIn(marker, source)
+            self.assertNotIn('"last_seven_days.again_rate"', source)
 
     def test_surface_registry_matches_the_authority_exactly_once(self) -> None:
         manifest_surfaces = self.manifest["canonical_surfaces"]

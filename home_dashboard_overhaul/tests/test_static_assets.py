@@ -59,20 +59,14 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn('class="hdo-calendar-footer"', calendar)
         self.assertIn('data-hdo-date-state', calendar)
         self.assertIn('data-hdo-context-date', calendar)
-        self.assertIn('data-hdo-open-events', calendar)
-        self.assertIn('data-hdo-event-meta', calendar)
+        self.assertIn('data-hdo-event-rows', calendar)
+        self.assertIn('data-hdo-context-event-label', calendar)
         self.assertIn('data-hdo-event-empty', calendar)
-        self.assertIn('data-hdo-edit-event', calendar)
         self.assertIn('data-hdo-primary-action', calendar)
         self.assertIn('data-hdo-most-missed hidden', calendar)
-        self.assertRegex(
-            self.css,
-            r"\.hdo-next-event-line\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;",
-        )
-        self.assertRegex(
-            self.css,
-            r"\.hdo-event-summary\s*\{[^}]*flex:\s*1 1 auto;",
-        )
+        self.assertIn('link.dataset.hdoOpenEvents = ""', self.js)
+        self.assertIn('edit.dataset.hdoEditEvent = ""', self.js)
+        self.assertIn("items.slice(0, 2)", self.js)
         self.assertIn("text-overflow: clip", self.css)
 
     def test_compact_surfaces_omit_internal_boundary_copy_and_placeholders(self) -> None:
@@ -80,7 +74,6 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         for forbidden in (
             "Outside due forecast",
             "Outside study history",
-            "No events",
             "Placeholder —",
         ):
             self.assertNotIn(forbidden, sources)
@@ -150,15 +143,15 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertNotIn("heat-due-bg", future_rule)
         self.assertIn("aspect-ratio: 1 / 1", self.css)
         selected_rule = self.css.split(".hdo-calendar-day.is-selected {", 1)[1].split("}", 1)[0]
-        self.assertIn("background-image: linear-gradient", selected_rule)
-        self.assertIn("var(--calendar-selected-ring) 16%", selected_rule)
-        self.assertNotIn("box-shadow", selected_rule)
-        today_rule = self.css.split(".hdo-calendar-day.is-today {", 1)[1].split("}", 1)[0]
-        self.assertIn("outline: 2px solid var(--calendar-today-ring) !important", today_rule)
+        self.assertIn("box-shadow: inset 0 0 0 2px var(--calendar-selected-ring)", selected_rule)
+        self.assertNotIn("background", selected_rule)
+        today_rule = self.css.split(
+            ".hdo-calendar-grid--month .hdo-calendar-day.is-today .hdo-date-number {", 1
+        )[1].split("}", 1)[0]
+        self.assertIn("background: var(--calendar-today-ring)", today_rule)
         self.assertIn("var(--calendar-ring-halo)", today_rule)
         self.assertIn(".hdo-calendar-day.is-selected:focus-visible", self.css)
-        for height in ("block-size: 3px", "block-size: 4px"):
-            self.assertIn(height, self.css)
+        self.assertIn("block-size: 3px", self.css)
         due_rule = self.css.split(
             '.hdo-calendar-day[data-due-level]:not([data-due-level="0"])::after {', 1
         )[1].split("}", 1)[0]
@@ -179,12 +172,16 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("padding: 0 0 var(--hdo-bottom-clearance)", self.css)
         self.assertIn("scroll-padding-bottom: var(--hdo-bottom-clearance)", self.css)
         self.assertIn("grid-template-columns: minmax(0, 1fr);", self.css)
-        self.assertIn("@container hdo-dashboard (min-width: 420px)", self.css)
-        self.assertIn("repeat(auto-fit, minmax(min(100%, 180px), 1fr))", self.css)
-        self.assertIn("@container hdo-dashboard (min-width: 1040px)", self.css)
-        self.assertIn("grid-template-columns: minmax(0, 2.05fr) minmax(372px, .95fr);", self.css)
+        self.assertIn("@container hdo-dashboard (min-width: 308px)", self.css)
+        self.assertIn("repeat(2, minmax(148px, 1fr))", self.css)
+        self.assertNotIn("repeat(auto-fit", self.css)
+        self.assertIn("@container hdo-dashboard (min-width: 860px)", self.css)
+        self.assertIn("if (resolved >= 860)", self.js)
+        self.assertIn("if (resolved >= 620)", self.js)
+        self.assertIn("minmax(var(--calendar-min-width), 1fr)", self.css)
+        self.assertIn("minmax(var(--sidebar-min-width), var(--sidebar-preferred-width))", self.css)
         self.assertIn("@container hdo-calendar (max-width: 419px)", self.css)
-        for retired in ("640px", "900px", "1220px"):
+        for retired in ("640px", "900px", "1000px", "1220px"):
             self.assertNotIn("hdo-dashboard (min-width: {})".format(retired), self.css)
         self.assertNotIn('data-hdo-calendar-view="year"] .hdo-summary-metrics-grid', self.css)
         self.assertNotIn('data-hdo-calendar-view="month"] .hdo-summary-metrics-grid', self.css)
@@ -206,8 +203,14 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("overflow-wrap: anywhere", progress_chip_rule)
         self.assertIn("white-space: normal", progress_chip_rule)
         progress_rule = self.css.split(".hdo-progress-track {", 1)[1].split("}", 1)[0]
-        self.assertIn("min-block-size: 14px", progress_rule)
+        self.assertIn("min-block-size: 18px", progress_rule)
+        progress_fill_label_rule = self.css.split(
+            ".hdo-progress-label--fill {", 1
+        )[1].split("}", 1)[0]
+        self.assertIn("clip-path: inset", progress_fill_label_rule)
+        self.assertIn("color: var(--ui-on-accent)", progress_fill_label_rule)
         self.assertEqual(self.html.count("data-hdo-progress-label"), 2)
+        self.assertEqual(self.html.count("data-hdo-progress-value"), 0)
 
     def test_live_canvas_is_transparent_while_cards_and_preview_remain_themed(self) -> None:
         root_rule = self.css.split("#hdo-dashboard {", 1)[1].split("}", 1)[0]
@@ -243,14 +246,17 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         year = self.css.split(".hdo-calendar-grid--year {", 1)[1].split("}", 1)[0]
         month = self.css.split(".hdo-calendar-grid--month {", 1)[1].split("}", 1)[0]
         dashboard_buttons = self.css.split("#hdo-dashboard button {", 1)[1].split("}", 1)[0]
-        self.assertIn("repeat(6, clamp(48px, 4.8cqi, 54px))", month)
-        self.assertIn("28px repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))", year)
-        self.assertIn("column-gap: 3px", year)
-        self.assertIn("row-gap: 3px", year)
-        self.assertIn("width: 100%", year)
-        self.assertIn("min-width: 0", year)
-        self.assertNotIn("width: max-content", year)
-        self.assertGreaterEqual(self.css.count("min-height: 34px"), 3)
+        self.assertIn("repeat(6, clamp(38px, 5cqi, 44px))", month)
+        self.assertIn(
+            "24px repeat(var(--hdo-year-weeks, 53), var(--hdo-year-cell-size))",
+            year,
+        )
+        self.assertIn("column-gap: 2px", year)
+        self.assertIn("row-gap: 2px", year)
+        self.assertIn("min-width: 100%", year)
+        self.assertIn("width: max-content", year)
+        self.assertIn("--hdo-year-cell-size: 7px", self.css)
+        self.assertGreaterEqual(self.css.count("min-height: 30px"), 3)
         self.assertIn("margin: 0", dashboard_buttons)
         self.assertNotIn("transform: scale", self.css)
         self.assertIn("grid-column-start: var(--hdo-month-start-week)", self.css)
@@ -259,24 +265,18 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         for label in ('label: "Mon"', 'label: "Wed"', 'label: "Fri"'):
             self.assertIn(label, self.js)
         self.assertEqual(self.css.count("overflow-x: auto"), 1)
-        compact = self.css.split("@container hdo-calendar (max-width: 759px)", 1)[1].split(
-            "@container hdo-calendar (max-width: 419px)", 1
-        )[0]
-        self.assertIn("18px repeat(var(--hdo-year-weeks, 53), minmax(0, 1fr))", compact)
-        self.assertIn("column-gap: 1px", compact)
-        self.assertIn("row-gap: 1px", compact)
-        narrow = self.css.split("@container hdo-dashboard (max-width: 479px)", 1)[1]
-        frame_rule = narrow.split(
-            '#hdo-dashboard[data-hdo-calendar-view="year"] .hdo-calendar-grid-frame {', 1
+        frame_rule = self.css.split(
+            '.hdo-calendar-shell[data-hdo-calendar-view="year"] .hdo-calendar-grid-frame {', 1
         )[1].split("}", 1)[0]
         self.assertIn("overflow-x: auto", frame_rule)
-        self.assertIn("overflow-y: hidden", frame_rule)
-        self.assertIn("min-width: 580px", narrow)
+        narrow = self.css.split("@container hdo-dashboard (max-width: 479px)", 1)[1]
+        self.assertIn("overflow-y: hidden", narrow)
+        self.assertIn("min-width: 500px", self.css)
         self.assertNotIn("grid-template-columns", narrow)
         self.assertNotIn("transform: scale", narrow)
 
     def test_footer_is_compact_tonal_and_keeps_event_editing_adjacent(self) -> None:
-        self.assertIn('grid-template-areas: "date event actions"', self.css)
+        self.assertIn('"date actions"\n    "event event"', self.css)
         compact = self.css.split("@container hdo-calendar (max-width: 759px)", 1)[1]
         self.assertIn('"date actions"', compact)
         self.assertIn('"event event"', compact)
@@ -284,14 +284,13 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn('"date date"', smallest)
         self.assertIn('"event event"', smallest)
         self.assertIn('". actions"', smallest)
-        self.assertIn("overflow-wrap: anywhere", compact)
-        self.assertIn("white-space: normal", compact)
+        self.assertIn("hdo-event-row", self.css)
         label_rule = self.css.split(".hdo-context-label {", 1)[1].split("}", 1)[0]
         self.assertIn("white-space: nowrap", label_rule)
         action_rule = self.css.split(".hdo-calendar-card-action {", 1)[1].split("}", 1)[0]
         self.assertIn("background: var(--ui-accent-soft)", action_rule)
         self.assertIn("border-color: var(--ui-accent-border)", action_rule)
-        self.assertIn("height: 32px", action_rule)
+        self.assertIn("height: 30px", action_rule)
         event_title_rule = self.css.split(".hdo-event-title {", 1)[1].split("}", 1)[0]
         self.assertIn("overflow-wrap: anywhere", event_title_rule)
         self.assertIn("white-space: normal", event_title_rule)

@@ -394,7 +394,8 @@ def _show_live_snapshot(
         queue = _queue_values(snapshot)
         _require(queue["new"] == expected_new, "{} analytics New remaining mismatch".format(label))
         _require(queue["total"] == expected_total, "{} analytics Total remaining mismatch".format(label))
-        expected_progress = _progress_presentation(snapshot).label
+        progress = _progress_presentation(snapshot)
+        expected_progress = progress.label
         _controller.config = config
         _controller.snapshot = snapshot
         _controller.cache_key = _controller._key()
@@ -778,6 +779,7 @@ def _stress_snapshot() -> DashboardSnapshot:
                 LastSevenDaysStats(
                     cards_studied=98_765,
                     new_cards_studied=8_765,
+                    seconds=98_765 * 25.1,
                     retention=RateMetric.from_counts(90_864, 98_765),
                     again_rate=RateMetric.from_counts(7_901, 98_765),
                 )
@@ -1280,8 +1282,8 @@ DOM_REPORT_SCRIPT = r"""
     layoutSideBySide:!!calendar&&!!rail&&rect(calendar).right<=rect(rail).left+1,
     layoutStacked:!!calendar&&!!rail&&rect(calendar).bottom<=rect(rail).top+1,
     railWidth:rail?rect(rail).width:0,
-    progressText:text('[data-hdo-progress-label]') || text('[data-hdo-progress-chip]'),
-    progressLabelCount:qa('[data-hdo-progress-label], [data-hdo-progress-label-fill]').length,
+    progressText:text('[data-hdo-progress-label]'),
+    progressLabelCount:qa('[data-hdo-progress-label]').length,
     calendarCellCount:cells.length,
     selectedCount:selected.length,
     yearMonthLabels:qa('.hdo-year-month-label').map(function(node){return node.textContent.trim();}),

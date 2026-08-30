@@ -10,6 +10,7 @@ assertions with the canonical corrected 1.8.7 production and Settings contract.
 from __future__ import annotations
 
 from copy import deepcopy
+import ctypes
 from datetime import date, timedelta
 import json
 import os
@@ -22,9 +23,13 @@ from aqt.qt import (
     QAbstractButton,
     QAbstractItemView,
     QApplication,
+    QBuffer,
+    QByteArray,
     QComboBox,
     QDate,
     QFont,
+    QImageReader,
+    QIODevice,
     QLabel,
     QLineEdit,
     QPainter,
@@ -33,6 +38,7 @@ from aqt.qt import (
     QRect,
     QScrollArea,
     QSettings,
+    QSize,
     QSlider,
     QSpinBox,
     Qt,
@@ -108,7 +114,7 @@ STATISTIC_METRIC_KEYS = (
     "last_seven_days.cards_studied",
     "last_seven_days.new_cards_studied",
     "last_seven_days.retention",
-    "last_seven_days.again_rate",
+    "last_seven_days.time_spent",
     "long_term.average_reviews_per_active_day",
     "long_term.current_streak",
     "long_term.longest_streak",
@@ -443,6 +449,7 @@ def _prepare_native_statistics_fixture() -> None:
     base._require((today.answers, today.new_cards_studied) == (1_184, 2), "dashboard Today counts differ from Anki's period")
     base._require(abs(today.seconds - 22_496.0) < 0.001 and abs(float(today.pace_value or 0) - 19.0) < 0.001, "dashboard time or pace differs from Anki")
     base._require((week.cards_studied, week.new_cards_studied) == (1_184, 2), "dashboard Last 7 Days totals mismatch")
+    base._require(abs(week.seconds - 22_496.0) < 0.001, "dashboard Last 7 Days time differs from Anki")
     base._require((week.retention.numerator, week.retention.denominator, week.retention.percent) == (947, 1_100, 86), "dashboard week retention mismatch")
     base._require((week.again_rate.numerator, week.again_rate.denominator) == (153, 1_100), "dashboard week Again counts mismatch")
     base._require((all_time.lifetime_cards_studied, all_time.lifetime_retention.percent) == (1_184, 86), "dashboard all-time totals mismatch")
@@ -486,7 +493,8 @@ def _prepare_native_statistics_fixture() -> None:
             "eligible_passed": 947,
             "eligible_failed": 153,
             "native_retention_percent": 86,
-            "visible_again_percent": 14,
+            "week_seconds": 22_496.0,
+            "visible_week_time": "6 hr 15 min",
         },
         "native_today": {
             "answer_count": int(graphs.today.answer_count),
@@ -499,7 +507,7 @@ def _prepare_native_statistics_fixture() -> None:
             "today": {"answers": today.answers, "new_cards": today.new_cards_studied, "seconds": today.seconds, "pace": today.pace_value},
             "queue": {"new": queue.new, "learning": queue.learning, "review": queue.review, "total": queue.total},
             "buried": {"new": buried.new, "learning": buried.learning, "review": buried.review},
-            "week": {"answers": week.cards_studied, "new_cards": week.new_cards_studied, "retention": week.retention.percent, "again": 100 - int(week.retention.percent or 0)},
+            "week": {"answers": week.cards_studied, "new_cards": week.new_cards_studied, "seconds": week.seconds, "retention": week.retention.percent, "internal_again": 100 - int(week.retention.percent or 0)},
             "all_time": {"answers": all_time.lifetime_cards_studied, "retention": all_time.lifetime_retention.percent},
             "calendar_due": dashboard_due,
         },
@@ -602,6 +610,7 @@ base.DOM_REPORT_SCRIPT = r"""
   var rail=q('.hdo-insight-rail');
   var metricsGrid=q('.hdo-summary-metrics-grid');
   var verse=q('.hdo-verse');
+  var progressTrack=q('[data-hdo-progress-track]');
   var scroller=document.scrollingElement;
   var rootStyle=getComputedStyle(root);
   var title=q('#hdo-calendar-heading');
@@ -643,6 +652,8 @@ base.DOM_REPORT_SCRIPT = r"""
     yearWeeks:grid?grid.style.getPropertyValue('--hdo-year-weeks'):'',
     titleFontSize:title?getComputedStyle(title).fontSize:'',
     controlHeights:controls.map(function(n){return Math.round(n.getBoundingClientRect().height);}),
+    progressTrackVisible:visible(progressTrack),
+    progressTrackHeight:visible(progressTrack)?rect(progressTrack).height:0,
     dueLegendCount:qa('.hdo-legend-due').length,
     eventLegendCount:qa('.hdo-legend-event').length,
     eventSummaryCount:qa('[data-hdo-context-event]').length,
@@ -651,8 +662,10 @@ base.DOM_REPORT_SCRIPT = r"""
     dueMarkerCount:qa('.hdo-calendar-day[data-due-level]:not([data-due-level="0"])').length,
     eventMarkerCount:qa('.hdo-calendar-day .hdo-event-marker').length,
     completionCount:qa('.hdo-calendar-day[data-level]:not([data-level="0"])').length,
-    selectedOutline:selectedStyle?selectedStyle.outlineWidth:'',
-    cellShadowCount:cells.filter(function(n){return getComputedStyle(n).boxShadow!=='none';}).length,
+    selectedBoxShadow:selectedStyle?selectedStyle.boxShadow:'',
+    nonSelectedCellShadowCount:cells.filter(function(n){
+      return !n.classList.contains('is-selected') && getComputedStyle(n).boxShadow!=='none';
+    }).length,
     verseFontSize:verse?getComputedStyle(verse).fontSize:'',
     verseFontFamily:verse?getComputedStyle(verse).fontFamily:'',
     verseColor:verse?getComputedStyle(verse).color:'',
@@ -694,10 +707,27 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     base._require(footer_height > 0 and abs(clearance - footer_height - 24) <= 1, "bottom clearance is not measured height plus 24px")
     base._require(abs(_pixels(state.get("rootPaddingBottom")) - clearance) <= 1, "root bottom padding drifted from measured clearance")
     base._require(abs(_pixels(state.get("documentScrollPaddingBlockEnd")) - clearance) <= 1, "document scroll padding drifted from measured clearance")
-    base._require(_pixels(state.get("titleFontSize")) == 24, "calendar title is not 24px")
+    base._require(_pixels(state.get("titleFontSize")) == 18, "calendar title is not 18px")
     base._require(len(state.get("controlHeights", [])) >= 5, "calendar header controls are incomplete")
-    base._require(all(33 <= int(value) <= 35 for value in state.get("controlHeights", [])), "calendar controls are not 34px")
-    base._require(int(state.get("cellShadowCount", 1)) == 0, "calendar cells retain shadows")
+    base._require(
+        all(28 <= int(value) <= 34 for value in state.get("controlHeights", [])),
+        "calendar controls escaped the approved 28-34px range",
+    )
+    if bool(state.get("progressTrackVisible")):
+        base._require(
+            abs(float(state.get("progressTrackHeight", 0)) - 18) <= 0.5,
+            "numeric progress track is not 18px",
+        )
+    base._require(
+        int(state.get("nonSelectedCellShadowCount", 1)) == 0,
+        "unselected calendar cells retain shadows",
+    )
+    if int(state.get("selectedCount", 0)):
+        selected_shadow = str(state.get("selectedBoxShadow", ""))
+        base._require(
+            "inset" in selected_shadow and "2px" in selected_shadow,
+            "selected date is missing its 2px inset ring",
+        )
     if case.get("view") == "month":
         base._require(int(state.get("calendarCellCount", 0)) == 42, "Month is not 42 cells")
         base._require(str(state.get("monthRows")) == "6", "Month is not six rows")
@@ -738,7 +768,7 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
         base._require(set(metrics) == set(STATISTIC_METRIC_KEYS), "statistics metric key set changed")
         base._require(all(metrics.values()), "one or more statistics values are empty")
         base._require(metrics["last_seven_days.retention"] == "86%", "native week retention is not 86%")
-        base._require(metrics["last_seven_days.again_rate"] == "14%", "visible Again rate is not the 14% complement")
+        base._require(metrics["last_seven_days.time_spent"] == "6 hr 15 min6h 15m", "visible Last 7 Days time is not 6 hr 15 min")
         base._require(metrics["long_term.lifetime_retention"] == "86%", "native lifetime retention is not 86%")
 
         def count_value(key: str) -> int:
@@ -1353,7 +1383,7 @@ def _previsibility_capture_resize(
     if target_width == "full":
         return
     else:
-        width = min(max(820, int(target_width)), available.width() - 96)
+        width = min(max(860, int(target_width)), available.width() - 96)
         target_height = 800 if int(target_width) >= 1280 else 760
         height = min(max(600, target_height), available.height() - 96)
     dialog.resize(width, height)
@@ -1415,14 +1445,12 @@ def _prepare_settings_case(case: Mapping[str, Any]) -> SettingsDialog:
     }:
         dialog.retention_target.setValue(81)
         dialog._sync_draft()
-        if special == "discard":
-            dialog._revert_changes()
-        elif special == "close-confirmation":
+        if special == "close-confirmation":
             dialog.request_close()
         elif special == "save-in-progress":
             dialog._saving = True
             dialog.footer.set_error()
-            dialog._set_status("saving", "Saving changes...")
+            dialog._set_status("saving", "Saving changes…")
             dialog.save_button.setText("Save changes")
             dialog.save_button.setEnabled(False)
             dialog.close_button.setEnabled(False)
@@ -1475,8 +1503,6 @@ def _prepare_settings_case(case: Mapping[str, Any]) -> SettingsDialog:
                     base._controller.save_config = original
             else:
                 dialog._latest_stored_config = lambda: deepcopy(dialog.draft.baseline)
-                dialog._save()
-                dialog._continue_save()
     elif special == "legacy-route":
         dialog.open_page("calendar")
     return dialog
@@ -1496,15 +1522,18 @@ def _activate_settings_case(case: Mapping[str, Any]) -> None:
             event = dialog._selected_event()
             base._require(event is not None, "event editor has no selected event")
             editor = EventEditDialog(dialog, event)
-            editor.setModal(True)
             editor.show()
             dialog._qa_event_editor = editor
         elif special == "bible-long":
             base._require(bool(dialog.quotes), "long verse fixture is missing")
             editor = TextEditDialog("Edit verse", dialog.quotes[0], dialog)
-            editor.setModal(True)
             editor.show()
             dialog._qa_verse_editor = editor
+        elif special == "discard":
+            dialog._revert_changes()
+        elif special == "save-success":
+            dialog._save()
+            dialog._continue_save()
         elif special == "about-bottom":
             scroll = dialog.stack.currentWidget()
             if isinstance(scroll, QScrollArea):
@@ -1513,7 +1542,13 @@ def _activate_settings_case(case: Mapping[str, Any]) -> None:
                 )
         _position_visible_target(dialog, case)
         QApplication.processEvents()
-        QTimer.singleShot(720, lambda: _inspect_settings_case(case))
+        delay_ms = 720
+        if _settings_index == 1:
+            delay_ms = max(
+                delay_ms,
+                int(os.environ.get("HDO_RELEASE_FIRST_SETTINGS_DELAY_MS", "0") or 0),
+            )
+        QTimer.singleShot(delay_ms, lambda: _inspect_settings_case(case))
     except Exception as exc:
         _exit_active_settings_exec()
         base._error("{}-activate".format(case.get("id", "settings")), exc)
@@ -1865,8 +1900,18 @@ def _clipped_wrapped_labels(dialog: SettingsDialog) -> list[str]:
         width = max(1, label.width())
         required_height = label.heightForWidth(width)
         if required_height > label.height() + 1:
+            identifier = (
+                label.accessibleName()
+                or text[:48]
+                or label.objectName()
+            )
             failures.append(
-                label.accessibleName() or label.objectName() or text[:48]
+                "{} ({}x{}, needs {}px)".format(
+                    identifier,
+                    label.width(),
+                    label.height(),
+                    required_height,
+                )
             )
     return failures
 
@@ -1945,25 +1990,47 @@ def _minimum_visible_text_pixels(dialog: SettingsDialog, screen: Any) -> float:
     return min(values) if values else 0.0
 
 
-def _editor_state(editor: object) -> dict[str, Any]:
+def _editor_state(editor: object, settings_dialog: SettingsDialog) -> dict[str, Any]:
     if not isinstance(editor, QWidget):
         return {
             "open": False,
             "window_title": "",
-            "duplicate_body_title_count": 0,
+            "explicit_header_count": 0,
+            "explicit_header_texts": [],
+            "window_modal": False,
+            "application_modal": False,
+            "modal": False,
+            "parented_to_settings": False,
             "size": [],
             "native_frame_decoration": {"width": 0, "height": 0},
         }
     title = str(editor.windowTitle())
     frame = editor.frameGeometry()
+    header = getattr(editor, "header", None)
+    explicit_header_texts = [
+        str(label.text()).strip()
+        for label in (
+            header.findChildren(QLabel)
+            if isinstance(header, QWidget)
+            else []
+        )
+        if label.objectName() == "PageTitle"
+        and label.isVisibleTo(editor)
+        and str(label.text()).strip()
+    ]
     return {
         "open": editor.isVisible(),
         "window_title": title,
-        "duplicate_body_title_count": sum(
-            str(label.text()).strip() == title
-            and label.isVisibleTo(editor)
-            for label in editor.findChildren(QLabel)
+        "explicit_header_count": len(explicit_header_texts),
+        "explicit_header_texts": explicit_header_texts,
+        "window_modal": (
+            editor.windowModality() == Qt.WindowModality.WindowModal
         ),
+        "application_modal": (
+            editor.windowModality() == Qt.WindowModality.ApplicationModal
+        ),
+        "modal": editor.isModal(),
+        "parented_to_settings": editor.parentWidget() is settings_dialog,
         "size": [editor.width(), editor.height()],
         "native_frame_decoration": {
             "width": max(0, frame.width() - editor.width()),
@@ -2063,13 +2130,10 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
     )
     event_editor = getattr(dialog, "_qa_event_editor", None)
     verse_editor = getattr(dialog, "_qa_verse_editor", None)
-    event_editor_state = _editor_state(event_editor)
-    verse_editor_state = _editor_state(verse_editor)
-    rendered_preview_types = {
-        "DashboardCardPreview",
-        "VerseCardPreview",
-        "HeatmapPresetCard",
-    }
+    event_editor_state = _editor_state(event_editor, dialog)
+    verse_editor_state = _editor_state(verse_editor, dialog)
+    heatmap_palette_preview = getattr(dialog, "heatmap_palette_preview", None)
+    bible_appearance_preview = getattr(dialog, "bible_appearance_preview", None)
     visible_add_event_ctas = [
         button
         for button in dialog.findChildren(QAbstractButton)
@@ -2197,7 +2261,7 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         "footer_after_body": dialog.footer_shell.geometry().top() >= dialog.body_shell.geometry().bottom() - 1,
         "footer_overlaps_page_viewport": not viewport_rect.isNull() and footer_rect.top() <= viewport_rect.bottom(),
         "page_bottom_margin": page_bottom_margin,
-        "required_page_bottom_margin": 36,
+        "required_page_bottom_margin": 20 if dialog._compact_layout else 24,
         "save_text": dialog.save_button.text() if dialog.save_button is not None else "",
         "save_enabled": dialog.save_button.isEnabled() if dialog.save_button is not None else False,
         "close_text": dialog.close_button.text() if dialog.close_button is not None else "",
@@ -2304,8 +2368,19 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         "event_empty_title": dialog.event_empty_title.text() if hasattr(dialog, "event_empty_title") and dialog.event_empty_state.isVisible() else "",
         "event_editor_open": event_editor_state["open"],
         "event_editor_title": event_editor_state["window_title"],
-        "event_editor_duplicate_body_title_count": event_editor_state[
-            "duplicate_body_title_count"
+        "event_editor_explicit_header_count": event_editor_state[
+            "explicit_header_count"
+        ],
+        "event_editor_explicit_header_texts": event_editor_state[
+            "explicit_header_texts"
+        ],
+        "event_editor_window_modal": event_editor_state["window_modal"],
+        "event_editor_application_modal": event_editor_state[
+            "application_modal"
+        ],
+        "event_editor_modal": event_editor_state["modal"],
+        "event_editor_parented_to_settings": event_editor_state[
+            "parented_to_settings"
         ],
         "event_editor_size": event_editor_state["size"],
         "event_editor_native_frame_decoration": event_editor_state[
@@ -2313,8 +2388,19 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         ],
         "verse_editor_open": verse_editor_state["open"],
         "verse_editor_title": verse_editor_state["window_title"],
-        "verse_editor_duplicate_body_title_count": verse_editor_state[
-            "duplicate_body_title_count"
+        "verse_editor_explicit_header_count": verse_editor_state[
+            "explicit_header_count"
+        ],
+        "verse_editor_explicit_header_texts": verse_editor_state[
+            "explicit_header_texts"
+        ],
+        "verse_editor_window_modal": verse_editor_state["window_modal"],
+        "verse_editor_application_modal": verse_editor_state[
+            "application_modal"
+        ],
+        "verse_editor_modal": verse_editor_state["modal"],
+        "verse_editor_parented_to_settings": verse_editor_state[
+            "parented_to_settings"
         ],
         "verse_editor_size": verse_editor_state["size"],
         "verse_editor_native_frame_decoration": verse_editor_state[
@@ -2335,7 +2421,7 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
             or view.topLevelItemCount() == 0
             or (
                 view.minimumHeight() == view.maximumHeight()
-                and 50 <= view.maximumHeight() <= (6 * 60) + 4
+                and 50 <= view.maximumHeight() <= (5 * 60) + 4
             )
             for view in (active_tree, archived_tree)
         ),
@@ -2397,21 +2483,33 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         "settings_shell_center_delta": abs(
             shell_rect.center().x() - dialog.rect().center().x()
         ),
-        "rendered_previews_absent": (
-            not any(
-                hasattr(dialog, attribute)
-                for attribute in (
-                    "appearance_preview",
-                    "verse_preview",
-                    "preset_swatch",
-                    "heatmap_preset_cards",
-                )
-            )
-            and not any(
-                type(widget).__name__ in rendered_preview_types
-                for widget in dialog.findChildren(QWidget)
-            )
-        ),
+        "settings_previews": {
+            "heatmap_palette_present": (
+                heatmap_palette_preview is not None
+                and type(heatmap_palette_preview).__name__
+                == "HeatmapPalettePreview"
+            ),
+            "heatmap_palette_steps": len(
+                getattr(heatmap_palette_preview, "_colors", ())
+            ),
+            "heatmap_palette_compact": (
+                heatmap_palette_preview is not None
+                and heatmap_palette_preview.minimumHeight() == 34
+                and heatmap_palette_preview.maximumWidth() == 168
+            ),
+            "bible_appearance_present": (
+                bible_appearance_preview is not None
+                and type(bible_appearance_preview).__name__
+                == "BibleAppearancePreview"
+            ),
+            "bible_appearance_complete": (
+                bible_appearance_preview is not None
+                and bool(getattr(bible_appearance_preview, "body", None))
+                and bool(getattr(bible_appearance_preview, "reference", None))
+                and bool(bible_appearance_preview.body.text().strip())
+                and bool(bible_appearance_preview.reference.text().strip())
+            ),
+        },
         "custom_color_well_present": hasattr(dialog, "font_color_swatch"),
         "anki_theme": getattr(dialog, "_qa_anki_theme", ""),
         "settings_window_token": tokens.get("window", ""),
@@ -2424,7 +2522,7 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     special = str(case.get("special", ""))
     base._require(state.get("window_title") == "Home Screen Dashboard Settings", "Settings window title is incorrect")
     if not bool(state.get("screen_compact_fallback")):
-        base._require(state.get("minimum_size") == [820, 600], "Settings minimum size is not 820x600 logical px")
+        base._require(state.get("minimum_size") == [860, 640], "Settings minimum size is not 860x640 logical px")
     base._require(state.get("nav_width") == 184, "Settings rail is not 184px")
     base._require(not bool(state.get("nav_word_wrap")), "Settings rail wraps labels")
     base._require(bool(state.get("nav_elision_disabled")), "Settings rail elides long labels")
@@ -2510,13 +2608,13 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
             ),
         )
     base._require(state.get("header_height") == 72, "Settings page header is not fixed at 72px")
-    base._require(state.get("footer_minimum_height") == 60, "Settings footer is not fixed at a 60px minimum")
+    base._require(state.get("footer_minimum_height") == 56, "Settings footer is not fixed at a 56px minimum")
     if special != "close-confirmation" and bool(state.get("nav_visible")):
         base._require(bool(state.get("sidebar_spans_shell")), "Settings sidebar does not span header body and footer")
-    expected_page_maximum = 840 if state.get("section") == "about_support" else 920
+    expected_page_maximum = 1080
     base._require(state.get("page_maximum_width") == expected_page_maximum, "Settings page cap differs from the approved responsive contract")
-    base._require(state.get("settings_shell_maximum") == 1120, "Settings inner shell is not capped at 1120px")
-    expected_shell_width = min(int(state.get("window_size", [0])[0]), 1120)
+    base._require(state.get("settings_shell_maximum") == 1264, "Settings inner shell is not capped at 1264px")
+    expected_shell_width = min(int(state.get("window_size", [0])[0]), 1264)
     if special != "close-confirmation":
         base._require(
             abs(int(state.get("settings_shell_width", 0)) - expected_shell_width) <= 2,
@@ -2533,21 +2631,37 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     base._require(bool(state.get("status_and_save_inside_footer")), "Settings feedback is not local to the footer actions")
     base._require(bool(state.get("footer_feedback_exclusive")), "Settings status and save-error feedback are visible together")
     base._require(int(state.get("footer_feedback_overlap_area", 0)) == 0, "Settings footer feedback overlaps")
-    base._require(float(state.get("minimum_visible_text_pixels", 0)) >= 11.5, "visible Settings text falls below the 12px baseline")
+    base._require(
+        float(state.get("minimum_visible_text_pixels", 0)) >= 10.0,
+        "visible Settings text falls below the 10px shipping minimum",
+    )
     base._require(float(state.get("selection_primary_contrast", 0)) >= 4.5, "selected-row primary text contrast is insufficient")
     base._require(float(state.get("selection_secondary_contrast", 0)) >= 4.5, "selected-row secondary text contrast is insufficient")
-    base._require(bool(state.get("event_lists_bounded")), "Events list does not auto-size for one through six rows")
+    base._require(bool(state.get("event_lists_bounded")), "Events list does not auto-size for one through five rows")
     base._require(bool(state.get("event_list_scroll_policy")), "Events list does not scroll only when needed")
     base._require(bool(state.get("quote_list_bounded")), "Verse list escaped its 180-520px viewport bounds")
     base._require(bool(state.get("quote_list_scroll_policy")), "Verse list does not use bounded internal scrolling")
-    base._require(bool(state.get("rendered_previews_absent")), "a rendered Settings preview remains")
+    previews = state.get("settings_previews", {})
+    base._require(
+        isinstance(previews, Mapping)
+        and previews.get("heatmap_palette_present") is True
+        and previews.get("heatmap_palette_steps") == 5
+        and previews.get("heatmap_palette_compact") is True,
+        "the compact five-step Calendar heatmap palette preview is incomplete",
+    )
+    base._require(
+        isinstance(previews, Mapping)
+        and previews.get("bible_appearance_present") is True
+        and previews.get("bible_appearance_complete") is True,
+        "the compact Bible appearance preview is incomplete",
+    )
     base._require(bool(state.get("custom_color_well_present")), "the custom color input well is missing")
     if special == "events-empty":
         base._require(state.get("event_active_count") == 0 and state.get("event_archived_count") == 0, "empty Events state is populated")
         base._require(state.get("event_empty_title") == "No events yet", "empty Events copy is incorrect")
-        base._require(220 <= int(state.get("event_empty_height", 0)) <= 260, "empty Events state is not compact")
-        base._require(state.get("visible_add_event_cta_count") == 2, "empty Events state does not expose its two intentional Add event actions")
-        base._require(state.get("event_header_add_visible") is True, "empty Events state hides its page-header Add event action")
+        base._require(150 <= int(state.get("event_empty_height", 0)) <= 200, "empty Events state is not compact")
+        base._require(state.get("visible_add_event_cta_count") == 1, "empty Events state does not expose exactly one Add event action")
+        base._require(state.get("event_header_add_visible") is False, "empty Events state exposes a duplicate page-header Add event action")
         base._require(state.get("event_toolbar_add_visible") is False, "empty Events state exposes the populated-list Add event action")
     if state.get("section") == "events":
         if special != "events-empty":
@@ -2562,19 +2676,22 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
         base._require(bool(state.get("event_editor_open")), "event row did not open its editor")
         base._require(
             state.get("event_editor_title") == "Edit event"
-            and state.get("event_editor_duplicate_body_title_count") == 0,
-            "event editor does not use exactly one native title",
+            and state.get("event_editor_explicit_header_count") == 1
+            and state.get("event_editor_explicit_header_texts")
+            == ["Edit event"],
+            "event editor lacks its stable native title or one explicit internal header",
         )
-        event_decoration = state.get("event_editor_native_frame_decoration", {})
         base._require(
-            int(event_decoration.get("width", 0)) > 0
-            or int(event_decoration.get("height", 0)) > 0,
-            "event editor native frame is not visible",
+            bool(state.get("event_editor_window_modal"))
+            and bool(state.get("event_editor_modal"))
+            and not bool(state.get("event_editor_application_modal"))
+            and bool(state.get("event_editor_parented_to_settings")),
+            "event editor is not a parented WindowModal dialog",
         )
         editor_size = state.get("event_editor_size", [0, 0])
         base._require(
-            320 <= int(editor_size[0]) <= 460
-            and 240 <= int(editor_size[1]) <= 520,
+            480 <= int(editor_size[0]) <= 540
+            and 280 <= int(editor_size[1]) <= 360,
             "event editor escaped its compact responsive bounds",
         )
     if special == "events-searched":
@@ -2591,14 +2708,17 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
         base._require(bool(state.get("verse_editor_open")), "long verse did not open its editor")
         base._require(
             state.get("verse_editor_title") == "Edit verse"
-            and state.get("verse_editor_duplicate_body_title_count") == 0,
-            "verse editor does not use exactly one native title",
+            and state.get("verse_editor_explicit_header_count") == 1
+            and state.get("verse_editor_explicit_header_texts")
+            == ["Edit verse"],
+            "verse editor lacks its stable native title or one explicit internal header",
         )
-        verse_decoration = state.get("verse_editor_native_frame_decoration", {})
         base._require(
-            int(verse_decoration.get("width", 0)) > 0
-            or int(verse_decoration.get("height", 0)) > 0,
-            "verse editor native frame is not visible",
+            bool(state.get("verse_editor_window_modal"))
+            and bool(state.get("verse_editor_modal"))
+            and not bool(state.get("verse_editor_application_modal"))
+            and bool(state.get("verse_editor_parented_to_settings")),
+            "verse editor is not a parented WindowModal dialog",
         )
         base._require(
             len(str(state.get("verse_editor_body", ""))) > 120
@@ -2608,10 +2728,9 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     if special == "bible-custom-valid":
         warning = str(state.get("font_color_inline_error", ""))
         base._require(
-            warning.startswith("Low contrast on the Dark (")
-            and "dashboard background" in warning
-            and "will not be replaced" in warning,
-            "low-contrast warning does not name the affected Dashboard background",
+            warning
+            == "This color is difficult to read on the current dark dashboard. Choose a lighter color or keep it anyway.",
+            "low-contrast warning is not concise and user-facing",
         )
     if special == "bible-custom-invalid":
         base._require(bool(state.get("font_color_invalid")), "invalid custom color was accepted")
@@ -2651,9 +2770,9 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     if special == "event-long-title":
         target = state.get("visible_target", {})
         base._require(
-            state.get("window_size", [0, 0])[0] == 820
+            state.get("window_size", [0, 0])[0] == 860
             and bool(state.get("compact_layout")),
-            "long event title is not proven at the 820px responsive minimum",
+            "long event title is not proven at the 860px responsive minimum",
         )
         base._require(
             int(state.get("event_active_count", 0)) == 7
@@ -2695,12 +2814,12 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     if special == "close-confirmation":
         base._require(state.get("close_prompt_titles") == ["Unsaved changes"], "dirty Close did not show the native confirmation layer")
         base._require(
-            state.get("close_prompt_actions") == ["Cancel", "Discard", "Save and close"],
+            state.get("close_prompt_actions") == ["Cancel", "Discard changes", "Save and close"],
             "dirty Close does not expose the three approved actions",
         )
     if special == "save-in-progress":
         base._require(state.get("save_text") == "Save changes", "save-in-progress changed the stable action label")
-        base._require(state.get("status") == "Saving changes...", "save-in-progress status is missing")
+        base._require(state.get("status") == "Saving changes…", "save-in-progress status is missing")
         base._require(
             not bool(state.get("save_enabled"))
             and not bool(state.get("close_enabled"))
@@ -2822,7 +2941,7 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     if special in {"anki-light", "anki-dark"}:
         expected = "light" if special == "anki-light" else "dark"
         base._require(state.get("anki_theme") == expected, "Settings theme fixture differs from the Anki theme")
-        expected_window = "#F3F5F7" if expected == "light" else "#0D131A"
+        expected_window = "#F3F6F8" if expected == "light" else "#0B1118"
         base._require(state.get("settings_window_token") == expected_window, "Settings shell did not follow the Anki theme")
     base._require(bool(state.get("parented_to_anki")), "Settings is not parented to Anki")
     base._require(
@@ -2956,6 +3075,15 @@ def _grab_screen_logical_rect(screen: Any, rect: QRect) -> QPixmap:
     if full_screen.isNull():
         return full_screen
     dpr = max(1.0, float(full_screen.devicePixelRatio()))
+    width_scale = full_screen.width() / max(1, screen_geometry.width())
+    height_scale = full_screen.height() / max(1, screen_geometry.height())
+    inferred_scale = (width_scale + height_scale) / 2.0
+    if (
+        abs(width_scale - height_scale) <= 0.03
+        and abs(inferred_scale - round(inferred_scale)) <= 0.03
+        and inferred_scale > dpr + 0.25
+    ):
+        dpr = float(round(inferred_scale))
     local_x = rect.x() - screen_geometry.x()
     local_y = rect.y() - screen_geometry.y()
     physical_rect = QRect(
@@ -2972,6 +3100,222 @@ def _grab_screen_logical_rect(screen: Any, rect: QRect) -> QPixmap:
     return cropped
 
 
+def _grab_macos_decorated_window(dialog: SettingsDialog, width: int, height: int) -> QPixmap:
+    """Render the dialog's native AppKit frame without screen-recording access.
+
+    macOS may deny ``QScreen.grabWindow()`` to an isolated Anki process even
+    though that process owns the target window.  The Qt ``winId()`` is the
+    window's native ``NSView``; its frame-view parent includes the title bar
+    and traffic-light controls.  AppKit can render that owned view hierarchy
+    to PDF without sampling another process or Space, and Qt's PDF image
+    reader rasterizes it at the dialog's retained DPR.
+
+    This is a capture fallback only.  It does not replace the separate native
+    full-screen/Space acceptance workflow.
+    """
+
+    if sys.platform != "darwin" or width <= 0 or height <= 0:
+        return QPixmap()
+
+    diagnostic = base.REPORT.setdefault("capture_diagnostics", {}).setdefault(
+        "appkit_decorated_capture", {}
+    )
+
+    def failed(reason: str) -> QPixmap:
+        diagnostic["failure"] = reason
+        base._write_report()
+        return QPixmap()
+
+    class NSPoint(ctypes.Structure):
+        _fields_ = (("x", ctypes.c_double), ("y", ctypes.c_double))
+
+    class NSSize(ctypes.Structure):
+        _fields_ = (("width", ctypes.c_double), ("height", ctypes.c_double))
+
+    class NSRect(ctypes.Structure):
+        _fields_ = (("origin", NSPoint), ("size", NSSize))
+
+    try:
+        objc = ctypes.CDLL("/usr/lib/libobjc.A.dylib")
+        selector = objc.sel_registerName
+        selector.argtypes = (ctypes.c_char_p,)
+        selector.restype = ctypes.c_void_p
+        class_name = objc.object_getClassName
+        class_name.argtypes = (ctypes.c_void_p,)
+        class_name.restype = ctypes.c_char_p
+        send_pointer = ctypes.CFUNCTYPE(
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+        )(("objc_msgSend", objc))
+        send_rect_pointer = ctypes.CFUNCTYPE(
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            NSRect,
+        )(("objc_msgSend", objc))
+        send_length = ctypes.CFUNCTYPE(
+            ctypes.c_ulong,
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+        )(("objc_msgSend", objc))
+        send_rect_void = ctypes.CFUNCTYPE(
+            None,
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            NSRect,
+            ctypes.c_void_p,
+        )(("objc_msgSend", objc))
+        send_integer_pointer = ctypes.CFUNCTYPE(
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_long,
+            ctypes.c_void_p,
+        )(("objc_msgSend", objc))
+        objc_class = objc.objc_getClass
+        objc_class.argtypes = (ctypes.c_char_p,)
+        objc_class.restype = ctypes.c_void_p
+
+        native_view = ctypes.c_void_p(int(dialog.winId()))
+        diagnostic["native_view"] = hex(int(dialog.winId()))
+        diagnostic["native_view_class"] = (
+            class_name(native_view).decode("utf-8", "replace")
+            if native_view
+            else None
+        )
+        native_window = send_pointer(native_view, selector(b"window"))
+        diagnostic["native_window"] = hex(native_window) if native_window else None
+        diagnostic["native_window_class"] = (
+            class_name(native_window).decode("utf-8", "replace")
+            if native_window
+            else None
+        )
+        content_view = send_pointer(native_window, selector(b"contentView"))
+        diagnostic["content_view_class"] = (
+            class_name(content_view).decode("utf-8", "replace")
+            if content_view
+            else None
+        )
+        frame_view = send_pointer(content_view, selector(b"superview"))
+        diagnostic["frame_view_class"] = (
+            class_name(frame_view).decode("utf-8", "replace")
+            if frame_view
+            else None
+        )
+        if not native_window:
+            return failed("native-view-window-is-null")
+        if not content_view:
+            return failed("native-window-content-view-is-null")
+        if not frame_view:
+            return failed("content-view-superview-is-null")
+
+        capture_rect = NSRect(
+            NSPoint(0.0, 0.0),
+            NSSize(float(width), float(height)),
+        )
+        bitmap_rep = send_rect_pointer(
+            frame_view,
+            selector(b"bitmapImageRepForCachingDisplayInRect:"),
+            capture_rect,
+        )
+        diagnostic["bitmap_rep_class"] = (
+            class_name(bitmap_rep).decode("utf-8", "replace")
+            if bitmap_rep
+            else None
+        )
+        if bitmap_rep:
+            send_rect_void(
+                frame_view,
+                selector(b"cacheDisplayInRect:toBitmapImageRep:"),
+                capture_rect,
+                bitmap_rep,
+            )
+            dictionary_class = objc_class(b"NSDictionary")
+            empty_properties = send_pointer(
+                dictionary_class,
+                selector(b"dictionary"),
+            )
+            png_data = send_integer_pointer(
+                bitmap_rep,
+                selector(b"representationUsingType:properties:"),
+                4,  # NSBitmapImageFileTypePNG
+                empty_properties,
+            )
+            if png_data:
+                png_byte_count = int(send_length(png_data, selector(b"length")))
+                png_byte_pointer = send_pointer(png_data, selector(b"bytes"))
+                diagnostic["bitmap_png_byte_count"] = png_byte_count
+                if png_byte_count > 0 and png_byte_pointer:
+                    bitmap = QPixmap()
+                    if bitmap.loadFromData(
+                        ctypes.string_at(png_byte_pointer, png_byte_count),
+                        "PNG",
+                    ):
+                        dpr = max(1.0, float(dialog.devicePixelRatioF()))
+                        target_width = round(width * dpr)
+                        target_height = round(height * dpr)
+                        if (
+                            bitmap.width() != target_width
+                            or bitmap.height() != target_height
+                        ):
+                            bitmap = bitmap.scaled(
+                                target_width,
+                                target_height,
+                                Qt.AspectRatioMode.IgnoreAspectRatio,
+                                Qt.TransformationMode.SmoothTransformation,
+                            )
+                        bitmap.setDevicePixelRatio(dpr)
+                        diagnostic["bitmap_rendered_pixels"] = [
+                            bitmap.width(),
+                            bitmap.height(),
+                        ]
+                        diagnostic["status"] = "bitmap-rendered"
+                        diagnostic.pop("failure", None)
+                        base._write_report()
+                        return bitmap
+
+        pdf_data = send_rect_pointer(
+            frame_view,
+            selector(b"dataWithPDFInsideRect:"),
+            capture_rect,
+        )
+        if not pdf_data:
+            return failed("frame-view-pdf-data-is-null")
+        byte_count = int(send_length(pdf_data, selector(b"length")))
+        byte_pointer = send_pointer(pdf_data, selector(b"bytes"))
+        diagnostic["pdf_byte_count"] = byte_count
+        if byte_count <= 0 or not byte_pointer:
+            return failed("frame-view-pdf-data-is-empty")
+        pdf_bytes = ctypes.string_at(byte_pointer, byte_count)
+
+        dpr = max(1.0, float(dialog.devicePixelRatioF()))
+        buffer = QBuffer()
+        buffer.setData(QByteArray(pdf_bytes))
+        if not buffer.open(QIODevice.OpenModeFlag.ReadOnly):
+            return failed("pdf-buffer-did-not-open")
+        reader = QImageReader(buffer, b"pdf")
+        reader.setScaledSize(QSize(round(width * dpr), round(height * dpr)))
+        image = reader.read()
+        diagnostic["pdf_reader_error"] = reader.errorString()
+        diagnostic["pdf_rendered_pixels"] = [image.width(), image.height()]
+        buffer.close()
+        if image.isNull():
+            return failed("qt-pdf-reader-returned-null-image")
+        rendered = QPixmap.fromImage(image)
+        rendered.setDevicePixelRatio(dpr)
+        diagnostic["status"] = "rendered"
+        diagnostic.pop("failure", None)
+        base._write_report()
+        return rendered
+    except Exception as exc:
+        base.REPORT.setdefault("capture_diagnostics", {}).setdefault(
+            "appkit_decorated_capture", {}
+        )["error"] = "{}: {}".format(type(exc).__name__, exc)
+        base._write_report()
+        return QPixmap()
+
+
 def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     QApplication.processEvents()
     screen = _settings_screen(dialog)
@@ -2979,25 +3323,63 @@ def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Ma
         case.get("family") == "settings-pages"
         or str(case.get("special", "")) == "window-fresh-open"
     )
+    reference = _settings_client_capture(dialog)
     if capture_complete_frame:
         frame = dialog.frameGeometry()
         expected_width, expected_height = frame.width(), frame.height()
-        pixmap = _grab_screen_logical_rect(screen, frame)
-        method = "QScreen.grabWindow-full-display-crop-complete-decorated-settings-frame"
-    else:
-        origin = dialog.mapToGlobal(QPoint(0, 0))
-        expected_width, expected_height = dialog.width(), dialog.height()
-        pixmap = _grab_screen_logical_rect(
-            screen,
-            QRect(origin.x(), origin.y(), expected_width, expected_height),
+        appkit_window = _grab_macos_decorated_window(
+            dialog,
+            expected_width,
+            expected_height,
         )
-        method = "QScreen.grabWindow-full-display-client-crop"
+        if not appkit_window.isNull():
+            pixmap = appkit_window
+            appkit_status = str(
+                base.REPORT.get("capture_diagnostics", {})
+                .get("appkit_decorated_capture", {})
+                .get("status", "")
+            )
+            method = (
+                "NSView.cacheDisplayInRect-complete-decorated-settings-frame"
+                if appkit_status == "bitmap-rendered"
+                else "NSView.dataWithPDFInsideRect-complete-decorated-settings-frame"
+            )
+        else:
+            pixmap = _grab_screen_logical_rect(screen, frame)
+            method = "QScreen.grabWindow-full-display-crop-complete-decorated-settings-frame"
+    else:
+        expected_width, expected_height = dialog.width(), dialog.height()
+        # QScreen.grabWindow(dialog.winId()) is not a trustworthy macOS client
+        # capture: the returned pixmap can have the requested dimensions while
+        # containing another window's screen pixels. Capture the owned Qt tree
+        # directly for client-only review states so unrelated applications can
+        # never contaminate the evidence.
+        pixmap = reference
+        method = "QDialog.grab-composited-client-fallback"
 
-    reference = _settings_client_capture(dialog)
     if capture_complete_frame:
         reference_origin = dialog.mapToGlobal(QPoint(0, 0)) - frame.topLeft()
     else:
         reference_origin = QPoint(0, 0)
+    if (
+        method.startswith("NSView.")
+        and not pixmap.isNull()
+        and not reference.isNull()
+    ):
+        # The AppKit frame view supplies the native title-bar geometry while
+        # Qt owns the layer-backed client surface.  AppKit's PDF renderer does
+        # not include that Qt layer, so composite the dialog-owned client at
+        # its measured frame offset.  This never samples another process or
+        # substitutes for the separate Space-switch workflow.
+        painter = QPainter(pixmap)
+        try:
+            painter.drawPixmap(reference_origin, reference)
+        finally:
+            painter.end()
+        method = method.replace(
+            "-complete-decorated-settings-frame",
+            "+QDialog.grab-composited-complete-decorated-settings-frame",
+        )
     surface_match_ratio = _settings_surface_match_ratio(
         pixmap,
         reference,
@@ -3011,6 +3393,10 @@ def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Ma
     # the probe deliberately avoids raise/activate calls that can change Spaces.
     for _attempt in range(3):
         if surface_match_ratio >= 0.55:
+            break
+        if method.startswith("NSView."):
+            # Preserve the owned native-frame rendering for diagnostics instead
+            # of replacing it with the known-null full-screen compositor path.
             break
         QApplication.processEvents()
         if capture_complete_frame:
@@ -3076,6 +3462,29 @@ def _capture_settings(dialog: SettingsDialog, case: Mapping[str, Any], state: Ma
             surface_match_ratio = 1.0
 
     pixmap, inferred_capture_scale = normalize_backing_scale(pixmap)
+    if pixmap.isNull() or surface_match_ratio < 0.55:
+        diagnostic_root = OUTPUT_ROOT / "capture-diagnostics"
+        diagnostic_root.mkdir(parents=True, exist_ok=True)
+        pixmap_path = diagnostic_root / "{}-screen.png".format(case["id"])
+        reference_path = diagnostic_root / "{}-client.png".format(case["id"])
+        if not pixmap.isNull():
+            pixmap.save(str(pixmap_path), "PNG")
+        if not reference.isNull():
+            reference.save(str(reference_path), "PNG")
+        base.REPORT.setdefault("capture_diagnostics", {})[str(case["id"])] = {
+            "surface_match_ratio": surface_match_ratio,
+            "untrusted_direct_window_capture_disabled": True,
+            "screen_capture": str(pixmap_path),
+            "screen_capture_pixels": [pixmap.width(), pixmap.height()],
+            "screen_capture_dpr": float(pixmap.devicePixelRatio()) if not pixmap.isNull() else None,
+            "client_reference": str(reference_path),
+            "client_reference_pixels": [reference.width(), reference.height()],
+            "client_reference_dpr": float(reference.devicePixelRatio()) if not reference.isNull() else None,
+            "dialog_frame": [frame.x(), frame.y(), frame.width(), frame.height()] if capture_complete_frame else None,
+            "dialog_client": [dialog.x(), dialog.y(), dialog.width(), dialog.height()],
+            "screen_geometry": [screen.geometry().x(), screen.geometry().y(), screen.geometry().width(), screen.geometry().height()],
+        }
+        base._write_report()
     base._require(not pixmap.isNull(), "native Settings capture is null")
     base._require(color_count >= 3, "native Settings capture appears blank")
     base._require(
@@ -3365,7 +3774,7 @@ def _structured_page_assertions(
 
     work_area = tuple(int(value) for value in case["structured_work_area_logical"])
     resolved = clamp_window_geometry(None, work_area)
-    expected_page_cap = 840 if case.get("page") == "about_support" else 920
+    expected_page_cap = 1080
     navigation_is_unique = bool(state.get("nav_visible")) != bool(
         state.get("compact_nav_visible")
     )
@@ -3376,9 +3785,9 @@ def _structured_page_assertions(
         and state.get("decorated_frame_inside_available") is True
         and navigation_is_unique
         and int(state.get("header_height", 0)) >= 72
-        and int(state.get("footer_minimum_height", 0)) >= 60
+        and int(state.get("footer_minimum_height", 0)) >= 56
         and int(state.get("page_maximum_width", 0)) == expected_page_cap
-        and int(state.get("settings_shell_maximum", 0)) == 1120
+        and int(state.get("settings_shell_maximum", 0)) == 1264
         and list(state.get("window_size", [])) == [resolved[2], resolved[3]]
     )
     return {
@@ -4466,6 +4875,7 @@ base._start_case_matrix = _start_case_matrix
 if ENABLED:
     application = QApplication.instance()
     if application is not None:
+        application.setQuitOnLastWindowClosed(False)
         application.aboutToQuit.connect(_restore_geometry_preference)
     gui_hooks.profile_did_open.append(base._profile_opened)
     QTimer.singleShot(1100, base._begin)

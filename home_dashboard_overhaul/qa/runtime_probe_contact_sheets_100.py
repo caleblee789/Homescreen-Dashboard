@@ -85,7 +85,7 @@ _case_index = 0
 _interaction_cases: list[dict[str, Any]] = []
 _interaction_index = 0
 _stress_width_index = 0
-STRESS_WIDTHS = (319, 439, 440, 1039, 1040, 1280)
+STRESS_WIDTHS = (307, 308, 619, 620, 859, 860)
 PACKAGE_ROOT = Path(home_dashboard_overhaul.__file__).resolve().parent
 
 
@@ -453,6 +453,7 @@ def _stress_snapshot(events_enabled: bool = True):
         last_seven_days=ValueState.available(LastSevenDaysStats(
             cards_studied=12_486,
             new_cards_studied=1_048,
+            seconds=12_486 * 125.4,
             retention=RateMetric.from_counts(11_237, 12_486),
             again_rate=RateMetric.from_counts(1_249, 12_486),
         )),
@@ -1128,7 +1129,7 @@ def _record_stress_year_width(requested: int, state: dict[str, Any]) -> None:
     _require(state.get("monthLabels") == ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], "stress Year omitted month labels")
     _require(state.get("eventDates") == ["2026-01-05", "2026-12-29"], "January/December Year events are incomplete")
     _require(state.get("selectedDate") == "2026-12-29", "stress Year lost the selected December state")
-    if requested >= 480:
+    if requested >= 620:
         _require(bool(state.get("selectedVisible")), "non-scrolling Year clipped the selected December state")
     _require(state.get("primaryActionText") == "Due cards" and not bool(state.get("primaryActionHidden")), "future-date CTA is incorrect")
     _require("Comprehensive Pediatric NBME" in str(state.get("contextEventTitle", "")), "long event text is missing")
@@ -1140,39 +1141,36 @@ def _record_stress_year_width(requested: int, state: dict[str, Any]) -> None:
     _require(bool(state.get("contextEventMarkerVisible")) and bool(state.get("editEventVisible")), "next-event marker or adjacent edit control is missing")
     _require(state.get("dateStateText") == "Selected" and state.get("selectedDateText") == "Tue, Dec 29, 2026", "selected-date chip or date is incorrect")
     _require(abs(float(state.get("rootWidth", 0)) - requested) <= 1.5, "unexpected stress container width")
-    if requested == 319:
-        _require(state.get("metricColumns") == 1 and state.get("metricRows") == 4, "319px container did not use one metric column")
-        _require(bool(state.get("stackedSharedShell")), "319px container did not stack")
+    if requested == 307:
+        _require(state.get("metricColumns") == 1 and state.get("metricRows") == 4, "307px container did not use one metric column")
+        _require(bool(state.get("stackedSharedShell")), "307px container did not stack")
         _require(int(state.get("frameOverflow", 0)) > 0 and int(state.get("frameScrollLeft", 0)) > 0, "narrow Year did not use its selected-cell scroller")
-    elif requested == 439:
+    elif requested == 308:
         _require(
             state.get("metricColumns") == 2
             and state.get("metricRows") == 2
             and bool(state.get("stackedSharedShell")),
-            "439px container did not use the compact 2x2 matrix state",
+            "308px container did not use the minimum viable 2x2 matrix state",
         )
-    elif requested == 440:
-        _require(state.get("metricColumns") == 2 and state.get("metricRows") == 2, "intermediate container did not use 2x2 metrics")
-        _require(bool(state.get("stackedSharedShell")), "intermediate container did not stack the rail")
-    elif requested == 1039:
+    elif requested in (619, 620, 859):
         _require(
-            state.get("metricColumns") == 4
-            and state.get("metricRows") == 1
+            state.get("metricColumns") == 2
+            and state.get("metricRows") == 2
             and bool(state.get("stackedSharedShell")),
-            "1039px stacked container did not use its four-column metric row",
+            "intermediate container did not retain the 2x2 metric grid",
         )
     else:
         _require(state.get("metricColumns") == 2 and state.get("metricRows") == 2, "wide container did not use 2x2 metrics")
         _require(bool(state.get("wideSharedShell")), "wide shared shell did not align")
-    if requested in (439, 440):
+    if requested in (308, 619):
         _require(
             int(state.get("frameOverflow", 0)) > 0
             and int(state.get("frameScrollLeft", 0)) > 0,
             "compact Year boundary did not retain its selected-cell scroller",
         )
-    if requested >= 480:
+    if requested >= 620:
         _require(bool(state.get("yearGridInsideFrame")) and int(state.get("frameOverflow", 1)) <= 0, "supported Year width clipped the heatmap")
-    if 480 <= requested <= 1039:
+    if 620 <= requested <= 859:
         _require(0.89 <= float(state.get("yearHeatmapWidthRatio", 0)) <= 0.95, "Year heatmap does not occupy roughly 90-94 percent of its body")
     REPORT["stress_checks"]["year_widths"][str(requested)] = state
     _write_report()
@@ -1195,8 +1193,8 @@ def _record_stress_month(state: dict[str, Any]) -> None:
     cell_heights = state.get("cellHeights", [])
     _require(
         len(cell_heights) == 1
-        and 48.0 <= float(cell_heights[0]) <= 54.0,
-        "compact Month cells are not uniform within the 48-54px fluid range",
+        and 38.0 <= float(cell_heights[0]) <= 44.0,
+        "compact Month cells are not uniform within the 38-44px fluid range",
     )
     _require(state.get("metricColumns") == 2 and state.get("metricRows") == 2, "compact Month did not retain 2x2 metrics")
     _require(float(state.get("contextEventLines", 99)) <= 2.1, "long compact event exceeded two text lines")

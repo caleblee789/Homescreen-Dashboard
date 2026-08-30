@@ -1,0 +1,512 @@
+{
+  "capture_detail_sheet_count": 16,
+  "capture_plan_sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+  "detail_sheet_count": 17,
+  "each_native_capture_in_details_exactly_once": true,
+  "native_capture_count": 94,
+  "non_overview_sheet_count": 17,
+  "overview_count": 1,
+  "profile": "full",
+  "release": "1.8.7",
+  "report_sheet_count": 1,
+  "schema_version": 2,
+  "sheets": [
+    {
+      "captions": {
+        "SET-ABOUT-BOTTOM": "About & support \u00b7 backup and export at page bottom",
+        "SET-BIBLE-CUSTOM-INVALID": "Bible verse \u00b7 invalid color and blocked Save",
+        "SET-BIBLE-CUSTOM-VALID": "Bible verse \u00b7 valid custom color with low-contrast warning",
+        "SET-BIBLE-LONG": "Bible verse \u00b7 single-title editor with separate Body and Reference",
+        "SET-BIBLE-LONG-ROW": "Bible verse \u00b7 fully reachable final long row",
+        "SET-BIBLE-SHORT": "Bible verse \u00b7 short library row",
+        "SET-CLOSE-CONFIRM": "Save workflow \u00b7 three-action unsaved-changes prompt",
+        "SET-DASHBOARD-ADVANCED": "Dashboard \u00b7 expanded Sapphire advanced appearance fields",
+        "SET-DASHBOARD-FUTURE-OFF": "Dashboard \u00b7 future range visible and disabled",
+        "SET-DASHBOARD-FUTURE-ON": "Dashboard \u00b7 future range visible and enabled",
+        "SET-DIRTY": "Save workflow \u00b7 dirty count and enabled Save",
+        "SET-DISCARD": "Save workflow \u00b7 changes discarded confirmation",
+        "SET-EVENT-EDITOR-OPEN": "Events \u00b7 parented single-title editor",
+        "SET-EVENT-LONG-TITLE": "Events \u00b7 long title at the 860 px responsive minimum",
+        "SET-EVENTS-ARCHIVED": "Events \u00b7 archived tab and restore actions",
+        "SET-EVENTS-EMPTY": "Events \u00b7 empty state and Add event action",
+        "SET-EVENTS-NO-RESULTS": "Events \u00b7 no matching results",
+        "SET-EVENTS-POPULATED": "Events \u00b7 populated list with compact rows",
+        "SET-EVENTS-SEARCHED": "Events \u00b7 search result and matching count",
+        "SET-LEGACY-ROUTE": "Legacy Calendar route \u00b7 normalized Dashboard anchor",
+        "SET-PAGE-ABOUT-1080-100": "About & support \u00b7 1080 px \u00b7 100% application font",
+        "SET-PAGE-ABOUT-1280-100": "About & support \u00b7 1280 px \u00b7 100% application font",
+        "SET-PAGE-ABOUT-FULL-100": "About & support \u00b7 Full screen \u00b7 100% application font",
+        "SET-PAGE-BIBLE-1080-100": "Bible verse \u00b7 1080 px \u00b7 100% application font",
+        "SET-PAGE-BIBLE-1280-100": "Bible verse \u00b7 1280 px \u00b7 100% application font",
+        "SET-PAGE-BIBLE-FULL-100": "Bible verse \u00b7 Full screen \u00b7 100% application font",
+        "SET-PAGE-DASHBOARD-1080-100": "Dashboard \u00b7 1080 px \u00b7 100% application font",
+        "SET-PAGE-DASHBOARD-1280-100": "Dashboard \u00b7 1280 px \u00b7 100% application font",
+        "SET-PAGE-DASHBOARD-FULL-100": "Dashboard \u00b7 Full screen \u00b7 100% application font",
+        "SET-PAGE-EVENTS-1080-100": "Events \u00b7 1080 px \u00b7 100% application font",
+        "SET-PAGE-EVENTS-1280-100": "Events \u00b7 1280 px \u00b7 100% application font",
+        "SET-PAGE-EVENTS-FULL-100": "Events \u00b7 Full screen \u00b7 100% application font",
+        "SET-RESTART-PERSISTENCE": "Controlled restart \u00b7 saved values, geometry, and clean footer",
+        "SET-SAVE-ERROR": "Save workflow \u00b7 preserved draft with Retry and error details",
+        "SET-SAVE-IN-PROGRESS": "Save workflow \u00b7 one saving status and stable actions",
+        "SET-SAVE-SUCCESS": "Save workflow \u00b7 transient Saved confirmation",
+        "SET-THEME-DARK": "HOST-DARK \u00b7 DASHBOARD-DARK",
+        "SET-THEME-LIGHT": "HOST-LIGHT \u00b7 DASHBOARD-DARK",
+        "SET-WINDOW-CLAMP": "Window geometry \u00b7 oversized record clamped on screen",
+        "SET-WINDOW-FRESH-OPEN": "Fresh open \u00b7 complete decorated 1080 \u00d7 760 Settings window",
+        "SET-WINDOW-OFFSCREEN-RESTORE": "Window geometry \u00b7 disconnected position restored safely"
+      },
+      "capture_ids": [
+        "PROD-PAL-SG-SAPPHIRE-L",
+        "PROD-PAL-SG-SAPPHIRE-D",
+        "PROD-PAL-SG-AMETHYST-L",
+        "PROD-PAL-SG-AMETHYST-D",
+        "PROD-PAL-SG-GLACIER-L",
+        "PROD-PAL-SG-GLACIER-D",
+        "PROD-PAL-SG-SEA-GLASS-L",
+        "PROD-PAL-SG-SEA-GLASS-D",
+        "PROD-PAL-GR-SLATE-L",
+        "PROD-PAL-GR-SLATE-D",
+        "PROD-PAL-GR-STEEL-L",
+        "PROD-PAL-GR-STEEL-D",
+        "PROD-PAL-GR-PLUM-L",
+        "PROD-PAL-GR-PLUM-D",
+        "PROD-PAL-GR-MINT-L",
+        "PROD-PAL-GR-MINT-D",
+        "PROD-PAL-EM-EMERALD-L",
+        "PROD-PAL-EM-EMERALD-D",
+        "PROD-PAL-EM-JADE-L",
+        "PROD-PAL-EM-JADE-D",
+        "PROD-PAL-EM-MOSS-L",
+        "PROD-PAL-EM-MOSS-D",
+        "PROD-PAL-EM-LAGOON-L",
+        "PROD-PAL-EM-LAGOON-D",
+        "PROD-PAL-HC-CYAN-L",
+        "PROD-PAL-HC-CYAN-D",
+        "PROD-PAL-HC-GOLD-L",
+        "PROD-PAL-HC-GOLD-D",
+        "PROD-PAL-HC-MAGENTA-L",
+        "PROD-PAL-HC-MAGENTA-D",
+        "PROD-PAL-HC-MONOCHROME-L",
+        "PROD-PAL-HC-MONOCHROME-D",
+        "PROD-MONTH-STABLE",
+        "PROD-YEAR-STABLE",
+        "PROD-MARKERS-COMBINED",
+        "PROD-MARKERS-COMPLETION",
+        "PROD-MARKERS-DUE",
+        "PROD-MARKERS-TODAY",
+        "PROD-MARKERS-EVENT",
+        "PROD-LEGEND-NO-DUE",
+        "PROD-LEGEND-NO-EVENT",
+        "PROD-BG-WHITE",
+        "PROD-BG-BLACK",
+        "PROD-BG-PURPLE",
+        "PROD-BG-IMAGE",
+        "PROD-SECTIONS-BELOW",
+        "PROD-BOTTOM-CLEARANCE",
+        "PROD-VERSE-EXACT",
+        "SET-PAGE-DASHBOARD-1080-100",
+        "SET-PAGE-DASHBOARD-1280-100",
+        "SET-PAGE-DASHBOARD-FULL-100",
+        "SET-PAGE-EVENTS-1080-100",
+        "SET-PAGE-EVENTS-1280-100",
+        "SET-PAGE-EVENTS-FULL-100",
+        "SET-PAGE-BIBLE-1080-100",
+        "SET-PAGE-BIBLE-1280-100",
+        "SET-PAGE-BIBLE-FULL-100",
+        "SET-PAGE-ABOUT-1080-100",
+        "SET-PAGE-ABOUT-1280-100",
+        "SET-PAGE-ABOUT-FULL-100",
+        "SET-EVENTS-EMPTY",
+        "SET-EVENTS-POPULATED",
+        "SET-EVENT-EDITOR-OPEN",
+        "SET-EVENTS-SEARCHED",
+        "SET-EVENTS-NO-RESULTS",
+        "SET-EVENTS-ARCHIVED",
+        "SET-EVENT-LONG-TITLE",
+        "SET-BIBLE-SHORT",
+        "SET-BIBLE-LONG",
+        "SET-BIBLE-CUSTOM-VALID",
+        "SET-BIBLE-CUSTOM-INVALID",
+        "SET-BIBLE-LONG-ROW",
+        "SET-ABOUT-BOTTOM",
+        "SET-DASHBOARD-FUTURE-OFF",
+        "SET-DASHBOARD-FUTURE-ON",
+        "SET-DASHBOARD-ADVANCED",
+        "SET-DIRTY",
+        "SET-DISCARD",
+        "SET-CLOSE-CONFIRM",
+        "SET-SAVE-IN-PROGRESS",
+        "SET-SAVE-SUCCESS",
+        "SET-SAVE-ERROR",
+        "SET-LEGACY-ROUTE",
+        "SET-WINDOW-FRESH-OPEN",
+        "SET-WINDOW-CLAMP",
+        "SET-WINDOW-OFFSCREEN-RESTORE",
+        "SET-THEME-LIGHT",
+        "SET-THEME-DARK",
+        "PROD-STATS-WIDE-MONTH",
+        "PROD-STATS-WIDE-YEAR",
+        "PROD-STATS-INTERMEDIATE",
+        "PROD-STATS-NARROW",
+        "PROD-RESTART-PERSISTENCE",
+        "SET-RESTART-PERSISTENCE"
+      ],
+      "file": "contact-sheets/contact-sheet-00-overview.png",
+      "physical_pixels": [
+        1742,
+        5188
+      ],
+      "sha256": "06e551e0209b9dfdfda0589deb433bd8f42de2486f602b8c26be1e4640fcd40b",
+      "title": "Canonical UI release overview"
+    },
+    {
+      "captions": {},
+      "capture_ids": [
+        "PROD-PAL-SG-SAPPHIRE-L",
+        "PROD-PAL-SG-SAPPHIRE-D",
+        "PROD-PAL-SG-AMETHYST-L",
+        "PROD-PAL-SG-AMETHYST-D",
+        "PROD-PAL-SG-GLACIER-L",
+        "PROD-PAL-SG-GLACIER-D",
+        "PROD-PAL-SG-SEA-GLASS-L",
+        "PROD-PAL-SG-SEA-GLASS-D"
+      ],
+      "file": "contact-sheets/contact-sheet-01-production-palettes-sapphire-glass.png",
+      "physical_pixels": [
+        1988,
+        1500
+      ],
+      "sha256": "ec04f8feab989df87d15ae8476655b4ee0d392ffd2ce9b5f91ff86b9ca846804",
+      "title": "Production palettes \u00b7 Sapphire Glass"
+    },
+    {
+      "captions": {},
+      "capture_ids": [
+        "PROD-PAL-GR-SLATE-L",
+        "PROD-PAL-GR-SLATE-D",
+        "PROD-PAL-GR-STEEL-L",
+        "PROD-PAL-GR-STEEL-D",
+        "PROD-PAL-GR-PLUM-L",
+        "PROD-PAL-GR-PLUM-D",
+        "PROD-PAL-GR-MINT-L",
+        "PROD-PAL-GR-MINT-D"
+      ],
+      "file": "contact-sheets/contact-sheet-02-production-palettes-graphite.png",
+      "physical_pixels": [
+        1988,
+        1500
+      ],
+      "sha256": "7ae45a5a119af0bb2d3109211f317884e57fe5d36fe46a9e679fce20495d5f04",
+      "title": "Production palettes \u00b7 Graphite"
+    },
+    {
+      "captions": {},
+      "capture_ids": [
+        "PROD-PAL-EM-EMERALD-L",
+        "PROD-PAL-EM-EMERALD-D",
+        "PROD-PAL-EM-JADE-L",
+        "PROD-PAL-EM-JADE-D",
+        "PROD-PAL-EM-MOSS-L",
+        "PROD-PAL-EM-MOSS-D",
+        "PROD-PAL-EM-LAGOON-L",
+        "PROD-PAL-EM-LAGOON-D"
+      ],
+      "file": "contact-sheets/contact-sheet-03-production-palettes-emerald.png",
+      "physical_pixels": [
+        1988,
+        1500
+      ],
+      "sha256": "301c78aef3fce7f302b3c2a9d49fe6f94a8a625c9dd65d2d3335826174361975",
+      "title": "Production palettes \u00b7 Emerald"
+    },
+    {
+      "captions": {},
+      "capture_ids": [
+        "PROD-PAL-HC-CYAN-L",
+        "PROD-PAL-HC-CYAN-D",
+        "PROD-PAL-HC-GOLD-L",
+        "PROD-PAL-HC-GOLD-D",
+        "PROD-PAL-HC-MAGENTA-L",
+        "PROD-PAL-HC-MAGENTA-D",
+        "PROD-PAL-HC-MONOCHROME-L",
+        "PROD-PAL-HC-MONOCHROME-D"
+      ],
+      "file": "contact-sheets/contact-sheet-04-production-palettes-high-contrast.png",
+      "physical_pixels": [
+        1988,
+        1500
+      ],
+      "sha256": "d92a751553668d19427d5e8e9c69cf5cdea6105a275dc37fb923747091527a6d",
+      "title": "Production palettes \u00b7 High Contrast"
+    },
+    {
+      "captions": {},
+      "capture_ids": [
+        "PROD-MONTH-STABLE",
+        "PROD-YEAR-STABLE",
+        "PROD-MARKERS-COMBINED",
+        "PROD-MARKERS-COMPLETION",
+        "PROD-MARKERS-DUE",
+        "PROD-MARKERS-TODAY",
+        "PROD-MARKERS-EVENT"
+      ],
+      "file": "contact-sheets/contact-sheet-05-production-month-year-and-marker-combinations.png",
+      "physical_pixels": [
+        1988,
+        1500
+      ],
+      "sha256": "beffe78b81a7edf25f8871a8ddcdee800655f4a6a47a9dff31d9bf1b87c6dddc",
+      "title": "Production Month, Year, and marker combinations"
+    },
+    {
+      "captions": {},
+      "capture_ids": [
+        "PROD-LEGEND-NO-DUE",
+        "PROD-LEGEND-NO-EVENT",
+        "PROD-BG-WHITE",
+        "PROD-BG-BLACK",
+        "PROD-BG-PURPLE",
+        "PROD-BG-IMAGE",
+        "PROD-SECTIONS-BELOW",
+        "PROD-BOTTOM-CLEARANCE",
+        "PROD-VERSE-EXACT"
+      ],
+      "file": "contact-sheets/contact-sheet-06-production-legends-backgrounds-sections-clearance-and-verse.png",
+      "physical_pixels": [
+        1988,
+        1500
+      ],
+      "sha256": "65ef4cf42f276b064760682932fe111e88bb9197bde9e02a118f43aaf32feefb",
+      "title": "Production legends, backgrounds, sections, clearance, and verse"
+    },
+    {
+      "captions": {
+        "SET-DASHBOARD-ADVANCED": "Dashboard \u00b7 expanded Sapphire advanced appearance fields",
+        "SET-DASHBOARD-FUTURE-OFF": "Dashboard \u00b7 future range visible and disabled",
+        "SET-DASHBOARD-FUTURE-ON": "Dashboard \u00b7 future range visible and enabled",
+        "SET-PAGE-DASHBOARD-1080-100": "Dashboard \u00b7 1080 px \u00b7 100% application font",
+        "SET-PAGE-DASHBOARD-1280-100": "Dashboard \u00b7 1280 px \u00b7 100% application font",
+        "SET-PAGE-DASHBOARD-FULL-100": "Dashboard \u00b7 Full screen \u00b7 100% application font"
+      },
+      "capture_ids": [
+        "SET-PAGE-DASHBOARD-1080-100",
+        "SET-PAGE-DASHBOARD-1280-100",
+        "SET-PAGE-DASHBOARD-FULL-100",
+        "SET-DASHBOARD-FUTURE-OFF",
+        "SET-DASHBOARD-FUTURE-ON",
+        "SET-DASHBOARD-ADVANCED"
+      ],
+      "file": "contact-sheets/contact-sheet-07-settings-dashboard-100-application-font.png",
+      "physical_pixels": [
+        1988,
+        1032
+      ],
+      "sha256": "cb29c69a9bfdc62de6abddf362edfa152e9d4e8657748321ec39d75e657873a8",
+      "title": "Settings Dashboard \u00b7 100% application font"
+    },
+    {
+      "captions": {
+        "SET-PAGE-EVENTS-1080-100": "Events \u00b7 1080 px \u00b7 100% application font",
+        "SET-PAGE-EVENTS-1280-100": "Events \u00b7 1280 px \u00b7 100% application font",
+        "SET-PAGE-EVENTS-FULL-100": "Events \u00b7 Full screen \u00b7 100% application font"
+      },
+      "capture_ids": [
+        "SET-PAGE-EVENTS-1080-100",
+        "SET-PAGE-EVENTS-1280-100",
+        "SET-PAGE-EVENTS-FULL-100"
+      ],
+      "file": "contact-sheets/contact-sheet-08-settings-events-100-application-font.png",
+      "physical_pixels": [
+        1988,
+        564
+      ],
+      "sha256": "dc2dbcdcf87e7303468fb3c6dcceda11a13a778948a34f7ae24d3ffc7fae51cb",
+      "title": "Settings Events \u00b7 100% application font"
+    },
+    {
+      "captions": {
+        "SET-PAGE-BIBLE-1080-100": "Bible verse \u00b7 1080 px \u00b7 100% application font",
+        "SET-PAGE-BIBLE-1280-100": "Bible verse \u00b7 1280 px \u00b7 100% application font",
+        "SET-PAGE-BIBLE-FULL-100": "Bible verse \u00b7 Full screen \u00b7 100% application font"
+      },
+      "capture_ids": [
+        "SET-PAGE-BIBLE-1080-100",
+        "SET-PAGE-BIBLE-1280-100",
+        "SET-PAGE-BIBLE-FULL-100"
+      ],
+      "file": "contact-sheets/contact-sheet-09-settings-bible-verse-100-application-font.png",
+      "physical_pixels": [
+        1988,
+        564
+      ],
+      "sha256": "9a827e232c5c64d8a6812b60ff9f681734391b1fc78b18c752fca21767d76d75",
+      "title": "Settings Bible verse \u00b7 100% application font"
+    },
+    {
+      "captions": {
+        "SET-PAGE-ABOUT-1080-100": "About & support \u00b7 1080 px \u00b7 100% application font",
+        "SET-PAGE-ABOUT-1280-100": "About & support \u00b7 1280 px \u00b7 100% application font",
+        "SET-PAGE-ABOUT-FULL-100": "About & support \u00b7 Full screen \u00b7 100% application font"
+      },
+      "capture_ids": [
+        "SET-PAGE-ABOUT-1080-100",
+        "SET-PAGE-ABOUT-1280-100",
+        "SET-PAGE-ABOUT-FULL-100"
+      ],
+      "file": "contact-sheets/contact-sheet-10-settings-about-100-application-font.png",
+      "physical_pixels": [
+        1988,
+        564
+      ],
+      "sha256": "66cf7f4fb55b9ca25b5670a9df88bfec7a5ab6e5e34cdf406b79904ec29e5f4d",
+      "title": "Settings About \u00b7 100% application font"
+    },
+    {
+      "captions": {
+        "SET-EVENT-EDITOR-OPEN": "Events \u00b7 parented single-title editor",
+        "SET-EVENT-LONG-TITLE": "Events \u00b7 long title at the 860 px responsive minimum",
+        "SET-EVENTS-ARCHIVED": "Events \u00b7 archived tab and restore actions",
+        "SET-EVENTS-EMPTY": "Events \u00b7 empty state and Add event action",
+        "SET-EVENTS-NO-RESULTS": "Events \u00b7 no matching results",
+        "SET-EVENTS-POPULATED": "Events \u00b7 populated list with compact rows",
+        "SET-EVENTS-SEARCHED": "Events \u00b7 search result and matching count"
+      },
+      "capture_ids": [
+        "SET-EVENTS-EMPTY",
+        "SET-EVENTS-POPULATED",
+        "SET-EVENT-EDITOR-OPEN",
+        "SET-EVENTS-SEARCHED",
+        "SET-EVENTS-NO-RESULTS",
+        "SET-EVENTS-ARCHIVED",
+        "SET-EVENT-LONG-TITLE"
+      ],
+      "file": "contact-sheets/contact-sheet-11-settings-events-states.png",
+      "physical_pixels": [
+        1988,
+        1500
+      ],
+      "sha256": "3a690ceec15bdd79213b47600f7d27281cb8490819e6454a01f3d6e9ff97dca3",
+      "title": "Settings Events states"
+    },
+    {
+      "captions": {
+        "SET-BIBLE-CUSTOM-INVALID": "Bible verse \u00b7 invalid color and blocked Save",
+        "SET-BIBLE-CUSTOM-VALID": "Bible verse \u00b7 valid custom color with low-contrast warning",
+        "SET-BIBLE-LONG": "Bible verse \u00b7 single-title editor with separate Body and Reference",
+        "SET-BIBLE-LONG-ROW": "Bible verse \u00b7 fully reachable final long row",
+        "SET-BIBLE-SHORT": "Bible verse \u00b7 short library row"
+      },
+      "capture_ids": [
+        "SET-BIBLE-SHORT",
+        "SET-BIBLE-LONG",
+        "SET-BIBLE-CUSTOM-VALID",
+        "SET-BIBLE-CUSTOM-INVALID",
+        "SET-BIBLE-LONG-ROW"
+      ],
+      "file": "contact-sheets/contact-sheet-12-settings-bible-states.png",
+      "physical_pixels": [
+        1988,
+        1032
+      ],
+      "sha256": "1413e656fb51887b859e619626816632339f58e6622b703995cf213fb9837f31",
+      "title": "Settings Bible states"
+    },
+    {
+      "captions": {
+        "SET-CLOSE-CONFIRM": "Save workflow \u00b7 three-action unsaved-changes prompt",
+        "SET-DIRTY": "Save workflow \u00b7 dirty count and enabled Save",
+        "SET-DISCARD": "Save workflow \u00b7 changes discarded confirmation",
+        "SET-SAVE-ERROR": "Save workflow \u00b7 preserved draft with Retry and error details",
+        "SET-SAVE-IN-PROGRESS": "Save workflow \u00b7 one saving status and stable actions",
+        "SET-SAVE-SUCCESS": "Save workflow \u00b7 transient Saved confirmation"
+      },
+      "capture_ids": [
+        "SET-DIRTY",
+        "SET-DISCARD",
+        "SET-CLOSE-CONFIRM",
+        "SET-SAVE-IN-PROGRESS",
+        "SET-SAVE-SUCCESS",
+        "SET-SAVE-ERROR"
+      ],
+      "file": "contact-sheets/contact-sheet-13-settings-dirty-discard-save-and-error.png",
+      "physical_pixels": [
+        1988,
+        1032
+      ],
+      "sha256": "ec0d75a8069c93e6a555e06556861a72c11efe1c4586ecb89c0c60598ad5c90c",
+      "title": "Settings dirty, discard, save, and error"
+    },
+    {
+      "captions": {
+        "SET-ABOUT-BOTTOM": "About & support \u00b7 backup and export at page bottom",
+        "SET-LEGACY-ROUTE": "Legacy Calendar route \u00b7 normalized Dashboard anchor",
+        "SET-THEME-DARK": "HOST-DARK \u00b7 DASHBOARD-DARK",
+        "SET-THEME-LIGHT": "HOST-LIGHT \u00b7 DASHBOARD-DARK",
+        "SET-WINDOW-CLAMP": "Window geometry \u00b7 oversized record clamped on screen",
+        "SET-WINDOW-FRESH-OPEN": "Fresh open \u00b7 complete decorated 1080 \u00d7 760 Settings window",
+        "SET-WINDOW-OFFSCREEN-RESTORE": "Window geometry \u00b7 disconnected position restored safely"
+      },
+      "capture_ids": [
+        "SET-ABOUT-BOTTOM",
+        "SET-LEGACY-ROUTE",
+        "SET-WINDOW-FRESH-OPEN",
+        "SET-WINDOW-CLAMP",
+        "SET-WINDOW-OFFSCREEN-RESTORE",
+        "SET-THEME-LIGHT",
+        "SET-THEME-DARK"
+      ],
+      "file": "contact-sheets/contact-sheet-14-settings-about-bottom-legacy-route-fresh-open-and-clamp.png",
+      "physical_pixels": [
+        1988,
+        1500
+      ],
+      "sha256": "bc9cc7e557feebd13c8394a5e15763e27fe64b05acf7bc1b86f9da678819417b",
+      "title": "Settings About bottom, legacy route, fresh open, and clamp"
+    },
+    {
+      "captions": {},
+      "capture_ids": [
+        "PROD-STATS-WIDE-MONTH",
+        "PROD-STATS-WIDE-YEAR",
+        "PROD-STATS-INTERMEDIATE",
+        "PROD-STATS-NARROW"
+      ],
+      "file": "contact-sheets/contact-sheet-15-statistics-accuracy-responsive-shells.png",
+      "physical_pixels": [
+        1988,
+        1032
+      ],
+      "sha256": "d8577cc504aa79310953b6e0be81d8d7d02af132ff2ad19ad0faa4e66a77239c",
+      "title": "Statistics accuracy \u00b7 responsive shells"
+    },
+    {
+      "captions": {
+        "SET-RESTART-PERSISTENCE": "Controlled restart \u00b7 saved values, geometry, and clean footer"
+      },
+      "capture_ids": [
+        "PROD-RESTART-PERSISTENCE",
+        "SET-RESTART-PERSISTENCE"
+      ],
+      "file": "contact-sheets/contact-sheet-16-controlled-restart-persistence.png",
+      "physical_pixels": [
+        1988,
+        564
+      ],
+      "sha256": "b856cff2ccf89e3e290087916428cfa7ffdd596b4455faad21f369365e5597b1",
+      "title": "Controlled restart persistence"
+    },
+    {
+      "all_four_isolation_gates_repeated": true,
+      "capture_ids": [],
+      "file": "contact-sheets/contact-sheet-17-package-and-isolation-reports.png",
+      "native_platform_matrix": "passed",
+      "physical_pixels": [
+        1800,
+        1400
+      ],
+      "report_only": true,
+      "sha256": "5627a738b812c42de05b14acbb25e3830d7602c87ba781ba18641cff6dc3b583",
+      "title": "Package and isolation reports"
+    }
+  ]
+}

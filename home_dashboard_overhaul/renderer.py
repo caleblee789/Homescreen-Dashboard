@@ -160,6 +160,7 @@ def _style(config: Mapping[str, Any], anki_dark: bool) -> str:
     theme = _resolved_theme(config, anki_dark)
 
     glass = theme["theme_name"] == "Sapphire Glass"
+    high_contrast = theme["theme_name"] == "High Contrast"
     safe_opacity = max(94, min(100, int(appearance.get("opacity", 96)))) / 100
     blur = max(0, min(16, int(appearance.get("blur", 12)))) if glass else 0
     if glass:
@@ -170,12 +171,14 @@ def _style(config: Mapping[str, Any], anki_dark: bool) -> str:
             )
         else:
             card_background = rgba_color(theme["ui_surface_1"], safe_opacity)
-    else:
+    elif high_contrast:
         card_background = theme["ui_surface_1"]
+    else:
+        card_background = rgba_color(theme["ui_surface_1"], safe_opacity)
     declarations = {
         "--ui-card-background": card_background,
         "--hdo-card-backdrop-filter": "blur({}px) saturate(1.08)".format(blur) if blur else "none",
-        "--hdo-card-surface-opacity": "{:.2f}".format(safe_opacity if glass else 1.0),
+        "--hdo-card-surface-opacity": "{:.2f}".format(1.0 if high_contrast else safe_opacity),
         "--hdo-target-size": "{}px".format(INTERACTION_TARGET_MIN_PX),
         "--hdo-control-visual": "{}px".format(VISUAL_CHROME_PX),
         "--hdo-focus-ring": "{}px".format(FOCUS_RING_PX),
@@ -186,6 +189,35 @@ def _style(config: Mapping[str, Any], anki_dark: bool) -> str:
         "--{}".format(key.replace("_", "-")): value
         for key, value in theme.items()
         if key not in {"theme_name", "color_mode", "heatmap_preset"}
+    })
+    declarations.update({
+        "--hd-surface-root": theme["ui_canvas"],
+        "--hd-surface-card": card_background,
+        "--hd-surface-elevated": theme["ui_surface_2"],
+        "--hd-surface-hover": theme["ui_control_hover"],
+        "--hd-surface-pressed": theme["ui_control_pressed"],
+        "--hd-border-subtle": theme["ui_border_subtle"],
+        "--hd-border-strong": theme["ui_border_strong"],
+        "--hd-text-primary": theme["ui_text_primary"],
+        "--hd-text-secondary": theme["ui_text_secondary"],
+        "--hd-text-muted": theme["ui_text_tertiary"],
+        "--hd-accent": theme["ui_accent"],
+        "--hd-accent-hover": theme["ui_accent_hover"],
+        "--hd-accent-pressed": theme["ui_accent_pressed"],
+        "--hd-focus-ring": theme["ui_focus"],
+        "--hd-shadow": theme["ui_shadow_card"],
+        "--hd-new": theme["status_new_fill"],
+        "--hd-learning": theme["status_learning_fill"],
+        "--hd-reviews": theme["status_review_fill"],
+        "--hd-success": theme["status_success_fill"],
+        "--hd-warning": theme["status_warning_fill"],
+        "--hd-danger": theme["status_danger_fill"],
+        "--hd-event": theme["status_event_fill"],
+        "--hd-due": theme["heat_due_mark_2"],
+        **{
+            "--hd-heat-{}".format(level): theme["heat_complete_{}".format(level)]
+            for level in range(6)
+        },
     })
     return ";".join("{}:{}".format(key, value) for key, value in declarations.items())
 
@@ -346,7 +378,8 @@ def _progress_group(snapshot: DashboardSnapshot) -> str:
         'aria-valuemax="100" aria-valuenow="{}" aria-valuetext="{}"{} '
         'style="--hdo-progress-percent:{}%">'
         '<span class="hdo-progress-fill" data-hdo-progress-fill></span>'
-        '<span class="hdo-progress-label hdo-progress-label--track" data-hdo-progress-label>{}</span>'
+        '<span class="hdo-progress-label hdo-progress-label--track" '
+        'data-hdo-progress-label>{}</span>'
         '<span class="hdo-progress-label hdo-progress-label--fill" '
         'data-hdo-progress-label-fill aria-hidden="true">{}</span></div>'
     ).format(
@@ -488,24 +521,23 @@ def _retention_role(value: RateMetric, target: int | None) -> str:
     return "hdo-value--danger"
 
 
-def _again_role(
-    value: RateMetric,
-    retention_target: int | None,
-    display_percent: int | None = None,
-) -> str:
-    if value.status != RateStatus.AVAILABLE or value.percent is None or retention_target is None:
-        return ""
-    percent = value.percent if display_percent is None else display_percent
-    target = max(0, 100 - retention_target)
-    if percent <= target:
-        return "hdo-value--success"
-    if percent <= min(100, target + 10):
-        return "hdo-value--warning"
-    return "hdo-value--danger"
+def _last_seven_presentation(snapshot: DashboardSnapshot) -> dict[str, str]:
+    state = _facts_state(snapshot, "last_seven_days")
+    if not state.is_available:
+        return {
+            "time_spent": UNAVAILABLE_TEXT,
+            "time_spent_compact": UNAVAILABLE_TEXT,
+        }
+    stats: LastSevenDaysStats = state.value
+    return {
+        "time_spent": _duration(stats.seconds),
+        "time_spent_compact": _duration_compact(stats.seconds),
+    }
 
 
 def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
     state = _facts_state(snapshot, "last_seven_days")
+    presentation = _last_seven_presentation(snapshot)
     if not state.is_available:
         return _stats_group(
             "Last 7 Days",
@@ -516,7 +548,14 @@ def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
                     ("Cards studied", "last_seven_days.cards_studied", ""),
                     ("New cards studied", "last_seven_days.new_cards_studied", "new"),
                     ("Retention", "last_seven_days.retention", ""),
-                    ("Again rate", "last_seven_days.again_rate", ""),
+                )
+            ] + [
+                _metric(
+                    "Time spent",
+                    presentation["time_spent"],
+                    "last_seven_days.time_spent",
+                    unavailable=True,
+                    compact_value=presentation["time_spent_compact"],
                 )
             ],
         )
@@ -533,22 +572,12 @@ def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
         _retention_role(stats.retention, target),
         unavailable=retention == UNAVAILABLE_TEXT,
     ))
-    again_percent = (
-        100 - int(stats.retention.percent)
-        if (
-            stats.retention.status == RateStatus.AVAILABLE
-            and stats.retention.percent is not None
-            and stats.again_rate.status == RateStatus.AVAILABLE
-        )
-        else None
-    )
-    again = "{}%".format(again_percent) if again_percent is not None else _rate_text(stats.again_rate)
     rows.append(_metric(
-        "Again rate",
-        again,
-        "last_seven_days.again_rate",
-        _again_role(stats.again_rate, target, again_percent),
-        unavailable=again == UNAVAILABLE_TEXT,
+        "Time spent",
+        presentation["time_spent"],
+        "last_seven_days.time_spent",
+        unavailable=False,
+        compact_value=presentation["time_spent_compact"],
     ))
     return _stats_group("Last 7 Days", "hdo-last-seven", rows)
 
@@ -754,6 +783,7 @@ def dashboard_facts_payload(
     progress = _progress_presentation(snapshot)
     session = _today_session_presentation(snapshot)
     session.pop("time_spent_compact", None)
+    recent = _last_seven_presentation(snapshot)
     return {
         "activity": range_payload["activity"],
         "events": _event_state_payload(facts.events),
@@ -786,6 +816,7 @@ def dashboard_facts_payload(
                 "fill_percent": progress.fill_percent,
             },
             "today_session": session,
+            "last_seven_days": recent,
         },
         "retention_target": retention_target,
         "view": view,
@@ -840,29 +871,18 @@ def _calendar(
         '<div class="hdo-legend-group hdo-legend-due">'
         '<span class="hdo-legend-title">Due cards</span>'
         '<span class="hdo-legend-scale hdo-due-legend" aria-hidden="true">'
-        '<i data-due-level="1"></i><i data-due-level="2"></i><i data-due-level="3"></i>'
+        '<i data-due-level="2"></i>'
         '</span></div>'
         if config.get("heatmap", {}).get("show_due_forecast", True)
         else ""
     )
     event_summary = (
-        '<div class="hdo-next-event-line hdo-calendar-footer__event" data-hdo-context-event>'
-        '<span class="hdo-context-event-marker" data-hdo-event-marker aria-hidden="true" hidden></span>'
-        '<span class="hdo-event-summary">'
-        '<button type="button" class="hdo-event-title" data-hdo-open-events hidden></button>'
-        '<span class="hdo-event-meta" data-hdo-event-meta hidden></span>'
-        '<span class="hdo-event-more" data-hdo-event-more hidden></span>'
-        '<span class="hdo-event-empty" data-hdo-event-empty>No upcoming events</span></span></div>'
-        if config.get("visibility", {}).get("events", True)
-        else ""
-    )
-    event_edit = (
-        '<button type="button" class="hdo-edit-event-button hdo-icon-button" data-hdo-edit-event '
-        'aria-label="Edit event" title="Edit event" hidden>'
-        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
-        '<path d="m4 16.8-.8 4 4-.8L18.6 8.6l-3.2-3.2L4 16.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
-        '<path d="m13.8 7 3.2 3.2M3.8 20.2h16.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'
-        '</svg></button>'
+        '<div class="hdo-event-sections hdo-calendar-footer__event" data-hdo-context-event>'
+        '<section class="hdo-event-section" data-hdo-event-section>'
+        '<p class="hdo-context-label" data-hdo-context-event-label>Next event</p>'
+        '<div class="hdo-event-rows" data-hdo-event-rows></div>'
+        '<p class="hdo-event-empty" data-hdo-event-empty>No upcoming events</p>'
+        '</section></div>'
         if config.get("visibility", {}).get("events", True)
         else ""
     )
@@ -886,14 +906,14 @@ def _calendar(
         '<span class="hdo-legend-title">Completed reviews</span>'
         '<span class="hdo-legend-endpoint">Low</span>'
         '<span class="hdo-legend-scale hdo-completion-legend" aria-hidden="true">'
-        '<i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i><i data-level="5"></i>'
+        '<i data-level="0"></i><i data-level="1"></i><i data-level="2"></i>'
+        '<i data-level="3"></i><i data-level="4"></i><i data-level="5"></i>'
         '</span><span class="hdo-legend-endpoint">High</span></div>{}{}</div>'
         '<div class="hdo-calendar-context hdo-calendar-context-bar{}" aria-live="polite">'
         '<div class="hdo-selected-date-line hdo-calendar-footer__date-context">'
         '<span class="hdo-date-state-chip" data-hdo-date-state>Today</span>'
         '<time data-hdo-context-date></time></div>{}'
         '<div class="hdo-context-actions hdo-calendar-footer__actions">'
-        '{}'
         '<button type="button" class="hdo-context-action hdo-calendar-card-action hdo-context-action--primary" data-hdo-primary-action hidden></button>'
         '<button type="button" class="hdo-context-action" data-hdo-most-missed hidden>Most missed</button>'
         '</div></div></footer>'
@@ -912,7 +932,6 @@ def _calendar(
         event_legend,
         " hdo-calendar-context--no-event" if not event_summary else "",
         event_summary,
-        event_edit,
         _safe_json(payload),
     )
 
@@ -926,8 +945,12 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
     except (TypeError, ValueError):
         configured_size = 28
     plain_verse = html.unescape(re.sub(r"<[^>]+>", " ", snapshot.verse.body_html))
-    character_count = len(" ".join(plain_verse.split()))
-    if character_count <= 90:
+    normalized_verse = " ".join(plain_verse.split())
+    character_count = len(normalized_verse)
+    has_verse = bool(normalized_verse)
+    if not has_verse:
+        verse_class = "hdo-verse hdo-verse--empty"
+    elif character_count <= 90:
         verse_class = "hdo-verse hdo-verse--short"
     elif character_count <= 180:
         verse_class = "hdo-verse hdo-verse--medium"
@@ -935,8 +958,13 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
         verse_class = "hdo-verse hdo-verse--long"
     reference = (
         '<footer class="hdo-verse-reference">{}</footer>'.format(snapshot.verse.reference_html)
-        if snapshot.verse.reference_html
+        if has_verse and snapshot.verse.reference_html
         else ""
+    )
+    verse_body = (
+        snapshot.verse.body_html
+        if has_verse
+        else '<span class="hdo-verse-empty-state">No verse selected</span>'
     )
     return (
         '<section class="hdo-card hdo-dashboard-panel hdo-bible-card" data-hdo-primitive="{}" '
@@ -951,7 +979,7 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
         custom_color,
         _escape(bible.get("font_family", "Georgia, serif")),
         configured_size,
-        snapshot.verse.body_html,
+        verse_body,
         reference,
     )
 

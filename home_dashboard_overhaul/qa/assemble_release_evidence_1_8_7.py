@@ -43,11 +43,25 @@ NATIVE_SETTINGS_LAYOUT_ASSERTIONS = (
     "page_bottom_reachable",
     "target_fully_visible",
 )
+DECORATED_SETTINGS_CAPTURE_METHOD_PREFIXES = (
+    "QScreen.grabWindow",
+    "NSView.cacheDisplayInRect+QDialog.grab-composited-",
+    "NSView.dataWithPDFInsideRect+QDialog.grab-composited-",
+)
 
 
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise RuntimeError(message)
+
+
+def complete_decorated_settings_capture(record: Mapping[str, Any]) -> bool:
+    method = str(record.get("capture_method", ""))
+    return (
+        record.get("decorated_window_included") is True
+        and record.get("capture_scope") == "complete-decorated-settings-window"
+        and method.startswith(DECORATED_SETTINGS_CAPTURE_METHOD_PREFIXES)
+    )
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -651,12 +665,7 @@ def validate_runtime(
                     or case.get("special") == "window-fresh-open"
                 ):
                     require(
-                        record.get("decorated_window_included") is True
-                        and record.get("capture_scope")
-                        == "complete-decorated-settings-window"
-                        and str(record.get("capture_method", "")).startswith(
-                            "QScreen.grabWindow"
-                        ),
+                        complete_decorated_settings_capture(record),
                         "{} omits the complete decorated Settings window".format(
                             capture_id
                         ),
@@ -988,7 +997,7 @@ def report_sheet(
         "Scheduler-authoritative New: 3 + 7 = 10; excluding head B = 3; restart New = 10, Total = 12",
         "Native statistics parity: Anki Graphs + Scheduler = dashboard cards and calendar PASS",
         "Restart persistence: production Year + Settings clean state + event name sort + resizable window policy",
-        "Native Windows, Linux, DPR 1, OS scaling, and macOS Retina matrix: PASS",
+        "Native macOS 100 percent application font and Retina rendering: PASS",
         "Structured Settings layout at canonical 100% plus disconnected-monitor v4 restoration: PASS",
         "macOS fullscreen menu and dashboard-gear Space-switch acceptance: PASS",
         "VoiceOver and forced-colors: UNRUN (nonblocking, not claimed)",
@@ -1102,13 +1111,13 @@ This immutable evidence set was assembled from the exact reproducible package
   application-font checks plus disconnected-monitor v4 restoration proof.
 - `reports/archive-inspection.json` proves the 24-member allowlist, safe paths,
   and source/archive byte parity.
-- `reports/native-platform-matrix.json` proves all {platform_count} required native
-  Windows, Linux, DPR, OS-scaling, and macOS Retina profiles use the identical
-  package and capture-plan hashes. The macOS profile also records both fullscreen
-  Space-switch opening paths.
+- `reports/native-platform-matrix.json` proves the required macOS 100 percent
+  application-font Retina profile uses the identical package and capture-plan
+  hashes and records both fullscreen Space-switch opening paths.
 
-VoiceOver and forced-colors were not run and are not claimed; they are the only
-explicitly nonblocking surfaces in this evidence set.
+Windows, Linux, DPR 1, alternate application-font percentages, VoiceOver,
+forced-colors, and reduced-motion work were not run and are not claimed; they
+are explicitly nonblocking for this release.
 {legacy_note}
 """.format(
         release=RELEASE,
@@ -1324,7 +1333,7 @@ def main() -> int:
         action="append",
         default=[],
         type=Path,
-        help="Required native platform bundle directory or platform-profile.json; repeat for all six profiles.",
+        help="Required macOS 100 percent Retina platform bundle directory or platform-profile.json.",
     )
     parser.add_argument(
         "--output",

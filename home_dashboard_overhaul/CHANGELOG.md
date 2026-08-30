@@ -5,48 +5,52 @@
 ## 1.8.7 — 2026-08-25
 
 - Kept the parented native `QDialog(mw)` and local `exec()` lifecycle while
-  replacing the Settings geometry contract with logical 940×680 defaults,
-  720×520 minimums, and 92%×88% initial screen caps. A versioned UI-only
-  `QSettings` value preserves non-maximized geometry and clamps or recenters it
-  on the active screen before first visibility.
-- Rebuilt the shell as fixed header, zero-minimum scrollable body, and fixed
-  footer. The centered shell is capped at 1,120 px; the page column is capped
-  at 940 px; and a synchronized, non-eliding `QTabBar` replaces the 152 px
-  sidebar below 760 logical body pixels or before a label would wrap.
-- Added application-font-relative role fonts, 36 px shared controls, the
-  4/8/12/16/20/24/32 spacing scale, supplied graphite dark/light roles,
-  accent-soft selection, neutral Events tabs, standardized disclosures, and
-  scoped Reset visibility.
+  replacing the Settings geometry contract with a logical 1080×760 default,
+  an 860×640 normal minimum, and 48 px normal or 24 px constrained-screen
+  margins. The UI-only `settings_dialog_geometry/v4` record preserves valid
+  logical geometry and clamps or recenters it on the active screen before
+  first visibility.
+- Rebuilt the shell as fixed header, zero-minimum scrollable body, reserved
+  error region, and separate fixed 56 px action footer. The centered shell is
+  capped at 1,264 px; every page is capped at 1,080 px; and a synchronized,
+  non-eliding `QTabBar` replaces the 184 px sidebar at the supported 860 px
+  minimum.
+- Added application-font-relative role fonts, 34 px shared controls, the
+  4/8/12/16/24 spacing scale, the supplied `#F3F6F8`/`#E9EFF4` light and
+  `#0B1118`/`#151D26` dark surfaces, `#C7D1DB`/`#2B3948` borders, neutral
+  Events tabs, standardized disclosures, and scoped Reset visibility.
 - Reworked Dashboard Appearance, sections, Study metrics, Calendar display,
-  Calendar range, and Local data into responsive native groups. Added a native
-  dashboard-card preview at wide page widths and retained all saved palette
-  IDs, ranges, filters, and date semantics.
+  Calendar range, and Local data into responsive native groups. Added a
+  five-step heatmap palette preview and a compact Bible appearance preview
+  while retaining all saved palette IDs, ranges, filters, and date semantics.
 - Rebuilt Events as one bounded list surface with explicit sorting, search
   clearing and result summaries, separate empty/no-results states, neutral
   Active/Archived tabs, readable two-line rows, and 32 px action menus. Normal
   row activation opens the editor; persistent row selection was removed.
-- Added a native Bible verse preview, attached Custom color field/swatch,
-  blocking invalid-hex validation, nonblocking contrast warnings, dynamic
-  Rotation help, and a complete filtered `QAbstractListModel`/`QListView`
-  implementation with delegate-painted two-line rows instead of a visible
-  100-item cap.
-- Top-aligned independently sized About Version and Help cards, derived Anki
-  compatibility copy from the manifest, added two-second Copy diagnostics
-  feedback, standardized legal disclosures, tightened the local-data and
-  backup copy, and renamed the export action to Export verse edits.
-- Moved dirty, saving, success, validation, and failure feedback into the
-  footer beside its actions. Save failure now retains the draft and retry
-  state, shows production-safe copy, and keeps raw details collapsed. Dirty
-  close uses the existing embedded prompt with Keep editing and Discard and
-  close actions.
-- Expanded the canonical plan to 106 native frames and added hard native
-  Windows, Linux, DPR, OS-scaling, and macOS full-screen report gates keyed to
-  one package and plan hash. VoiceOver and forced colors remain explicitly
-  unrun and nonblocking. Existing 1.8.6 release evidence and the untracked
-  41-frame 1.8.7 review set remain immutable provenance.
+- Added an attached Custom color field/input well, blocking invalid-hex
+  validation, nonblocking contrast warnings, dynamic Rotation help, and a
+  complete filtered `QAbstractListModel`/`QListView` implementation with
+  delegate-painted two-line rows instead of a visible 100-item cap.
+- Reflowed About into a deliberate two-column Version and support, Privacy and
+  legal, and Backup and recovery composition; derived Anki compatibility copy
+  from the manifest; added transient Copy diagnostics feedback; standardized
+  legal disclosures; and named the export action Export verse library edits.
+- Kept dirty, saving, success, and discard feedback in the native fixed footer
+  while validation and save failures use the reserved region above it. Failed
+  saves retain the complete draft for retry and keep technical details
+  collapsed. Dirty close uses `Cancel`, `Discard changes`, and `Save and close`.
+- Set the canonical plan to 94 native frames: 92 initial and two controlled
+  restart states. macOS Retina at 100% application font plus the full-screen
+  no-Space-switch workflow are blocking; Windows, Linux, DPR 1, alternate font
+  and OS scaling, VoiceOver, and forced colors remain explicitly unrun,
+  unclaimed, and nonblocking. Existing evidence remains immutable provenance.
+- Changed Last 7 Days to display elapsed Time spent from its exact seven
+  scheduler periods instead of visible Again rate; Again remains internal to
+  retention parity. Active progress displays `N% complete` inside the bar.
 - Preserved schema 8, every setting key and saved identifier, events and verse
-  data, transactional persistence, dashboard statistics, native isolation,
-  and the 24-member package allowlist.
+  data, transactional persistence, scheduler/retention semantics, native
+  isolation, and the 24-member package allowlist.
+
 ## 1.8.6 — 2026-08-24
 
 - Audited every study-derived value shown in Today’s Progress, Today’s

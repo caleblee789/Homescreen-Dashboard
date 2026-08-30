@@ -85,17 +85,19 @@ buried `-2`/`-3` queues are excluded. The selected deck is not consulted, and
 Total is always the exact sum of the three categories. Cards buried reports
 only scoped cards currently in queues `-2` or `-3` that are New or currently
 due/overdue. Future Learning and Review cards and transient queue-hidden
-siblings are excluded.
+siblings are excluded. While work remains, the active progress presentation
+places `N% complete` inside the filled bar.
 
 Last 7 Days spans the seven fixed scheduler periods ending at the next
-rollover. All Time spans the complete configured analytics scope. Retention
+rollover, and Time spent sums recorded review time from those same scoped
+rows. All Time spans the complete configured analytics scope. Retention
 matches Anki 26.8.1 true-retention eligibility: `ease > 0`, excluding
 `type = 3 AND factor = 0`, and requiring `type = 1` or a prior interval of at
 least one day. Again fails and Hard, Good, and Easy pass. Raw pass and eligible
 counts are aggregated before Retention is rounded half-up to the existing whole
-percentage once; visible Again is `100 − Retention`. Avg cards/day divides
-answer events by active scheduler days, and streaks count consecutive active
-scheduler days.
+percentage once. Again remains an internal retention-parity calculation but is
+not displayed. Avg cards/day divides answer events by active scheduler days,
+and streaks count consecutive active scheduler days.
 
 Calendar history and selected-day details use the same rollover-relative
 records. Forecasting follows Anki's non-new, non-suspended future-due logic,
@@ -105,18 +107,26 @@ excludes buried backlog/work due in the active scheduler day.
 ## Settings
 
 Settings is a normal movable `QDialog(mw)` matching Progress Bar and
-PronounceIt. It starts at 680×620, has a 680×560 minimum, remains resizable,
-uses default window flags, and opens through a local `exec()` call. It performs
-no screen query or pre-`exec()` move, leaving parent-aware placement to Qt. It
-never saves coordinates, repositions after opening, hides Anki's backing
-views, forces lifecycle focus, or contains an `AnkiWebView`. It uses one
-compact header, 152 px rail, active-page scroller, and final-row footer.
+PronounceIt. It starts at 1080×760 logical pixels, has an 860×640 normal
+minimum, remains resizable, uses default window flags, and opens through a
+local `exec()` call. The UI-only `settings_dialog_geometry/v4` record preserves
+logical geometry, screen identity, available bounds, and informational DPR;
+invalid, disconnected, undersized, maximized, or full-screen records are
+rejected before the dialog is shown.
+
+The native shell has a fixed header, one active-page scroller, and a final-row
+footer with a 56 px minimum. The shell is capped at 1,120 px, ordinary pages at
+920 px, and the sidebar rail is 184 px. A synchronized compact top navigation
+replaces the rail whenever retaining it would leave less than 680 px for the
+main region, including at the supported minimum. Settings never hides Anki's
+backing views, forces lifecycle focus, contains an `AnkiWebView`, or constructs
+Dashboard, verse, palette, theme, or heatmap previews.
 
 Settings colors derive only from Anki's light/dark appearance; dashboard themes
-affect swatches and production rendering. Staged display, event, heatmap, and
-Bible changes update the draft synchronously but write nothing until Save.
-Sidebar changes only select a native stacked page. Revert restores the complete
-saved baseline.
+affect production rendering. Staged display, event, heatmap, and Bible changes
+update the draft synchronously but write nothing until Save. Navigation changes
+only select a native stacked page. Discard changes restores the complete saved
+baseline.
 Saving validates all staged state, prepares both config and manual-verse
 writes, replaces atomically where supported, and rolls back best-effort on a
 partial failure before reporting a specific inline error.

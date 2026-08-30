@@ -24,10 +24,27 @@ def main() -> int:
     capture_plan = json.loads(
         (ROOT / "qa" / "capture_plan.json").read_text(encoding="utf-8")
     )
+    surface_manifest = json.loads(
+        (ROOT / "qa" / "calendar_surface_manifest_1_8_7.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    surface_registry = json.loads(
+        (ROOT / "qa" / "ui-surface-registry_1_8_7.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    evidence_contract = json.loads(
+        (ROOT / "qa" / "capture_evidence_manifest_1_8_7.json").read_text(
+            encoding="utf-8"
+        )
+    )
     manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
     config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
     settings = (ROOT / "settings.py").read_text(encoding="utf-8")
     model = (ROOT / "settings_model.py").read_text(encoding="utf-8")
+    renderer = (ROOT / "renderer.py").read_text(encoding="utf-8")
+    dashboard_js = (ROOT / "web" / "dashboard.js").read_text(encoding="utf-8")
     controller = (ROOT / "controller.py").read_text(encoding="utf-8")
     release_probe = (ROOT / "qa" / "runtime_probe_release_1_8_7.py").read_text(
         encoding="utf-8"
@@ -53,7 +70,7 @@ def main() -> int:
     _require(errors, contract.get("release") == "1.8.7", "window contract release differs")
     _require(errors, capture_plan.get("release") == "1.8.7", "capture plan release differs")
     _require(errors, config.get("schema_version") == 8, "configuration schema changed")
-    _require(errors, contract.get("minimum_size") == [820, 600], "minimum geometry differs")
+    _require(errors, contract.get("minimum_size") == [860, 640], "minimum geometry differs")
     _require(errors, contract.get("default_size") == [1080, 760], "default geometry differs")
     _require(
         errors,
@@ -96,12 +113,92 @@ def main() -> int:
         == "home_dashboard_overhaul/settings_dialog_geometry/v4_dpr",
         "geometry DPR key differs",
     )
-    _require(errors, contract.get("shell_maximum_width") == 1120, "shell cap differs")
-    _require(errors, contract.get("page_maximum_width") == 920, "page cap differs")
-    _require(errors, contract.get("about_page_maximum_width") == 840, "About cap differs")
+    _require(errors, contract.get("shell_maximum_width") == 1264, "shell cap differs")
+    _require(errors, contract.get("page_maximum_width") == 1080, "page cap differs")
+    _require(errors, contract.get("about_page_maximum_width") == 1080, "About cap differs")
     _require(errors, contract.get("rail_width") == 184, "rail width differs")
     _require(errors, contract.get("header_height") == 72, "header height differs")
-    _require(errors, contract.get("footer_height") == 60, "footer height differs")
+    _require(errors, contract.get("footer_height") == 56, "footer height differs")
+    _require(
+        errors,
+        contract.get("rendered_previews")
+        == "compact five-step calendar palette ramp and live Bible appearance preview only; no embedded dashboard preview",
+        "rendered preview contract differs",
+    )
+    surface_settings = surface_manifest.get("settings_architecture", {})
+    _require(
+        errors,
+        {
+            "default_window": surface_settings.get("default_window"),
+            "minimum_normal_window": surface_settings.get("minimum_normal_window"),
+            "screen_margins": surface_settings.get("screen_margins"),
+            "minimum_saved_visible_ratio": surface_settings.get(
+                "minimum_saved_visible_ratio"
+            ),
+            "maximum_inner_width": surface_settings.get("maximum_inner_width"),
+            "maximum_page_width": surface_settings.get("maximum_page_width"),
+            "maximum_about_width": surface_settings.get("maximum_about_width"),
+            "rail_width": surface_settings.get("rail_width"),
+            "fixed_header_height": surface_settings.get("fixed_header_height"),
+            "fixed_footer_height": surface_settings.get("fixed_footer_height"),
+        }
+        == {
+            "default_window": contract.get("default_size"),
+            "minimum_normal_window": contract.get("minimum_size"),
+            "screen_margins": contract.get("screen_margins"),
+            "minimum_saved_visible_ratio": contract.get(
+                "minimum_saved_visible_ratio"
+            ),
+            "maximum_inner_width": contract.get("shell_maximum_width"),
+            "maximum_page_width": contract.get("page_maximum_width"),
+            "maximum_about_width": contract.get("about_page_maximum_width"),
+            "rail_width": contract.get("rail_width"),
+            "fixed_header_height": contract.get("header_height"),
+            "fixed_footer_height": contract.get("footer_height"),
+        },
+        "surface manifest differs from the focused Settings window contract",
+    )
+    persistence = surface_manifest.get("persistence_contract", {})
+    _require(
+        errors,
+        persistence.get("qt_window_preference")
+        == "home_dashboard_overhaul/settings_dialog_geometry/v4 logical geometry screen identity available bounds and informational DPR with valid v3 migration",
+        "surface geometry persistence contract differs",
+    )
+    _require(
+        errors,
+        persistence.get("settings_preview")
+        == "compact five-step calendar palette ramp and live Bible appearance preview only; no embedded dashboard preview",
+        "surface rendered-preview contract differs",
+    )
+    expected_window_fixture = (
+        "logical-1080x760-default-860x640-minimum-v4-screen-aware-restored-"
+        "clamped-parented-dialog-exec"
+    )
+    canonical_surfaces = surface_manifest.get("canonical_surfaces", [])
+    canonical_by_id = {
+        str(surface.get("id")): surface
+        for surface in canonical_surfaces
+        if isinstance(surface, dict)
+    }
+    _require(
+        errors,
+        canonical_by_id.get("SET-WINDOW", {}).get("fixture")
+        == expected_window_fixture,
+        "SET-WINDOW fixture differs from the implemented minimum",
+    )
+    _require(
+        errors,
+        surface_registry.get("surfaces") == canonical_surfaces,
+        "surface registry differs from the governing manifest",
+    )
+    prohibited_fixtures = set(surface_registry.get("prohibited_fixture_kinds", []))
+    _require(
+        errors,
+        "settings-fixed-footer" not in prohibited_fixtures
+        and "settings-footer-overlay" in prohibited_fixtures,
+        "surface registry footer prohibition contradicts the fixed footer",
+    )
     _require(
         errors,
         contract.get("settings_profile_acceptance_gate")
@@ -138,10 +235,98 @@ def main() -> int:
         settings_profile.get("required_application_font_percent") == 100,
         "Settings canonical capture lane is not 100 percent application font",
     )
+    settings_contract_family = next(
+        (
+            family
+            for family in capture_plan.get("families", [])
+            if family.get("id") == "settings-contract"
+        ),
+        {},
+    )
+    long_title = next(
+        (
+            case
+            for case in settings_contract_family.get("cases", [])
+            if case.get("id") == "SET-EVENT-LONG-TITLE"
+        ),
+        {},
+    )
+    _require(
+        errors,
+        long_title.get("width") == 860
+        and long_title.get("caption")
+        == "Events · long title at the 860 px responsive minimum",
+        "long-title capture is not labeled at the supported minimum",
+    )
+    _require(
+        errors,
+        evidence_contract.get("derived_native_frame_count")
+        == {
+            "initial": 92,
+            "restart": 2,
+            "total": 94,
+            "derivation": "sum(capture_families.count)",
+        },
+        "full capture contract is not the derived 94-frame lane",
+    )
+    statistics_family = next(
+        (
+            family
+            for family in evidence_contract.get("capture_families", [])
+            if family.get("id") == "statistics-accuracy"
+        ),
+        {},
+    )
+    statistics_requirements = set(statistics_family.get("requirements", []))
+    _require(
+        errors,
+        {
+            "active-progress-N-percent-complete-inside-track",
+            "86-percent-retention-and-seven-day-time-spent-no-visible-again-rate",
+        }
+        <= statistics_requirements
+        and "86-percent-retention-and-14-percent-again"
+        not in statistics_requirements,
+        "statistics evidence still permits visible metric drift",
+    )
+
+    for source_name, source, markers in (
+        (
+            "renderer",
+            renderer,
+            (
+                'label = "{}% complete".format(percent)',
+                "data-hdo-progress-label",
+                '"last_seven_days.time_spent"',
+            ),
+        ),
+        (
+            "live dashboard",
+            dashboard_js,
+            (
+                'Math.round(percent) + "% complete"',
+                "[data-hdo-progress-label]",
+                '"last_seven_days.time_spent"',
+            ),
+        ),
+    ):
+        for marker in markers:
+            _require(
+                errors,
+                marker in source,
+                "{} is missing current visible metric marker: {}".format(
+                    source_name, marker
+                ),
+            )
+        _require(
+            errors,
+            '"last_seven_days.again_rate"' not in source,
+            "{} still exposes Last 7 Days Again rate".format(source_name),
+        )
 
     for marker in (
         "SETTINGS_DEFAULT_SIZE = (1080, 760)",
-        "SETTINGS_MINIMUM_SIZE = (820, 600)",
+        "SETTINGS_MINIMUM_SIZE = (860, 640)",
         "SETTINGS_NORMAL_SCREEN_MARGIN = 48",
         "SETTINGS_SMALL_SCREEN_MARGIN = 24",
         "SETTINGS_MINIMUM_VISIBLE_RATIO = .80",
@@ -158,20 +343,21 @@ def main() -> int:
         'self.setWindowTitle("Home Screen Dashboard Settings")',
         "self.setMinimumSize(\n            min(SETTINGS_MINIMUM_SIZE[0], geometry[2])",
         "self._apply_initial_window_geometry(parent)",
-        "SETTINGS_SHELL_MAX_WIDTH = 1120",
-        "SETTINGS_PAGE_MAX_WIDTH = 920",
-        "SETTINGS_ABOUT_MAX_WIDTH = 840",
-        "SETTINGS_COMPACT_BODY_WIDTH = SETTINGS_SIDEBAR_WIDTH + 680",
+        "SETTINGS_SHELL_MAX_WIDTH = 1264",
+        "SETTINGS_PAGE_MAX_WIDTH = 1080",
+        "SETTINGS_ABOUT_MAX_WIDTH = 1080",
+        "SETTINGS_COMPACT_BODY_WIDTH = 860",
+        "SETTINGS_TWO_COLUMN_CONTENT_WIDTH = 760",
         "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)",
         "self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)",
         "self.header_stack.setMinimumHeight(SETTINGS_HEADER_HEIGHT)",
         "self.compact_nav = QTabBar(self.header_shell)",
-        "shell_width < SETTINGS_COMPACT_BODY_WIDTH",
+        "shell_width <= SETTINGS_COMPACT_BODY_WIDTH",
         "scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
         "self.footer = SettingsFooter()",
-        "self.setMinimumHeight(SETTINGS_FOOTER_MIN_HEIGHT)",
+        "self.footer.setFixedHeight(SETTINGS_FOOTER_MIN_HEIGHT)",
         'self.revert_button = QPushButton("Discard changes")',
-        'self._set_status("saving", "Saving changes...")',
+        'self._set_status("saving", "Saving changes…")',
         'self.save_button.setText("Save changes")',
         '"Save and close"',
         "self._pending_close_after_save = True",
@@ -184,8 +370,11 @@ def main() -> int:
         '"{} of {} verses".format(total, len(self.quotes))',
         "target = max(180, min(520, viewport_height - 300))",
         "class SuffixNumberField(QWidget):",
-        'save_button.setText("Add" if title.startswith("Add") else "Apply changes")',
-        'save_button.setText("Apply changes" if item else "Add")',
+        'save_button.setText("Add verse" if title.startswith("Add") else "Update verse")',
+        'save_button.setText("Update event" if item else "Save event")',
+        "class SettingsEditorDialog(QDialog):",
+        "class HeatmapPalettePreview(QWidget):",
+        "class BibleAppearancePreview(QWidget):",
         'SETTINGS_GEOMETRY_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v4"',
         'SETTINGS_GEOMETRY_SCREEN_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v4_screen"',
         'SETTINGS_GEOMETRY_AVAILABLE_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v4_available"',

@@ -1,0 +1,46 @@
+{
+  "all_four_gates_repeated_after_restart": true,
+  "initial": {
+    "candidate": {
+      "candidate": "<candidate-package>",
+      "candidate_sha256": "4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994",
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.7",
+      "member_count": 24
+    },
+    "collection_path": "<disposable-run-root>/Codex QA HDO 1.8.7 20260830-4d0a4107/collection.anki2",
+    "gated_before_window_interaction": true,
+    "gates": {
+      "filesystem": true,
+      "process": true,
+      "sync": true,
+      "window": true
+    },
+    "profile": "Codex QA HDO 1.8.7 20260830-4d0a4107",
+    "run_root": "<disposable-run-root>",
+    "status": "passed",
+    "window_title": "Codex QA HDO 1.8.7 20260830-4d0a4107 - Anki"
+  },
+  "legacy_unversioned_capture_reports": [],
+  "restart": {
+    "candidate": {
+      "candidate": "<candidate-package>",
+      "candidate_sha256": "4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994",
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.7",
+      "member_count": 24
+    },
+    "collection_path": "<disposable-run-root>/Codex QA HDO 1.8.7 20260830-4d0a4107/collection.anki2",
+    "gated_before_window_interaction": true,
+    "gates": {
+      "filesystem": true,
+      "process": true,
+      "sync": true,
+      "window": true
+    },
+    "profile": "Codex QA HDO 1.8.7 20260830-4d0a4107",
+    "run_root": "<disposable-run-root>",
+    "status": "passed",
+    "window_title": "Codex QA HDO 1.8.7 20260830-4d0a4107 - Anki"
+  }
+}

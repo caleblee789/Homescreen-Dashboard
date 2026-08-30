@@ -233,7 +233,7 @@
       return {
         event: selected[0],
         additional: selected.length - 1,
-        relationship: "On this date",
+        relationship: "Events on this date",
         kind: "selected"
       };
     }
@@ -241,7 +241,7 @@
     return {
       event: null,
       additional: 0,
-      relationship: "No event on this date",
+      relationship: "Events on this date",
       kind: "empty_selected",
       upcoming: upcoming
     };
@@ -282,8 +282,8 @@
 
   function dashboardDensity(width) {
     var resolved = Math.max(0, Number(width) || 0);
-    if (resolved >= 1040) return "wide";
-    if (resolved >= 420) return "intermediate";
+    if (resolved >= 860) return "wide";
+    if (resolved >= 620) return "intermediate";
     return "narrow";
   }
 
@@ -519,7 +519,9 @@
     var scrollOwner = applyDocumentScrollClearance(root);
 
     function updateDensity() {
-      root.dataset.hdoContentMode = dashboardDensity(root.getBoundingClientRect().width);
+      var width = Math.max(0, Number(root.getBoundingClientRect().width) || 0);
+      root.dataset.hdoContentMode = dashboardDensity(width);
+      root.dataset.hdoMetricColumns = width >= 308 ? "2" : "1";
     }
 
     updateDensity();
@@ -609,12 +611,8 @@
     var contextDate = root.querySelector("[data-hdo-context-date]");
     var contextEvent = root.querySelector("[data-hdo-context-event]");
     var contextEventLabel = root.querySelector("[data-hdo-context-event-label]");
-    var contextEventMarker = root.querySelector("[data-hdo-event-marker]");
-    var eventLink = root.querySelector("[data-hdo-open-events]");
-    var eventMeta = root.querySelector("[data-hdo-event-meta]");
-    var eventMore = root.querySelector("[data-hdo-event-more]");
+    var eventRows = root.querySelector("[data-hdo-event-rows]");
     var eventEmpty = root.querySelector("[data-hdo-event-empty]");
-    var editEvent = root.querySelector("[data-hdo-edit-event]");
     var primaryAction = root.querySelector("[data-hdo-primary-action]");
     var mostMissed = root.querySelector("[data-hdo-most-missed]");
     var liveStatus = root.querySelector("[data-hdo-calendar-status]");
@@ -708,6 +706,53 @@
       send("date_insight", { date: day.date, request_id: state.requestId });
     }
 
+    function renderEventRows(target, items, relationship, todayIso) {
+      target.replaceChildren();
+      items.slice(0, 2).forEach(function (item) {
+        var row = document.createElement("div");
+        row.className = "hdo-event-row";
+        var marker = document.createElement("span");
+        marker.className = "hdo-context-event-marker";
+        marker.setAttribute("aria-hidden", "true");
+        var copy = document.createElement("span");
+        copy.className = "hdo-event-copy";
+        var link = document.createElement("button");
+        link.type = "button";
+        link.className = "hdo-event-title";
+        link.dataset.hdoOpenEvents = "";
+        link.dataset.eventDate = item.date;
+        link.textContent = item.name;
+        link.title = relationship + ": " + item.name;
+        var meta = document.createElement("span");
+        meta.className = "hdo-event-meta";
+        var countdown = eventCountdown(item.date, todayIso, locale);
+        meta.textContent = formatEventDate(item.date, todayIso, locale) + (countdown ? " · " + countdown : "");
+        copy.appendChild(link);
+        copy.appendChild(meta);
+        var edit = document.createElement("button");
+        edit.type = "button";
+        edit.className = "hdo-event-edit";
+        edit.dataset.hdoEditEvent = "";
+        edit.dataset.eventId = String(item.id || "");
+        edit.dataset.eventDate = item.date;
+        edit.textContent = "Edit";
+        edit.setAttribute("aria-label", "Edit event: " + item.name);
+        row.appendChild(marker);
+        row.appendChild(copy);
+        row.appendChild(edit);
+        target.appendChild(row);
+      });
+      if (items.length > 2) {
+        var more = document.createElement("button");
+        more.type = "button";
+        more.className = "hdo-event-more";
+        more.dataset.hdoOpenEvents = "";
+        more.dataset.eventDate = items[0].date;
+        more.textContent = "+" + formatNumber(items.length - 2, locale) + " more";
+        target.appendChild(more);
+      }
+    }
+
     function updateContext() {
       var todayIso = String(state.payload.calendar_date || state.payload.scheduling_date || "");
       if (contextDate) {
@@ -716,77 +761,66 @@
       }
       if (dateState) {
         var selectedIsToday = state.selected === todayIso;
-        dateState.textContent = selectedIsToday ? "Today" : "Selected";
+        dateState.textContent = selectedIsToday ? "Today" : "Selected date";
         dateState.classList.toggle("is-today", selectedIsToday);
         dateState.classList.toggle("is-selected", !selectedIsToday);
       }
       var eventContext = getContextEvent(state.events, state.selected, todayIso);
-      if (contextEvent && contextEventMarker && eventLink && eventMeta && eventMore && eventEmpty && editEvent) {
-        var calendarCard = root.querySelector(".hdo-calendar-card");
-        var compactFooter = (calendarCard ? calendarCard.clientWidth : root.clientWidth) < 760;
+      if (contextEvent && eventRows && eventEmpty) {
+        contextEvent.querySelectorAll("[data-hdo-generated-event-section]").forEach(function (section) {
+          section.remove();
+        });
         var selectedEvent = eventContext && eventContext.event;
-        var secondaryUpcoming = eventContext && eventContext.kind === "empty_selected" && !compactFooter
+        var secondaryUpcoming = eventContext && eventContext.kind === "empty_selected"
           ? eventContext.upcoming
           : null;
-        var displayedEvent = selectedEvent || (secondaryUpcoming && secondaryUpcoming.event) || null;
-        var additionalEvents = selectedEvent
-          ? eventContext.additional
-          : secondaryUpcoming ? secondaryUpcoming.additional : 0;
         if (contextEventLabel) contextEventLabel.textContent = eventContext.relationship;
-        if (displayedEvent) {
-          var countdown = compactFooter
-            ? eventCountdownCompact(displayedEvent.date, todayIso, locale)
-            : eventCountdown(displayedEvent.date, todayIso, locale);
-          var eventDate = compactFooter
-            ? formatCompactEventDate(displayedEvent.date, todayIso, locale)
-            : formatEventDate(displayedEvent.date, todayIso, locale);
-          var eventMetaText = eventDate + (countdown ? " · " + countdown : "");
-          var eventTitle = secondaryUpcoming
-            ? "Next upcoming: " + displayedEvent.name
-            : displayedEvent.name;
-          var eventDescription = eventContext.relationship + ": " + eventTitle + (eventMetaText ? " · " + eventMetaText : "");
-          contextEventMarker.hidden = false;
-          eventLink.hidden = false;
-          eventLink.textContent = eventTitle;
-          eventLink.title = eventDescription;
-          eventLink.dataset.eventDate = displayedEvent.date;
-          eventMeta.hidden = !eventMetaText;
-          eventMeta.textContent = eventMetaText;
-          eventMore.hidden = additionalEvents <= 0;
-          eventMore.textContent = additionalEvents > 0
-            ? "+" + formatNumber(additionalEvents, locale)
-            : "";
+        eventRows.replaceChildren();
+        if (selectedEvent) {
+          renderEventRows(
+            eventRows,
+            state.eventsByDate[selectedEvent.date] || [selectedEvent],
+            eventContext.relationship,
+            todayIso
+          );
           eventEmpty.hidden = true;
         } else {
-          contextEventMarker.hidden = true;
-          eventLink.hidden = true;
-          eventLink.textContent = "";
-          eventLink.removeAttribute("title");
-          eventLink.dataset.eventDate = "";
-          eventMeta.hidden = true;
-          eventMeta.textContent = "";
-          eventMore.hidden = true;
-          eventMore.textContent = "";
-          eventEmpty.textContent = eventContext.kind === "empty_today" ? "No upcoming events" : "";
-          eventEmpty.hidden = !eventEmpty.textContent;
+          eventEmpty.textContent = eventContext.kind === "empty_today"
+            ? "No upcoming events"
+            : "No events on this date";
+          eventEmpty.hidden = false;
         }
-        var canEditEvents = state.payload.events_enabled !== false;
-        editEvent.hidden = !canEditEvents;
-        editEvent.dataset.eventId = selectedEvent ? String(selectedEvent.id || "") : "";
-        editEvent.dataset.eventDate = selectedEvent ? selectedEvent.date : state.selected;
-        if (selectedEvent) {
-          editEvent.setAttribute("aria-label", "Edit event: " + selectedEvent.name);
-          editEvent.title = "Edit event";
-        } else {
-          editEvent.setAttribute("aria-label", "Add event on " + formatSelectedDate(state.selected, locale));
-          editEvent.title = "Add event";
+        if (secondaryUpcoming && secondaryUpcoming.event) {
+          var nextSection = document.createElement("section");
+          nextSection.className = "hdo-event-section";
+          nextSection.dataset.hdoGeneratedEventSection = "";
+          var nextLabel = document.createElement("p");
+          nextLabel.className = "hdo-context-label";
+          nextLabel.textContent = "Next event";
+          var nextRows = document.createElement("div");
+          nextRows.className = "hdo-event-rows";
+          renderEventRows(
+            nextRows,
+            state.eventsByDate[secondaryUpcoming.event.date] || [secondaryUpcoming.event],
+            "Next event",
+            todayIso
+          );
+          nextSection.appendChild(nextLabel);
+          nextSection.appendChild(nextRows);
+          contextEvent.appendChild(nextSection);
         }
       }
       var day = state.days[state.selected];
       var capabilities = getSelectedDateCapabilities(day, String(state.payload.scheduling_date || ""));
       if (primaryAction) {
-        if (capabilities.primary === "reviewed") primaryAction.textContent = "Reviewed cards";
-        if (capabilities.primary === "due") primaryAction.textContent = "Due cards";
+        if (capabilities.primary === "reviewed") {
+          primaryAction.textContent = "Reviewed cards";
+          primaryAction.setAttribute("aria-label", "View reviewed cards");
+        }
+        if (capabilities.primary === "due") {
+          primaryAction.textContent = "Due cards";
+          primaryAction.setAttribute("aria-label", "View due cards");
+        }
         primaryAction.dataset.action = capabilities.primary;
         setButtonHidden(primaryAction, !capabilities.primaryEnabled);
         primaryAction.disabled = false;
@@ -938,8 +972,9 @@
         marker.setAttribute("aria-hidden", "true");
         if (view === "month" && model.events.length > 1) {
           var count = document.createElement("span");
+          count.className = "hdo-event-count";
           count.textContent = String(model.events.length);
-          marker.appendChild(count);
+          cell.appendChild(count);
         }
         cell.appendChild(marker);
       }
@@ -1140,15 +1175,20 @@
       });
     });
 
-    if (eventLink) eventLink.addEventListener("click", function () {
-      send("settings", { page: "events" });
-    });
-    if (editEvent) editEvent.addEventListener("click", function () {
-      send("settings", {
-        page: "events",
-        date: editEvent.dataset.eventDate || "",
-        event_id: editEvent.dataset.eventId || ""
-      });
+    if (contextEvent) contextEvent.addEventListener("click", function (event) {
+      var link = event.target && event.target.closest ? event.target.closest("[data-hdo-open-events]") : null;
+      if (link) {
+        send("settings", { page: "events", date: link.dataset.eventDate || state.selected });
+        return;
+      }
+      var edit = event.target && event.target.closest ? event.target.closest("[data-hdo-edit-event]") : null;
+      if (edit) {
+        send("settings", {
+          page: "events",
+          date: edit.dataset.eventDate || state.selected,
+          event_id: edit.dataset.eventId || ""
+        });
+      }
     });
     if (primaryAction) primaryAction.addEventListener("click", function () {
       if (!primaryAction.hidden && !primaryAction.disabled) send("open_day", { date: state.selected });
@@ -1309,6 +1349,7 @@
     var recent = availableValue(statistics.last_seven_days);
     var longTerm = availableValue(statistics.long_term);
     var todayPresentation = presentation && presentation.today_session || {};
+    var recentPresentation = presentation && presentation.last_seven_days || {};
     if (today) {
       setMetric(root, "today.answers", todayPresentation.cards_studied || formatNumber(today.answers, locale), today.answers);
       setMetric(root, "today.new_cards_studied", todayPresentation.new_cards_studied || formatNumber(today.new_cards_studied, locale), today.new_cards_studied);
@@ -1342,14 +1383,16 @@
     } else setMetric(root, "today.cards_buried", UNAVAILABLE_TEXT, null);
     if (recent) {
       var retentionAvailable = recent.retention && recent.retention.status === "available";
-      var againAvailable = recent.again_rate && recent.again_rate.status === "available";
-      var displayedAgainPercent = retentionAvailable && againAvailable
-        ? 100 - Number(recent.retention.percent)
-        : (againAvailable ? Number(recent.again_rate.percent) : null);
       setMetric(root, "last_seven_days.cards_studied", formatNumber(recent.cards_studied, locale), recent.cards_studied);
       setMetric(root, "last_seven_days.new_cards_studied", formatNumber(recent.new_cards_studied, locale), recent.new_cards_studied);
       setMetric(root, "last_seven_days.retention", retentionAvailable ? recent.retention.percent + "%" : N_A_TEXT, recent.retention && recent.retention.percent);
-      setMetric(root, "last_seven_days.again_rate", againAvailable ? displayedAgainPercent + "%" : N_A_TEXT, displayedAgainPercent);
+      setMetric(
+        root,
+        "last_seven_days.time_spent",
+        recentPresentation.time_spent || UNAVAILABLE_TEXT,
+        recent.seconds,
+        recentPresentation.time_spent_compact || UNAVAILABLE_TEXT
+      );
       updateMetricSemanticRole(
         root,
         "last_seven_days.retention",
@@ -1357,25 +1400,11 @@
           ? rateSemanticRole(recent.retention.percent, retentionTarget, false)
           : ""
       );
-      updateMetricSemanticRole(
-        root,
-        "last_seven_days.again_rate",
-        againAvailable
-          ? rateSemanticRole(
-              displayedAgainPercent,
-              retentionTarget === null || retentionTarget === undefined || retentionTarget === ""
-                ? null
-                : 100 - Number(retentionTarget),
-              true
-            )
-          : ""
-      );
     } else {
-      ["last_seven_days.cards_studied", "last_seven_days.new_cards_studied", "last_seven_days.retention", "last_seven_days.again_rate"].forEach(function (key) {
+      ["last_seven_days.cards_studied", "last_seven_days.new_cards_studied", "last_seven_days.retention", "last_seven_days.time_spent"].forEach(function (key) {
         setMetric(root, key, UNAVAILABLE_TEXT, null);
       });
       updateMetricSemanticRole(root, "last_seven_days.retention", "");
-      updateMetricSemanticRole(root, "last_seven_days.again_rate", "");
     }
     if (longTerm) {
       setMetric(root, "long_term.average_reviews_per_active_day", formatNumber(longTerm.average_reviews_per_active_day, locale), longTerm.average_reviews_per_active_day);
@@ -1444,39 +1473,121 @@
 
   function visibleBottomActionContainer(root) {
     if (!root || typeof document === "undefined" || !document.body) return null;
-    var controls = document.querySelectorAll(
-      "button, [role='button'], input[type='button'], input[type='submit']"
-    );
+    var actionSelector = "button, [role='button'], input[type='button'], input[type='submit'], a[href], a[onclick]";
+    var controls = document.querySelectorAll(actionSelector);
     var candidates = [];
+
+    function addCandidate(node, normalFlow) {
+      if (!node || node === document.body || root.contains(node)) return;
+      var existing = candidates.find(function (entry) { return entry.node === node; });
+      if (existing) {
+        existing.normalFlow = existing.normalFlow || Boolean(normalFlow);
+      } else {
+        candidates.push({ node: node, normalFlow: Boolean(normalFlow) });
+      }
+    }
+
+    function controlSignature(control) {
+      var attribute = function (name) {
+        return control && typeof control.getAttribute === "function"
+          ? String(control.getAttribute(name) || "")
+          : "";
+      };
+      return [
+        control.textContent,
+        control.value,
+        control.id,
+        typeof control.className === "string" ? control.className : "",
+        attribute("aria-label"),
+        attribute("title"),
+        attribute("onclick"),
+        attribute("href")
+      ].join(" ").toLowerCase();
+    }
+
+    function visibleControl(control) {
+      if (!control || root.contains(control)) return false;
+      var style = global.getComputedStyle ? global.getComputedStyle(control) : null;
+      if (style && (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0)) return false;
+      var rect = control.getBoundingClientRect();
+      return Boolean(rect && rect.width > 0 && rect.height > 0);
+    }
+
+    function structuralActionRow(control) {
+      var candidate = control && control.parentElement;
+      var depth = 0;
+      while (candidate && candidate !== document.body && depth < 5) {
+        if (root.contains(candidate)) return null;
+        var style = global.getComputedStyle ? global.getComputedStyle(candidate) : null;
+        var position = style ? style.position : "";
+        if (position === "fixed" || position === "sticky") return null;
+        var rect = candidate.getBoundingClientRect();
+        if (rect && rect.width >= 80 && rect.height > 0 && rect.height <= 160) {
+          var grouped = Array.prototype.filter.call(
+            candidate.querySelectorAll(actionSelector),
+            visibleControl
+          );
+          if (grouped.length >= 2 && grouped.length <= 12) {
+            var controlRects = grouped.map(function (item) { return item.getBoundingClientRect(); });
+            var tallest = Math.max.apply(null, controlRects.map(function (item) { return item.height; }));
+            var centers = controlRects.map(function (item) { return item.top + item.height / 2; });
+            var centerSpread = Math.max.apply(null, centers) - Math.min.apply(null, centers);
+            if (centerSpread <= Math.max(12, tallest * .75)) return candidate;
+          }
+        }
+        candidate = candidate.parentElement;
+        depth += 1;
+      }
+      return null;
+    }
+
+    var normalActions = [];
     Array.prototype.forEach.call(controls, function (control) {
       if (root.contains(control)) return;
+      var signature = controlSignature(control);
+      if (
+        /\b(get shared|create deck|import file)\b/.test(signature) ||
+        /pycmd\s*\([^)]*\b(shared|add|create|import)\b/.test(signature)
+      ) normalActions.push(control);
+      var structural = structuralActionRow(control);
+      if (structural) addCandidate(structural, true);
       var candidate = control;
       while (candidate && candidate !== document.body) {
         var style = global.getComputedStyle ? global.getComputedStyle(candidate) : null;
         var position = style ? style.position : "";
         if (position === "fixed" || position === "sticky") {
-          candidates.push(candidate);
+          addCandidate(candidate, false);
           break;
         }
         candidate = candidate.parentElement;
       }
     });
+
+    if (normalActions.length) {
+      var common = normalActions[0].parentElement || normalActions[0];
+      while (
+        common && common !== document.body &&
+        !normalActions.every(function (control) { return common.contains(control); })
+      ) common = common.parentElement;
+      addCandidate(common, true);
+    }
+
     var viewportHeight = Math.max(0, Number(global.innerHeight) || 0);
     var best = null;
     var bestHeight = 0;
-    candidates.forEach(function (candidate) {
+    var bestBottom = -Infinity;
+    candidates.forEach(function (entry) {
+      var candidate = entry.node;
       if (!candidate || !candidate.isConnected) return;
       var style = global.getComputedStyle ? global.getComputedStyle(candidate) : null;
       if (style && (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0)) return;
       var rect = candidate.getBoundingClientRect();
       if (!rect || rect.width < 80 || rect.height <= 0 || rect.height > 240) return;
-      if (viewportHeight && rect.bottom < viewportHeight - 8) return;
-      var visibleHeight = viewportHeight
-        ? Math.max(0, Math.min(viewportHeight, rect.bottom) - Math.max(0, rect.top))
-        : rect.height;
-      if (visibleHeight > bestHeight) {
+      if (!entry.normalFlow && viewportHeight && rect.bottom < viewportHeight - 8) return;
+      if (rect.bottom > bestBottom || (rect.bottom === bestBottom && rect.height > bestHeight)) {
         best = candidate;
-        bestHeight = visibleHeight;
+        bestHeight = rect.height;
+        bestBottom = rect.bottom;
       }
     });
     return best;
@@ -1494,11 +1605,7 @@
       var measured = 60;
       if (candidate) {
         var rect = candidate.getBoundingClientRect();
-        var viewportHeight = Math.max(0, Number(global.innerHeight) || rect.bottom);
-        measured = Math.max(
-          0,
-          Math.ceil(Math.min(viewportHeight, rect.bottom) - Math.max(0, rect.top))
-        );
+        measured = Math.max(0, Math.ceil(Number(rect.height) || 0));
       }
       var footerHeight = candidate ? measured : 60;
       var clearance = footerHeight + 24;

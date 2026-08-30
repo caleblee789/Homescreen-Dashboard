@@ -527,7 +527,7 @@ def _history_period_aggregate(
     col: Any,
     scope: FilterScope,
     days: int,
-) -> Tuple[int, int, int, int, int]:
+) -> Tuple[int, int, int, int, int, int]:
     """Aggregate one exact rollover-relative period without date-bucket loss."""
     cutoff = int(col.sched.day_cutoff)
     lower = pace_lower_bound(cutoff, days) * 1000
@@ -548,7 +548,8 @@ def _history_period_aggregate(
         "count(DISTINCT CASE WHEN {new_cards} THEN r.cid END), "
         "coalesce(sum(CASE WHEN r.ease = 1 THEN 1 ELSE 0 END), 0), "
         "coalesce(sum(CASE WHEN {retention} AND r.ease != 1 THEN 1 ELSE 0 END), 0), "
-        "coalesce(sum(CASE WHEN {retention} AND r.ease = 1 THEN 1 ELSE 0 END), 0) "
+        "coalesce(sum(CASE WHEN {retention} AND r.ease = 1 THEN 1 ELSE 0 END), 0), "
+        "coalesce(sum(r.time), 0) "
         "FROM revlog r {join} WHERE {where}".format(
             new_cards=new_card_condition,
             retention=retention_condition,
@@ -557,7 +558,7 @@ def _history_period_aggregate(
         ),
         *args,
     )
-    return tuple(max(0, int(value or 0)) for value in row[:5])  # type: ignore[return-value]
+    return tuple(max(0, int(value or 0)) for value in row[:6])  # type: ignore[return-value]
 
 
 def _truncating_division(numerator: int, denominator: int) -> int:
@@ -1260,12 +1261,14 @@ def collect_dashboard_facts(
             _recent_all_answer_again,
             recent_retention_passed,
             recent_retention_failed,
+            recent_time_millis,
         ) = _history_period_aggregate(col, scope, 7)
         recent_retention_total = recent_retention_passed + recent_retention_failed
         last_seven_days: ValueState[LastSevenDaysStats] = ValueState.available(
             LastSevenDaysStats(
                 cards_studied=recent_answers,
                 new_cards_studied=recent_new_cards,
+                seconds=max(0, recent_time_millis) / 1000.0,
                 retention=RateMetric.from_counts(
                     recent_retention_passed,
                     recent_retention_total,
@@ -1599,6 +1602,7 @@ def representative_preview_snapshot(reference_date: str = "") -> DashboardSnapsh
             LastSevenDaysStats(
                 cards_studied=1_214,
                 new_cards_studied=148,
+                seconds=28_800,
                 retention=RateMetric.from_counts(1_008, 1_214),
                 again_rate=RateMetric.from_counts(206, 1_214),
             )

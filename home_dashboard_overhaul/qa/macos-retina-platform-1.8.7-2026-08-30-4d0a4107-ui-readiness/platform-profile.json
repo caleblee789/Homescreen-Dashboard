@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "release": "1.8.7",
+  "status": "passed",
+  "package_sha256": "4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994",
+  "capture_plan_sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+  "host_platform": "macos",
+  "os_scale_percent": 100,
+  "dpr_class": "retina",
+  "native_display_scaling": true,
+  "environment_scale_substitute": false,
+  "application_font_percents": [100],
+  "os": "macOS 26.6.2 (25G83)",
+  "anki_version": "26.8.1",
+  "qt_platform": "cocoa",
+  "display_name": "Built-in Retina Display",
+  "available_logical_geometry": [0, 34, 1710, 1073],
+  "physical_geometry": [0, 68, 3420, 2146],
+  "logical_dpi": [72.0, 72.0],
+  "physical_dpi": [133.00000199745963, 133.0000019974596],
+  "device_pixel_ratio": 2.0,
+  "settings_page_layout": {
+    "id": "settings-font-100",
+    "kind": "application-font-layout",
+    "fixture_kind": "logical-work-area-equivalence",
+    "application_font_percent": 100,
+    "status": "passed",
+    "work_area_logical": [0, 0, 1366, 768],
+    "resolved_window_geometry_logical": [143, 48, 1080, 672],
+    "pages": [
+      {
+        "id": "dashboard",
+        "status": "passed",
+        "assertions": {
+          "horizontal_scroll_zero": true,
+          "visible_controls_contained": true,
+          "labels_unclipped_or_approved": true,
+          "segmented_selection_matches_model": true,
+          "body_footer_disjoint": true,
+          "footer_actions_visible": true,
+          "page_bottom_reachable": true,
+          "target_fully_visible": true
+        }
+      },
+      {
+        "id": "events",
+        "status": "passed",
+        "assertions": {
+          "horizontal_scroll_zero": true,
+          "visible_controls_contained": true,
+          "labels_unclipped_or_approved": true,
+          "segmented_selection_matches_model": true,
+          "body_footer_disjoint": true,
+          "footer_actions_visible": true,
+          "page_bottom_reachable": true,
+          "target_fully_visible": true
+        }
+      },
+      {
+        "id": "bible_verse",
+        "status": "passed",
+        "assertions": {
+          "horizontal_scroll_zero": true,
+          "visible_controls_contained": true,
+          "labels_unclipped_or_approved": true,
+          "segmented_selection_matches_model": true,
+          "body_footer_disjoint": true,
+          "footer_actions_visible": true,
+          "page_bottom_reachable": true,
+          "target_fully_visible": true
+        }
+      },
+      {
+        "id": "about_support",
+        "status": "passed",
+        "assertions": {
+          "horizontal_scroll_zero": true,
+          "visible_controls_contained": true,
+          "labels_unclipped_or_approved": true,
+          "segmented_selection_matches_model": true,
+          "body_footer_disjoint": true,
+          "footer_actions_visible": true,
+          "page_bottom_reachable": true,
+          "target_fully_visible": true
+        }
+      }
+    ]
+  },
+  "fullscreen_space_switch": {
+    "schema_version": 2,
+    "id": "macos-fullscreen-no-space-switch-menu-and-dashboard-gear",
+    "release": "1.8.7",
+    "host_platform": "macos",
+    "candidate_sha256": "4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994",
+    "capture_plan_sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+    "status": "passed",
+    "native_fullscreen": true,
+    "input_method": "pointer-only",
+    "keyboard_testing": "omitted-not-a-release-gate",
+    "desktop_space_switch_regression": "not-observed",
+    "opening_paths": {
+      "menu": {
+        "status": "passed",
+        "settings_opened": true,
+        "remained_on_anki_fullscreen_space": true,
+        "desktop_or_space_switch_observed": false,
+        "workflow_steps": {
+          "all-four-pages": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "events-tabs": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "resize": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "event-edit": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "verse-edit": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "save": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "close-reopen": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "controlled-restart": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false}
+        }
+      },
+      "dashboard-gear": {
+        "status": "passed",
+        "settings_opened": true,
+        "remained_on_anki_fullscreen_space": true,
+        "desktop_or_space_switch_observed": false,
+        "workflow_steps": {
+          "all-four-pages": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "events-tabs": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "resize": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "event-edit": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "verse-edit": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "save": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "close-reopen": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false},
+          "controlled-restart": {"status": "passed", "completed": true, "remained_on_current_anki_space": true, "desktop_or_space_switch_observed": false}
+        }
+      }
+    }
+  }
+}

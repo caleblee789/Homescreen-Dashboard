@@ -1,0 +1,338 @@
+{
+  "capture_plan_sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+  "contact_sheets": {
+    "capture_details": 16,
+    "details": 17,
+    "exact_once_detail_coverage": true,
+    "overview": 1,
+    "reports": 1,
+    "repository_tracking": "current-only",
+    "total": 18
+  },
+  "deferred_unrun": [
+    "voiceover_review",
+    "forced_colors_review"
+  ],
+  "isolation": {
+    "all_four_gates_repeated_after_restart": true,
+    "initial": {
+      "candidate": {
+        "candidate": "<candidate-package>",
+        "candidate_sha256": "4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994",
+        "installed_member_parity": "passed",
+        "manifest_version": "1.8.7",
+        "member_count": 24
+      },
+      "collection_path": "<disposable-run-root>/Codex QA HDO 1.8.7 20260830-4d0a4107/collection.anki2",
+      "gated_before_window_interaction": true,
+      "gates": {
+        "filesystem": true,
+        "process": true,
+        "sync": true,
+        "window": true
+      },
+      "profile": "Codex QA HDO 1.8.7 20260830-4d0a4107",
+      "run_root": "<disposable-run-root>",
+      "status": "passed",
+      "window_title": "Codex QA HDO 1.8.7 20260830-4d0a4107 - Anki"
+    },
+    "legacy_unversioned_capture_reports": [],
+    "restart": {
+      "candidate": {
+        "candidate": "<candidate-package>",
+        "candidate_sha256": "4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994",
+        "installed_member_parity": "passed",
+        "manifest_version": "1.8.7",
+        "member_count": 24
+      },
+      "collection_path": "<disposable-run-root>/Codex QA HDO 1.8.7 20260830-4d0a4107/collection.anki2",
+      "gated_before_window_interaction": true,
+      "gates": {
+        "filesystem": true,
+        "process": true,
+        "sync": true,
+        "window": true
+      },
+      "profile": "Codex QA HDO 1.8.7 20260830-4d0a4107",
+      "run_root": "<disposable-run-root>",
+      "status": "passed",
+      "window_title": "Codex QA HDO 1.8.7 20260830-4d0a4107 - Anki"
+    }
+  },
+  "native_captures": {
+    "initial": 92,
+    "restart": 2,
+    "total": 94
+  },
+  "native_platform_matrix": {
+    "capture_plan_sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+    "package_sha256": "4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994",
+    "profiles": [
+      {
+        "anki_version": "26.8.1",
+        "application_font_percents": [
+          100
+        ],
+        "available_logical_geometry": [
+          0,
+          34,
+          1710,
+          1073
+        ],
+        "capture_plan_sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+        "device_pixel_ratio": 2.0,
+        "display_name": "Built-in Retina Display",
+        "dpr_class": "retina",
+        "environment_scale_substitute": false,
+        "fullscreen_space_switch": {
+          "candidate_sha256": "4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994",
+          "capture_plan_sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+          "desktop_space_switch_regression": "not-observed",
+          "host_platform": "macos",
+          "id": "macos-fullscreen-no-space-switch-menu-and-dashboard-gear",
+          "input_method": "pointer-only",
+          "keyboard_testing": "omitted-not-a-release-gate",
+          "native_fullscreen": true,
+          "opening_paths": {
+            "dashboard-gear": {
+              "desktop_or_space_switch_observed": false,
+              "remained_on_anki_fullscreen_space": true,
+              "settings_opened": true,
+              "status": "passed",
+              "workflow_steps": {
+                "all-four-pages": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "close-reopen": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "controlled-restart": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "event-edit": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "events-tabs": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "resize": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "save": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "verse-edit": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                }
+              }
+            },
+            "menu": {
+              "desktop_or_space_switch_observed": false,
+              "remained_on_anki_fullscreen_space": true,
+              "settings_opened": true,
+              "status": "passed",
+              "workflow_steps": {
+                "all-four-pages": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "close-reopen": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "controlled-restart": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "event-edit": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "events-tabs": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "resize": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "save": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "verse-edit": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                }
+              }
+            }
+          },
+          "release": "1.8.7",
+          "schema_version": 2,
+          "status": "passed"
+        },
+        "host_platform": "macos",
+        "logical_dpi": [
+          72.0,
+          72.0
+        ],
+        "native_display_scaling": true,
+        "os": "macOS 26.6.2 (25G83)",
+        "os_scale_percent": 100,
+        "package_sha256": "4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994",
+        "physical_dpi": [
+          133.00000199745963,
+          133.0000019974596
+        ],
+        "physical_geometry": [
+          0,
+          68,
+          3420,
+          2146
+        ],
+        "qt_platform": "cocoa",
+        "release": "1.8.7",
+        "schema_version": 1,
+        "settings_page_layout": {
+          "application_font_percent": 100,
+          "fixture_kind": "logical-work-area-equivalence",
+          "id": "settings-font-100",
+          "kind": "application-font-layout",
+          "pages": [
+            {
+              "assertions": {
+                "body_footer_disjoint": true,
+                "footer_actions_visible": true,
+                "horizontal_scroll_zero": true,
+                "labels_unclipped_or_approved": true,
+                "page_bottom_reachable": true,
+                "segmented_selection_matches_model": true,
+                "target_fully_visible": true,
+                "visible_controls_contained": true
+              },
+              "id": "dashboard",
+              "status": "passed"
+            },
+            {
+              "assertions": {
+                "body_footer_disjoint": true,
+                "footer_actions_visible": true,
+                "horizontal_scroll_zero": true,
+                "labels_unclipped_or_approved": true,
+                "page_bottom_reachable": true,
+                "segmented_selection_matches_model": true,
+                "target_fully_visible": true,
+                "visible_controls_contained": true
+              },
+              "id": "events",
+              "status": "passed"
+            },
+            {
+              "assertions": {
+                "body_footer_disjoint": true,
+                "footer_actions_visible": true,
+                "horizontal_scroll_zero": true,
+                "labels_unclipped_or_approved": true,
+                "page_bottom_reachable": true,
+                "segmented_selection_matches_model": true,
+                "target_fully_visible": true,
+                "visible_controls_contained": true
+              },
+              "id": "bible_verse",
+              "status": "passed"
+            },
+            {
+              "assertions": {
+                "body_footer_disjoint": true,
+                "footer_actions_visible": true,
+                "horizontal_scroll_zero": true,
+                "labels_unclipped_or_approved": true,
+                "page_bottom_reachable": true,
+                "segmented_selection_matches_model": true,
+                "target_fully_visible": true,
+                "visible_controls_contained": true
+              },
+              "id": "about_support",
+              "status": "passed"
+            }
+          ],
+          "resolved_window_geometry_logical": [
+            143,
+            48,
+            1080,
+            672
+          ],
+          "status": "passed",
+          "work_area_logical": [
+            0,
+            0,
+            1366,
+            768
+          ]
+        },
+        "status": "passed"
+      }
+    ],
+    "release": "1.8.7",
+    "required_profile_count": 1,
+    "status": "passed"
+  },
+  "package": {
+    "member_count": 24,
+    "path": "package/home-dashboard-overhaul-1.8.7.ankiaddon",
+    "sha256": "4d0a410721ba5af43cd672127531eefc90795881ef4f9e755a6fb8550aa61994",
+    "source_archive_byte_parity": "passed"
+  },
+  "profile": "full",
+  "release": "1.8.7",
+  "restart_persistence": "passed",
+  "runtime_plan_identity": "passed",
+  "schema_version": 3,
+  "status": "passed",
+  "structured_settings_layout": {
+    "adds_png_frames": false,
+    "generated_png_count": 0,
+    "report": "reports/settings-structured-layout.json",
+    "status": "passed"
+  }
+}

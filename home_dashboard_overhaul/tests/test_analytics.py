@@ -88,7 +88,7 @@ class FakeDB:
                 max(0, int(row[5] or 0)) if len(row) >= 7 else (max(0, int(row[3] or 0)) if len(row) > 3 else 0)
                 for row in self.history
             )
-            return answers, new_cards, again, passed, failed
+            return answers, new_cards, again, passed, failed, answers * 10_000
         if "count(DISTINCT CASE" in sql:
             self.today_new_sql = sql
             return (self.today_new,)
@@ -247,6 +247,7 @@ class LongTermTests(unittest.TestCase):
             (RateStatus.AVAILABLE, 15, 22, 68),
         )
         self.assertEqual(recent.cards_studied, 8)
+        self.assertEqual(recent.seconds, 0.0)
         self.assertEqual(recent.retention.percent, 75)
         self.assertEqual(recent.again_rate.percent, 25)
 
@@ -319,6 +320,7 @@ class NativeRetentionTests(unittest.TestCase):
 
         self.assertEqual(RateMetric.from_counts(947, 1184).percent, 80)
         self.assertEqual(recent.cards_studied, 1184)
+        self.assertEqual(recent.seconds, 1_184.0)
         self.assertEqual(
             (
                 recent.retention.numerator,
@@ -385,6 +387,7 @@ class NativeRetentionTests(unittest.TestCase):
         facts = collect_dashboard_facts(col, normalize_config({}), date(2026, 8, 13))
 
         self.assertEqual(facts.last_seven_days.value.cards_studied, 2)
+        self.assertEqual(facts.last_seven_days.value.seconds, 2.0)
         self.assertEqual(facts.last_seven_days.value.retention.percent, 100)
         self.assertEqual(facts.today.value.answers, 1)
         self.assertEqual(facts.long_term.value.lifetime_cards_studied, 3)
@@ -508,6 +511,7 @@ class SnapshotTests(unittest.TestCase):
             (3, 2, 7),
         )
         self.assertEqual(facts.last_seven_days.value.cards_studied, 12)
+        self.assertEqual(facts.last_seven_days.value.seconds, 120.0)
         self.assertEqual(facts.last_seven_days.value.retention.percent, 75)
         self.assertEqual(facts.last_seven_days.value.again_rate.percent, 25)
         self.assertEqual(facts.long_term.value.lifetime_cards_studied, 12)
@@ -1065,6 +1069,7 @@ class CanonicalFactsTests(unittest.TestCase):
         self.assertEqual((current.reviews_completed.value, current.new_cards_studied.value), (1, 1))
         self.assertEqual((facts.today.value.answers, facts.today.value.new_cards_studied), (1, 1))
         self.assertEqual(facts.today.value.seconds, 1.0)
+        self.assertEqual(facts.last_seven_days.value.seconds, 1.0)
         self.assertEqual(facts.long_term.value.current_streak, 1)
         self.assertEqual(current.browse_target.card_ids, (1,))
         self.assertEqual(current.browse_target.query, "cid:1")
@@ -1224,6 +1229,7 @@ class CanonicalFactsTests(unittest.TestCase):
             (facts.today.value.answers, facts.today.value.new_cards_studied, facts.today.value.seconds),
             (2, 1, 3.0),
         )
+        self.assertEqual(facts.last_seven_days.value.seconds, 3.0)
         self.assertEqual(facts.long_term.value.current_streak, 1)
         self.assertEqual(current.browse_target.card_ids, (1, 4))
         self.assertFalse({11, 14}.intersection(current.browse_target.card_ids))
