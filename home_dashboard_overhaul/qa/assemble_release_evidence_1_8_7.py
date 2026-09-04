@@ -24,7 +24,7 @@ CAPTURE_PLAN = load_capture_plan(SOURCE_ROOT / "qa" / "capture_plan.json")
 RELEASE = CAPTURE_PLAN.release
 DEFAULT_CANDIDATE = SOURCE_ROOT / "dist" / "home-dashboard-overhaul-1.8.7.ankiaddon"
 FULLSCREEN_WORKFLOW_STEP_IDS = (
-    "all-four-pages",
+    "all-six-pages-and-bible-views",
     "events-tabs",
     "resize",
     "event-edit",
@@ -355,7 +355,7 @@ def validate_structured_settings_layout(
     pages = spec.get("pages")
     require(
         isinstance(pages, list)
-        and pages == ["dashboard", "events", "bible_verse", "about_support"],
+        and pages == ["dashboard", "appearance", "calendar", "events", "bible_verse", "bible_display", "about_support"],
         "structured Settings page order differs from the contract",
     )
     restore_scenarios = spec.get("restore_scenarios")

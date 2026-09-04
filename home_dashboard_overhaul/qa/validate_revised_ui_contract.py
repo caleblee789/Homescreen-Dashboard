@@ -63,13 +63,24 @@ def _validate_palette_matrix(errors: List[str], matrix: Mapping[str, Any]) -> No
         errors.append("palette matrix must cover every saved ID and mode exactly once")
     axes = matrix.get("settings_page_axes", {})
     if axes != {
-        "page": ["dashboard", "events", "bible_verse", "about_support"],
+        "page": ["dashboard", "appearance", "calendar", "events", "bible_verse", "bible_display", "about_support"],
         "window_width": [1080, 1280, "full-screen"],
         "application_font_percent": [100],
     }:
         errors.append("Settings page axes must use 1080, 1280, full-screen and 100 percent")
-    if matrix.get("settings_page_case_count") != 12:
-        errors.append("Settings page matrix must contain 12 derived cases")
+    if matrix.get("settings_page_case_count") != 21:
+        errors.append("Settings page matrix must contain 21 derived cases")
+    if matrix.get("statistics_quality_assertions") != [
+        "exact-requested-row-order-in-all-four-statistics-cards",
+        "initial-cards-due-matches-the-progress-denominator",
+        "fixed-seven-period-average-cards-per-day-rounded-half-up",
+        "no-visible-again-rate-cards-completed-or-study-days",
+        "initial-live-refresh-responsive-and-restart-parity",
+        "equal-2x2-card-geometry-with-12px-gaps",
+        "right-aligned-single-line-values-with-at-least-8px-label-separation",
+        "long-statistics-values-fit-without-wrap-clip-overlap-ellipsis-or-font-reduction",
+    ]:
+        errors.append("statistics quality assertions differ from the visible metric contract")
 
 
 def validate(root: Path = ROOT) -> List[str]:
@@ -119,7 +130,7 @@ def validate(root: Path = ROOT) -> List[str]:
         "header_height": 72,
         "footer_height": 56,
         "rendered_previews": "compact five-step calendar palette ramp and live Bible appearance preview only; no embedded dashboard preview",
-        "compact_navigation": "single-line synchronized QTabBar whenever retaining the 184 px rail would leave less than 680 logical pixels for the main region; the 860 px supported minimum is compact",
+        "compact_navigation": "labelled synchronized section dropdown below the 860 px supported minimum; the 184 px sidebar remains visible at supported widths",
         "reposition_after_open": "one decoration-only clamp when the decorated frame is outside the active screen; never move an already-contained frame",
     }
     if not isinstance(settings, Mapping) or any(settings.get(key) != value for key, value in expected_settings.items()):
@@ -205,8 +216,10 @@ def validate(root: Path = ROOT) -> List[str]:
             errors.append("Settings geometry criterion is missing: {}".format(marker))
     retention_requirement = criteria_by_id.get("STAT-RETENTION", "")
     if (
-        "Last 7 Days displays Time spent" not in retention_requirement
-        or "instead of Again rate" not in retention_requirement
+        "Last 7 Days orders Cards studied, Avg cards/day, Retention, New cards studied, and Time spent"
+        not in retention_requirement
+        or "Avg cards/day equal to Cards studied divided by seven" not in retention_requirement
+        or "Again rate remains hidden" not in retention_requirement
     ):
         errors.append("visible Last 7 Days metric criterion drifted")
 
@@ -226,10 +239,10 @@ def validate(root: Path = ROOT) -> List[str]:
         derived = capture.get("derived_native_frame_count", {})
         if {key: derived.get(key) for key in ("initial", "restart", "total")} != plan.counts("full"):
             errors.append("derived native frame counts differ from the declarative plan")
-        if plan.counts("full") != {"initial": 92, "restart": 2, "total": 94}:
-            errors.append("corrected full capture plan must contain 94 frames")
-        if plan.counts("settings") != {"initial": 40, "restart": 1, "total": 41}:
-            errors.append("minimal Settings capture plan must contain exactly 41 frames")
+        if plan.counts("full") != {"initial": 114, "restart": 2, "total": 116}:
+            errors.append("corrected full capture plan must contain 116 frames")
+        if plan.counts("settings") != {"initial": 62, "restart": 1, "total": 63}:
+            errors.append("minimal Settings capture plan must contain exactly 63 frames")
         settings_contract_spec = next(
             (
                 family
@@ -250,8 +263,8 @@ def validate(root: Path = ROOT) -> List[str]:
             != "Events · long title at the 860 px responsive minimum"
         ):
             errors.append("long-title Settings case is not captured at the supported minimum")
-        if 2 + len(plan.detail_groups("settings")) > 11:
-            errors.append("minimal Settings capture plan exceeds 11 sheets")
+        if 2 + len(plan.detail_groups("settings")) > 14:
+            errors.append("minimal Settings capture plan exceeds 14 sheets")
         required_manual_results = [
             "macos-fullscreen-no-space-switch-menu-and-dashboard-gear"
         ]
@@ -268,7 +281,7 @@ def validate(root: Path = ROOT) -> List[str]:
             "adds_png_frames": False,
             "opening_paths": ["menu", "dashboard-gear"],
             "workflow_steps_per_path": [
-                "all-four-pages",
+                "all-six-pages-and-bible-views",
                 "events-tabs",
                 "resize",
                 "event-edit",
@@ -284,7 +297,7 @@ def validate(root: Path = ROOT) -> List[str]:
             "geometry": "physical width and height equal available logical width and height multiplied by the declared device pixel ratio within one percent or two pixels",
             "dpr_1": "DPR is within 0.05 of 1.0 and physical and logical dimensions match",
             "native_scale": "native-class DPR matches declared OS scale within 0.08; environment scale substitutes are forbidden",
-            "settings_pages": ["dashboard", "events", "bible_verse", "about_support"],
+            "settings_pages": ["dashboard", "appearance", "calendar", "events", "bible_verse", "bible_display", "about_support"],
             "settings_page_assertions": [
                 "horizontal_scroll_zero",
                 "visible_controls_contained",
@@ -353,6 +366,8 @@ def validate(root: Path = ROOT) -> List[str]:
     for marker in (
         'label = "{}% complete".format(percent)',
         "data-hdo-progress-label",
+        '"progress.initial_cards_due"',
+        '"last_seven_days.average_cards_per_day"',
         '"last_seven_days.time_spent"',
     ):
         if marker not in renderer_source:
@@ -360,6 +375,8 @@ def validate(root: Path = ROOT) -> List[str]:
     for marker in (
         'Math.round(percent) + "% complete"',
         "[data-hdo-progress-label]",
+        '"progress.initial_cards_due"',
+        '"last_seven_days.average_cards_per_day"',
         '"last_seven_days.time_spent"',
     ):
         if marker not in dashboard_js:
@@ -384,7 +401,7 @@ def validate(root: Path = ROOT) -> List[str]:
         "SETTINGS_SIDEBAR_WIDTH = 184",
         "SETTINGS_HEADER_HEIGHT = 72",
         "SETTINGS_FOOTER_MIN_HEIGHT = 56",
-        "self.compact_nav = QTabBar",
+        "self.compact_nav = QComboBox",
         "ScrollBarPolicy.ScrollBarAlwaysOff",
         "class SettingsFooter(QWidget)",
         'self.revert_button = QPushButton("Discard changes")',

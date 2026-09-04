@@ -1,0 +1,55 @@
+{
+  "purpose": "README presentation copies. Only native window title bars are removed; the frozen source captures remain unchanged.",
+  "package_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+  "coordinate_system": "[left, top, right, bottom] in physical source pixels; right and bottom are exclusive",
+  "images": [
+    {
+      "image": "docs/images/1.8.7/dashboard-sapphire-dark.png",
+      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-SG-SAPPHIRE-D.png",
+      "source_sha256": "7d040ad5bb709e13789c10a719870275bfe902e5d47c9bbd69ba343ba6a11c1d",
+      "image_sha256": "73889ad5728d3930e8ad5ee482a9b97b87bdc0fb561c00a56d5b361e621e8dad",
+      "crop_box_pixels": [
+        0,
+        64,
+        3420,
+        2146
+      ]
+    },
+    {
+      "image": "docs/images/1.8.7/dashboard-emerald-dark.png",
+      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-EM-EMERALD-D.png",
+      "source_sha256": "64c2b463520e31ec5a3d75b738fdb6dad3abbfcd482131534679f60d27144f98",
+      "image_sha256": "fbb04b40feda1d0cd61a885433a4ddc9d301db233b00e64800f413ede3674221",
+      "crop_box_pixels": [
+        0,
+        64,
+        3420,
+        2146
+      ]
+    },
+    {
+      "image": "docs/images/1.8.7/dashboard-year.png",
+      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-YEAR-STABLE.png",
+      "source_sha256": "ac9d40f9d9acc85a2f3aff8878151316b29087bfdf87d2192ddda3324026bffb",
+      "image_sha256": "df46f08bb68680fb502546b8d1344f456ba2e3ec8d888ce38548fb1aee914161",
+      "crop_box_pixels": [
+        0,
+        64,
+        3420,
+        2146
+      ]
+    },
+    {
+      "image": "docs/images/1.8.7/settings-appearance-dark.png",
+      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/SET-PAGE-APPEARANCE-1280-100.png",
+      "source_sha256": "4cf3bb42c8f14318f11bbc775f325e1e16b7417f148941df048647a0992da688",
+      "image_sha256": "18ca17cb9488f9442a85f916c6e42f1593e41ac2ac0d8dc7b24a493862a3a4f4",
+      "crop_box_pixels": [
+        0,
+        64,
+        2560,
+        1664
+      ]
+    }
+  ]
+}

@@ -85,7 +85,7 @@ _case_index = 0
 _interaction_cases: list[dict[str, Any]] = []
 _interaction_index = 0
 _stress_width_index = 0
-STRESS_WIDTHS = (307, 308, 619, 620, 859, 860)
+STRESS_WIDTHS = (588, 589, 1008, 1009, 1160)
 PACKAGE_ROOT = Path(home_dashboard_overhaul.__file__).resolve().parent
 
 
@@ -539,8 +539,10 @@ def _inspect(case: dict[str, Any], continuation: Any, attempt: int) -> None:
   var cards = root ? Array.from(root.querySelectorAll('.hdo-statistics-card')) : [];
   var bible = root ? root.querySelector('.hdo-bible-card') : null;
   var frame = root ? root.querySelector('.hdo-calendar-grid-frame') : null;
+  var heatmap = root ? root.querySelector('.hdo-year-heatmap-content') : null;
   var yearGrid = root ? root.querySelector('.hdo-calendar-grid--year') : null;
   var monthLabels = root ? Array.from(root.querySelectorAll('.hdo-year-month-label')) : [];
+  var weekdayLabels = root ? Array.from(root.querySelectorAll('.hdo-year-weekday-label')) : [];
   if (!root || !layout || !calendar || !rail || !metrics || !bible || !frame || !cells.length) return {ready:false};
   function roundedBands(elements, axis) {
     return Array.from(new Set(elements.map(function (element) {
@@ -574,18 +576,24 @@ def _inspect(case: dict[str, Any], continuation: Any, attempt: int) -> None:
   var selectedRect = selected ? selected.getBoundingClientRect() : null;
   var metricRows = roundedBands(cards, 'top').length;
   var metricColumns = roundedBands(cards, 'left').length;
-  var metricNoOverlap = Array.from(root.querySelectorAll('.hdo-metric-row')).every(function (row) {
+  var metricGaps = Array.from(root.querySelectorAll('.hdo-metric-row')).map(function (row) {
     var label = row.querySelector('dt');
     var value = row.querySelector('dd');
-    if (!label || !value) return false;
+    if (!label || !value) return -1;
     var labelRect = label.getBoundingClientRect();
     var valueRect = value.getBoundingClientRect();
-    return labelRect.right <= valueRect.left + 1;
+    return valueRect.left - labelRect.right;
   });
+  var metricMinimumGap = metricGaps.length ? Math.min.apply(null, metricGaps) : -1;
+  var metricNoOverlap = metricMinimumGap >= -1;
   var cardsContained = cards.every(function (card) {
     var cardRect = card.getBoundingClientRect();
     return inside(cardRect, metricsRect, 1) && card.scrollWidth <= card.clientWidth + 1;
   });
+  var cardWidths = cards.map(function (card) { return card.getBoundingClientRect().width; });
+  var cardHeights = cards.map(function (card) { return card.getBoundingClientRect().height; });
+  var cardWidthDelta = cardWidths.length ? Math.max.apply(null, cardWidths) - Math.min.apply(null, cardWidths) : 0;
+  var cardHeightDelta = cardHeights.length ? Math.max.apply(null, cardHeights) - Math.min.apply(null, cardHeights) : 0;
   var yearComplete = !yearGrid || (
     monthLabels.length === 12 &&
     monthLabels.map(function (label) { return label.textContent.trim(); }).join('|') === 'Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec' &&
@@ -607,6 +615,25 @@ def _inspect(case: dict[str, Any], continuation: Any, attempt: int) -> None:
     };
   });
   var yearGridStyle = yearGrid ? window.getComputedStyle(yearGrid) : null;
+  var yearCells = yearGrid ? Array.from(yearGrid.querySelectorAll('.hdo-calendar-day')) : [];
+  var yearCellWidths = yearCells.map(function (cell) { return cell.getBoundingClientRect().width; });
+  var yearCellHeights = yearCells.map(function (cell) { return cell.getBoundingClientRect().height; });
+  var yearOccupiedNodes = yearCells.concat(Array.from(root.querySelectorAll('.hdo-year-weekday-label')));
+  var yearOccupiedLeft = yearOccupiedNodes.length ? Math.min.apply(null, yearOccupiedNodes.map(function (node) {
+    return node.getBoundingClientRect().left;
+  })) : 0;
+  var yearOccupiedRight = yearOccupiedNodes.length ? Math.max.apply(null, yearOccupiedNodes.map(function (node) {
+    return node.getBoundingClientRect().right;
+  })) : 0;
+  var yearCellsSquare = yearCells.every(function (cell) {
+    var cellRect = cell.getBoundingClientRect();
+    return Math.abs(cellRect.width - cellRect.height) <= .5;
+  });
+  var overflowNodes = [root, layout, calendar, rail, metrics, bible, frame]
+    .concat(cards).concat(yearGrid ? [yearGrid] : []);
+  var componentOverflowMax = Math.max.apply(null, overflowNodes.map(function (node) {
+    return Math.max(0, node.scrollWidth - node.clientWidth);
+  }));
   function reportRect(rect) {
     if (!rect) return null;
     return {
@@ -632,15 +659,27 @@ def _inspect(case: dict[str, Any], continuation: Any, attempt: int) -> None:
     calendarCells:cells.length,
     monthLabels:monthLabels.length,
     monthLabelText:monthLabels.map(function (label) { return label.textContent.trim(); }),
+    weekdayLabelText:weekdayLabels.map(function (label) { return label.textContent.trim(); }),
     statisticsCards:cards.length,
     metricColumns:metricColumns,
     metricRows:metricRows,
     metricNoOverlap:metricNoOverlap,
+    metricMinimumGap:Number(metricMinimumGap.toFixed(2)),
     cardsContained:cardsContained,
+    equalCardGeometry:metricColumns !== 2 || (cardWidthDelta <= 1 && cardHeightDelta <= 1),
+    cardWidthDelta:Number(cardWidthDelta.toFixed(2)),
+    cardHeightDelta:Number(cardHeightDelta.toFixed(2)),
     bibleAfter:bibleRect.top >= metricsRect.bottom - 1,
     wideSharedShell:calendarRect.right <= railRect.left + 1 && Math.abs(calendarRect.top - railRect.top) <= 1,
     stackedSharedShell:calendarRect.bottom <= railRect.top + 1,
-    bottomAligned:Math.abs(calendarRect.bottom - railRect.bottom) <= 1 && Math.abs(calendarRect.bottom - bibleRect.bottom) <= 1,
+    layoutColumnGap:Number((railRect.left - calendarRect.right).toFixed(2)),
+    topEdgeDelta:Number(Math.abs(calendarRect.top - railRect.top).toFixed(2)),
+    railWidth:Number(railRect.width.toFixed(2)),
+    calendarHeight:Number(calendarRect.height.toFixed(2)),
+    metricsHeight:Number(metricsRect.height.toFixed(2)),
+    bibleHeight:Number(bibleRect.height.toFixed(2)),
+    monthBottomDelta:Number(Math.abs(calendarRect.bottom - bibleRect.bottom).toFixed(2)),
+    yearBottomDelta:Number(Math.abs(calendarRect.bottom - metricsRect.bottom).toFixed(2)),
     completeYearVisible:yearComplete,
     yearFrameRect:reportRect(frameRect),
     yearGridRect:reportRect(yearGridRect),
@@ -650,6 +689,14 @@ def _inspect(case: dict[str, Any], continuation: Any, attempt: int) -> None:
     yearGridTemplateColumns:yearGridStyle ? yearGridStyle.gridTemplateColumns : '',
     yearGridWeekVariable:yearGrid ? yearGrid.style.getPropertyValue('--hdo-year-weeks') : '',
     yearGridInsideFrame:!yearGrid || inside(yearGridRect, frameRect, 1),
+    yearFrameOverflow:frame.scrollWidth - frame.clientWidth,
+    yearFrameScrollLeft:frame.scrollLeft,
+    yearHeatmapWidthRatio:yearGrid && heatmap ? Number(((yearOccupiedRight - yearOccupiedLeft) / Math.max(1, frameRect.width)).toFixed(3)) : 0,
+    yearCellsSquare:yearCellsSquare,
+    yearCellWidthMin:yearCellWidths.length ? Number(Math.min.apply(null, yearCellWidths).toFixed(2)) : 0,
+    yearCellWidthMax:yearCellWidths.length ? Number(Math.max.apply(null, yearCellWidths).toFixed(2)) : 0,
+    yearCellHeightMin:yearCellHeights.length ? Number(Math.min.apply(null, yearCellHeights).toFixed(2)) : 0,
+    yearCellHeightMax:yearCellHeights.length ? Number(Math.max.apply(null, yearCellHeights).toFixed(2)) : 0,
     yearOutsideCellCount:yearOutsideCells.length,
     yearOutsideCells:yearOutsideCells,
     selectedDayVisible:!!selectedRect && inside(selectedRect, frameRect, 1),
@@ -658,6 +705,7 @@ def _inspect(case: dict[str, Any], continuation: Any, attempt: int) -> None:
     dueLegendSwatches:root.querySelectorAll('.hdo-due-legend i').length,
     eventLegendMarkers:root.querySelectorAll('.hdo-legend-event').length,
     layoutContained:inside(layoutRect, rootRect, 1),
+    componentOverflowMax:componentOverflowMax,
     overflowX:document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
     bodyScrollHeight:document.body.scrollHeight,
     rootScrollHeight:root.scrollHeight
@@ -669,6 +717,9 @@ def _inspect(case: dict[str, Any], continuation: Any, attempt: int) -> None:
         try:
             state = value if isinstance(value, dict) else {"ready": False}
             expected_cells = 365 if case["view"] == "year" else 42
+            root_width = float(state.get("rootWidth", 0))
+            expected_metric_columns = 1 if root_width <= 588.5 else 2
+            expected_metric_rows = 4 if expected_metric_columns == 1 else 2
             ready = (
                 bool(state.get("ready"))
                 and state.get("view") == case["view"]
@@ -681,10 +732,12 @@ def _inspect(case: dict[str, Any], continuation: Any, attempt: int) -> None:
                     {365, 366} if case["view"] == "year" else {28, 35, 42}
                 )
                 and state.get("statisticsCards") == 4
-                and state.get("metricColumns") == 2
-                and state.get("metricRows") == 2
+                and state.get("metricColumns") == expected_metric_columns
+                and state.get("metricRows") == expected_metric_rows
                 and bool(state.get("metricNoOverlap"))
+                and float(state.get("metricMinimumGap", -1)) >= 8
                 and bool(state.get("cardsContained"))
+                and bool(state.get("equalCardGeometry"))
                 and bool(state.get("bibleAfter"))
                 and bool(state.get("selectedDayVisible"))
                 and int(state.get("eventMarkers", 0)) >= 1
@@ -692,18 +745,46 @@ def _inspect(case: dict[str, Any], continuation: Any, attempt: int) -> None:
                 and state.get("dueLegendSwatches") == 3
                 and state.get("eventLegendMarkers") == 1
                 and bool(state.get("layoutContained"))
+                and float(state.get("componentOverflowMax", 1)) <= 1
                 and not bool(state.get("overflowX"))
             )
             if case.get("view") == "year":
                 ready = (
                     ready
                     and state.get("monthLabels") == 12
+                    and state.get("weekdayLabelText") == ["Mon", "Wed", "Fri"]
                     and state.get("yearOutsideCellCount") == 0
                 )
             if case.get("layout") == "wide" or case.get("full_screen"):
-                ready = ready and bool(state.get("wideSharedShell"))
+                ready = (
+                    ready
+                    and bool(state.get("wideSharedShell"))
+                    and abs(root_width - 1160) <= 1.5
+                    and abs(float(state.get("railWidth", 0)) - 360) <= 1
+                    and abs(float(state.get("layoutColumnGap", 0)) - 14) <= 1
+                    and float(state.get("topEdgeDelta", 99)) <= 1
+                )
                 if case.get("view") == "year":
-                    ready = ready and bool(state.get("completeYearVisible"))
+                    ready = (
+                        ready
+                        and bool(state.get("completeYearVisible"))
+                        and float(state.get("yearBottomDelta", 99)) <= 2
+                        and float(state.get("yearFrameOverflow", 99)) <= 1
+                        and abs(float(state.get("yearFrameScrollLeft", 99))) <= 1
+                        and float(state.get("yearHeatmapWidthRatio", 0)) >= .85
+                        and bool(state.get("yearCellsSquare"))
+                        and 9 <= float(state.get("yearCellWidthMin", 0))
+                        and float(state.get("yearCellWidthMax", 99)) <= 10.5
+                        and float(state.get("calendarHeight", 0)) >= 351
+                        and float(state.get("metricsHeight", 0)) >= 351
+                    )
+                else:
+                    ready = (
+                        ready
+                        and float(state.get("monthBottomDelta", 99)) <= 2
+                        and float(state.get("calendarHeight", 0)) >= 545
+                        and float(state.get("bibleHeight", 0)) >= 181
+                    )
             else:
                 ready = ready and bool(state.get("stackedSharedShell"))
             if not ready:
@@ -834,6 +915,7 @@ STRESS_INSPECTION_SCRIPT = """
 (function () {
   var root = document.getElementById('hdo-dashboard');
   if (!root) return {ready:false};
+  var layout = root.querySelector('.hdo-dashboard-layout');
   var calendar = root.querySelector('.hdo-calendar-card');
   var rail = root.querySelector('.hdo-insight-rail');
   var metrics = root.querySelector('.hdo-summary-metrics-grid');
@@ -853,7 +935,7 @@ STRESS_INSPECTION_SCRIPT = """
   var editEvent = root.querySelector('[data-hdo-edit-event]');
   var primaryAction = root.querySelector('[data-hdo-primary-action]');
   var dateState = root.querySelector('[data-hdo-date-state]');
-  if (!calendar || !rail || !metrics || cards.length !== 4 || !bible || !frame || !grid || !selected || !shell || !heatmap || !footer || !contextEvent || !primaryAction || !dateState) return {ready:false};
+  if (!layout || !calendar || !rail || !metrics || cards.length !== 4 || !bible || !frame || !grid || !selected || !shell || !heatmap || !footer || !contextEvent || !primaryAction || !dateState) return {ready:false};
   function rect(element) { return element.getBoundingClientRect(); }
   function visible(element) {
     return !!element && !element.hidden && getComputedStyle(element).display !== 'none';
@@ -878,6 +960,8 @@ STRESS_INSPECTION_SCRIPT = """
   }
   var calendarRect = rect(calendar);
   var railRect = rect(rail);
+  var metricsRect = rect(metrics);
+  var bibleRect = rect(bible);
   var frameRect = rect(frame);
   var link = root.querySelector('[data-hdo-open-events]');
   var linkStyle = link ? getComputedStyle(link) : null;
@@ -892,6 +976,27 @@ STRESS_INSPECTION_SCRIPT = """
   var cellHeights = Array.from(new Set(Array.from(root.querySelectorAll('.hdo-calendar-day')).map(function (cell) {
     return Number(rect(cell).height.toFixed(1));
   })));
+  var yearCells = Array.from(root.querySelectorAll('.hdo-calendar-grid--year .hdo-calendar-day'));
+  var yearCellWidths = yearCells.map(function (cell) { return rect(cell).width; });
+  var yearCellHeights = yearCells.map(function (cell) { return rect(cell).height; });
+  var yearOccupiedNodes = yearCells.concat(Array.from(root.querySelectorAll('.hdo-year-weekday-label')));
+  var yearOccupiedLeft = yearOccupiedNodes.length ? Math.min.apply(null, yearOccupiedNodes.map(function (node) {
+    return rect(node).left;
+  })) : 0;
+  var yearOccupiedRight = yearOccupiedNodes.length ? Math.max.apply(null, yearOccupiedNodes.map(function (node) {
+    return rect(node).right;
+  })) : 0;
+  var metricGaps = Array.from(root.querySelectorAll('.hdo-metric-row')).map(function (row) {
+    var label = row.querySelector('dt');
+    var value = row.querySelector('dd');
+    return label && value ? rect(value).left - rect(label).right : -1;
+  });
+  var cardWidths = cards.map(function (card) { return rect(card).width; });
+  var cardHeights = cards.map(function (card) { return rect(card).height; });
+  var componentNodes = [root, layout, calendar, rail, metrics, bible, frame, grid, shell, footer].concat(cards);
+  var componentOverflow = Math.max.apply(null, componentNodes.map(function (node) {
+    return Math.max(0, node.scrollWidth - node.clientWidth);
+  }));
   var editEventAdjacent = true;
   var editEventGap = null;
   if (visible(editEvent) && visible(eventSummary)) {
@@ -905,6 +1010,7 @@ STRESS_INSPECTION_SCRIPT = """
     ready:true,
     viewportWidth:window.innerWidth,
     rootWidth:Number(rect(root).width.toFixed(1)),
+    density:root.dataset.hdoContentMode || '',
     view:root.dataset.hdoCalendarView || '',
     title:(root.querySelector('[data-hdo-calendar-title]') || {}).textContent || '',
     metricColumns:bands(cards, 'left'),
@@ -914,14 +1020,28 @@ STRESS_INSPECTION_SCRIPT = """
       var value = row.querySelector('dd');
       return label && value && rect(label).right <= rect(value).left + 1;
     }),
+    metricMinimumGap:metricGaps.length ? Number(Math.min.apply(null, metricGaps).toFixed(1)) : -1,
     cardsContained:cards.every(function (card) {
       return inside(rect(card), rect(metrics), 1) && card.scrollWidth <= card.clientWidth + 1;
     }),
+    equalCardGeometry:bands(cards, 'left') !== 2 || (
+      Math.max.apply(null, cardWidths) - Math.min.apply(null, cardWidths) <= 1 &&
+      Math.max.apply(null, cardHeights) - Math.min.apply(null, cardHeights) <= 1
+    ),
     metricValues:metricValues,
-    wideSharedShell:calendarRect.right <= railRect.left + 1,
+    wideSharedShell:calendarRect.right <= railRect.left + 1 && Math.abs(calendarRect.top - railRect.top) <= 1,
     stackedSharedShell:calendarRect.bottom <= railRect.top + 1,
-    bottomAligned:Math.abs(calendarRect.bottom - railRect.bottom) <= 1,
+    railWidth:Number(railRect.width.toFixed(1)),
+    layoutColumnGap:Number((railRect.left - calendarRect.right).toFixed(1)),
+    topEdgeDelta:Number(Math.abs(calendarRect.top - railRect.top).toFixed(1)),
+    monthBottomDelta:Number(Math.abs(calendarRect.bottom - bibleRect.bottom).toFixed(1)),
+    yearBottomDelta:Number(Math.abs(calendarRect.bottom - metricsRect.bottom).toFixed(1)),
+    calendarHeight:Number(calendarRect.height.toFixed(1)),
+    metricsHeight:Number(metricsRect.height.toFixed(1)),
     monthLabels:Array.from(root.querySelectorAll('.hdo-year-month-label')).map(function (node) {
+      return node.textContent.trim();
+    }),
+    weekdayLabels:Array.from(root.querySelectorAll('.hdo-year-weekday-label')).map(function (node) {
       return node.textContent.trim();
     }),
     calendarCells:root.querySelectorAll('.hdo-calendar-day').length,
@@ -931,7 +1051,12 @@ STRESS_INSPECTION_SCRIPT = """
     selectedVisible:inside(rect(selected), frameRect, 1),
     frameOverflow:frame.scrollWidth - frame.clientWidth,
     frameScrollLeft:frame.scrollLeft,
-    yearHeatmapWidthRatio:Number((rect(heatmap).width / Math.max(1, frameRect.width)).toFixed(3)),
+    yearHeatmapWidthRatio:Number(((yearOccupiedRight - yearOccupiedLeft) / Math.max(1, frameRect.width)).toFixed(3)),
+    yearCellsSquare:yearCells.every(function (cell) { return Math.abs(rect(cell).width - rect(cell).height) <= .5; }),
+    yearCellWidthMin:yearCellWidths.length ? Number(Math.min.apply(null, yearCellWidths).toFixed(1)) : 0,
+    yearCellWidthMax:yearCellWidths.length ? Number(Math.max.apply(null, yearCellWidths).toFixed(1)) : 0,
+    yearCellHeightMin:yearCellHeights.length ? Number(Math.min.apply(null, yearCellHeights).toFixed(1)) : 0,
+    yearCellHeightMax:yearCellHeights.length ? Number(Math.max.apply(null, yearCellHeights).toFixed(1)) : 0,
     eventDates:Array.from(root.querySelectorAll('.hdo-calendar-day')).filter(function (cell) {
       return !!cell.querySelector('.hdo-event-marker');
     }).map(function (cell) { return cell.dataset.date; }).sort(),
@@ -962,6 +1087,7 @@ STRESS_INSPECTION_SCRIPT = """
     verseText:(root.querySelector('.hdo-verse-body') || {}).textContent || '',
     verseOverflow:(root.querySelector('.hdo-verse-body') || {}).scrollHeight > (root.querySelector('.hdo-verse-body') || {}).clientHeight + 1,
     legendFont:getComputedStyle(root.querySelector('.hdo-calendar-legend')).fontSize,
+    componentOverflow:componentOverflow,
     documentOverflow:document.documentElement.scrollWidth - document.documentElement.clientWidth
   };
 })()
@@ -1015,11 +1141,13 @@ def _require_stress_common(
     events_enabled: bool = True,
 ) -> None:
     expected_values = {
+        "progress.initial_cards_due": "12,610",
         "today.answers": "12,486",
         "today.new_cards_studied": "1,048",
         "today.pace": "125.4 sec/card",
         "queue.eta": "Tomorrow, 12:15 AM",
         "last_seven_days.cards_studied": "12,486",
+        "last_seven_days.average_cards_per_day": "1,784",
         "last_seven_days.new_cards_studied": "1,048",
         "long_term.current_streak": "1,024 days",
         "long_term.longest_streak": "1,517 days",
@@ -1028,7 +1156,10 @@ def _require_stress_common(
     values = state.get("metricValues", {})
     _require(all(values.get(key) == value for key, value in expected_values.items()), "stress metrics differ: {}".format(values))
     _require(bool(state.get("metricNoOverlap")), "stress metric labels overlap values")
+    _require(float(state.get("metricMinimumGap", -1)) >= 8, "stress metric label/value gap is below 8px")
     _require(bool(state.get("cardsContained")), "stress metric cards overflow their grid")
+    _require(bool(state.get("equalCardGeometry")), "stress 2x2 metric cards do not have equal geometry")
+    _require(float(state.get("componentOverflow", 1)) <= 1, "stress dashboard has component-level horizontal overflow")
     _require(int(state.get("documentOverflow", 1)) <= 0, "stress dashboard has page-level horizontal overflow")
     _require(bool(state.get("footerIntegrated")), "calendar footer is not integrated with the calendar panel")
     _require(bool(state.get("footerSurfaceMapped")), "calendar footer does not use the intended nested neutral tokens")
@@ -1066,7 +1197,7 @@ def _require_stress_common(
 
 def _start_stress_year() -> None:
     REPORT["stress_checks"] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "specified_values": {
             "cards_studied": "12,486",
             "new_cards_studied": "1,048",
@@ -1127,10 +1258,10 @@ def _record_stress_year_width(requested: int, state: dict[str, Any]) -> None:
     _require(state.get("view") == "year", "stress Year rendered the wrong view")
     _require(state.get("calendarCells") == 365, "stress Year omitted civil dates")
     _require(state.get("monthLabels") == ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], "stress Year omitted month labels")
+    _require(state.get("weekdayLabels") == ["Mon", "Wed", "Fri"], "stress Year omitted weekday labels")
     _require(state.get("eventDates") == ["2026-01-05", "2026-12-29"], "January/December Year events are incomplete")
     _require(state.get("selectedDate") == "2026-12-29", "stress Year lost the selected December state")
-    if requested >= 620:
-        _require(bool(state.get("selectedVisible")), "non-scrolling Year clipped the selected December state")
+    _require(bool(state.get("selectedVisible")), "non-scrolling Year clipped the selected December state")
     _require(state.get("primaryActionText") == "Due cards" and not bool(state.get("primaryActionHidden")), "future-date CTA is incorrect")
     _require("Comprehensive Pediatric NBME" in str(state.get("contextEventTitle", "")), "long event text is missing")
     _require(
@@ -1141,37 +1272,51 @@ def _record_stress_year_width(requested: int, state: dict[str, Any]) -> None:
     _require(bool(state.get("contextEventMarkerVisible")) and bool(state.get("editEventVisible")), "next-event marker or adjacent edit control is missing")
     _require(state.get("dateStateText") == "Selected" and state.get("selectedDateText") == "Tue, Dec 29, 2026", "selected-date chip or date is incorrect")
     _require(abs(float(state.get("rootWidth", 0)) - requested) <= 1.5, "unexpected stress container width")
-    if requested == 307:
-        _require(state.get("metricColumns") == 1 and state.get("metricRows") == 4, "307px container did not use one metric column")
-        _require(bool(state.get("stackedSharedShell")), "307px container did not stack")
-        _require(int(state.get("frameOverflow", 0)) > 0 and int(state.get("frameScrollLeft", 0)) > 0, "narrow Year did not use its selected-cell scroller")
-    elif requested == 308:
+    expected_density = "wide" if requested >= 1009 else "intermediate" if requested >= 589 else "narrow"
+    _require(state.get("density") == expected_density, "stress density differs at a 588/589 or 1008/1009 boundary")
+    if requested == 588:
         _require(
-            state.get("metricColumns") == 2
-            and state.get("metricRows") == 2
+            state.get("metricColumns") == 1
+            and state.get("metricRows") == 4
             and bool(state.get("stackedSharedShell")),
-            "308px container did not use the minimum viable 2x2 matrix state",
+            "588px container did not retain the stacked single-column metric state",
         )
-    elif requested in (619, 620, 859):
+    elif requested in (589, 1008):
         _require(
             state.get("metricColumns") == 2
             and state.get("metricRows") == 2
             and bool(state.get("stackedSharedShell")),
-            "intermediate container did not retain the 2x2 metric grid",
+            "589-1008px container did not retain the stacked 2x2 metric grid",
         )
     else:
         _require(state.get("metricColumns") == 2 and state.get("metricRows") == 2, "wide container did not use 2x2 metrics")
         _require(bool(state.get("wideSharedShell")), "wide shared shell did not align")
-    if requested in (308, 619):
         _require(
-            int(state.get("frameOverflow", 0)) > 0
-            and int(state.get("frameScrollLeft", 0)) > 0,
-            "compact Year boundary did not retain its selected-cell scroller",
+            abs(float(state.get("railWidth", 0)) - 360) <= 1
+            and abs(float(state.get("layoutColumnGap", 0)) - 14) <= 1
+            and float(state.get("topEdgeDelta", 99)) <= 1,
+            "wide shell does not use the 360px rail, 14px gap, and aligned top edge",
         )
-    if requested >= 620:
-        _require(bool(state.get("yearGridInsideFrame")) and int(state.get("frameOverflow", 1)) <= 0, "supported Year width clipped the heatmap")
-    if 620 <= requested <= 859:
-        _require(0.89 <= float(state.get("yearHeatmapWidthRatio", 0)) <= 0.95, "Year heatmap does not occupy roughly 90-94 percent of its body")
+        _require(float(state.get("yearBottomDelta", 99)) <= 2, "Year calendar does not align with the summary grid bottom")
+        _require(
+            float(state.get("calendarHeight", 0)) >= 351
+            and float(state.get("metricsHeight", 0)) >= 351,
+            "wide Year calendar or summary grid is below the 352px target",
+        )
+        _require(float(state.get("yearHeatmapWidthRatio", 0)) >= .85, "wide Year heatmap occupies less than 85 percent of its body")
+    _require(
+        bool(state.get("yearGridInsideFrame"))
+        and int(state.get("frameOverflow", 1)) <= 1
+        and abs(int(state.get("frameScrollLeft", 1))) <= 1,
+        "Year heatmap clips or requires internal horizontal scrolling",
+    )
+    _require(bool(state.get("yearCellsSquare")), "Year heatmap cells are not square")
+    if requested == 1160:
+        _require(
+            9 <= float(state.get("yearCellWidthMin", 0))
+            and float(state.get("yearCellWidthMax", 99)) <= 10.5,
+            "1160px Year heatmap cells are outside the 9-10px target",
+        )
     REPORT["stress_checks"]["year_widths"][str(requested)] = state
     _write_report()
     QTimer.singleShot(80, _capture_next_stress_width)
@@ -1196,7 +1341,7 @@ def _record_stress_month(state: dict[str, Any]) -> None:
         and 38.0 <= float(cell_heights[0]) <= 44.0,
         "compact Month cells are not uniform within the 38-44px fluid range",
     )
-    _require(state.get("metricColumns") == 2 and state.get("metricRows") == 2, "compact Month did not retain 2x2 metrics")
+    _require(state.get("metricColumns") == 1 and state.get("metricRows") == 4, "compact Month did not use the single-column metrics state")
     _require(float(state.get("contextEventLines", 99)) <= 2.1, "long compact event exceeded two text lines")
     _require(float(state.get("primaryActionHeight", 0)) in (30.0, 31.0, 32.0), "compact CTA height is outside 30-32px")
     _require(bool(state.get("primaryActionOwnRow")), "compact CTA is not on its own row")

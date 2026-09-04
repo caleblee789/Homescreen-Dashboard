@@ -1,0 +1,145 @@
+{
+  "accepted_canonical_frames": 115,
+  "capture_plan_sha256": "026d1bbd0190942e9faa161463aa4432a1f74000c8f0ac5848ac7d7de3ee0365",
+  "closeup_review": [
+    "minimum-size Bible library",
+    "light-mode Bible library",
+    "event and verse editors",
+    "save error region and footer",
+    "verse previews and invalid color",
+    "dashboard empty verse action",
+    "Pending save and Current labels through menu and gear, before and after restart"
+  ],
+  "date": "2026-09-04",
+  "findings": "No remaining UI defects identified in retained evidence; contamination omitted or replaced as recorded in visual-curation.json.",
+  "human_visual_approval": false,
+  "omitted_canonical_frames": 1,
+  "package_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+  "quality_status": "review-required",
+  "release_ready": false,
+  "reused_existing_exact_package_frames": 1,
+  "reviewed_sheets": [
+    {
+      "file": "contact-sheets/contact-sheet-00-overview.png",
+      "sha256": "805d976f8a75a129fd814ce99a463e06d82a9e098abeaaaaeb80b0b3afcf245f"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-01-production-palettes-sapphire-glass.png",
+      "sha256": "27734147ab0637bb09cec0152b2f111110ebb2e749742b5d693417c37f307eff"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-02-production-palettes-graphite.png",
+      "sha256": "ce3356d7041849491b0e50c71c1ca664ffed10abcef99eecdf9d7edd4d356459"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-03-production-palettes-emerald.png",
+      "sha256": "dabe86b791c85c6cb58cff3b37f46334f01dfea33ed6e21ed14b9498dc163aae"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-04-production-palettes-high-contrast.png",
+      "sha256": "a7207e24f48e96148f2a2a06cd14ff81c204e92f35c355b7a2252855ca72149d"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-05-production-month-year-and-marker-combinations.png",
+      "sha256": "9d984a8c5905b484f6eccc5ceb32f667fb175f5de916734dd9f871a090f8d552"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-06-production-legends-backgrounds-sections-clearance-and-verse.png",
+      "sha256": "d788a21a9ae765e95f09150c8ba2a86fc249a9f798720a312931c21691b4b3c7"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-07-settings-dashboard-100-application-font.png",
+      "sha256": "d95d8333757946473fa0df7888898aed1f6f33526bdf4d69bdc90224bd170ff5"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-08-settings-appearance-widths-and-native-themes.png",
+      "sha256": "1905bc2cb9258879b21c518c27fff829558494403883ea19f6de4bafbf5f20ff"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-09-settings-calendar-widths-and-ranges.png",
+      "sha256": "49df3638746b9b729589bd17dbde7bba8c9665aaee0a61e215e686be1f1e60d1"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-10-settings-events-100-application-font.png",
+      "sha256": "55d6fa381736e9c1e30b9484ea465dd017f3914c50a5f2637f10b1c18a9a06f8"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-11-settings-bible-verse-100-application-font.png",
+      "sha256": "b1dd966d9f53cb8ff5795ad06090d18d8cb1e700a96aad5555c8eaf514ca888d"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-12-settings-bible-display-rotation-widths-and-native-themes.png",
+      "sha256": "5729fdd29df9d639f681f0add9e95371ca689d49e4cc320827c68228e02d3c48"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-13-settings-about-100-application-font.png",
+      "sha256": "6c9b2ea6df8a61b291a509ad92030848e497b82827979ff34f88ddedc10ef362"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-14-settings-events-states.png",
+      "sha256": "6ba2c3a4629430275f7200d9e54bfc0960c4aa893a7becf4a0b2b16fcece2936"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-15-settings-bible-states.png",
+      "sha256": "b327562a2f57f2aecebd92e2fb2356d4c1c75dc7a33ec78be33a346677e2a416"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-16-settings-dirty-discard-save-and-error.png",
+      "sha256": "6168d610d34ea96cdd6c3a78079537e6eb7615f486660f33b1de706d60518182"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-17-settings-about-bottom-legacy-route-fresh-open-and-clamp.png",
+      "sha256": "6ea668d821043e8a9ae9b520affbe024db8ccdc5d43b144b0fdba3946ee3ddb6"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-18-statistics-accuracy-responsive-shells.png",
+      "sha256": "41b956d191e78006bbe32434720266aa41734eca1327989b70ee2b92264c1ec9"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-19-controlled-restart-persistence.png",
+      "sha256": "3b4092b2ddd924cd454f7a23c516862920d8a9307dddb4f5bb7c0b711f1a3945"
+    },
+    {
+      "file": "contact-sheets/contact-sheet-20-package-and-isolation-reports.png",
+      "sha256": "7910167bd6718e7168708485e5dc54c80c374bbfc12995c45b5b7e47b3e93879"
+    }
+  ],
+  "reviewer": "Codex model visual review",
+  "schema_version": 1,
+  "status": "passed-for-retained-frames",
+  "supplemental_images": [
+    {
+      "file": "reports/fullscreen-workflow/initial-dashboard-gear-current-verse.png",
+      "sha256": "82d82ca6e069676ced3fef7bc45bd0ed7883d4d96d8e723a00c23b52f7b7ff75"
+    },
+    {
+      "file": "reports/fullscreen-workflow/initial-dashboard-gear-pending-verse.png",
+      "sha256": "5c47e6a6d8f711558699cd1df45d61df9f70a3096905c13d49a4e47b4879fa38"
+    },
+    {
+      "file": "reports/fullscreen-workflow/initial-menu-current-verse.png",
+      "sha256": "11019b824a146d1bf6a1079c032f5477a62ace0908c2793f82967d05637215d5"
+    },
+    {
+      "file": "reports/fullscreen-workflow/initial-menu-pending-verse.png",
+      "sha256": "447be85dee3ab07af61f71f7cabce33f8e64f4b4221411ac0f6598063d3334dc"
+    },
+    {
+      "file": "reports/fullscreen-workflow/restart-dashboard-gear-current-verse.png",
+      "sha256": "b20b5dcb6d1c8948a4312a2b37c5c6aa018c73a4180b12e32e9d8c1679ebd7f0"
+    },
+    {
+      "file": "reports/fullscreen-workflow/restart-dashboard-gear-pending-verse.png",
+      "sha256": "a71b3e538c94a16a18c5ddd4b66c059bc646b8a5eda9e416e4e220476f2ea643"
+    },
+    {
+      "file": "reports/fullscreen-workflow/restart-menu-current-verse.png",
+      "sha256": "7ce62066213613e1b22e055f800e979028c27f27f4b52e8ccf0ad0f22d601d85"
+    },
+    {
+      "file": "reports/fullscreen-workflow/restart-menu-pending-verse.png",
+      "sha256": "bf60b3bf1dc32db4dcb23af9a7facdd7b3b9525036167d493d0b3af4e663c1b1"
+    }
+  ],
+  "supplemental_images_reviewed": 8
+}

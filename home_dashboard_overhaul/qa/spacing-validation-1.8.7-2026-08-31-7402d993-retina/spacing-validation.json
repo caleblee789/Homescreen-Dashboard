@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "release": "1.8.7",
+  "scope": "month-year-spacing-validation-pair",
+  "candidate": {
+    "archive": "../../dist/home-dashboard-overhaul-1.8.7.ankiaddon",
+    "sha256": "7402d9933d2554551f1c0516e9ca07e7f13b673f0b01d39cdad091d6f5919b02",
+    "member_count": 24,
+    "source_package_parity": "passed",
+    "deterministic_two_build_parity": "passed",
+    "archive_integrity": "passed"
+  },
+  "environment": {
+    "anki_version": "26.8.1",
+    "profile": "Codex QA HDO 1.8.7 Spacing Accept 20260831-2030",
+    "sync": "disabled-and-disconnected",
+    "instance_key_fingerprint": "089e99207152",
+    "screen_name": "Built-in Retina Display",
+    "screen_geometry_logical": [0, 0, 1710, 1107],
+    "window_frame_logical": [0, 34, 1710, 1073],
+    "device_pixel_ratio": 2.0,
+    "application_text_percent": 100,
+    "process_filesystem_package_and_sync_gates": "passed"
+  },
+  "capture_plan": {
+    "profile": "wide-100",
+    "sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+    "capture_count": 2,
+    "capture_ids": [
+      "PROD-STATS-WIDE-MONTH",
+      "PROD-STATS-WIDE-YEAR"
+    ]
+  },
+  "captures": {
+    "PROD-STATS-WIDE-MONTH": {
+      "file": "captures/PROD-STATS-WIDE-MONTH.png",
+      "sha256": "ddb04769d70d22c0a2336312484e1128e72db47b8d538d8a8acd4c0801df0df9",
+      "physical_pixels": [3420, 2146],
+      "dashboard_shell_width": 1160,
+      "calendar_width": 786,
+      "rail_width": 360,
+      "calendar_to_rail_gap": 14,
+      "deck_to_dashboard_gap": 30,
+      "summary_grid_height": 352,
+      "bible_card_height": 182,
+      "calendar_bible_bottom_delta": 0,
+      "minimum_metric_label_value_gap": 10,
+      "document_horizontal_overflow": 0,
+      "component_horizontal_overflow": 0,
+      "document_scroll_maximum": 0
+    },
+    "PROD-STATS-WIDE-YEAR": {
+      "file": "captures/PROD-STATS-WIDE-YEAR.png",
+      "sha256": "fd75315e0d24e6fc3a49fe970346151b9fa6438b5f2c600c261b004d3a4eee9c",
+      "physical_pixels": [3420, 2146],
+      "dashboard_shell_width": 1160,
+      "calendar_width": 786,
+      "rail_width": 360,
+      "calendar_to_rail_gap": 14,
+      "deck_to_dashboard_gap": 30,
+      "summary_grid_height": 352,
+      "calendar_summary_bottom_delta": 0,
+      "year_week_count": 53,
+      "year_cell_width_range": [10, 10],
+      "year_cell_height_range": [10, 10],
+      "year_heatmap_width_ratio": 0.9192200557103064,
+      "minimum_metric_label_value_gap": 10,
+      "document_horizontal_overflow": 0,
+      "component_horizontal_overflow": 0,
+      "year_component_horizontal_overflow": 0,
+      "document_scroll_maximum": 0
+    }
+  },
+  "runtime_report": {
+    "file": "reports/runtime-report-initial.json",
+    "sha256": "77815859c6b0a02e8a989c04ac47713fcbc80cca8fd520b1eca1151a534dba1c",
+    "schema_version": 3,
+    "status": "passed",
+    "errors": []
+  },
+  "live_acceptance": {
+    "status": "passed",
+    "criteria": {
+      "01_centered_and_28_to_30px_below_deck_panel": true,
+      "02_calendar_and_top_cards_share_top_edge": true,
+      "03_calendar_to_rail_gap_is_14px": true,
+      "04_summary_cards_are_equal_2_by_2_with_12px_gaps": true,
+      "05_metric_values_are_right_aligned": true,
+      "06_metric_label_value_separation_is_at_least_8px": true,
+      "07_representative_long_values_do_not_touch_wrap_clip_or_overlap": true,
+      "08_dashboard_font_sizes_are_preserved": true,
+      "09_month_calendar_and_bible_bottoms_align_within_2px": true,
+      "10_year_calendar_and_summary_grid_bottoms_align_within_2px": true,
+      "11_year_heatmap_uses_at_least_85_percent_of_content_width": true,
+      "12_year_cells_are_square_complete_and_visible": true,
+      "13_legend_groups_have_distinct_spacing": true,
+      "14_no_dashboard_horizontal_scrolling": true,
+      "15_no_internal_dashboard_scrollbar": true,
+      "16_native_deck_area_and_bottom_actions_are_unobstructed": true,
+      "17_month_year_switch_preserves_horizontal_shell_and_rail_geometry": true
+    }
+  },
+  "release_state": {
+    "quality_status": "review-required",
+    "release_ready": false,
+    "canonical_94_frame_bundle_regenerated": false,
+    "current_evidence_or_status_pointers_updated": false,
+    "historical_evidence_modified": false
+  }
+}

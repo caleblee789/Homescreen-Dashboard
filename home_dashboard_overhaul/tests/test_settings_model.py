@@ -314,6 +314,7 @@ class SettingsDraftTests(unittest.TestCase):
 
         for scope in (
             "appearance",
+            "panel_placement",
             "dashboard_sections",
             "study_metrics",
             "calendar_display",
@@ -606,22 +607,24 @@ class SettingsUtilityTests(unittest.TestCase):
 
     def test_routes_keep_old_aliases(self) -> None:
         self.assertEqual(resolve_section_target(""), ("dashboard", ""))
-        self.assertEqual(resolve_section("appearance"), "dashboard")
+        self.assertEqual(resolve_section("appearance"), "appearance")
         self.assertEqual(resolve_section("dashboard"), "dashboard")
-        self.assertEqual(resolve_section("activity"), "dashboard")
-        self.assertEqual(resolve_section("calendar"), "dashboard")
+        self.assertEqual(resolve_section("activity"), "calendar")
+        self.assertEqual(resolve_section("calendar"), "calendar")
         self.assertEqual(resolve_section("events"), "events")
         self.assertEqual(resolve_section("Bible Verse"), "bible_verse")
         self.assertEqual(resolve_section("About & Credits"), "about_support")
-        self.assertEqual(resolve_section_target("theme_layout"), ("dashboard", "appearance"))
+        self.assertEqual(resolve_section_target("theme_layout"), ("appearance", ""))
         self.assertEqual(resolve_section_target("home_screen"), ("dashboard", "dashboard_sections"))
-        self.assertEqual(resolve_section_target("calendar_data"), ("dashboard", "calendar"))
+        self.assertEqual(resolve_section_target("calendar_data"), ("calendar", ""))
 
     def test_section_ids_labels_and_groups_match_the_navigation_contract(self) -> None:
         self.assertEqual(
             SECTION_IDS,
             (
                 "dashboard",
+                "appearance",
+                "calendar",
                 "events",
                 "bible_verse",
                 "about_support",
@@ -629,11 +632,11 @@ class SettingsUtilityTests(unittest.TestCase):
         )
         self.assertEqual(
             [SECTION_LABELS[value] for value in SECTION_IDS],
-            ["Dashboard", "Events", "Bible verse", "About & support"],
+            ["Dashboard", "Appearance", "Calendar", "Events", "Bible verse", "About & support"],
         )
         self.assertEqual(
             [SECTION_GROUPS[value] for value in SECTION_IDS],
-            ["", "", "", ""],
+            ["", "", "", "", "", ""],
         )
 
     def test_unknown_key_diff_is_visible(self) -> None:

@@ -345,9 +345,11 @@ class ControllerCapabilityTests(unittest.TestCase):
         self.module.ROTATION_STATE_PATH = Path(self.rotation_directory.name) / "rotation.json"
         self.controller = self.module.DashboardController()
         self.original_collector = self.module.collect_day_insight
+        self.original_day_target_collector = self.module.collect_day_browse_target
 
     def tearDown(self) -> None:
         self.module.collect_day_insight = self.original_collector
+        self.module.collect_day_browse_target = self.original_day_target_collector
         self.module.ROTATION_STATE_PATH = self.original_rotation
         self.rotation_directory.cleanup()
 
@@ -533,22 +535,60 @@ class ControllerCapabilityTests(unittest.TestCase):
         self.assertTrue(self.controller.selection_follows_today)
         self.assertIsNone(self.controller.year_scroll_left)
 
-    def test_reviewed_and_due_actions_use_only_cached_exact_day_targets(self) -> None:
+    def test_reviewed_and_due_actions_resolve_once_then_use_cached_exact_targets(self) -> None:
         snapshot = sample_snapshot(date(2026, 8, 17))
         self.controller.snapshot = snapshot
         self.controller.cache_key = self.controller._key()
+        targets = {
+            iso: snapshot.facts.for_date(iso).browse_target
+            for iso in ("2026-08-16", "2026-08-17", "2026-08-18")
+        }
+        calls = []
+
+        def collect(_col, _config, selected, _scheduling_date):
+            calls.append(selected.isoformat())
+            return targets[selected.isoformat()]
+
+        self.module.collect_day_browse_target = collect
         self.controller.open_day_in_browser("2026-08-17")
+        self.controller.open_day_in_browser("2026-08-17")
+        self.assertEqual(len(FakeQueryOp.pending), 1)
+        self.assertEqual(self.aqt.dialogs.opened, [])
+        FakeQueryOp.pending[-1].complete()
         browser = self.aqt.dialogs.opened[-1][1]
         self.assertEqual(browser.searches, [snapshot.facts.for_date("2026-08-17").browse_target.query])
+        self.controller.open_day_in_browser("2026-08-17")
+        self.assertEqual(len(FakeQueryOp.pending), 1)
+        self.assertEqual(len(self.aqt.dialogs.opened), 2)
         self.controller.open_day_in_browser("2026-08-18")
+        FakeQueryOp.pending[-1].complete()
         due_browser = self.aqt.dialogs.opened[-1][1]
         self.assertEqual(due_browser.searches, [snapshot.facts.for_date("2026-08-18").browse_target.query])
         before = len(self.aqt.dialogs.opened)
         self.controller.open_day_in_browser("2026-08-16")
+        FakeQueryOp.pending[-1].complete()
         # The fixture has review activity on the past date, so an exact Browser opens.
         self.assertEqual(len(self.aqt.dialogs.opened), before + 1)
         self.controller.open_day_in_browser("bad")
         self.assertEqual(len(self.aqt.dialogs.opened), before + 1)
+        self.assertEqual(calls, ["2026-08-17", "2026-08-18", "2026-08-16"])
+
+    def test_stale_day_target_completion_is_discarded_after_invalidation(self) -> None:
+        snapshot = sample_snapshot(date(2026, 8, 17))
+        self.controller.snapshot = snapshot
+        self.controller.cache_key = self.controller._key()
+        self.module.collect_day_browse_target = (
+            lambda *_args: snapshot.facts.for_date("2026-08-17").browse_target
+        )
+
+        self.controller.open_day_in_browser("2026-08-17")
+        self.assertEqual(len(self.controller.inflight_browse_targets), 1)
+        self.controller.invalidate()
+        FakeQueryOp.pending[-1].complete()
+
+        self.assertEqual(self.controller.browse_target_cache, {})
+        self.assertEqual(self.controller.inflight_browse_targets, set())
+        self.assertEqual(self.aqt.dialogs.opened, [])
 
     def test_most_missed_browser_retains_again_answer_id_rank(self) -> None:
         target = BrowseTarget(

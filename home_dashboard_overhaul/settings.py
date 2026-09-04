@@ -45,6 +45,7 @@ from aqt.qt import (
     QIcon,
     QKeySequence,
     QLabel,
+    QLayout,
     QLineEdit,
     QLocale,
     QListWidget,
@@ -158,12 +159,15 @@ SETTINGS_SHELL_MAX_WIDTH = 1264
 SETTINGS_PAGE_MAX_WIDTH = 1080
 SETTINGS_ABOUT_MAX_WIDTH = 1080
 SETTINGS_SIDEBAR_WIDTH = 184
-# The supported 860 px minimum uses one non-wrapping navigation row. Wider
-# windows keep the stable 184 px sidebar and center the bounded page content.
+# Keep the sidebar throughout the supported sizes. Constrained screens use a
+# labelled section selector rather than squeezing six destinations into tabs.
 SETTINGS_COMPACT_BODY_WIDTH = 860
 SETTINGS_TWO_COLUMN_CONTENT_WIDTH = 760
 SETTINGS_HEADER_HEIGHT = 72
 SETTINGS_FOOTER_MIN_HEIGHT = 56
+EVENT_TAB_STRIP_MIN_HEIGHT = 44
+EVENT_TAB_FONT_VERTICAL_PADDING = 18
+EVENT_TAB_PANEL_VERTICAL_CHROME = 4
 SETTINGS_SPACING = {
     "tight": 4,
     "control": 8,
@@ -357,7 +361,7 @@ QWidget#HomeDashboardSettings QLabel#FooterStatus[state="error"] {{ color: {dang
 QWidget#HomeDashboardSettings QPushButton#FooterStatusAction {{ background: transparent; border: 1px solid transparent; border-radius: 6px; color: {danger}; font-weight: 600; margin: 0; min-height: 28px; padding: 0 4px; text-align: left; }}
 QWidget#HomeDashboardSettings QPushButton#FooterStatusAction:hover {{ background: {hover}; border-color: {border}; }}
 QWidget#HomeDashboardSettings QPushButton#FooterStatusAction:focus {{ border: {focus_ring}px solid {focus}; }}
-QWidget#HomeDashboardSettings QWidget#SaveErrorPanel {{ background: {base}; border: 1px solid {danger}; border-radius: 8px; margin: 8px 16px 0 16px; padding: 8px; }}
+QWidget#HomeDashboardSettings QWidget#SaveErrorPanel {{ background: {base}; border: 1px solid {danger}; border-radius: 8px; margin: 0; padding: 0; }}
 QWidget#HomeDashboardSettings QLabel#InlineSaveError {{ color: {danger}; }}
 QWidget#HomeDashboardSettings QLabel#WarningText {{ color: {warning}; }}
 QWidget#HomeDashboardSettings QLabel#WarningText[state="error"] {{ color: {danger}; }}
@@ -1103,10 +1107,14 @@ class BibleAppearancePreview(QWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setObjectName("BibleAppearancePreview")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setMinimumWidth(0)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 10, 12, 10)
         layout.setSpacing(4)
+        self.caption = QLabel("Preview")
+        self.caption.setObjectName("FieldHelp")
+        layout.addWidget(self.caption)
         self.body = QLabel("Your verse text")
         self.body.setWordWrap(True)
         self.body.setTextFormat(Qt.TextFormat.PlainText)
@@ -1117,14 +1125,18 @@ class BibleAppearancePreview(QWidget):
         layout.addWidget(self.reference)
         self.setAccessibleName("Verse appearance preview")
 
-    def set_preview(self, family: str, pixel_size: int, color: str) -> None:
+    def set_preview(self, family: str, pixel_size: int, color: str, background: str, text: str = "") -> None:
         font = QFont(family) if family else QFont(self.font())
-        font.setPixelSize(max(10, min(20, int(pixel_size))))
+        font.setPixelSize(int(pixel_size))
         self.body.setFont(font)
         reference_font = QFont(font)
         reference_font.setPixelSize(max(10, min(15, int(pixel_size) - 2)))
         self.reference.setFont(reference_font)
         self.body.setStyleSheet("color: {};".format(color))
+        self.setStyleSheet("QWidget#BibleAppearancePreview {{ background: {}; }}".format(background))
+        body, reference = split_quote_reference(text)
+        self.body.setText(body or "Your verse text")
+        self.reference.setText(reference or "Reference")
 
 
 class SelectChevron(QWidget):
@@ -1661,8 +1673,8 @@ class SettingsSidebar(QListWidget):
         self.setWordWrap(False)
         self.setTextElideMode(Qt.TextElideMode.ElideNone)
         self.setUniformItemSizes(False)
-        self.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
     def refresh_item_sizes(self) -> None:
         """Keep one consistent row height without wrapping or elision."""
@@ -1729,7 +1741,7 @@ class SettingsTabPanel(QWidget):
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed,
         )
-        self._tab_bar.setMinimumHeight(38)
+        self._tab_bar.setMinimumHeight(EVENT_TAB_STRIP_MIN_HEIGHT)
         self._pages = QStackedWidget(self)
         self._pages.setObjectName("EventTabPages")
         self._pages.setMinimumWidth(0)
@@ -1822,7 +1834,7 @@ class SettingsFooter(QWidget):
         self.error_panel = QWidget(self)
         self.error_panel.setObjectName("SaveErrorPanel")
         error_layout = QGridLayout(self.error_panel)
-        error_layout.setContentsMargins(0, 0, 0, 0)
+        error_layout.setContentsMargins(16, 12, 16, 12)
         error_layout.setHorizontalSpacing(8)
         error_layout.setVerticalSpacing(4)
         self.error_label = QLabel("")
@@ -2276,7 +2288,8 @@ class VerseLibraryDelegate(QStyledItemDelegate):
 
     def paint(self, painter: QPainter, option: Any, index: QModelIndex) -> None:
         painter.save()
-        tokens = _palette_tokens()
+        view = self.parent()
+        tokens = getattr(view.window(), "_hdo_theme_tokens", _palette_tokens())
         rect = option.rect
         selected = bool(option.state & QStyle.StateFlag.State_Selected)
         semantic = bool(index.data(VERSE_CURRENT_ROLE) or index.data(VERSE_PENDING_ROLE))
@@ -2288,6 +2301,10 @@ class VerseLibraryDelegate(QStyledItemDelegate):
 
         content = rect.adjusted(34, 8, -48, -8)
         reference = str(index.data(VERSE_REFERENCE_ROLE) or "Custom verse")
+        if index.data(VERSE_PENDING_ROLE):
+            reference += " · Pending save"
+        elif index.data(VERSE_CURRENT_ROLE):
+            reference += " · Current"
         excerpt = str(index.data(VERSE_EXCERPT_ROLE) or "")
         reference_font = QFont(option.font)
         reference_font.setWeight(QFont.Weight.DemiBold)
@@ -2353,10 +2370,15 @@ class VerseLibraryView(QListView):
         self.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.setItemDelegate(VerseLibraryDelegate(self))
-        self.setMinimumHeight(260)
+        self.setMinimumHeight(68)
         self.setMaximumHeight(16777215)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self._menu_callback: Optional[Callable[[QModelIndex, QPoint], None]] = None
+
+    def sizeHint(self) -> QSize:
+        # QScrollArea uses height-for-width hints as a minimum. QListView's
+        # default 192 px hint would push the Library actions below the viewport.
+        return QSize(super().sizeHint().width(), self.minimumHeight())
 
     def set_menu_callback(
         self,
@@ -2464,6 +2486,7 @@ class SettingsEditorDialog(QDialog):
         self.body = QWidget(self.scroll)
         self.body.setObjectName("EditorBody")
         self.body_layout = QVBoxLayout(self.body)
+        self.body_layout.setSizeConstraint(QLayout.SizeConstraint.SetMinimumSize)
         self.body_layout.setContentsMargins(20, 16, 20, 20)
         self.body_layout.setSpacing(12)
         self.scroll.setWidget(self.body)
@@ -2526,7 +2549,11 @@ class SettingsEditorDialog(QDialog):
         )
         preferred_width = max(480, min(540, (preferred_columns * column_width) + (4 * line_height)))
         minimum_width = max(480, min(540, (minimum_columns * column_width) + (4 * line_height)))
-        preferred_height = preferred_lines * line_height
+        self.body_layout.activate()
+        preferred_height = max(
+            preferred_lines * line_height,
+            self.header.sizeHint().height() + self.footer.height() + self.body.sizeHint().height(),
+        )
         minimum_height = minimum_lines * line_height
         width = min(available_width, max(minimum_width, preferred_width))
         maximum_body_height = max(
@@ -2777,7 +2804,7 @@ class TextEditDialog(SettingsEditorDialog):
         form = QFormLayout()
         form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
         form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        form.addRow("Body", self.editor)
+        self.editor.setMinimumHeight(96)
         self.reference = QLineEdit(reference_value)
         _set_accessibility(
             self.reference,
@@ -2789,6 +2816,7 @@ class TextEditDialog(SettingsEditorDialog):
             ),
         )
         form.addRow("Reference", self.reference)
+        form.addRow("Body", self.editor)
         self.body_layout.addLayout(form, 1)
         self.editor_count = QLabel("")
         self.editor_count.setObjectName("EditorHelp")
@@ -2891,9 +2919,6 @@ class EventEditDialog(SettingsEditorDialog):
         self.name_help.setObjectName("EditorHelp")
         self.name_help.setWordWrap(True)
         self.name_help.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        self.name_help.setMinimumHeight(
-            (3 * self.name_help.fontMetrics().lineSpacing()) + 2
-        )
         self.name_help.setAccessibleName("Event display behavior")
         self.name_count = QLabel()
         self.name_count.setObjectName("EditorHelp")
@@ -2917,9 +2942,9 @@ class EventEditDialog(SettingsEditorDialog):
         name_label_layout.addWidget(self.name_count)
         form.addRow(name_label_row)
         form.addRow(self.name)
-        form.addRow("", self.validation_label)
-        form.addRow("", self.name_help)
         form.addRow("Date", self.date)
+        form.addRow("", self.validation_label)
+        form.addRow(self.name_help)
         form.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.body_layout.addLayout(form)
         self.body_layout.addStretch(1)
@@ -2940,17 +2965,12 @@ class EventEditDialog(SettingsEditorDialog):
         self.set_footer_buttons(buttons)
         self._update_name_count(self.name.text())
         self._fit_editor(60, 42, 16, 12)
-        screen = self.screen()
-        available = screen.availableGeometry() if screen is not None else QRect(0, 0, 620, 360)
-        width = max(480, min(540, available.width() - 96))
-        height = max(240, min(320, available.height() - 96))
-        self.setMinimumSize(min(480, width), min(280, height))
-        self.resize(width, height)
 
     def _update_name_count(self, value: str) -> None:
         self.name_count.setText("{} of 160 characters.".format(len(value)))
         valid = bool(value.strip())
         self.validation_label.setText("" if valid else "Enter an event name.")
+        self.validation_label.setVisible(not valid)
         if self.apply_button is not None:
             self.apply_button.setEnabled(valid)
 
@@ -3222,15 +3242,15 @@ class SettingsDialog(QDialog):
             QSizePolicy.Policy.Minimum,
         )
         header_shell_layout.addWidget(self.header_stack)
-        self.compact_nav = QTabBar(self.header_shell)
+        self.compact_nav = QComboBox(self.header_shell)
         self.compact_nav.setObjectName("CompactSettingsNav")
         self.compact_nav.setAccessibleName("Settings sections")
-        self.compact_nav.setDrawBase(False)
-        self.compact_nav.setDocumentMode(True)
-        self.compact_nav.setExpanding(True)
-        self.compact_nav.setUsesScrollButtons(True)
-        self.compact_nav.setElideMode(Qt.TextElideMode.ElideNone)
+        self.compact_nav.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.compact_nav_label = QLabel("Section", self.header_shell)
+        self.compact_nav_label.setBuddy(self.compact_nav)
+        self.compact_nav_label.hide()
         self.compact_nav.hide()
+        header_shell_layout.addWidget(self.compact_nav_label)
         header_shell_layout.addWidget(self.compact_nav)
         outer.addWidget(self.header_shell, 0, 1)
 
@@ -3244,11 +3264,13 @@ class SettingsDialog(QDialog):
         outer.addWidget(self.body_shell, 1, 1)
 
         self._build_dashboard_page()
+        self._build_appearance_page()
+        self._build_calendar_page()
         self._build_events_page()
         self._build_bible_page()
         self._build_about_page()
         self.nav.currentRowChanged.connect(self._nav_changed)
-        self.compact_nav.currentChanged.connect(self._compact_nav_changed)
+        self.compact_nav.currentIndexChanged.connect(self._compact_nav_changed)
 
         self.footer = SettingsFooter()
         self.footer.set_details_callback(self._show_save_error_details)
@@ -3282,7 +3304,10 @@ class SettingsDialog(QDialog):
         # Save failures have a dedicated row between the page scroller and
         # the fixed action footer, so neither can cover the other.
         self.footer.error_panel.setParent(self.settings_shell)
-        outer.addWidget(self.footer.error_panel, 2, 1)
+        error_region = QHBoxLayout()
+        error_region.setContentsMargins(24, 8, 24, 8)
+        error_region.addWidget(self.footer.error_panel)
+        outer.addLayout(error_region, 2, 1)
 
         self.undo_toast = QWidget()
         self.undo_toast.setObjectName("UndoToast")
@@ -3492,6 +3517,11 @@ class SettingsDialog(QDialog):
 
     def showEvent(self, event: Any) -> None:
         super().showEvent(event)
+        # QTabBar's final styled size is only reliable after the dialog has
+        # been polished. Refit the zero-row Events panel then so its selected
+        # tab label cannot be clipped by the panel's fixed height.
+        if hasattr(self, "event_tabs"):
+            QTimer.singleShot(0, self._update_event_actions)
         if not self._post_show_clamp_done:
             self._post_show_clamp_done = True
             QTimer.singleShot(0, self._correct_decorated_frame_if_needed)
@@ -3566,7 +3596,7 @@ class SettingsDialog(QDialog):
         item.setData(Qt.ItemDataRole.UserRole, section_id)
         item.setData(Qt.ItemDataRole.AccessibleTextRole, name)
         self.nav.addItem(item)
-        self.compact_nav.addTab(name)
+        self.compact_nav.addItem(name, section_id)
         self.nav.refresh_item_sizes()
         self.nav_rows[section_id] = self.nav.count() - 1
         self.page_indices[section_id] = self.stack.count()
@@ -3592,6 +3622,10 @@ class SettingsDialog(QDialog):
                 margins.bottom(),
             )
         self.stack.addWidget(scroll)
+        if section_id == "bible_verse":
+            scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            page.setMinimumSize(0, 0)
+            page.layout().setSizeConstraint(QLayout.SizeConstraint.SetNoConstraint)
 
     def open_page(
         self,
@@ -3600,13 +3634,15 @@ class SettingsDialog(QDialog):
         selected_event_id: str = "",
     ) -> None:
         section_id, anchor = resolve_section_target(page)
-        self._requested_dashboard_anchor = anchor
+        self._requested_dashboard_anchor = anchor if section_id == "dashboard" else ""
         row = self.nav_rows.get(section_id)
         if row is not None:
             self.nav.setCurrentRow(row)
         if section_id == "dashboard" and anchor:
             self._normalized_route = "dashboard#{}".format(anchor)
             self._schedule_dashboard_anchor(anchor)
+        if section_id == "bible_verse":
+            self._set_bible_view("display" if anchor == "display" else "library")
         if section_id == "events" and selected_event_date:
             self._select_event_date(selected_event_date)
         if section_id == "events" and selected_event_id:
@@ -3780,10 +3816,11 @@ class SettingsDialog(QDialog):
         if not hasattr(self, "body_shell"):
             return
         shell_width = max(0, self.settings_shell.width())
-        compact = self._screen_compact_fallback or shell_width <= SETTINGS_COMPACT_BODY_WIDTH
+        compact = self._screen_compact_fallback or shell_width < SETTINGS_COMPACT_BODY_WIDTH
         self._compact_layout = compact
         self.sidebar_panel.setVisible(not compact)
         self.compact_nav.setVisible(compact)
+        self.compact_nav_label.setVisible(compact)
         self.footer.set_compact(compact)
         page_padding = SETTINGS_SPACING["compact_page"] if compact else SETTINGS_SPACING["page"]
         for scroll, base in self._settings_scroll_base_margins.items():
@@ -3958,14 +3995,10 @@ class SettingsDialog(QDialog):
         self.blur_field = blur_control
         advanced_form.addRow(self.opacity_field)
         advanced_form.addRow(self.blur_field_label, self.blur_field)
-        advanced_form.addRow(
-            _field_label("Panel placement", "Anki’s deck list remains above injected add-on panels."),
-            self.home_screen_position,
-        )
         self.appearance_advanced_button = DisclosureHeader(
             "Advanced appearance",
             self.appearance_advanced,
-            "Show opacity, blur, and add-on panel placement controls.",
+            "Show card opacity and blur controls.",
         )
         self.appearance_controls = QWidget()
         appearance_controls_layout = QVBoxLayout(self.appearance_controls)
@@ -3988,16 +4021,13 @@ class SettingsDialog(QDialog):
     def _build_dashboard_page(self) -> None:
         page, layout, form = _page(
             "Dashboard",
-            "Customize appearance, sections, metrics, and calendar.",
+            "Choose your sections, study preferences, and included decks.",
         )
         # The page root never owns fields; each group has a quiet, resettable
         # card. Remove the empty compatibility form inserted by ``_page``.
         layout.removeItem(form)
         self.dashboard_anchors: Dict[str, QWidget] = {}
         appearance_card = self._create_appearance_card()
-        appearance_card.setProperty("hdoAnchor", "appearance")
-        self.dashboard_anchors["appearance"] = appearance_card
-        layout.addWidget(appearance_card)
 
         sections_card = SettingsCard(
             "Dashboard sections",
@@ -4052,7 +4082,7 @@ class SettingsDialog(QDialog):
         self.visibility["bible"] = bible_switch
         self.bible_section_row = bible_row
         self.configure_bible = bible_row.action
-        self.configure_bible.clicked.connect(lambda: self._show_section("bible_verse"))
+        self.configure_bible.clicked.connect(lambda: self.open_page("bible_display"))
         sections_layout.addWidget(bible_row)
         sections_card.add_layout(sections_layout)
 
@@ -4124,10 +4154,16 @@ class SettingsDialog(QDialog):
         layout.addWidget(self.dashboard_primary_wrap)
 
         calendar_cards = self._create_calendar_cards()
-        calendar_cards[0].setProperty("hdoAnchor", "calendar")
-        self.dashboard_anchors["calendar"] = calendar_cards[0]
-        for calendar_card in calendar_cards:
-            layout.addWidget(calendar_card)
+        self.calendar_page_content = calendar_cards[0]
+        placement = SettingsCard("Panel placement", "", "Reset")
+        self.placement_card = placement
+        placement.reset_button.clicked.connect(lambda: self._reset_card("panel_placement", "Panel placement"))
+        placement.add_form().addRow(
+            _field_label("Position", "Anki’s deck list remains above other add-on panels."),
+            self.home_screen_position,
+        )
+        layout.addWidget(placement)
+        layout.addWidget(calendar_cards[1])
         self.dashboard_anchor_tail = QWidget()
         self.dashboard_anchor_tail.setFixedHeight(0)
         self.dashboard_anchor_tail.hide()
@@ -4135,9 +4171,22 @@ class SettingsDialog(QDialog):
         layout.addStretch()
         self._add_page("dashboard", page)
 
-    def _create_calendar_cards(self) -> tuple[SettingsCard, SettingsCard]:
+    def _build_appearance_page(self) -> None:
+        page, layout, form = _page("Appearance", "Customize dashboard colors, text size, and card surfaces.")
+        layout.removeItem(form)
+        layout.addWidget(self.appearance_card)
+        layout.addStretch()
+        self._add_page("appearance", page)
+
+    def _build_calendar_page(self) -> None:
+        page, layout, form = _page("Calendar", "Choose the calendar view, history, and future due markers.")
+        layout.removeItem(form)
+        layout.addWidget(self.calendar_page_content)
+        layout.addStretch()
+        self._add_page("calendar", page)
+
+    def _create_calendar_cards(self) -> tuple[QWidget, SettingsCard]:
         display_card = SettingsCard("Calendar display", "", "Reset")
-        display_card.setObjectName("SettingsSubsection")
         self.calendar_display_card = display_card
         if display_card.reset_button is not None:
             display_card.reset_button.clicked.connect(
@@ -4198,7 +4247,6 @@ class SettingsDialog(QDialog):
         form.addRow(self.events_dependency)
 
         range_card = SettingsCard("Calendar range", "", "Reset")
-        range_card.setObjectName("SettingsSubsection")
         self.calendar_range_card = range_card
         if range_card.reset_button is not None:
             range_card.reset_button.clicked.connect(
@@ -4253,32 +4301,15 @@ class SettingsDialog(QDialog):
         )
         form.addRow(self.forecast_range_label, self.forecast_days)
 
-        data_card = SettingsCard("Filters and deck exclusions", "", "Reset")
-        data_card.setObjectName("SettingsSubsection")
+        data_card = SettingsCard("Deck exclusions and filters", "", "Reset")
         self.local_data_card = data_card
         if data_card.reset_button is not None:
             data_card.reset_button.clicked.connect(
-                lambda: self._reset_card("local_data", "Local data")
+                lambda: self._reset_card(
+                    "local_data", "Deck exclusions and filters"
+                )
             )
-        form = data_card.add_form()
-        semantics_copy = QLabel(
-            "Study counts and due forecasts follow Anki’s configured rollover, not calendar midnight. Events use their civil-calendar date."
-        )
-        semantics_copy.setObjectName("FieldHelp")
-        semantics_copy.setWordWrap(True)
-        semantics = DisclosureHeader(
-            "Date calculation",
-            semantics_copy,
-            "Show the date and rollover rules.",
-        )
-        form.addRow(semantics)
-        form.addRow(semantics_copy)
-
-        self.calendar_advanced = QWidget()
-        advanced_form = QFormLayout(self.calendar_advanced)
-        advanced_form.setContentsMargins(0, 0, 0, 0)
-        advanced_form.setVerticalSpacing(10)
-        advanced_form.setHorizontalSpacing(18)
+        advanced_form = data_card.add_form()
         self.ignore_before = QDateEdit(); self.ignore_before.setCalendarPopup(True); self.ignore_before.setDisplayFormat("MMMM d, yyyy")
         parsed_ignore = QDate.fromString(heatmap["ignore_before"], "yyyy-MM-dd")
         self.ignore_before.setDate(parsed_ignore if parsed_ignore.isValid() else QDate.currentDate())
@@ -4291,7 +4322,8 @@ class SettingsDialog(QDialog):
             "Custom start",
             "Reviews before this date are ignored after Save.",
         )
-        advanced_form.addRow(self.history_start_label, self.ignore_before)
+        form.addRow(self.history_start_label, self.ignore_before)
+        self.history_start_label.setToolTip("A custom start date also filters historical dashboard metrics after saving.")
         advanced_form.addRow(_field_label("Manual changes", "Filters manual reschedule and forget log entries."), self.exclude_reschedules)
         advanced_form.addRow(_field_label("Deleted cards", "Filters logs whose cards no longer exist."), self.exclude_deleted)
 
@@ -4341,13 +4373,6 @@ class SettingsDialog(QDialog):
             _field_label("Excluded decks", "A checked parent excludes its descendants across dashboard study data; full deck paths are retained."),
             deck_wrap,
         )
-        self.calendar_advanced_button = DisclosureHeader(
-            "Deck exclusions and filters",
-            self.calendar_advanced,
-            "Show custom history rules and deck exclusions.",
-        )
-        data_card.add_widget(self.calendar_advanced_button)
-        data_card.add_widget(self.calendar_advanced)
         self.show_forecast.toggled.connect(self._update_forecast_range_visibility)
         self.history_range.currentIndexChanged.connect(self._update_history_range_visibility)
         self._update_forecast_range_visibility()
@@ -4364,28 +4389,7 @@ class SettingsDialog(QDialog):
         calendar_content_layout.setVerticalSpacing(16)
         self.calendar_cards_grid = calendar_content_layout
         self.calendar_cards = (display_card, range_card)
-        calendar_wrapper = SettingsCard()
-        self.calendar_display_disclosure = DisclosureHeader(
-            "Calendar display",
-            calendar_content,
-            "Show calendar view and range settings.",
-        )
-        calendar_wrapper.add_widget(self.calendar_display_disclosure)
-        calendar_wrapper.add_widget(calendar_content)
-
-        local_content = QWidget()
-        local_layout = QVBoxLayout(local_content)
-        local_layout.setContentsMargins(0, 0, 0, 0)
-        local_layout.addWidget(data_card)
-        local_wrapper = SettingsCard()
-        self.local_data_disclosure = DisclosureHeader(
-            "Local data",
-            local_content,
-            "Show date semantics, filters, and deck exclusions.",
-        )
-        local_wrapper.add_widget(self.local_data_disclosure)
-        local_wrapper.add_widget(local_content)
-        return calendar_wrapper, local_wrapper
+        return calendar_content, data_card
 
     def _build_events_page(self) -> None:
         page, layout, form = _page(
@@ -4728,7 +4732,6 @@ class SettingsDialog(QDialog):
         self.bible_top_grid.setContentsMargins(0, 0, 0, 0)
         self.bible_top_grid.setHorizontalSpacing(16)
         self.bible_top_grid.setVerticalSpacing(16)
-        layout.addWidget(self.bible_top_wrap)
 
         library_card = SettingsCard(
             "Verse library",
@@ -4811,9 +4814,45 @@ class SettingsDialog(QDialog):
         self.quote_actions.add_widget(import_info)
         self.quote_actions.add_stretch()
         library_card.add_widget(self.quote_actions)
-        layout.addWidget(library_card)
-        layout.addStretch()
+        self.bible_view_tabs = NeutralSettingsTabBar()
+        self.bible_view_tabs.setObjectName("EventTabsBar")
+        self.bible_view_tabs.setDocumentMode(True)
+        self.bible_view_tabs.setElideMode(Qt.TextElideMode.ElideNone)
+        self.bible_view_tabs.setAccessibleName("Bible verse views")
+        self.bible_view_tabs.addTab("Library")
+        self.bible_view_tabs.addTab("Display && rotation")
+        self.bible_view_tabs.setExpanding(False)
+        self.bible_view_tabs.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.bible_view_tabs.setMinimumHeight(40)
+        layout.addWidget(self.bible_view_tabs)
+        self.bible_views = QStackedWidget()
+        self.bible_views.setMinimumSize(0, 0)
+        # A hidden display preview must not dictate the Library's minimum
+        # height. The list takes the space left after its persistent actions.
+        self.bible_views.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
+        library_card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.bible_views.addWidget(library_card)
+        self.bible_display_scroll = QScrollArea()
+        self.bible_display_scroll.setAccessibleName("Verse display and rotation")
+        self.bible_display_scroll.setWidgetResizable(True)
+        self.bible_display_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.bible_display_scroll.viewport().setAutoFillBackground(False)
+        display_page = QWidget()
+        display_page.setObjectName("SettingsPage")
+        display_layout = QVBoxLayout(display_page)
+        display_layout.setContentsMargins(0, 0, 0, 0)
+        display_layout.addWidget(self.bible_top_wrap)
+        display_layout.addStretch()
+        self.bible_display_scroll.setWidget(display_page)
+        self.bible_views.addWidget(self.bible_display_scroll)
+        self.bible_view_tabs.currentChanged.connect(self.bible_views.setCurrentIndex)
+        layout.addWidget(self.bible_views, 1)
+        page.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
+        layout.setAlignment(Qt.AlignmentFlag(0))
         self._add_page("bible_verse", page)
+
+    def _set_bible_view(self, view: str) -> None:
+        self.bible_view_tabs.setCurrentIndex(1 if view == "display" else 0)
 
     def _build_about_page(self) -> None:
         page, layout, root_form = _page(
@@ -5091,13 +5130,13 @@ class SettingsDialog(QDialog):
         grid.removeWidget(first)
         grid.removeWidget(second)
         if wide:
-            grid.addWidget(first, 0, 0)
-            grid.addWidget(second, 0, 1)
+            grid.addWidget(first, 0, 0, Qt.AlignmentFlag.AlignTop)
+            grid.addWidget(second, 0, 1, Qt.AlignmentFlag.AlignTop)
             grid.setColumnStretch(0, 1)
             grid.setColumnStretch(1, 1)
         else:
-            grid.addWidget(first, 0, 0)
-            grid.addWidget(second, 1, 0)
+            grid.addWidget(first, 0, 0, Qt.AlignmentFlag.AlignTop)
+            grid.addWidget(second, 1, 0, Qt.AlignmentFlag.AlignTop)
             grid.setColumnStretch(0, 1)
             grid.setColumnStretch(1, 0)
         grid.invalidate()
@@ -5183,14 +5222,15 @@ class SettingsDialog(QDialog):
                 and self.about_cards_wrap.width() >= SETTINGS_TWO_COLUMN_CONTENT_WIDTH
             )
             if wide:
-                self.about_cards_grid.addWidget(self.about_version_card, 0, 0)
-                self.about_cards_grid.addWidget(self.about_privacy_card, 1, 0)
+                self.about_cards_grid.addWidget(self.about_version_card, 0, 0, Qt.AlignmentFlag.AlignTop)
+                self.about_cards_grid.addWidget(self.about_privacy_card, 1, 0, Qt.AlignmentFlag.AlignTop)
                 self.about_cards_grid.addWidget(
                     self.about_recovery_card,
                     0,
                     1,
                     2,
                     1,
+                    Qt.AlignmentFlag.AlignTop,
                 )
                 self.about_cards_grid.setColumnStretch(0, 1)
                 self.about_cards_grid.setColumnStretch(1, 1)
@@ -5475,16 +5515,18 @@ class SettingsDialog(QDialog):
             return
         family = self.font_family.currentFont().family()
         pixel_size = self.font_size.value()
+        preset_name = _combo_value(self.preset, "Sapphire Glass")
+        dashboard_mode = _combo_value(self.mode, "auto")
+        variant = ("dark" if self.controller.is_dark() else "light") if dashboard_mode == "auto" else dashboard_mode
         if _combo_value(self.theme_color, "theme") == "custom":
             color = self.font_color_value
         else:
-            preset_name = _combo_value(self.preset, "Sapphire Glass")
-            dashboard_mode = _combo_value(self.mode, "auto")
-            variant = (
-                "dark" if self.controller.is_dark() else "light"
-            ) if dashboard_mode == "auto" else dashboard_mode
             color = PRESETS[preset_name][variant]["ui_text_primary"]
-        self.bible_appearance_preview.set_preview(family, pixel_size, color)
+        selected = self._selected_quote_index() if hasattr(self, "quote_list") else None
+        sample = self.quotes[selected] if selected is not None and 0 <= selected < len(self.quotes) else ""
+        self.bible_appearance_preview.set_preview(
+            family, pixel_size, color, PRESETS[preset_name][variant]["ui_surface_1"], sample
+        )
 
     def _apply_theme(self) -> None:
         config = self.draft.values
@@ -5662,6 +5704,7 @@ class SettingsDialog(QDialog):
     def _update_reset_visibility(self) -> None:
         scoped_cards = (
             (getattr(self, "appearance_card", None), "appearance"),
+            (getattr(self, "placement_card", None), "panel_placement"),
             (getattr(self, "dashboard_sections_card", None), "dashboard_sections"),
             (getattr(self, "study_metrics_card", None), "study_metrics"),
             (getattr(self, "calendar_display_card", None), "calendar_display"),
@@ -6714,7 +6757,16 @@ class SettingsDialog(QDialog):
         current_tree = self.archived_events if archived else self.active_events
         row_count = current_tree.topLevelItemCount()
         current_tree.setVisible(row_count > 0)
-        tab_height = max(38, self.event_tabs.tabBar().sizeHint().height())
+        tab_bar = self.event_tabs.tabBar()
+        tab_bar.ensurePolished()
+        tab_bar.updateGeometry()
+        tab_height = max(
+            EVENT_TAB_STRIP_MIN_HEIGHT,
+            tab_bar.sizeHint().height(),
+            tab_bar.minimumSizeHint().height(),
+            tab_bar.fontMetrics().lineSpacing()
+            + EVENT_TAB_FONT_VERTICAL_PADDING,
+        )
         row_widget = (
             current_tree.itemWidget(current_tree.topLevelItem(0), 0)
             if row_count
@@ -6726,7 +6778,9 @@ class SettingsDialog(QDialog):
             if row_count
             else 0
         )
-        panel_height = tab_height + list_height + 2
+        panel_height = (
+            tab_height + list_height + EVENT_TAB_PANEL_VERTICAL_CHROME
+        )
         self.event_tabs.setMinimumHeight(panel_height)
         self.event_tabs.setMaximumHeight(panel_height)
         query = self.event_search.text().strip()
@@ -6944,6 +6998,7 @@ class SettingsDialog(QDialog):
 
     def _update_quote_detail(self, *_args: object) -> None:
         self.quote_list.viewport().update()
+        self._update_bible_appearance_preview()
 
     def _quote_search_changed(self, *_args: object) -> None:
         self._refresh_quote_list()
@@ -6978,27 +7033,18 @@ class SettingsDialog(QDialog):
         self.quote_count.setText(
             "{} of {} verses".format(total, len(self.quotes))
             if needle
-            else "{} verses".format(len(self.quotes))
+            else "{} {}".format(len(self.quotes), "verse" if len(self.quotes) == 1 else "verses")
         )
         self._update_quote_detail()
         self._update_quote_actions()
         self._settings_changed()
 
     def _fit_quote_list(self) -> None:
-        viewport_height = 0
-        bible_index = self.page_indices.get("bible_verse")
-        if bible_index is not None:
-            scroll = self.stack.widget(bible_index)
-            if isinstance(scroll, QScrollArea):
-                viewport_height = scroll.viewport().height()
-        if viewport_height <= 0:
-            viewport_height = self.height()
-        target = max(180, min(520, viewport_height - 300))
-        self.quote_list.setMinimumHeight(target)
-        self.quote_list.setMaximumHeight(target)
+        self.quote_list.setMinimumHeight(68)
+        self.quote_list.setMaximumHeight(16777215)
         self.quote_list.setSizePolicy(
             QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Fixed,
+            QSizePolicy.Policy.Expanding,
         )
 
     def _open_quote_menu_for_model(
@@ -7282,8 +7328,8 @@ class SettingsDialog(QDialog):
             "event_search": self.event_search.text(),
             "deck_search": self.deck_search.text(),
             "quote_search": self.quote_search.text(),
-            "calendar_disclosure": self.calendar_display_disclosure.isChecked(),
-            "local_data_disclosure": self.local_data_disclosure.isChecked(),
+            "bible_view": self.bible_view_tabs.currentIndex(),
+            "bible_display_scroll": self.bible_display_scroll.verticalScrollBar().value(),
             "event_tab": self.event_tabs.currentIndex(),
             "event_id": str(event.get("id", "")) if event is not None else "",
             "event_archived": bool(event.get("archived")) if event is not None else False,
@@ -7310,14 +7356,8 @@ class SettingsDialog(QDialog):
             widget = getattr(self, name, None)
             if isinstance(widget, QLineEdit) and isinstance(value, str):
                 widget.setText(value)
-        if "calendar_disclosure" in state:
-            self.calendar_display_disclosure.setChecked(
-                bool(state["calendar_disclosure"])
-            )
-        if "local_data_disclosure" in state:
-            self.local_data_disclosure.setChecked(
-                bool(state["local_data_disclosure"])
-            )
+        self.bible_view_tabs.setCurrentIndex(int(state.get("bible_view", 0)))
+        self.bible_display_scroll.verticalScrollBar().setValue(int(state.get("bible_display_scroll", 0)))
         section = str(state.get("section", self.current_section))
         if section in self.page_indices:
             self._show_section(section)
@@ -7375,7 +7415,7 @@ class SettingsDialog(QDialog):
                 not self.retention_target.is_valid(),
             ),
             (
-                "dashboard",
+                "calendar",
                 self.forecast_days.editor,
                 not self.forecast_days.is_valid(),
             ),
@@ -7394,8 +7434,12 @@ class SettingsDialog(QDialog):
             if not invalid:
                 continue
             self._show_section(section)
+            if section == "bible_verse":
+                self._set_bible_view("display")
             page_index = self.page_indices.get(section)
             scroll = self.stack.widget(page_index) if page_index is not None else None
+            if section == "bible_verse":
+                scroll = self.bible_display_scroll
 
             def reveal(
                 target: QWidget = control,

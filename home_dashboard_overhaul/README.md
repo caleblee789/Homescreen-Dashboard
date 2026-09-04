@@ -23,7 +23,7 @@ Browser or statistics classes.
   focus restoration, application event filter, and menu-dismissal timer are
   removed. Qt manages the same dialog lifecycle as the two working add-ons.
 - The corrected scheduler and retention semantics, schema 8, configuration
-  keys, bridge commands, and all four Settings pages remain unchanged.
+  keys, bridge commands, remain compatible with existing installations.
 
 - Every study-derived value is computed from one scheduler-authoritative
   snapshot. Today uses `[next rollover − 86,400 seconds, next rollover)`, and
@@ -35,12 +35,15 @@ Browser or statistics classes.
   at least one day. Again fails and Hard/Good/Easy pass. The visible integer
   Retention is rounded half-up once; later suspension or burial does not erase
   past answers. Last 7 Days displays elapsed review time from the same exact
-  seven-period scope instead of displaying Again rate.
+  seven-period scope instead of displaying Again rate and adds a whole-card
+  Avg cards/day rounded half-up across all seven periods.
 - Today’s Progress is collection-wide minus excluded deck descendants. It
   applies each included top-level head's native due-tree limits independently,
   and the selected deck cannot change the result. Queue 0 is New, queues 1/3/4
   are Learning, and queue 2 is Review regardless of card type; queues -1/-2/-3
-  are not remaining. `Total remaining` is enforced as the category sum.
+  are not remaining. `Initial cards due` exposes the progress denominator
+  (Cards studied today plus Total remaining), and `Total remaining` is enforced
+  as the category sum.
 - Today’s Session counts rated answer events and elapsed review time in the
   active scheduler period, distinct qualifying new introductions, and cards
   presently in scoped explicit buried queues -2/-3 that are New or currently
@@ -52,23 +55,28 @@ Browser or statistics classes.
   excluding buried work due in the active day. Tooltips and selected-day
   details consume the same canonical history records as the metric cards.
 - Initial HTML, live refresh, Month/Year 2×2, intermediate, narrow, and restart
-  states are checked for identical metric values. Schema
-  8, all existing labels/order/JSON/DOM keys, and bridge commands are unchanged.
+  states are checked for identical metric values. Schema 8, saved settings,
+  established JSON/DOM keys, and bridge commands remain compatible.
 
 - Settings has one native Qt widget tree at every size: fixed header, a body
   with one vertical scroller per page, a reserved error region, and a true
   final-row 56 px action footer. The centered shell is capped at 1,264 px, the
   sidebar is 184 px, and every page is capped at 1,080 px.
-- Compact top navigation activates at the 860 px minimum, with the page title
-  consistently above one row of tabs. At 760 px of page content, the existing
-  cards reflow into deliberate pairs while Appearance remains full width.
-- Dashboard groups Appearance, Dashboard sections, Study metrics, Calendar
-  display, and Calendar range. Events uses one content-sized Add event action,
-  a searchable/sortable Active/Archived list bounded to five naturally growing
-  rows, and a shared parented window-modal editor 480–540 px wide and at most
-  80% of the Settings body. Bible verse uses a flexible filtered library with
-  two-line clamped excerpts and one inline hex error.
-  About groups Version and support, Privacy and legal, and Backup and recovery.
+- The sidebar remains visible at supported widths, including 860×640. Constrained screens use a labelled section dropdown. Cards align to the top and reflow into pairs where space allows.
+- Settings has six pages: **Dashboard**, **Appearance**, **Calendar**, **Events**,
+  **Bible verse**, and **About & support**. Dashboard owns section visibility,
+  panel placement, study preferences, and deck exclusions. Appearance owns
+  theme, palette, scale, opacity, and blur. Calendar owns the view, week start,
+  event markers, history range, and future due markers. A custom history cutoff
+  also limits historical statistics and exact Browser targets.
+- Events retains its searchable Active/Archived lists and staged editing.
+  Editors place Name and Date, or Reference and Body, in reading order with
+  fixed action buttons and a scrollable body when required.
+- Bible verse opens to **Library**, which gives the list the available height
+  and labels **Current** and **Pending save** rows. **Display & rotation** holds
+  the typography, color, rotation controls, and a preview at the chosen size
+  against the staged dashboard surface. Invalid colors block Save; contrast
+  warnings remain optional. About groups support, privacy, and recovery.
 - Dirty, saving, saved, and discard feedback stays in the fixed action footer;
   validation and save failures use the reserved region above it. A failed save
   retains the complete draft for retry and keeps technical details behind a
@@ -78,16 +86,21 @@ Browser or statistics classes.
   row.
   Their layout-changing staged updates run after the native combo popup closes,
   and save locking restores both selectors and their nested popup views.
-- Month is always 42 cells. Year always uses one responsive 53-week tree with
-  readable 6–8 px cells; when they do not fit, horizontal scrolling is confined
-  to the heatmap. Calendar legend and event-summary groups disappear when their
-  features are disabled.
-- The production root is transparent and in normal document flow at a 1,120 px
-  maximum. It measures Anki's visible normally positioned, fixed, or sticky
-  bottom action container and maintains a 24 px clearance, using 60 px only as
-  the missing-height fallback.
+- Month is always 42 cells. Year uses one responsive 53-week tree with 10 px
+  cells at the wide reference and fluid square cells when narrower; it has no
+  minimum-width floor or internal horizontal scrolling. Calendar legend and
+  event-summary groups disappear when their features are disabled.
+- The production root is transparent, centered, and in normal document flow at
+  a 1,160 px maximum with 16 px minimum side insets and a 30 px top margin. A
+  360 px insight rail appears at 1,009 px and stacks at 1,008 px; the summary
+  grid stays 2×2 through 589 px and becomes one column at 588 px. The root
+  measures Anki's visible normally positioned, fixed, or sticky bottom action
+  container and maintains a 24 px clearance, using 60 px only as the
+  missing-height fallback.
 - The 16 existing completion-palette IDs now resolve to distinct, separately
-  authored light and dark ladders.
+  authored light and dark ladders. Sapphire Glass dark mode explicitly uses
+  red Learning and green Review semantics; all other theme baselines remain
+  shared.
 - `events.sort` additionally accepts `name`, ordered case-insensitively by
   name, date, and stable ID. Schema remains 8 and all other keys retain their
   meanings.
@@ -105,10 +118,12 @@ Browser or statistics classes.
 ## Dashboard
 
 Month and Year share one persistent controller-owned view. Today's Progress
-contains New, Learning, Reviews, and Total remaining. Today's Session contains
-Cards studied, New cards studied, Cards buried, Time spent, Pace, and ETA. Last
-7 Days contains Cards studied, New cards studied, Retention, and Time spent;
-All Time retains its Anki-native eligible retention metrics. The configured
+contains Initial cards due, Total remaining, New remaining, Learning remaining,
+and Reviews remaining. Today's Session contains Cards studied, New cards
+studied, Cards buried, Time spent, Pace, and ETA. Last 7 Days contains Cards
+studied, Avg cards/day, Retention, New cards studied, and Time spent. All Time
+contains Cards studied, Avg cards/day, Retention, Current streak, and Longest
+streak. The configured
 Bible verse is rendered at its exact font, size, and color. While work remains,
 Today's Progress displays `N% complete` inside the filled progress bar.
 
@@ -167,9 +182,9 @@ python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 
 The builder creates one 24-member allowlisted archive, checks its version and
 safe paths, validates the 1.8.7 release authorities, and verifies every
-packaged byte against source. The canonical plan contains 94 native frames,
-including exactly 41 Settings frames at 100% application font and two total
-controlled-restart states. Settings presentation is capped at 11 sheets.
+packaged byte against source. The canonical plan contains 116 native frames,
+including 63 Settings frames at 100% application font and two total
+controlled-restart states. Settings presentation is capped at 14 sheets.
 The focused Settings assembler additionally requires a structured exact-package
 native macOS result proving that both the full-screen menu and Dashboard-gear
 paths remain on Anki's full-screen Space without switching to the desktop,

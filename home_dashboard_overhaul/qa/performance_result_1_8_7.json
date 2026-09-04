@@ -1,0 +1,35 @@
+{
+  "acceptance": {
+    "absolute_median_seconds": 0.5,
+    "relative_improvement_required": 0.4
+  },
+  "comparison": {
+    "absolute_pass": true,
+    "baseline_median_seconds": 0.702054,
+    "improvement": 0.750182,
+    "passed": true,
+    "relative_pass": true
+  },
+  "fixture": {
+    "card_rows": 50000,
+    "revlog_rows": 500000
+  },
+  "measurement": {
+    "durations_seconds": [
+      0.175592,
+      0.175386,
+      0.174233,
+      0.176637,
+      0.175063,
+      0.176699,
+      0.173285
+    ],
+    "median_seconds": 0.175386,
+    "payload_bytes": 165448,
+    "query_count_median": 7,
+    "runs": 7,
+    "warmups": 2
+  },
+  "schema_version": 1,
+  "source_fingerprint": "bfbd92e4ef6b196e8f37c58e4906bf5805a3c2f6d4433b5e9bdb122d414ecf33"
+}

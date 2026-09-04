@@ -67,23 +67,25 @@ requested. Never overwrite a partial or completed output in place.
 
    The macOS Retina bundle must contain a passing `platform-profile.json` for
    the identical candidate and plan hashes, passing structured assertions for
-   all four Settings pages, and the full-screen Space workflow. Windows,
+   all six Settings pages and both Bible views, and the full-screen Space workflow. Windows,
    Linux, DPR 1, OS scaling, and alternate application-font percentages remain
    explicit nonblocking boundaries for 1.8.7.
 
 ## Profiles and focused revision
 
 - `full` is the complete release gate.
-- `settings` is the minimal 100%-font Settings authority: exactly 40 initial
-  states plus one controlled restart, capped at 11 contact sheets. It contains
-  12 page cases (four pages at 1080×760, 1280×800, and full screen), 28 existing
-  interaction/window/state cases, and one restart case. It does not include
+- `settings` is the 100%-font Settings authority: exactly 62 initial
+  states plus one controlled restart, capped at 14 contact sheets. It contains
+  21 page cases (six pages and both Bible views at 1080×760, 1280×800,
+  and full screen), 41 interaction/window/state cases, and one restart case.
+  The state cases include all views in light mode and at the 860×640 minimum.
+  It does not include
   720, 940, 150%-font, alternate-scale, or expanded full-release cases.
   Acceptance additionally requires the structured exact-package native macOS
   result `macos-fullscreen-no-space-switch-menu-and-dashboard-gear`. Both
   opening paths must remain on Anki's full-screen Space without a desktop or
   Space switch. Schema version 2 requires these ordered `workflow_steps` for
-  each route: `all-four-pages`, `events-tabs`, `resize`, `event-edit`,
+  each route: `all-six-pages-and-bible-views`, `events-tabs`, `resize`, `event-edit`,
   `verse-edit`, `save`, `close-reopen`, and `controlled-restart`. Every step
   records current-Space retention independently. Start from
   `qa/settings_fullscreen_acceptance_template_1_8_7.json`; keep every entry

@@ -27,6 +27,7 @@ from home_dashboard_overhaul.renderer import (
     _duration,
     _duration_compact,
     _eta,
+    _rounded_average,
     calendar_range_payload,
     dashboard_facts_payload,
     day_insight_payload,
@@ -154,11 +155,28 @@ class RendererTests(unittest.TestCase):
             html.index("All Time"),
         ]
         self.assertEqual(group_titles, sorted(group_titles))
+        progress = html[html.index("Today’s Progress"):html.index("Today’s Session")]
+        session = html[html.index("Today’s Session"):html.index("Last 7 Days")]
         recent = html[html.index("Last 7 Days"):html.index("All Time")]
-        self.assertLess(recent.index("Cards studied"), recent.index("New cards studied"))
-        self.assertLess(recent.index("New cards studied"), recent.index("Retention"))
-        self.assertLess(recent.index("Retention"), recent.index("Time spent"))
+        all_time = html[html.index("All Time"):]
+        self.assertEqual(re.findall(r"<dt(?: [^>]*)?>([^<]+)</dt>", progress), [
+            "Initial cards due", "Total remaining", "New remaining",
+            "Learning remaining", "Reviews remaining",
+        ])
+        self.assertEqual(re.findall(r"<dt(?: [^>]*)?>([^<]+)</dt>", session), [
+            "Cards studied", "New cards studied", "Cards buried",
+            "Time spent", "Pace", "ETA",
+        ])
+        self.assertEqual(re.findall(r"<dt(?: [^>]*)?>([^<]+)</dt>", recent), [
+            "Cards studied", "Avg cards/day", "Retention",
+            "New cards studied", "Time spent",
+        ])
+        self.assertEqual(re.findall(r"<dt(?: [^>]*)?>([^<]+)</dt>", all_time), [
+            "Cards studied", "Avg cards/day", "Retention",
+            "Current streak", "Longest streak",
+        ])
         self.assertIn("1,754", recent)
+        self.assertIn("251", recent)
         self.assertIn("312", recent)
         self.assertIn("12 hr 32 min", recent)
         self.assertIn("12h 32m", recent)
@@ -174,13 +192,12 @@ class RendererTests(unittest.TestCase):
         self.assertIn(">77% complete</span>", html)
         self.assertEqual(html.count("data-hdo-progress-label"), 2)
         self.assertNotIn("hdo-progress-heading-value", html)
-        session = html[html.index("Today’s Session"):html.index("Last 7 Days")]
         for label in (
             "Cards studied", "New cards studied", "Cards buried",
             "Time spent", "Pace", "ETA",
         ):
             self.assertIn("<dt>{}</dt>".format(label), session)
-        self.assertNotIn("<dt>Buried</dt>", html[html.index("Today’s Progress"):html.index("Today’s Session")])
+        self.assertNotIn("<dt>Buried</dt>", progress)
 
     def test_progress_distinguishes_fresh_clear_complete_in_progress_and_unavailable(self) -> None:
         def rendered(
@@ -235,6 +252,11 @@ class RendererTests(unittest.TestCase):
         self.assertIn('data-hdo-progress-state="unavailable"', unavailable)
         self.assertIn('>Unavailable</span>', unavailable)
         self.assertNotIn('aria-valuetext="0% complete"', unavailable)
+        self.assertRegex(
+            unavailable,
+            r'<div class="hdo-metric-row is-unavailable"[^>]*><dt>Initial cards due</dt>'
+            r'<dd data-hdo-metric="progress.initial_cards_due">—</dd>',
+        )
 
     def test_progress_example_uses_one_310_card_denominator(self) -> None:
         facts = replace(
@@ -247,7 +269,71 @@ class RendererTests(unittest.TestCase):
         self.assertIn("60% complete", html)
         self.assertIn('aria-valuetext="60% complete"', html)
         self.assertIn('--hdo-progress-percent:60%', html)
+        self.assertIn('<dt>Initial cards due</dt><dd data-hdo-metric="progress.initial_cards_due">310</dd>', html)
         self.assertNotIn("data-hdo-progress-segment", html)
+
+    def test_requested_statistics_examples_and_half_up_average(self) -> None:
+        facts = replace(
+            self.snapshot.facts,
+            today=ValueState.available(TodayStats(35, 0, 600, 17.1)),
+            queue=ValueState.available(QueueStats(0, 0, 366, 366, 22_536)),
+            last_seven_days=ValueState.available(LastSevenDaysStats(
+                cards_studied=1_402,
+                new_cards_studied=498,
+                seconds=21_480,
+                retention=RateMetric.from_counts(89, 100),
+                again_rate=RateMetric.from_counts(11, 100),
+            )),
+        )
+        html = render_dashboard(replace(self.snapshot, facts=facts), self.config)
+        self.assertIn('aria-valuenow="9"', html)
+        self.assertIn('>9% complete</span>', html)
+        self.assertIn(
+            '<dt>Initial cards due</dt><dd data-hdo-metric="progress.initial_cards_due">401</dd>',
+            html,
+        )
+        self.assertIn(
+            '<dd data-hdo-metric="last_seven_days.average_cards_per_day">200</dd>',
+            html,
+        )
+        self.assertEqual(_rounded_average(5, 2), 3)
+        self.assertEqual(_rounded_average(4, 2), 2)
+
+    def test_zero_remaining_counts_keep_only_learning_and_review_semantics(self) -> None:
+        def row_classes(html: str, label: str) -> str:
+            match = re.search(
+                r'<div class="hdo-metric-row ([^"]*)"[^>]*><dt>{}</dt>'.format(
+                    re.escape(label)
+                ),
+                html,
+            )
+            if match is None:
+                raise AssertionError("{} row missing".format(label))
+            return match.group(1)
+
+        facts = replace(
+            self.snapshot.facts,
+            queue=ValueState.available(QueueStats()),
+        )
+        html = render_dashboard(replace(self.snapshot, facts=facts), self.config)
+        progress = html[html.index("Today’s Progress"):html.index("Today’s Session")]
+        self.assertEqual(row_classes(progress, "New remaining"), "")
+        self.assertEqual(row_classes(progress, "Learning remaining"), "hdo-value--learning")
+        self.assertEqual(row_classes(progress, "Reviews remaining"), "hdo-value--review")
+
+        unavailable_facts = replace(
+            self.snapshot.facts,
+            queue=ValueState.unavailable(AvailabilityReason.QUERY_FAILED),
+        )
+        unavailable_html = render_dashboard(
+            replace(self.snapshot, facts=unavailable_facts),
+            self.config,
+        )
+        unavailable_progress = unavailable_html[
+            unavailable_html.index("Today’s Progress"):unavailable_html.index("Today’s Session")
+        ]
+        for label in ("New remaining", "Learning remaining", "Reviews remaining"):
+            self.assertEqual(row_classes(unavailable_progress, label), "is-unavailable")
 
     def test_release_stress_values_and_long_verse_render_without_truncation(self) -> None:
         facts = replace(
@@ -344,9 +430,9 @@ class RendererTests(unittest.TestCase):
         self.assertIn("Last 7 Days", html)
         self.assertIn("Some dashboard data is unavailable", html)
         recent = html[html.index("Last 7 Days"):html.index("All Time")]
-        for label in ("Cards studied", "New cards studied", "Retention", "Time spent"):
-            self.assertIn("<dt>{}</dt>".format(label), recent)
-        self.assertEqual(recent.count(">—</dd>"), 3)
+        for label in ("Cards studied", "Avg cards/day", "Retention", "New cards studied", "Time spent"):
+            self.assertRegex(recent, r"<dt(?: [^>]*)?>{}</dt>".format(re.escape(label)))
+        self.assertEqual(recent.count(">—</dd>"), 4)
         self.assertEqual(recent.count(">—</span>"), 2)
 
         zero_recent = LastSevenDaysStats(
@@ -363,7 +449,7 @@ class RendererTests(unittest.TestCase):
             self.config,
         )
         recent = zero_html[zero_html.index("Last 7 Days"):zero_html.index("All Time")]
-        self.assertEqual(recent.count(">0</dd>"), 2)
+        self.assertEqual(recent.count(">0</dd>"), 3)
         self.assertIn("<dt>Retention</dt>", recent)
         self.assertIn("<dt>Time spent</dt>", recent)
         self.assertEqual(recent.count(">N/A</dd>"), 1)
@@ -389,6 +475,7 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(payload["presentation"]["progress"], {
             "status": "in_progress",
             "fill_percent": 77,
+            "initial_cards_due": 736,
         })
         self.assertEqual(
             tuple(payload["presentation"]["today_session"]),
@@ -401,6 +488,7 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(payload["presentation"]["today_session"]["time_spent"], "4 hr 6 min")
         self.assertEqual(payload["statistics"]["last_seven_days"]["value"]["seconds"], 45_120)
         self.assertEqual(payload["presentation"]["last_seven_days"], {
+            "average_cards_per_day": 251,
             "time_spent": "12 hr 32 min",
             "time_spent_compact": "12h 32m",
         })

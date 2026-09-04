@@ -1,20 +1,36 @@
 {
   "release": "1.8.7",
   "schema_version": 8,
-  "reference_addons": ["Progress Bar", "PronounceIt"],
+  "reference_addons": [
+    "Progress Bar",
+    "PronounceIt"
+  ],
   "window_type": "parented native QDialog",
   "native_window": true,
   "parent": "Anki mw",
   "lifecycle": "local QDialog(mw) followed by exec()",
   "logical_coordinates": true,
-  "minimum_size": [860, 640],
-  "default_size": [1080, 760],
-  "screen_margins": {"normal": 48, "small_screen_fallback": 24},
+  "minimum_size": [
+    860,
+    640
+  ],
+  "default_size": [
+    1080,
+    760
+  ],
+  "screen_margins": {
+    "normal": 48,
+    "small_screen_fallback": 24
+  },
   "minimum_saved_visible_ratio": 0.8,
   "movable": true,
   "resizable": true,
   "default_window_flags": true,
-  "active_screen_order": ["parent window handle", "screen containing parent center", "primary screen"],
+  "active_screen_order": [
+    "parent window handle",
+    "screen containing parent center",
+    "primary screen"
+  ],
   "initial_placement": "migrate and restore a valid logical v3 or v4 QRect on its connected screen or center the preferred size on the active parent screen before first visibility",
   "pre_exec_geometry": true,
   "reposition_after_open": "one decoration-only clamp when the decorated frame is outside the active screen; never move an already-contained frame",
@@ -36,21 +52,28 @@
   "primary_prompts": "stacked overlay children keep the Settings shell visible beneath a tokenized scrim and never create another window",
   "auxiliary_dialogs": "single-title 480-to-540 px event and verse editors are parented window-modal dialogs clamped to 80 percent of the Settings body; native file and color pickers remain parented",
   "embedded_web_content": false,
-  "pages": ["dashboard", "events", "bible_verse", "about_support"],
+  "pages": [
+    "dashboard",
+    "appearance",
+    "calendar",
+    "events",
+    "bible_verse",
+    "about_support"
+  ],
   "shell_maximum_width": 1264,
   "page_maximum_width": 1080,
   "about_page_maximum_width": 1080,
   "rail_width": 184,
   "header_height": 72,
   "footer_height": 56,
-  "compact_navigation": "single-line synchronized QTabBar whenever retaining the 184 px rail would leave less than 680 logical pixels for the main region; the 860 px supported minimum is compact",
-  "page_content": "one vertical native scroll area owns each page body; only the bounded five-row Events list, 180-to-520 px verse library, and long editor bodies may scroll internally; the page header, reserved error region, and footer remain fixed and horizontal scrolling is disabled",
+  "compact_navigation": "labelled synchronized section dropdown below the 860 px supported minimum; the 184 px sidebar remains visible at supported widths",
+  "page_content": "top-aligned cards with one vertical scroll owner per view; the Bible Library gives its remaining viewport to the list, while Display & rotation owns a separate scroller; headers, error region, and footer remain fixed",
   "footer": "reserved error region plus a separate fixed 56 px action-local feedback row outside the page scrollers; status and actions retain stable positions",
   "event_list": "one to five 54 px rows use natural bounded height; more rows scroll internally",
-  "verse_list": "complete virtualized model in a viewport-derived 180-to-520 px bounded list with explicit semantic selection and vector-painted overflow action",
+  "verse_list": "complete virtualized model fills the Library viewport with explicit Current and Pending save status and a vector-painted overflow action",
   "editor_titles": "event and verse editors use one native title only, are parented and window-modal, and stage Add event, Update event, Add verse, or Update verse into the global draft",
   "save_close": "stable Save changes label during saving; mutation controls and close are disabled; failures preserve the draft; dirty close offers Cancel, Discard changes, and Save and close with pending-close cleared on failure",
-  "capture_surface_verification": "every PNG must sample-match the live Settings client so a same-sized Dashboard background cannot pass; all 12 page captures must use the complete decorated native Settings frame",
+  "capture_surface_verification": "every PNG must sample-match the live Settings client so a same-sized Dashboard background cannot pass; all 21 page captures must use the complete decorated native Settings frame",
   "release_blockers": [
     "native macOS full-screen Space behavior",
     "macOS 100 percent application-font and Retina rendering"
@@ -59,7 +82,7 @@
     "open from the Caleb M. menu in native macOS full-screen",
     "open from the calendar gear in native macOS full-screen",
     "resize the dialog without changing Spaces",
-    "switch all four navigation pages without changing Spaces",
+    "switch all six navigation pages and both Bible views without changing Spaces",
     "switch Events Active and Archived tabs without changing Spaces",
     "edit an event without changing Spaces",
     "edit a verse without changing Spaces",
@@ -67,5 +90,9 @@
     "close and reopen without changing Spaces",
     "repeat after a controlled Anki restart without changing Spaces"
   ],
-  "settings_profile_acceptance_gate": "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 41 PNGs cannot satisfy or waive this gate"
+  "settings_profile_acceptance_gate": "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 63 PNGs cannot satisfy or waive this gate",
+  "bible_views": [
+    "library",
+    "display_rotation"
+  ]
 }

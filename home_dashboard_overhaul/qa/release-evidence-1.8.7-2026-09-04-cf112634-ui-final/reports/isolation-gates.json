@@ -1,0 +1,46 @@
+{
+  "all_four_gates_repeated_after_restart": true,
+  "initial": {
+    "candidate": {
+      "candidate": "<candidate-package>",
+      "candidate_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.7",
+      "member_count": 24
+    },
+    "collection_path": "<disposable-run-root>/Codex QA HDO 1.8.7 UI final cf112634 Retina/collection.anki2",
+    "gated_before_window_interaction": true,
+    "gates": {
+      "filesystem": true,
+      "process": true,
+      "sync": true,
+      "window": true
+    },
+    "profile": "Codex QA HDO 1.8.7 UI final cf112634 Retina",
+    "run_root": "<disposable-run-root>",
+    "status": "passed",
+    "window_title": "Codex QA HDO 1.8.7 UI final cf112634 Retina - Anki"
+  },
+  "legacy_unversioned_capture_reports": [],
+  "restart": {
+    "candidate": {
+      "candidate": "<candidate-package>",
+      "candidate_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.7",
+      "member_count": 24
+    },
+    "collection_path": "<disposable-run-root>/Codex QA HDO 1.8.7 UI final cf112634 Retina/collection.anki2",
+    "gated_before_window_interaction": true,
+    "gates": {
+      "filesystem": true,
+      "process": true,
+      "sync": true,
+      "window": true
+    },
+    "profile": "Codex QA HDO 1.8.7 UI final cf112634 Retina",
+    "run_root": "<disposable-run-root>",
+    "status": "passed",
+    "window_title": "Codex QA HDO 1.8.7 UI final cf112634 Retina - Anki"
+  }
+}

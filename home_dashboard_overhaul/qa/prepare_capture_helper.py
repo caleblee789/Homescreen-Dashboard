@@ -62,6 +62,7 @@ def prepare_helper(
             "__init__.py": QA_ROOT / "runtime_probe_profile_entrypoint.py",
             "_release_probe.py": QA_ROOT / "runtime_probe_release_1_8_7.py",
             "_probe_base.py": QA_ROOT / "runtime_probe_release_1_8_4.py",
+            "_workflow_probe.py": QA_ROOT / "runtime_probe_settings_workflow_1_8_7.py",
             "_capture_plan.py": QA_ROOT / "capture_plan.py",
             "_capture_plan.json": PLAN_PATH,
         }

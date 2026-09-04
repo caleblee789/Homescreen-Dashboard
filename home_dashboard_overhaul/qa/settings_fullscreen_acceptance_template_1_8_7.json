@@ -16,7 +16,7 @@
       "remained_on_anki_fullscreen_space": null,
       "desktop_or_space_switch_observed": null,
       "workflow_steps": {
-        "all-four-pages": {
+        "all-six-pages-and-bible-views": {
           "status": "unrun",
           "completed": false,
           "remained_on_current_anki_space": null,
@@ -72,7 +72,7 @@
       "remained_on_anki_fullscreen_space": null,
       "desktop_or_space_switch_observed": null,
       "workflow_steps": {
-        "all-four-pages": {
+        "all-six-pages-and-bible-views": {
           "status": "unrun",
           "completed": false,
           "remained_on_current_anki_space": null,

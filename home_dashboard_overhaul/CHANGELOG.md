@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Organized Settings into Dashboard, Appearance, Calendar, Events, Bible verse,
+  and About & support without changing schema 8 or stored values. Moved scoped
+  resets with their controls and retained the native modal lifecycle.
+- Split Bible settings into Library and Display & rotation, removed nested
+  Library scrolling, labelled current and pending choices, and made the live
+  preview use the selected verse, actual font size, and staged dashboard colors.
+- Top-aligned responsive cards, retained the sidebar at supported widths, and
+  added a labelled section selector for constrained screens. Reordered editor
+  fields and padded save-error content above the fixed footer.
+- Added a Choose a verse action to the dashboard empty state and explanatory
+  tooltips for recent versus active-day averages. Preserved dashboard geometry
+  and the in-bar N% complete label.
+- Expanded native capture coverage to 116 frames, including all six Settings
+  pages, both Bible views, minimum-size and light-mode coverage. Historical
+  evidence remains unchanged; release approval requires fresh validation and
+  human visual review.
+
 ## 1.8.7 — 2026-08-25
 
 - Kept the parented native `QDialog(mw)` and local `exec()` lifecycle while
@@ -20,9 +37,10 @@
   `#0B1118`/`#151D26` dark surfaces, `#C7D1DB`/`#2B3948` borders, neutral
   Events tabs, standardized disclosures, and scoped Reset visibility.
 - Reworked Dashboard Appearance, sections, Study metrics, Calendar display,
-  Calendar range, and Local data into responsive native groups. Added a
-  five-step heatmap palette preview and a compact Bible appearance preview
-  while retaining all saved palette IDs, ranges, filters, and date semantics.
+  Calendar range, and Deck exclusions and filters into responsive native
+  groups. Added a five-step heatmap palette preview and a compact Bible
+  appearance preview while retaining all saved palette IDs, ranges, filters,
+  and date semantics.
 - Rebuilt Events as one bounded list surface with explicit sorting, search
   clearing and result summaries, separate empty/no-results states, neutral
   Active/Archived tabs, readable two-line rows, and 32 px action menus. Normal
@@ -46,7 +64,22 @@
   unclaimed, and nonblocking. Existing evidence remains immutable provenance.
 - Changed Last 7 Days to display elapsed Time spent from its exact seven
   scheduler periods instead of visible Again rate; Again remains internal to
-  retention parity. Active progress displays `N% complete` inside the bar.
+  retention parity. Added its half-up whole-card Avg cards/day across all seven
+  periods and aligned Cards studied, Avg cards/day, and Retention with All Time.
+  Today's Progress now exposes the exact bar denominator as Initial cards due,
+  followed by Total, New, Learning, and Reviews remaining. Active progress
+  continues to display `N% complete` inside the bar.
+- Rebalanced the production dashboard around a centered 1,160 px shell, a
+  360 px desktop rail, a stable 2×2 summary grid, explicit 1,009/1,008 px and
+  589/588 px responsive boundaries, aligned Month/Year card bottoms, and a
+  fluid 53-week Year heatmap without an internal scrollbar.
+- Increased Calendar/footer spacing without reducing metric typography,
+  centered the Bible verse within its card, and hardened the in-bar completion
+  label against clipping. Sapphire Glass dark mode now uses the audited red
+  Learning and green Review semantics.
+- Kept Deck exclusions and filters directly visible instead of nesting them in
+  a Local data disclosure, and refitted Events tab chrome after native styling
+  so empty and no-results states do not clip their labels.
 - Preserved schema 8, every setting key and saved identifier, events and verse
   data, transactional persistence, scheduler/retention semantics, native
   isolation, and the 24-member package allowlist.

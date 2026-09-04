@@ -1,0 +1,984 @@
+{
+  "authority": "native-exact-package-production-and-canonical-settings",
+  "capture_completion_status": "complete",
+  "capture_display": {
+    "device_pixel_ratio": 2.0,
+    "is_full_screen": true,
+    "screen_geometry": [
+      0,
+      0,
+      1710,
+      1107
+    ],
+    "screen_name": "Built-in Retina Display",
+    "window_frame": [
+      0,
+      34,
+      1710,
+      1073
+    ]
+  },
+  "capture_plan": {
+    "profile": "wide-100",
+    "profile_counts": {
+      "initial": 2,
+      "restart": 0,
+      "total": 2
+    },
+    "resolved_stage_capture_ids": [
+      "PROD-STATS-WIDE-MONTH",
+      "PROD-STATS-WIDE-YEAR"
+    ],
+    "schema_version": 1,
+    "selected_capture_ids": [
+      "PROD-STATS-WIDE-MONTH",
+      "PROD-STATS-WIDE-YEAR"
+    ],
+    "sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45"
+  },
+  "capture_profile": {
+    "description": "True-full-screen wide production and Settings coverage at 100 percent text.",
+    "display_class": "wide",
+    "full_screen": true,
+    "id": "wide-100",
+    "resolved_counts": {
+      "initial": 2,
+      "restart": 0,
+      "total": 2
+    },
+    "settings_application_font_percent": 100,
+    "text_scale_percent": 100,
+    "ui_scale_percent": 100
+  },
+  "captures": {
+    "PROD-STATS-WIDE-MONTH": {
+      "capture_display": {
+        "device_pixel_ratio": 2.0,
+        "is_full_screen": true,
+        "screen_geometry": [
+          0,
+          0,
+          1710,
+          1107
+        ],
+        "screen_name": "Built-in Retina Display",
+        "window_frame": [
+          0,
+          34,
+          1710,
+          1073
+        ]
+      },
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "capture_plan_sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+      "capture_profile": "wide-100",
+      "dashboard_container_width": 1160,
+      "density": "wide",
+      "device_pixel_ratio": 2.0,
+      "dom": {
+        "bible": {
+          "bottom": 795,
+          "height": 182,
+          "left": 1075,
+          "right": 1435,
+          "top": 613,
+          "width": 360
+        },
+        "bodyBackgroundImage": "none",
+        "bodyOverflowX": 0,
+        "calendar": {
+          "bottom": 795,
+          "height": 546,
+          "left": 275,
+          "right": 1061,
+          "top": 249,
+          "width": 786
+        },
+        "calendarCellCount": 42,
+        "completionCount": 1,
+        "componentOverflowX": 0,
+        "controlHeights": [
+          30,
+          30,
+          30,
+          30,
+          30,
+          32
+        ],
+        "deckDashboardGap": 30,
+        "deckGapAnchor": {
+          "className": "",
+          "id": "",
+          "tag": "BR"
+        },
+        "density": "wide",
+        "documentBottomReached": true,
+        "documentOverflowX": 0,
+        "documentScrollMaximum": 0,
+        "documentScrollPaddingBlockEnd": "54px",
+        "dueLegendCount": 1,
+        "dueMarkerCount": 3,
+        "equalStatisticCardGeometry": true,
+        "eventLegendCount": 1,
+        "eventMarkerCount": 0,
+        "eventSummaryCount": 1,
+        "footerClearance": 54,
+        "footerClearanceSource": "measured",
+        "frame": {
+          "bottom": 613.171875,
+          "height": 252,
+          "left": 305,
+          "right": 1031,
+          "top": 361.171875,
+          "width": 726
+        },
+        "hostBackgroundClass": "",
+        "hostPreserved": "true",
+        "layout": {
+          "bottom": 795,
+          "height": 546,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "layoutColumnGap": 14,
+        "layoutSideBySide": true,
+        "layoutStacked": false,
+        "loading": false,
+        "metricMinimumGap": 10,
+        "metricOrder": {
+          "hdo-all-time": [
+            "long_term.lifetime_cards_studied",
+            "long_term.average_reviews_per_active_day",
+            "long_term.lifetime_retention",
+            "long_term.current_streak",
+            "long_term.longest_streak"
+          ],
+          "hdo-last-seven": [
+            "last_seven_days.cards_studied",
+            "last_seven_days.average_cards_per_day",
+            "last_seven_days.retention",
+            "last_seven_days.new_cards_studied",
+            "last_seven_days.time_spent"
+          ],
+          "hdo-progress": [
+            "progress.initial_cards_due",
+            "queue.total",
+            "queue.new",
+            "queue.learning",
+            "queue.review"
+          ],
+          "hdo-session": [
+            "today.answers",
+            "today.new_cards_studied",
+            "today.cards_buried",
+            "today.time_spent",
+            "today.pace",
+            "queue.eta"
+          ]
+        },
+        "metricTextSingleLine": true,
+        "metricValues": {
+          "last_seven_days.average_cards_per_day": "169",
+          "last_seven_days.cards_studied": "1,184",
+          "last_seven_days.new_cards_studied": "2",
+          "last_seven_days.retention": "86%",
+          "last_seven_days.time_spent": "6 hr 15 min6h 15m",
+          "long_term.average_reviews_per_active_day": "1,184",
+          "long_term.current_streak": "1 day",
+          "long_term.lifetime_cards_studied": "1,184",
+          "long_term.lifetime_retention": "86%",
+          "long_term.longest_streak": "1 day",
+          "progress.initial_cards_due": "1,196",
+          "queue.eta": "8:36 PM",
+          "queue.learning": "0",
+          "queue.new": "10",
+          "queue.review": "2",
+          "queue.total": "12",
+          "today.answers": "1,184",
+          "today.cards_buried": "1",
+          "today.new_cards_studied": "2",
+          "today.pace": "19.0 sec/card",
+          "today.time_spent": "6 hr 15 min6h 15m"
+        },
+        "metricsGrid": {
+          "bottom": 601,
+          "height": 352,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "mode": "dark",
+        "monthBottomDelta": 0,
+        "monthRows": "6",
+        "nativeFooterHeight": 30,
+        "nonSelectedCellShadowCount": 0,
+        "progressBarToMetricsGap": 10,
+        "progressHeaderToBarGap": 8,
+        "progressLabel": "99% complete",
+        "progressLabelCentered": true,
+        "progressLabelPadding": 6,
+        "progressTrackHeight": 18,
+        "progressTrackVisible": true,
+        "rail": {
+          "bottom": 795,
+          "height": 546,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "railWidth": 360,
+        "ready": true,
+        "root": {
+          "bottom": 849,
+          "height": 600,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "rootBackground": "rgba(0, 0, 0, 0)",
+        "rootMarginTop": "30px",
+        "rootPaddingBottom": "54px",
+        "rootPosition": "relative",
+        "rootScrollOwner": "documentElement",
+        "sectionsBelow": false,
+        "selectedBoxShadow": "rgb(124, 178, 240) 0px 0px 0px 2px inset",
+        "selectedCount": 1,
+        "statisticColumnCount": 2,
+        "statisticColumns": "174px 174px",
+        "statisticRowCount": 2,
+        "statisticsCardCount": 4,
+        "theme": "Graphite",
+        "titleFontSize": "18px",
+        "todayCount": 1,
+        "topEdgeDelta": 0,
+        "verseColor": "rgb(194, 201, 208)",
+        "verseFontFamily": "-apple-system, \"system-ui\", \"SF Pro Text\", sans-serif",
+        "verseFontSize": "12px",
+        "view": "month",
+        "yearBottomDelta": 194,
+        "yearCellHeightMax": 0,
+        "yearCellHeightMin": 0,
+        "yearCellWidthMax": 0,
+        "yearCellWidthMin": 0,
+        "yearCellsSquare": true,
+        "yearFrameOverflowX": 0,
+        "yearFrameScrollLeft": 0,
+        "yearGridInsideFrame": true,
+        "yearHeatmapWidthRatio": 0,
+        "yearMonthLabels": [],
+        "yearWeekdayLabels": [],
+        "yearWeeks": ""
+      },
+      "file": "captures/PROD-STATS-WIDE-MONTH.png",
+      "fixture": "native-statistics",
+      "full_screen": true,
+      "layout": "wide",
+      "logical_frame": {
+        "height": 1073,
+        "width": 1710,
+        "x": 0,
+        "y": 34
+      },
+      "mode": "dark",
+      "native_window_dimensions": [
+        1710,
+        1073
+      ],
+      "physical_pixels": [
+        3420,
+        2146
+      ],
+      "production_deck_browser_mount": true,
+      "sampled_color_count": 24,
+      "sha256": "ddb04769d70d22c0a2336312484e1128e72db47b8d538d8a8acd4c0801df0df9",
+      "state_label": "",
+      "tags": [
+        "statistics_accuracy",
+        "wide_2x2",
+        "month"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "month",
+      "window_title": "Codex QA HDO 1.8.7 Spacing Accept 20260831-2030 - Anki",
+      "window_title_matches_profile": true
+    },
+    "PROD-STATS-WIDE-YEAR": {
+      "capture_display": {
+        "device_pixel_ratio": 2.0,
+        "is_full_screen": true,
+        "screen_geometry": [
+          0,
+          0,
+          1710,
+          1107
+        ],
+        "screen_name": "Built-in Retina Display",
+        "window_frame": [
+          0,
+          34,
+          1710,
+          1073
+        ]
+      },
+      "capture_method": "QScreen.grabWindow-screen-crop",
+      "capture_plan_sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+      "capture_profile": "wide-100",
+      "dashboard_container_width": 1160,
+      "density": "wide",
+      "device_pixel_ratio": 2.0,
+      "dom": {
+        "bible": {
+          "bottom": 795,
+          "height": 182,
+          "left": 1075,
+          "right": 1435,
+          "top": 613,
+          "width": 360
+        },
+        "bodyBackgroundImage": "none",
+        "bodyOverflowX": 0,
+        "calendar": {
+          "bottom": 601,
+          "height": 352,
+          "left": 275,
+          "right": 1061,
+          "top": 249,
+          "width": 786
+        },
+        "calendarCellCount": 365,
+        "completionCount": 1,
+        "componentOverflowX": 0,
+        "controlHeights": [
+          30,
+          30,
+          30,
+          30,
+          30,
+          32
+        ],
+        "deckDashboardGap": 30,
+        "deckGapAnchor": {
+          "className": "",
+          "id": "",
+          "tag": "BR"
+        },
+        "density": "wide",
+        "documentBottomReached": true,
+        "documentOverflowX": 0,
+        "documentScrollMaximum": 0,
+        "documentScrollPaddingBlockEnd": "54px",
+        "dueLegendCount": 1,
+        "dueMarkerCount": 3,
+        "equalStatisticCardGeometry": true,
+        "eventLegendCount": 1,
+        "eventMarkerCount": 0,
+        "eventSummaryCount": 1,
+        "footerClearance": 54,
+        "footerClearanceSource": "measured",
+        "frame": {
+          "bottom": 434.265625,
+          "height": 102,
+          "left": 309,
+          "right": 1027,
+          "top": 332.265625,
+          "width": 718
+        },
+        "hostBackgroundClass": "",
+        "hostPreserved": "true",
+        "layout": {
+          "bottom": 795,
+          "height": 546,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "layoutColumnGap": 14,
+        "layoutSideBySide": true,
+        "layoutStacked": false,
+        "loading": false,
+        "metricMinimumGap": 10,
+        "metricOrder": {
+          "hdo-all-time": [
+            "long_term.lifetime_cards_studied",
+            "long_term.average_reviews_per_active_day",
+            "long_term.lifetime_retention",
+            "long_term.current_streak",
+            "long_term.longest_streak"
+          ],
+          "hdo-last-seven": [
+            "last_seven_days.cards_studied",
+            "last_seven_days.average_cards_per_day",
+            "last_seven_days.retention",
+            "last_seven_days.new_cards_studied",
+            "last_seven_days.time_spent"
+          ],
+          "hdo-progress": [
+            "progress.initial_cards_due",
+            "queue.total",
+            "queue.new",
+            "queue.learning",
+            "queue.review"
+          ],
+          "hdo-session": [
+            "today.answers",
+            "today.new_cards_studied",
+            "today.cards_buried",
+            "today.time_spent",
+            "today.pace",
+            "queue.eta"
+          ]
+        },
+        "metricTextSingleLine": true,
+        "metricValues": {
+          "last_seven_days.average_cards_per_day": "169",
+          "last_seven_days.cards_studied": "1,184",
+          "last_seven_days.new_cards_studied": "2",
+          "last_seven_days.retention": "86%",
+          "last_seven_days.time_spent": "6 hr 15 min6h 15m",
+          "long_term.average_reviews_per_active_day": "1,184",
+          "long_term.current_streak": "1 day",
+          "long_term.lifetime_cards_studied": "1,184",
+          "long_term.lifetime_retention": "86%",
+          "long_term.longest_streak": "1 day",
+          "progress.initial_cards_due": "1,196",
+          "queue.eta": "8:36 PM",
+          "queue.learning": "0",
+          "queue.new": "10",
+          "queue.review": "2",
+          "queue.total": "12",
+          "today.answers": "1,184",
+          "today.cards_buried": "1",
+          "today.new_cards_studied": "2",
+          "today.pace": "19.0 sec/card",
+          "today.time_spent": "6 hr 15 min6h 15m"
+        },
+        "metricsGrid": {
+          "bottom": 601,
+          "height": 352,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "mode": "dark",
+        "monthBottomDelta": 194,
+        "monthRows": "",
+        "nativeFooterHeight": 30,
+        "nonSelectedCellShadowCount": 0,
+        "progressBarToMetricsGap": 10,
+        "progressHeaderToBarGap": 8,
+        "progressLabel": "99% complete",
+        "progressLabelCentered": true,
+        "progressLabelPadding": 6,
+        "progressTrackHeight": 18,
+        "progressTrackVisible": true,
+        "rail": {
+          "bottom": 795,
+          "height": 546,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "railWidth": 360,
+        "ready": true,
+        "root": {
+          "bottom": 849,
+          "height": 600,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "rootBackground": "rgba(0, 0, 0, 0)",
+        "rootMarginTop": "30px",
+        "rootPaddingBottom": "54px",
+        "rootPosition": "relative",
+        "rootScrollOwner": "documentElement",
+        "sectionsBelow": false,
+        "selectedBoxShadow": "rgb(124, 178, 240) 0px 0px 0px 2px inset",
+        "selectedCount": 1,
+        "statisticColumnCount": 2,
+        "statisticColumns": "174px 174px",
+        "statisticRowCount": 2,
+        "statisticsCardCount": 4,
+        "theme": "Graphite",
+        "titleFontSize": "18px",
+        "todayCount": 1,
+        "topEdgeDelta": 0,
+        "verseColor": "rgb(194, 201, 208)",
+        "verseFontFamily": "-apple-system, \"system-ui\", \"SF Pro Text\", sans-serif",
+        "verseFontSize": "12px",
+        "view": "year",
+        "yearBottomDelta": 0,
+        "yearCellHeightMax": 10,
+        "yearCellHeightMin": 10,
+        "yearCellWidthMax": 10,
+        "yearCellWidthMin": 10,
+        "yearCellsSquare": true,
+        "yearFrameOverflowX": 0,
+        "yearFrameScrollLeft": 0,
+        "yearGridInsideFrame": true,
+        "yearHeatmapWidthRatio": 0.9192200557103064,
+        "yearMonthLabels": [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec"
+        ],
+        "yearWeekdayLabels": [
+          "Mon",
+          "Wed",
+          "Fri"
+        ],
+        "yearWeeks": "53"
+      },
+      "file": "captures/PROD-STATS-WIDE-YEAR.png",
+      "fixture": "native-statistics",
+      "full_screen": true,
+      "layout": "wide",
+      "logical_frame": {
+        "height": 1073,
+        "width": 1710,
+        "x": 0,
+        "y": 34
+      },
+      "mode": "dark",
+      "native_window_dimensions": [
+        1710,
+        1073
+      ],
+      "physical_pixels": [
+        3420,
+        2146
+      ],
+      "production_deck_browser_mount": true,
+      "sampled_color_count": 20,
+      "sha256": "fd75315e0d24e6fc3a49fe970346151b9fa6438b5f2c600c261b004d3a4eee9c",
+      "state_label": "",
+      "tags": [
+        "statistics_accuracy",
+        "wide_2x2",
+        "year"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "year",
+      "window_title": "Codex QA HDO 1.8.7 Spacing Accept 20260831-2030 - Anki",
+      "window_title_matches_profile": true
+    }
+  },
+  "errors": [],
+  "identity": {
+    "addons_inside_run_root": true,
+    "anki_version": "26.8.1",
+    "auto_sync": false,
+    "candidate": {
+      "candidate": "/Users/test/Documents/ChatGPT.nosync/Homescreen Statistics Overhaul/home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon",
+      "candidate_sha256": "7402d9933d2554551f1c0516e9ca07e7f13b673f0b01d39cdad091d6f5919b02",
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.7",
+      "member_count": 24
+    },
+    "candidate_addon_root": "/private/tmp/anki-release-qa.cs86jy6w/addons21/home_dashboard_overhaul",
+    "collection_inside_run_root": true,
+    "collection_path": "/private/tmp/anki-release-qa.cs86jy6w/Codex QA HDO 1.8.7 Spacing Accept 20260831-2030/collection.anki2",
+    "excluded_normal_pid": null,
+    "excluded_normal_pid_alive": false,
+    "excluded_normal_process_state": "none-present-at-prelaunch",
+    "gated_before_window_interaction": true,
+    "media_sync": false,
+    "pid": 60804,
+    "probe_addon_root": "/private/tmp/anki-release-qa.cs86jy6w/addons21/zz_hdo_1_8_7_wide_100_probe",
+    "processes_are_distinct": true,
+    "profile": "Codex QA HDO 1.8.7 Spacing Accept 20260831-2030",
+    "profile_matches": true,
+    "run_root": "/private/tmp/anki-release-qa.cs86jy6w",
+    "single_instance_key_fingerprint": "089e99207152",
+    "sync_credentials_present": false,
+    "sync_identity": "disabled-and-disconnected",
+    "window_title": "Codex QA HDO 1.8.7 Spacing Accept 20260831-2030 - Anki",
+    "window_title_matches_profile": true
+  },
+  "multi_deck_new_limit_smoke": {
+    "assertions": [
+      {
+        "analytics": {
+          "eta_seconds": null,
+          "learning": 0,
+          "new": 10,
+          "review": 0,
+          "total": 10
+        },
+        "dom": {
+          "mounted": true,
+          "newText": "10",
+          "progressLabel": "0% complete",
+          "totalText": "10"
+        },
+        "expected_new_remaining": 10,
+        "expected_progress_label": "0% complete",
+        "expected_total_remaining": 10,
+        "label": "active-a-unexcluded",
+        "production_dashboard_mounted": true
+      },
+      {
+        "analytics": {
+          "eta_seconds": null,
+          "learning": 0,
+          "new": 3,
+          "review": 0,
+          "total": 3
+        },
+        "dom": {
+          "mounted": true,
+          "newText": "3",
+          "progressLabel": "0% complete",
+          "totalText": "3"
+        },
+        "expected_new_remaining": 3,
+        "expected_progress_label": "0% complete",
+        "expected_total_remaining": 3,
+        "label": "excluding-head-b",
+        "production_dashboard_mounted": true
+      }
+    ],
+    "fixture": {
+      "active_deck_id": 1788226322012,
+      "active_head": "A",
+      "deck_ids": {
+        "A": 1788226322012,
+        "B": 1788226322013
+      },
+      "deck_names": {
+        "A": "HDO 1.8.7 QA Head A",
+        "B": "HDO 1.8.7 QA Head B"
+      },
+      "raw_new_cards": {
+        "A": 40,
+        "B": 40
+      },
+      "remaining_limits": {
+        "A": 3,
+        "B": 7
+      }
+    },
+    "initial_dashboard_loaded_before_fixture": true,
+    "initial_dashboard_queue": {
+      "eta_seconds": 0,
+      "learning": 0,
+      "new": 0,
+      "review": 0,
+      "total": 0
+    },
+    "stage": "initial",
+    "status": "passed"
+  },
+  "native_statistics_comparison": {
+    "authority": "Anki 26.8.1 GraphsResponse true_retention, today, future_due, and scheduler due tree",
+    "dashboard": {
+      "all_time": {
+        "answers": 1184,
+        "retention": 86
+      },
+      "buried": {
+        "learning": 0,
+        "new": 0,
+        "review": 1
+      },
+      "calendar_due": {
+        "0": 3,
+        "1": 2,
+        "2": 1
+      },
+      "queue": {
+        "initial_cards_due": 1196,
+        "learning": 0,
+        "new": 10,
+        "review": 2,
+        "total": 12
+      },
+      "today": {
+        "answers": 1184,
+        "new_cards": 2,
+        "pace": 19.0,
+        "seconds": 22496.0
+      },
+      "week": {
+        "answers": 1184,
+        "average_cards_per_day": 169,
+        "internal_again": 14,
+        "new_cards": 2,
+        "retention": 86,
+        "seconds": 22496.0
+      }
+    },
+    "fixture": {
+      "all_answer_success_percent": 80,
+      "answers": 1184,
+      "eligible_failed": 153,
+      "eligible_passed": 947,
+      "native_retention_percent": 86,
+      "visible_week_time": "6 hr 15 min",
+      "week_seconds": 22496.0
+    },
+    "native_due_tree": {
+      "learning": 0,
+      "new": 10,
+      "review": 2
+    },
+    "native_future_due": {
+      "-2": 1,
+      "0": 2,
+      "1": 2,
+      "2": 1
+    },
+    "native_today": {
+      "answer_count": 1184,
+      "answer_millis": 22496000
+    },
+    "native_true_retention": {
+      "all_time": {
+        "failed": 153,
+        "passed": 947,
+        "total": 1100
+      },
+      "week": {
+        "failed": 153,
+        "passed": 947,
+        "total": 1100
+      }
+    },
+    "status": "passed",
+    "upstream_reference": "ankitects/anki@26.08.1:rslib/src/stats/graphs/retention.rs"
+  },
+  "persistence_write": {
+    "calendar_view": "year",
+    "events_sort": "name",
+    "palette": "Plum",
+    "settings_window_geometry": [
+      264,
+      170,
+      1180,
+      800
+    ],
+    "settings_window_geometry_units": "logical-css-pixels",
+    "settings_window_policy": "resizable-clamped-parented-dialog-exec",
+    "status": "passed",
+    "theme": "Graphite"
+  },
+  "production_matrix": {
+    "capture_plan_sha256": "e99c6d7ad357e73649a20bbbf65deea2524218173cb4c963df27de62fee33e45",
+    "capture_profile": "wide-100",
+    "case_count": 2,
+    "case_ids": [
+      "PROD-STATS-WIDE-MONTH",
+      "PROD-STATS-WIDE-YEAR"
+    ],
+    "host": "actual isolated Anki main Deck Browser",
+    "renderer": "exact installed production controller and renderer"
+  },
+  "quality_status": "passed",
+  "release": "1.8.7",
+  "scale_policy": {
+    "dpr_1_acceptance": "unrun",
+    "os_display_scaling_acceptance": "unrun",
+    "production_text_percent": 100,
+    "production_ui_percent": 100,
+    "settings_application_font_percent": [
+      100
+    ]
+  },
+  "schema_version": 3,
+  "screen": {
+    "available_geometry": [
+      0,
+      34,
+      1710,
+      1073
+    ],
+    "device_pixel_ratio": 2.0,
+    "name": "Built-in Retina Display"
+  },
+  "settings_geometry_assertions": {
+    "checks": {
+      "below_eighty_percent_visibility_rejected": true,
+      "disconnected_monitor_restore_rejected": true,
+      "eighty_percent_visibility_accepted": true,
+      "legacy_720x520_v2_record_ignored": true,
+      "legacy_940x680_v2_record_ignored": true,
+      "normal_geometry_keeps_48px_margins": true,
+      "normal_screen_keeps_vertical_navigation": true,
+      "secondary_monitor_restore_accepted": true,
+      "small_screen_activates_compact_fallback": true,
+      "valid_1180x800_restore_accepted": true,
+      "valid_940x680_v3_record_migrates": true
+    },
+    "legacy_geometry_key_read": false,
+    "png_count": 0,
+    "space_switching": "manual-result-required",
+    "status": "passed"
+  },
+  "settings_matrix": {
+    "case_count": 0,
+    "case_ids": [],
+    "embedded_web_content": "none",
+    "settings_profile_ceiling": {
+      "captures": 41,
+      "contact_sheets": 11
+    },
+    "widget_tree": "one-native-qt-tree",
+    "window_fresh_open_capture": "complete-decorated-parented-resizable-application-modal-dialog"
+  },
+  "stage": "initial",
+  "statistics_render_paths": {
+    "PROD-STATS-WIDE-MONTH": {
+      "initial_html": {
+        "last_seven_days.average_cards_per_day": "169",
+        "last_seven_days.cards_studied": "1,184",
+        "last_seven_days.new_cards_studied": "2",
+        "last_seven_days.retention": "86%",
+        "last_seven_days.time_spent": "6 hr 15 min6h 15m",
+        "long_term.average_reviews_per_active_day": "1,184",
+        "long_term.current_streak": "1 day",
+        "long_term.lifetime_cards_studied": "1,184",
+        "long_term.lifetime_retention": "86%",
+        "long_term.longest_streak": "1 day",
+        "progress.initial_cards_due": "1,196",
+        "queue.eta": "8:36 PM",
+        "queue.learning": "0",
+        "queue.new": "10",
+        "queue.review": "2",
+        "queue.total": "12",
+        "today.answers": "1,184",
+        "today.cards_buried": "1",
+        "today.new_cards_studied": "2",
+        "today.pace": "19.0 sec/card",
+        "today.time_spent": "6 hr 15 min6h 15m"
+      },
+      "initial_progress": "99% complete",
+      "live_refresh_requested": true
+    },
+    "PROD-STATS-WIDE-YEAR": {
+      "initial_html": {
+        "last_seven_days.average_cards_per_day": "169",
+        "last_seven_days.cards_studied": "1,184",
+        "last_seven_days.new_cards_studied": "2",
+        "last_seven_days.retention": "86%",
+        "last_seven_days.time_spent": "6 hr 15 min6h 15m",
+        "long_term.average_reviews_per_active_day": "1,184",
+        "long_term.current_streak": "1 day",
+        "long_term.lifetime_cards_studied": "1,184",
+        "long_term.lifetime_retention": "86%",
+        "long_term.longest_streak": "1 day",
+        "progress.initial_cards_due": "1,196",
+        "queue.eta": "8:36 PM",
+        "queue.learning": "0",
+        "queue.new": "10",
+        "queue.review": "2",
+        "queue.total": "12",
+        "today.answers": "1,184",
+        "today.cards_buried": "1",
+        "today.new_cards_studied": "2",
+        "today.pace": "19.0 sec/card",
+        "today.time_spent": "6 hr 15 min6h 15m"
+      },
+      "initial_progress": "99% complete",
+      "live_refresh_requested": true
+    }
+  },
+  "statistics_responsive_parity": {
+    "PROD-STATS-WIDE-MONTH": {
+      "clock_relative_metrics": {
+        "queue.eta": {
+          "initial_html": "8:36 PM",
+          "live_refresh": "8:36 PM",
+          "parity_policy": "nonempty-clock-relative-presentation"
+        }
+      },
+      "computed_columns": 2,
+      "layout": "wide",
+      "metrics": {
+        "last_seven_days.average_cards_per_day": "169",
+        "last_seven_days.cards_studied": "1,184",
+        "last_seven_days.new_cards_studied": "2",
+        "last_seven_days.retention": "86%",
+        "last_seven_days.time_spent": "6 hr 15 min6h 15m",
+        "long_term.average_reviews_per_active_day": "1,184",
+        "long_term.current_streak": "1 day",
+        "long_term.lifetime_cards_studied": "1,184",
+        "long_term.lifetime_retention": "86%",
+        "long_term.longest_streak": "1 day",
+        "progress.initial_cards_due": "1,196",
+        "queue.eta": "8:36 PM",
+        "queue.learning": "0",
+        "queue.new": "10",
+        "queue.review": "2",
+        "queue.total": "12",
+        "today.answers": "1,184",
+        "today.cards_buried": "1",
+        "today.new_cards_studied": "2",
+        "today.pace": "19.0 sec/card",
+        "today.time_spent": "6 hr 15 min6h 15m"
+      },
+      "progress": "99% complete",
+      "status": "passed",
+      "view": "month"
+    },
+    "PROD-STATS-WIDE-YEAR": {
+      "clock_relative_metrics": {
+        "queue.eta": {
+          "initial_html": "8:36 PM",
+          "live_refresh": "8:36 PM",
+          "parity_policy": "nonempty-clock-relative-presentation"
+        }
+      },
+      "computed_columns": 2,
+      "layout": "wide",
+      "metrics": {
+        "last_seven_days.average_cards_per_day": "169",
+        "last_seven_days.cards_studied": "1,184",
+        "last_seven_days.new_cards_studied": "2",
+        "last_seven_days.retention": "86%",
+        "last_seven_days.time_spent": "6 hr 15 min6h 15m",
+        "long_term.average_reviews_per_active_day": "1,184",
+        "long_term.current_streak": "1 day",
+        "long_term.lifetime_cards_studied": "1,184",
+        "long_term.lifetime_retention": "86%",
+        "long_term.longest_streak": "1 day",
+        "progress.initial_cards_due": "1,196",
+        "queue.eta": "8:36 PM",
+        "queue.learning": "0",
+        "queue.new": "10",
+        "queue.review": "2",
+        "queue.total": "12",
+        "today.answers": "1,184",
+        "today.cards_buried": "1",
+        "today.new_cards_studied": "2",
+        "today.pace": "19.0 sec/card",
+        "today.time_spent": "6 hr 15 min6h 15m"
+      },
+      "progress": "99% complete",
+      "status": "passed",
+      "view": "year"
+    }
+  },
+  "status": "passed"
+}

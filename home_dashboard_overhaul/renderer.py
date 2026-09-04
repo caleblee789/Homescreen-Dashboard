@@ -111,6 +111,7 @@ class _ProgressPresentation:
     state: _ProgressState
     fill_percent: int | None
     label: str
+    initial_cards_due: int | None = None
 
 
 def _eta(
@@ -244,11 +245,17 @@ def _metric(
     *,
     semantic: str = "",
     semantic_value: int | float | None = None,
+    color_when_zero: bool = False,
     unavailable: bool = False,
     compact_value: object | None = None,
 ) -> str:
     classes = [modifier] if modifier else []
-    if semantic and not unavailable and semantic_value is not None and semantic_value > 0:
+    if (
+        semantic
+        and not unavailable
+        and semantic_value is not None
+        and (semantic_value > 0 or (color_when_zero and semantic_value == 0))
+    ):
         classes.append("hdo-value--{}".format(semantic))
     if unavailable:
         classes.append("is-unavailable")
@@ -263,11 +270,13 @@ def _metric(
         compact_attr = ' data-hdo-compact="true"'
     return (
         '<div class="hdo-metric-row {}" data-hdo-primitive="{}"{}>'
-        '<dt>{}</dt><dd data-hdo-metric="{}"{}>{}</dd></div>'
+        '<dt{}>{}</dt><dd data-hdo-metric="{}"{}>{}</dd></div>'
     ).format(
         _escape(" ".join(classes)),
         _dashboard_primitive("metric-row"),
         semantic_attr,
+        (' title="Average across all seven study-day periods, including days with no reviews."' if metric_key == "last_seven_days.average_cards_per_day" else
+         ' title="Average across days with recorded study activity."' if metric_key == "long_term.average_reviews_per_active_day" else ""),
         _escape(label),
         _escape(metric_key),
         compact_attr,
@@ -318,6 +327,15 @@ def _rounded_progress_percent(completed: int, workload: int) -> int:
     return min(100, max(0, (200 * max(0, completed) + workload) // (2 * workload)))
 
 
+def _rounded_average(total: int, periods: int) -> int:
+    """Return a nonnegative whole-number average rounded half-up."""
+
+    if periods <= 0:
+        return 0
+    value = max(0, int(total))
+    return (2 * value + periods) // (2 * periods)
+
+
 def _progress_presentation(snapshot: DashboardSnapshot) -> _ProgressPresentation:
     today_state = _facts_state(snapshot, "today")
     queue_state = _facts_state(snapshot, "queue")
@@ -356,7 +374,7 @@ def _progress_presentation(snapshot: DashboardSnapshot) -> _ProgressPresentation
         state = _ProgressState.IN_PROGRESS
         percent = _rounded_progress_percent(completed, workload)
         label = "{}% complete".format(percent)
-    return _ProgressPresentation(state, percent, label)
+    return _ProgressPresentation(state, percent, label, workload)
 
 
 def _progress_group(snapshot: DashboardSnapshot) -> str:
@@ -398,19 +416,44 @@ def _progress_group(snapshot: DashboardSnapshot) -> str:
         review_remaining = max(0, int(queue.review))
         remaining = new_remaining + learning_remaining + review_remaining
         rows = [
-            _metric("New remaining", _format_count(new_remaining), "queue.new", semantic="new", semantic_value=new_remaining),
-            _metric("Learning remaining", _format_count(learning_remaining), "queue.learning", semantic="learning", semantic_value=learning_remaining),
-            _metric("Reviews remaining", _format_count(review_remaining), "queue.review", semantic="review", semantic_value=review_remaining),
+            _metric(
+                "Initial cards due",
+                _format_count(presentation.initial_cards_due),
+                "progress.initial_cards_due",
+                unavailable=presentation.initial_cards_due is None,
+            ),
             _metric("Total remaining", _format_count(remaining), "queue.total"),
+            _metric("New remaining", _format_count(new_remaining), "queue.new", semantic="new", semantic_value=new_remaining),
+            _metric(
+                "Learning remaining",
+                _format_count(learning_remaining),
+                "queue.learning",
+                semantic="learning",
+                semantic_value=learning_remaining,
+                color_when_zero=True,
+            ),
+            _metric(
+                "Reviews remaining",
+                _format_count(review_remaining),
+                "queue.review",
+                semantic="review",
+                semantic_value=review_remaining,
+                color_when_zero=True,
+            ),
         ]
     else:
-        rows = [
+        rows = [_metric(
+            "Initial cards due",
+            UNAVAILABLE_TEXT,
+            "progress.initial_cards_due",
+            unavailable=True,
+        )] + [
             _metric(label, UNAVAILABLE_TEXT, key, semantic=semantic, unavailable=True)
             for label, key, semantic in (
+                ("Total remaining", "queue.total", ""),
                 ("New remaining", "queue.new", "new"),
                 ("Learning remaining", "queue.learning", "learning"),
                 ("Reviews remaining", "queue.review", "review"),
-                ("Total remaining", "queue.total", ""),
             )
         ]
     return _stats_group("Today’s Progress", "hdo-progress", rows, lead, heading_meta)
@@ -521,15 +564,17 @@ def _retention_role(value: RateMetric, target: int | None) -> str:
     return "hdo-value--danger"
 
 
-def _last_seven_presentation(snapshot: DashboardSnapshot) -> dict[str, str]:
+def _last_seven_presentation(snapshot: DashboardSnapshot) -> dict[str, object]:
     state = _facts_state(snapshot, "last_seven_days")
     if not state.is_available:
         return {
+            "average_cards_per_day": None,
             "time_spent": UNAVAILABLE_TEXT,
             "time_spent_compact": UNAVAILABLE_TEXT,
         }
     stats: LastSevenDaysStats = state.value
     return {
+        "average_cards_per_day": _rounded_average(stats.cards_studied, 7),
         "time_spent": _duration(stats.seconds),
         "time_spent_compact": _duration_compact(stats.seconds),
     }
@@ -546,8 +591,9 @@ def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
                 _metric(label, UNAVAILABLE_TEXT, key, semantic=semantic, unavailable=True)
                 for label, key, semantic in (
                     ("Cards studied", "last_seven_days.cards_studied", ""),
-                    ("New cards studied", "last_seven_days.new_cards_studied", "new"),
+                    ("Avg cards/day", "last_seven_days.average_cards_per_day", ""),
                     ("Retention", "last_seven_days.retention", ""),
+                    ("New cards studied", "last_seven_days.new_cards_studied", "new"),
                 )
             ] + [
                 _metric(
@@ -562,7 +608,12 @@ def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
     stats: LastSevenDaysStats = state.value
     rows = [
         _metric("Cards studied", _format_count(stats.cards_studied), "last_seven_days.cards_studied"),
-        _metric("New cards studied", _format_count(stats.new_cards_studied), "last_seven_days.new_cards_studied", semantic="new", semantic_value=stats.new_cards_studied),
+        _metric(
+            "Avg cards/day",
+            _format_count(presentation["average_cards_per_day"]),
+            "last_seven_days.average_cards_per_day",
+            unavailable=presentation["average_cards_per_day"] is None,
+        ),
     ]
     retention = _rate_text(stats.retention)
     rows.append(_metric(
@@ -571,6 +622,13 @@ def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
         "last_seven_days.retention",
         _retention_role(stats.retention, target),
         unavailable=retention == UNAVAILABLE_TEXT,
+    ))
+    rows.append(_metric(
+        "New cards studied",
+        _format_count(stats.new_cards_studied),
+        "last_seven_days.new_cards_studied",
+        semantic="new",
+        semantic_value=stats.new_cards_studied,
     ))
     rows.append(_metric(
         "Time spent",
@@ -591,20 +649,19 @@ def _all_time_group(snapshot: DashboardSnapshot, _target: int | None) -> str:
             [
                 _metric(label, UNAVAILABLE_TEXT, key, unavailable=True)
                 for label, key in (
+                    ("Cards studied", "long_term.lifetime_cards_studied"),
                     ("Avg cards/day", "long_term.average_reviews_per_active_day"),
+                    ("Retention", "long_term.lifetime_retention"),
                     ("Current streak", "long_term.current_streak"),
                     ("Longest streak", "long_term.longest_streak"),
-                    ("Retention", "long_term.lifetime_retention"),
-                    ("Cards studied", "long_term.lifetime_cards_studied"),
                 )
             ],
         )
     stats: LongTermStats = state.value
     day_text = lambda count: "{} day{}".format(_format_count(count), "" if count == 1 else "s")
     rows = [
+        _metric("Cards studied", _format_count(stats.lifetime_cards_studied), "long_term.lifetime_cards_studied"),
         _metric("Avg cards/day", _format_count(stats.average_reviews_per_active_day), "long_term.average_reviews_per_active_day"),
-        _metric("Current streak", day_text(stats.current_streak), "long_term.current_streak"),
-        _metric("Longest streak", day_text(stats.longest_streak), "long_term.longest_streak"),
     ]
     retention = _rate_text(stats.lifetime_retention)
     rows.append(_metric(
@@ -613,7 +670,8 @@ def _all_time_group(snapshot: DashboardSnapshot, _target: int | None) -> str:
         "long_term.lifetime_retention",
         unavailable=retention == UNAVAILABLE_TEXT,
     ))
-    rows.append(_metric("Cards studied", _format_count(stats.lifetime_cards_studied), "long_term.lifetime_cards_studied"))
+    rows.append(_metric("Current streak", day_text(stats.current_streak), "long_term.current_streak"))
+    rows.append(_metric("Longest streak", day_text(stats.longest_streak), "long_term.longest_streak"))
     return _stats_group("All Time", "hdo-all-time", rows)
 
 
@@ -814,6 +872,7 @@ def dashboard_facts_payload(
             "progress": {
                 "status": progress.state.value,
                 "fill_percent": progress.fill_percent,
+                "initial_cards_due": progress.initial_cards_due,
             },
             "today_session": session,
             "last_seven_days": recent,
@@ -965,6 +1024,7 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
         snapshot.verse.body_html
         if has_verse
         else '<span class="hdo-verse-empty-state">No verse selected</span>'
+             '<button type="button" class="hdo-verse-choose" data-hdo-command="bible-library">Choose a verse</button>'
     )
     return (
         '<section class="hdo-card hdo-dashboard-panel hdo-bible-card" data-hdo-primitive="{}" '

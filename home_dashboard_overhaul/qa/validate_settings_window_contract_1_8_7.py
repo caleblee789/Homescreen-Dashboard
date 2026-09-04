@@ -202,7 +202,7 @@ def main() -> int:
     _require(
         errors,
         contract.get("settings_profile_acceptance_gate")
-        == "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 41 PNGs cannot satisfy or waive this gate",
+        == "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 63 PNGs cannot satisfy or waive this gate",
         "full-screen no-Space-switch acceptance gate differs",
     )
     settings_profile = next(
@@ -222,13 +222,13 @@ def main() -> int:
     _require(
         errors,
         settings_profile.get("expected_capture_counts")
-        == {"initial": 40, "restart": 1, "total": 41},
-        "Settings capture profile is not the locked 40 plus one restart lane",
+        == {"initial": 62, "restart": 1, "total": 63},
+        "Settings capture profile is not the locked 62 plus one restart lane",
     )
     _require(
         errors,
-        settings_profile.get("maximum_contact_sheets") == 11,
-        "Settings capture profile exceeds the 11-sheet ceiling",
+        settings_profile.get("maximum_contact_sheets") == 14,
+        "Settings capture profile exceeds the 14-sheet ceiling",
     )
     _require(
         errors,
@@ -262,12 +262,12 @@ def main() -> int:
         errors,
         evidence_contract.get("derived_native_frame_count")
         == {
-            "initial": 92,
+            "initial": 114,
             "restart": 2,
-            "total": 94,
+            "total": 116,
             "derivation": "sum(capture_families.count)",
         },
-        "full capture contract is not the derived 94-frame lane",
+        "full capture contract is not the derived 116-frame lane",
     )
     statistics_family = next(
         (
@@ -282,6 +282,8 @@ def main() -> int:
         errors,
         {
             "active-progress-N-percent-complete-inside-track",
+            "initial-cards-due-equals-cards-studied-today-plus-total-remaining",
+            "fixed-seven-period-average-cards-per-day-rounded-half-up",
             "86-percent-retention-and-seven-day-time-spent-no-visible-again-rate",
         }
         <= statistics_requirements
@@ -297,6 +299,8 @@ def main() -> int:
             (
                 'label = "{}% complete".format(percent)',
                 "data-hdo-progress-label",
+                '"progress.initial_cards_due"',
+                '"last_seven_days.average_cards_per_day"',
                 '"last_seven_days.time_spent"',
             ),
         ),
@@ -306,6 +310,8 @@ def main() -> int:
             (
                 'Math.round(percent) + "% complete"',
                 "[data-hdo-progress-label]",
+                '"progress.initial_cards_due"',
+                '"last_seven_days.average_cards_per_day"',
                 '"last_seven_days.time_spent"',
             ),
         ),
@@ -351,8 +357,8 @@ def main() -> int:
         "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)",
         "self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)",
         "self.header_stack.setMinimumHeight(SETTINGS_HEADER_HEIGHT)",
-        "self.compact_nav = QTabBar(self.header_shell)",
-        "shell_width <= SETTINGS_COMPACT_BODY_WIDTH",
+        "self.compact_nav = QComboBox(self.header_shell)",
+        "shell_width < SETTINGS_COMPACT_BODY_WIDTH",
         "scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
         "self.footer = SettingsFooter()",
         "self.footer.setFixedHeight(SETTINGS_FOOTER_MIN_HEIGHT)",
@@ -366,9 +372,9 @@ def main() -> int:
         "QStackedLayout.StackingMode.StackAll",
         "class VerseLibraryModel(QAbstractListModel):",
         "class VerseLibraryView(QListView):",
-        '"{} verses".format(len(self.quotes))',
+        '"verse" if len(self.quotes) == 1 else "verses"',
         '"{} of {} verses".format(total, len(self.quotes))',
-        "target = max(180, min(520, viewport_height - 300))",
+        "self.quote_list.setMinimumHeight(68)",
         "class SuffixNumberField(QWidget):",
         'save_button.setText("Add verse" if title.startswith("Add") else "Update verse")',
         'save_button.setText("Update event" if item else "Save event")',

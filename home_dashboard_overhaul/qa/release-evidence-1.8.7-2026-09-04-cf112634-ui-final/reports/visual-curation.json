@@ -1,0 +1,39 @@
+{
+  "accepted_capture_count": 115,
+  "automatic_runtime_status_is_not_visual_acceptance": true,
+  "canonical_detail_coverage": "each accepted frame exactly once",
+  "capture_plan_sha256": "026d1bbd0190942e9faa161463aa4432a1f74000c8f0ac5848ac7d7de3ee0365",
+  "date": "2026-09-04",
+  "new_capture_run": false,
+  "omitted_captures": [
+    {
+      "authorization": "User: Just omit that one capture.",
+      "capture_id": "PROD-PAL-HC-GOLD-L",
+      "original_sha256": "26548babd7702b1c2bd4e82dd9d5f81d1a3f5008443d4687df96b0da4c6c1021",
+      "reason": "A foreign application covered the dashboard during this compositor capture.",
+      "visual_acceptance": "omitted; no replacement or recapture requested"
+    }
+  ],
+  "package_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+  "planned_capture_count": 116,
+  "raw_runtime_reports_preserved": true,
+  "rejected_images_and_affected_pre_curation_sheets_retained_outside_bundle": true,
+  "reused_captures": [
+    {
+      "accepted_sha256": "47af32dba3d04f1f2f16175ffaefc9db3797d41aafd70627d17e4d60307cf676",
+      "candidate_and_plan_match": true,
+      "capture_id": "SET-EVENT-EDITOR-OPEN",
+      "fixture_and_rendering_dependency_match": true,
+      "helper_difference": "The full-run probe adds only OS version and Qt platform metadata to the otherwise identical release probe.",
+      "installed_package_members_match": 24,
+      "new_capture_run": false,
+      "reason": "An unrelated window obscured the editor in the full sequence. Reused the existing unobstructed exact-package focused capture.",
+      "rejected_sha256": "d7bcaa28735991d38161d6eee760990a18779a443ab76702e4981d7777850c9f",
+      "same_native_display": "Built-in Retina Display, DPR 2, 100 percent application font",
+      "source_report": "reports/editor-reuse/runtime-report-initial.json",
+      "source_report_original_sha256": "b1d1f19cff6951d88dad1b4245454096366781309cc2f128be8d8749abe2b8fb",
+      "source_report_public_sha256": "f72aa8c9c3738251b522ae59e73ff9f05100967566168bcd95d650bf0331e256"
+    }
+  ],
+  "schema_version": 1
+}
