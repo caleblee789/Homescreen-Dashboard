@@ -1,0 +1,29 @@
+{
+  "calendar_javascript": {
+    "command": "node home_dashboard_overhaul/tests/calendar_model_test.js",
+    "status": "passed"
+  },
+  "contact_sheet_hashes": 21,
+  "date": "2026-09-04",
+  "exact_once_retained_detail_coverage": "passed",
+  "fullscreen_observations": 66,
+  "generated_capture_helper_hashes": "passed",
+  "git_diff_check": "passed",
+  "native_canonical_retained_hashes": 115,
+  "native_platform_profile_revalidation": "passed",
+  "omission": "PROD-PAL-HC-GOLD-L, by user request",
+  "package_build": "passed",
+  "package_members": 24,
+  "package_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+  "python_unittest": {
+    "command": "python3 -m unittest discover -s home_dashboard_overhaul/tests -q",
+    "status": "passed",
+    "tests": 325
+  },
+  "release_ready": false,
+  "revised_ui_contract": "passed",
+  "schema_version": 1,
+  "settings_window_contract": "passed",
+  "source_archive_byte_parity": "passed",
+  "supplemental_image_hashes": 8
+}

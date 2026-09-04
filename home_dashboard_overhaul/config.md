@@ -1,7 +1,10 @@
 # Home Screen Dashboard settings
 
 Open Settings from **Tools → Home Screen Dashboard settings**. The calendar
-gear routes to Dashboard and settles on Calendar display after layout.
+gear opens Calendar. Settings is organized into Dashboard, Appearance, Calendar,
+Events, Bible verse, and About & support. Bible verse opens to Library; its
+Display & rotation tab owns typography, color, and rotation. Changes remain
+staged until Save changes.
 
 Schema 8 keeps exactly three layout roles: `study_calendar`,
 `summary_metrics`, and `bible_verse`. Legacy selected-date, due-deck, and card
@@ -17,13 +20,15 @@ accepts 0–16 px and defaults to 12 px. Both controls apply only to Sapphire
 Glass and are hidden for other themes while retaining their staged and stored
 values. `appearance.text_scale` accepts 90–150.
 
-The production dashboard uses a transparent normal-flow root capped at
-1,120 px, with a 24 px top margin and at least 20 px on each side. Month is
-always a six-week, 42-cell grid. Year always uses one 53-week tree with a 28 px
-weekday column and fluid week columns; its gaps and label column compact below
-760 px so it remains contained without horizontal scrolling at 480 px and
-above. Below 480 px, only the Year heatmap may scroll internally. A measured
-visible fixed/sticky Anki bottom-action container supplies root and document
+The production dashboard uses a transparent centered normal-flow root with the
+width rule `min(1160px, calc(100% - 32px))` and one 30 px top margin. At a root
+width of 1,009 px or more, Calendar sits beside a fixed 360 px insight rail
+with a 14 px column gap. At 1,008 px and below the rail stacks; summary metrics
+remain two columns through 589 px and become one column at 588 px. Month is
+always a six-week, 42-cell grid. Year always uses one 53-week tree with 10 px
+square cells at the wide reference and fluid square cells when narrower, with
+no minimum-width floor or internal horizontal scrolling. A measured visible
+normal, fixed, or sticky Anki bottom-action container supplies root and document
 scroll padding equal to its height plus 24 px; 60 px is the height fallback.
 
 ## Completion palettes
@@ -38,7 +43,9 @@ dashboard theme. The IDs are stable:
 
 Every ID has separately authored light and dark ladders. An unknown or legacy
 value resets only that theme to its first preset. Switching themes restores the
-last valid ramp saved for that theme.
+last valid ramp saved for that theme. Study semantics share one baseline across
+themes except the audited Sapphire Glass dark override, where Learning is red
+and Review is green.
 
 ## Calendar, study, and events
 
@@ -86,7 +93,10 @@ Total is always the exact sum of the three categories. Cards buried reports
 only scoped cards currently in queues `-2` or `-3` that are New or currently
 due/overdue. Future Learning and Review cards and transient queue-hidden
 siblings are excluded. While work remains, the active progress presentation
-places `N% complete` inside the filled bar.
+places `N% complete` inside the filled bar. Initial cards due is the same
+denominator used by that bar: Cards studied today plus Total remaining. The
+visible order is Initial cards due, Total remaining, New remaining, Learning
+remaining, and Reviews remaining.
 
 Last 7 Days spans the seven fixed scheduler periods ending at the next
 rollover, and Time spent sums recorded review time from those same scoped
@@ -96,8 +106,10 @@ matches Anki 26.8.1 true-retention eligibility: `ease > 0`, excluding
 least one day. Again fails and Hard, Good, and Easy pass. Raw pass and eligible
 counts are aggregated before Retention is rounded half-up to the existing whole
 percentage once. Again remains an internal retention-parity calculation but is
-not displayed. Avg cards/day divides answer events by active scheduler days,
-and streaks count consecutive active scheduler days.
+not displayed. Last 7 Days Avg cards/day divides its answer total by all seven
+fixed scheduler periods, including zero-activity days, and rounds half-up to a
+whole card. All Time Avg cards/day divides answer events by active scheduler
+days, and streaks count consecutive active scheduler days.
 
 Calendar history and selected-day details use the same rollover-relative
 records. Forecasting follows Anki's non-new, non-suspended future-due logic,
@@ -115,12 +127,14 @@ invalid, disconnected, undersized, maximized, or full-screen records are
 rejected before the dialog is shown.
 
 The native shell has a fixed header, one active-page scroller, and a final-row
-footer with a 56 px minimum. The shell is capped at 1,120 px, ordinary pages at
-920 px, and the sidebar rail is 184 px. A synchronized compact top navigation
-replaces the rail whenever retaining it would leave less than 680 px for the
-main region, including at the supported minimum. Settings never hides Anki's
-backing views, forces lifecycle focus, contains an `AnkiWebView`, or constructs
-Dashboard, verse, palette, theme, or heatmap previews.
+footer with a 56 px minimum. The centered shell is capped at 1,264 px, ordinary
+pages at 1,080 px, and the sidebar rail is 184 px. A synchronized compact top
+navigation replaces the rail at the supported 860 px minimum. The Dashboard
+page keeps Deck exclusions and filters as a visible independently resettable
+card, and Events refits its native tab height after styling so empty states do
+not clip. Settings never hides Anki's backing views, forces lifecycle focus, or
+contains an `AnkiWebView`; the heatmap and Bible appearance previews are native
+Qt widgets derived from the staged draft.
 
 Settings colors derive only from Anki's light/dark appearance; dashboard themes
 affect production rendering. Staged display, event, heatmap, and Bible changes

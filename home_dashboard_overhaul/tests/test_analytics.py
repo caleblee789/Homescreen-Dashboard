@@ -16,6 +16,7 @@ from home_dashboard_overhaul.analytics import (
     browse_target_for_day,
     calculate_last_seven_days,
     calculate_long_term,
+    collect_day_browse_target,
     collect_dashboard_facts,
     collect_snapshot,
     pace_lower_bound,
@@ -121,13 +122,20 @@ class FakeDB:
                     passed = max(0, count - again)
                     failed = min(count, again)
                     card_ids = row[4] if len(row) > 4 else None
-                output.append((day_index, count, new_cards, again, passed, failed, card_ids))
+                output.append((day_index, count, new_cards, again, passed, failed, count * 10_000))
             return output
         if "GROUP BY did" in sql and "queue = 0" in sql:
             self.remaining_sql = sql
             if self.remaining and isinstance(self.remaining[0], (tuple, list)):
                 return list(self.remaining)
             return [(1, self.remaining[0], self.remaining[1], self.remaining[2])]
+        if "WITH eligible_due AS" in sql:
+            grouped = {}
+            for due, count, *_rest in self.forecast:
+                offset = max(0, int(due) - Scheduler.today)
+                if offset <= int(args[-1]):
+                    grouped[offset] = grouped.get(offset, 0) + max(0, int(count or 0))
+            return sorted(grouped.items())
         if "SELECT id, type, queue, due, odue, odid FROM cards" in sql:
             output = []
             card_id = 10_000
@@ -521,6 +529,8 @@ class SnapshotTests(unittest.TestCase):
         self.assertTrue(facts.next_rollover)
         self.assertEqual(set(snapshot.__dataclass_fields__), {"facts", "verse"})
         self.assertIn("r.type IN (0, 3) AND r.lastIvl = 0", col.db.history_sql)
+        self.assertNotIn("group_concat", col.db.history_sql.lower())
+        self.assertNotIn("existing.id = r.cid", col.db.history_sql)
 
     def test_today_new_card_count_uses_the_exact_active_scheduler_period(self) -> None:
         col = FakeCollection(history=[], today_new=4)
@@ -1071,9 +1081,11 @@ class CanonicalFactsTests(unittest.TestCase):
         self.assertEqual(facts.today.value.seconds, 1.0)
         self.assertEqual(facts.last_seven_days.value.seconds, 1.0)
         self.assertEqual(facts.long_term.value.current_streak, 1)
-        self.assertEqual(current.browse_target.card_ids, (1,))
-        self.assertEqual(current.browse_target.query, "cid:1")
-        self.assertTrue(current.browse_target.exact)
+        self.assertEqual(current.browse_target.kind, BrowseTargetKind.NONE)
+        target = collect_day_browse_target(col, config, date(2026, 8, 13))
+        self.assertEqual(target.card_ids, (1,))
+        self.assertEqual(target.query, "cid:1")
+        self.assertTrue(target.exact)
 
     def test_progress_uses_native_learning_and_review_queue_categories(self) -> None:
         col = self._sqlite_collection()
@@ -1105,16 +1117,26 @@ class CanonicalFactsTests(unittest.TestCase):
         current = facts.for_date("2026-08-13")
         tomorrow = facts.for_date("2026-08-14")
         self.assertEqual(current.reviews_due.value, 5)
-        self.assertEqual(current.browse_target.kind, BrowseTargetKind.DUE)
-        self.assertEqual(current.browse_target.card_ids, (1, 2, 7, 10, 11))
-        self.assertTrue(current.browse_target.exact)
-        self.assertEqual((tomorrow.reviews_due.value, tomorrow.browse_target.card_ids), (2, (6, 8)))
+        self.assertEqual(current.browse_target.kind, BrowseTargetKind.NONE)
+        current_target = collect_day_browse_target(
+            col,
+            normalize_config({"heatmap": {"excluded_deck_ids": [2]}}),
+            date(2026, 8, 13),
+        )
+        tomorrow_target = collect_day_browse_target(
+            col,
+            normalize_config({"heatmap": {"excluded_deck_ids": [2]}}),
+            date(2026, 8, 14),
+        )
+        self.assertEqual(current_target.card_ids, (1, 2, 7, 10, 11))
+        self.assertTrue(current_target.exact)
+        self.assertEqual((tomorrow.reviews_due.value, tomorrow_target.card_ids), (2, (6, 8)))
         self.assertEqual((facts.queue.value.new, facts.queue.value.learning), (1, 4))
         self.assertEqual(facts.queue.value.review, 1)
         self.assertEqual(facts.queue.value.total, 6)
-        self.assertEqual(tomorrow.browse_target.query, "cid:6,8")
-        self.assertEqual(tomorrow.browse_target.kind, BrowseTargetKind.FUTURE_DUE)
-        self.assertTrue(tomorrow.browse_target.exact)
+        self.assertEqual(tomorrow_target.query, "cid:6,8")
+        self.assertEqual(tomorrow_target.kind, BrowseTargetKind.FUTURE_DUE)
+        self.assertTrue(tomorrow_target.exact)
 
         disabled = collect_dashboard_facts(
             col,
@@ -1134,7 +1156,7 @@ class CanonicalFactsTests(unittest.TestCase):
     def test_forecast_failure_does_not_hide_scheduler_progress(self) -> None:
         class ForecastFailureDB(FakeDB):
             def all(self, sql, *args):
-                if "SELECT id, type, queue, due, odue, odid FROM cards" in sql:
+                if "WITH eligible_due AS" in sql:
                     raise RuntimeError("scheduled demand unavailable")
                 return super().all(sql, *args)
 
@@ -1231,12 +1253,14 @@ class CanonicalFactsTests(unittest.TestCase):
         )
         self.assertEqual(facts.last_seven_days.value.seconds, 3.0)
         self.assertEqual(facts.long_term.value.current_streak, 1)
-        self.assertEqual(current.browse_target.card_ids, (1, 4))
-        self.assertFalse({11, 14}.intersection(current.browse_target.card_ids))
+        current_target = collect_day_browse_target(col, config, date(2026, 8, 13))
+        future_target = collect_day_browse_target(col, config, date(2026, 8, 14))
+        self.assertEqual(current_target.card_ids, (1, 4))
+        self.assertFalse({11, 14}.intersection(current_target.card_ids))
         self.assertEqual(current.reviews_due.value, 4)
-        self.assertEqual((future.reviews_due.value, future.browse_target.card_ids), (1, (6,)))
-        self.assertNotIn(3, current.browse_target.card_ids)
-        self.assertFalse({13, 16}.intersection(future.browse_target.card_ids))
+        self.assertEqual((future.reviews_due.value, future_target.card_ids), (1, (6,)))
+        self.assertNotIn(3, current_target.card_ids)
+        self.assertFalse({13, 16}.intersection(future_target.card_ids))
         self.assertEqual(
             (
                 facts.queue.value.new,
@@ -1267,8 +1291,8 @@ class CanonicalFactsTests(unittest.TestCase):
         self.assertEqual(settings_snapshot.facts.queue.value, facts.queue.value)
         self.assertEqual(settings_snapshot.facts.buried.value, facts.buried.value)
         self.assertEqual(
-            settings_snapshot.facts.for_date("2026-08-14").browse_target.card_ids,
-            (6,),
+            settings_snapshot.facts.for_date("2026-08-14").browse_target.kind,
+            BrowseTargetKind.NONE,
         )
 
         mutation_expectations = (
@@ -1288,11 +1312,17 @@ class CanonicalFactsTests(unittest.TestCase):
         col.db.connection.execute("UPDATE cards SET queue = -2 WHERE id = 6")
         future_buried = filtered_facts()
         self.assertEqual(future_buried.for_date("2026-08-14").reviews_due.value, 1)
-        self.assertEqual(future_buried.for_date("2026-08-14").browse_target.card_ids, (6,))
+        self.assertEqual(
+            collect_day_browse_target(col, config, date(2026, 8, 14)).card_ids,
+            (6,),
+        )
         col.db.connection.execute("UPDATE cards SET queue = 2 WHERE id = 6")
         future_unburied = filtered_facts()
         self.assertEqual(future_unburied.for_date("2026-08-14").reviews_due.value, 1)
-        self.assertEqual(future_unburied.for_date("2026-08-14").browse_target.card_ids, (6,))
+        self.assertEqual(
+            collect_day_browse_target(col, config, date(2026, 8, 14)).card_ids,
+            (6,),
+        )
 
     def test_filtered_deck_original_ids_and_preview_queue_obey_the_same_scope(self) -> None:
         col = self._sqlite_collection()
@@ -1335,13 +1365,18 @@ class CanonicalFactsTests(unittest.TestCase):
         future = facts.for_date("2026-08-14")
 
         self.assertEqual(current.reviews_completed.value, 1)
-        self.assertEqual(current.browse_target.card_ids, (7,))
+        config = normalize_config({"heatmap": {"excluded_deck_ids": [2]}})
+        self.assertEqual(
+            collect_day_browse_target(col, config, date(2026, 8, 13)).card_ids,
+            (7,),
+        )
         self.assertEqual(facts.today.value.answers, 1)
         self.assertEqual(facts.today.value.seconds, 3.0)
         self.assertEqual(current.reviews_due.value, 4)
         self.assertEqual(future.reviews_due.value, 1)
-        self.assertEqual(future.browse_target.card_ids, (13,))
-        self.assertNotIn(12, future.browse_target.card_ids)
+        future_target = collect_day_browse_target(col, config, date(2026, 8, 14))
+        self.assertEqual(future_target.card_ids, (13,))
+        self.assertNotIn(12, future_target.card_ids)
         self.assertEqual(
             (
                 facts.queue.value.new,

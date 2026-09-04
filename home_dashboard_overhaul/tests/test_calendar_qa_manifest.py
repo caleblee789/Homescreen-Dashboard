@@ -63,13 +63,46 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(settings["window_lifecycle"], "parented-standard-dialog-exec")
         self.assertEqual(settings["page_switching"], "native-stacked-widget-only-no-render-timer")
         dashboard = self.manifest["dashboard_architecture"]
-        self.assertEqual(dashboard["maximum_width"], 1120)
+        self.assertEqual(
+            dashboard["width_rule"], "min(1160px, calc(100% - 32px))"
+        )
+        self.assertEqual(dashboard["maximum_width"], 1160)
+        self.assertEqual(dashboard["minimum_side_margin"], 16)
+        self.assertEqual(dashboard["top_spacing"], 30)
+        self.assertEqual(dashboard["rendered_deck_gap_range"], [28, 30])
+        self.assertEqual(dashboard["desktop_calendar_width_target"], 786)
+        self.assertEqual(dashboard["desktop_column_gap"], 14)
+        self.assertEqual(dashboard["desktop_rail_width"], 360)
+        self.assertEqual(dashboard["stack_root_maximum_width"], 1008)
+        self.assertEqual(dashboard["metric_single_column_root_maximum_width"], 588)
+        self.assertEqual(dashboard["rail_gap"], 12)
+        self.assertEqual(dashboard["summary_grid_minimum_height"], 352)
+        self.assertEqual(dashboard["summary_grid_shape"], [2, 2])
+        self.assertEqual(dashboard["summary_grid_gap"], 12)
+        self.assertEqual(dashboard["summary_card_minimum_width"], 170)
+        self.assertEqual(dashboard["summary_card_padding"], [14, 12, 13])
+        self.assertEqual(dashboard["metric_column_gap"], 10)
+        self.assertEqual(dashboard["metric_minimum_visible_gap"], 8)
+        self.assertEqual(dashboard["month_calendar_minimum_height"], 546)
+        self.assertEqual(dashboard["bible_card_minimum_height"], 182)
+        self.assertEqual(
+            dashboard["month_calendar_to_bible_bottom_tolerance"], 2
+        )
+        self.assertEqual(dashboard["year_calendar_minimum_height"], 352)
+        self.assertEqual(
+            dashboard["year_calendar_to_summary_grid_bottom_tolerance"], 2
+        )
         self.assertEqual(dashboard["month_cell_height_range"], [38, 44])
         self.assertEqual(dashboard["month_rows"], 6)
         self.assertEqual(dashboard["year_weeks"], 53)
         self.assertEqual(dashboard["year_weekday_column"], 28)
-        self.assertEqual(dashboard["year_cell_range"], [6, 8])
+        self.assertEqual(dashboard["year_cell_range"], [9, 10])
+        self.assertEqual(dashboard["year_wide_cell_size"], 10)
         self.assertEqual(dashboard["year_gap"], 2)
+        self.assertEqual(dashboard["year_heatmap_width_percent_range"], [85, 90])
+        self.assertEqual(dashboard["year_narrow_cell_sizing"], "fluid-square")
+        self.assertEqual(dashboard["year_minimum_width_floor"], "none")
+        self.assertIs(dashboard["year_internal_horizontal_scrolling"], False)
 
     def test_settings_authorities_share_the_implemented_v4_geometry(self) -> None:
         architecture = self.manifest["settings_architecture"]
@@ -168,14 +201,119 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
             "86-percent-retention-and-seven-day-time-spent-no-visible-again-rate",
             requirements,
         )
+        self.assertIn(
+            "initial-cards-due-equals-cards-studied-today-plus-total-remaining",
+            requirements,
+        )
+        self.assertIn(
+            "fixed-seven-period-average-cards-per-day-rounded-half-up",
+            requirements,
+        )
         self.assertNotIn("86-percent-retention-and-14-percent-again", requirements)
         retention = next(
             item
             for item in self.manifest["acceptance_criteria"]
             if item["id"] == "STAT-RETENTION"
         )["requirement"]
-        self.assertIn("Last 7 Days displays Time spent", retention)
-        self.assertIn("instead of Again rate", retention)
+        self.assertIn(
+            "Last 7 Days orders Cards studied, Avg cards/day, Retention, New cards studied, and Time spent",
+            retention,
+        )
+        self.assertIn("Avg cards/day equal to Cards studied divided by seven", retention)
+        self.assertIn("Again rate remains hidden", retention)
+        self.assertEqual(
+            self.matrix["statistics_quality_assertions"],
+            [
+                "exact-requested-row-order-in-all-four-statistics-cards",
+                "initial-cards-due-matches-the-progress-denominator",
+                "fixed-seven-period-average-cards-per-day-rounded-half-up",
+                "no-visible-again-rate-cards-completed-or-study-days",
+                "initial-live-refresh-responsive-and-restart-parity",
+                "equal-2x2-card-geometry-with-12px-gaps",
+                "right-aligned-single-line-values-with-at-least-8px-label-separation",
+                "long-statistics-values-fit-without-wrap-clip-overlap-ellipsis-or-font-reduction",
+            ],
+        )
+        self.assertEqual(
+            self.matrix["dashboard_layout_contract"],
+            {
+                "root_width_rule": "min(1160px, calc(100% - 32px))",
+                "rendered_deck_gap_range": [28, 30],
+                "addon_top_margin_target": 30,
+                "desktop_columns": ["minmax(0, 1fr)", "360px"],
+                "desktop_column_gap": 14,
+                "rail_gap": 12,
+                "summary_grid_minimum_height": 352,
+                "summary_grid_shape": [2, 2],
+                "summary_card_minimum_width": 170,
+                "summary_card_padding": [14, 12, 13],
+                "metric_column_gap": 10,
+                "metric_minimum_visible_gap": 8,
+                "stack_root_maximum_width": 1008,
+                "metric_single_column_root_maximum_width": 588,
+                "month_bottom_alignment": {
+                    "calendar_to_bible_tolerance": 2
+                },
+                "year_bottom_alignment": {
+                    "calendar_to_summary_grid_tolerance": 2
+                },
+                "year_heatmap": {
+                    "wide_cell_size": 10,
+                    "gap": 2,
+                    "usable_width_percent_range": [85, 90],
+                    "narrow_sizing": "fluid-square",
+                    "minimum_width_floor": "none",
+                    "internal_horizontal_scrolling": False,
+                },
+            },
+        )
+        self.assertEqual(
+            [
+                (case["id"], case.get("root_width"), case["layout"])
+                for case in self.matrix["statistics_accuracy_cases"]
+            ],
+            [
+                ("PROD-STATS-WIDE-MONTH", 1160, "wide-2x2"),
+                ("PROD-STATS-WIDE-YEAR", 1160, "wide-2x2"),
+                ("PROD-STATS-INTERMEDIATE", None, "intermediate"),
+                ("PROD-STATS-NARROW", None, "narrow-stacked"),
+            ],
+        )
+        self.assertEqual(
+            [
+                (case["id"], case["root_width"], case["layout"])
+                for case in self.matrix["responsive_boundary_cases"]
+            ],
+            [
+                ("PROD-STATS-STACK-BOUNDARY-BELOW", 1009, "wide-2x2"),
+                ("PROD-STATS-STACK-BOUNDARY", 1008, "stacked-rail-2x2"),
+                (
+                    "PROD-STATS-COLUMN-BOUNDARY-ABOVE",
+                    589,
+                    "stacked-rail-2x2",
+                ),
+                (
+                    "PROD-STATS-COLUMN-BOUNDARY",
+                    588,
+                    "stacked-rail-single-column",
+                ),
+            ],
+        )
+        self.assertEqual(
+            self.matrix["dashboard_quality_assertions"],
+            [
+                "centered-1160px-shell-with-16px-minimum-side-insets",
+                "single-owner-28-to-30px-rendered-deck-gap",
+                "aligned-calendar-and-top-summary-card-edges",
+                "month-calendar-bottom-to-bible-bottom-within-2px",
+                "year-calendar-bottom-to-summary-grid-bottom-within-2px",
+                "year-heatmap-at-least-85-percent-wide-with-square-complete-cells",
+                "no-document-or-component-horizontal-overflow",
+                "no-internal-dashboard-scrollbars",
+                "month-year-switch-preserves-horizontal-shell-and-rail-geometry",
+                "native-deck-area-and-bottom-actions-unobstructed",
+            ],
+        )
 
         for source, expected_markers in (
             (
@@ -183,6 +321,8 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
                 (
                     'label = "{}% complete".format(percent)',
                     "data-hdo-progress-label",
+                    '"progress.initial_cards_due"',
+                    '"last_seven_days.average_cards_per_day"',
                     '"last_seven_days.time_spent"',
                 ),
             ),
@@ -191,6 +331,8 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
                 (
                     'Math.round(percent) + "% complete"',
                     "[data-hdo-progress-label]",
+                    '"progress.initial_cards_due"',
+                    '"last_seven_days.average_cards_per_day"',
                     '"last_seven_days.time_spent"',
                 ),
             ),
@@ -243,8 +385,8 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(self.matrix["settings_page_case_count"], expected_count)
         self.assertEqual(axes["window_width"], [1080, 1280, "full-screen"])
         self.assertEqual(axes["application_font_percent"], [100])
-        self.assertEqual(self.plan.counts("settings"), {"initial": 40, "restart": 1, "total": 41})
-        self.assertLessEqual(2 + len(self.plan.detail_groups("settings")), 11)
+        self.assertEqual(self.plan.counts("settings"), {"initial": 62, "restart": 1, "total": 63})
+        self.assertLessEqual(2 + len(self.plan.detail_groups("settings")), 14)
 
     def test_capture_count_is_derived_from_contract_families(self) -> None:
         families = self.capture["capture_families"]
@@ -371,7 +513,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
             "adds_png_frames": False,
             "opening_paths": ["menu", "dashboard-gear"],
             "workflow_steps_per_path": [
-                "all-four-pages",
+                "all-six-pages-and-bible-views",
                 "events-tabs",
                 "resize",
                 "event-edit",
@@ -390,7 +532,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(platform_contract["macos_fullscreen_schema_version"], 2)
         self.assertEqual(
             platform_contract["settings_pages"],
-            ["dashboard", "events", "bible_verse", "about_support"],
+            ["dashboard", "appearance", "calendar", "events", "bible_verse", "bible_display", "about_support"],
         )
         self.assertIn("horizontal_scroll_zero", platform_contract["settings_page_assertions"])
         self.assertIn("target_fully_visible", platform_contract["settings_page_assertions"])

@@ -1,0 +1,288 @@
+{
+  "anki_version": "26.8.1",
+  "application_font_percents": [
+    100
+  ],
+  "available_logical_geometry": [
+    0,
+    34,
+    1710,
+    1073
+  ],
+  "capture_plan_sha256": "026d1bbd0190942e9faa161463aa4432a1f74000c8f0ac5848ac7d7de3ee0365",
+  "device_pixel_ratio": 2.0,
+  "dpr_class": "retina",
+  "environment_scale_substitute": false,
+  "fullscreen_space_switch": {
+    "candidate_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+    "capture_plan_sha256": "026d1bbd0190942e9faa161463aa4432a1f74000c8f0ac5848ac7d7de3ee0365",
+    "desktop_space_switch_regression": "not-observed",
+    "host_platform": "macos",
+    "human_visual_approval": false,
+    "id": "macos-fullscreen-no-space-switch-menu-and-dashboard-gear",
+    "input_method": "Automated native QAction and production dashboard DOM button; per-step AppKit screen and active-Space observations",
+    "native_fullscreen": true,
+    "opening_paths": {
+      "dashboard-gear": {
+        "desktop_or_space_switch_observed": false,
+        "remained_on_anki_fullscreen_space": true,
+        "settings_opened": true,
+        "status": "passed",
+        "workflow_steps": {
+          "all-six-pages-and-bible-views": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "events-tabs": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "resize": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "event-edit": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "verse-edit": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "save": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "close-reopen": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "controlled-restart": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          }
+        }
+      },
+      "menu": {
+        "desktop_or_space_switch_observed": false,
+        "remained_on_anki_fullscreen_space": true,
+        "settings_opened": true,
+        "status": "passed",
+        "workflow_steps": {
+          "all-six-pages-and-bible-views": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "events-tabs": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "resize": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "event-edit": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "verse-edit": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "save": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "close-reopen": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          },
+          "controlled-restart": {
+            "completed": true,
+            "desktop_or_space_switch_observed": false,
+            "remained_on_current_anki_space": true,
+            "status": "passed"
+          }
+        }
+      }
+    },
+    "package_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+    "raw_reports": [
+      "reports/fullscreen-workflow/workflow-initial.json",
+      "reports/fullscreen-workflow/workflow-restart.json"
+    ],
+    "release": "1.8.7",
+    "schema_version": 2,
+    "status": "passed"
+  },
+  "host_platform": "macos",
+  "human_visual_approval": false,
+  "logical_dpi": [
+    72.0,
+    72.0
+  ],
+  "native_display_scaling": true,
+  "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "os_scale_percent": 100,
+  "package_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+  "physical_dpi": [
+    133.00000199745963,
+    133.0000019974596
+  ],
+  "physical_geometry": [
+    0,
+    68,
+    3420,
+    2146
+  ],
+  "qt_platform": "cocoa",
+  "release": "1.8.7",
+  "scale_environment": {
+    "QT_AUTO_SCREEN_SCALE_FACTOR": null,
+    "QT_FONT_DPI": null,
+    "QT_SCALE_FACTOR": null,
+    "QT_SCREEN_SCALE_FACTORS": null
+  },
+  "schema_version": 1,
+  "screen_name": "Built-in Retina Display",
+  "screen_physical_pixels": [
+    3420,
+    2214
+  ],
+  "settings_page_layout": {
+    "application_font_percent": 100,
+    "pages": [
+      {
+        "assertions": {
+          "body_footer_disjoint": true,
+          "footer_actions_visible": true,
+          "horizontal_scroll_zero": true,
+          "labels_unclipped_or_approved": true,
+          "page_bottom_reachable": true,
+          "segmented_selection_matches_model": true,
+          "target_fully_visible": true,
+          "visible_controls_contained": true
+        },
+        "id": "dashboard",
+        "status": "passed"
+      },
+      {
+        "assertions": {
+          "body_footer_disjoint": true,
+          "footer_actions_visible": true,
+          "horizontal_scroll_zero": true,
+          "labels_unclipped_or_approved": true,
+          "page_bottom_reachable": true,
+          "segmented_selection_matches_model": true,
+          "target_fully_visible": true,
+          "visible_controls_contained": true
+        },
+        "id": "appearance",
+        "status": "passed"
+      },
+      {
+        "assertions": {
+          "body_footer_disjoint": true,
+          "footer_actions_visible": true,
+          "horizontal_scroll_zero": true,
+          "labels_unclipped_or_approved": true,
+          "page_bottom_reachable": true,
+          "segmented_selection_matches_model": true,
+          "target_fully_visible": true,
+          "visible_controls_contained": true
+        },
+        "id": "calendar",
+        "status": "passed"
+      },
+      {
+        "assertions": {
+          "body_footer_disjoint": true,
+          "footer_actions_visible": true,
+          "horizontal_scroll_zero": true,
+          "labels_unclipped_or_approved": true,
+          "page_bottom_reachable": true,
+          "segmented_selection_matches_model": true,
+          "target_fully_visible": true,
+          "visible_controls_contained": true
+        },
+        "id": "events",
+        "status": "passed"
+      },
+      {
+        "assertions": {
+          "body_footer_disjoint": true,
+          "footer_actions_visible": true,
+          "horizontal_scroll_zero": true,
+          "labels_unclipped_or_approved": true,
+          "page_bottom_reachable": true,
+          "segmented_selection_matches_model": true,
+          "target_fully_visible": true,
+          "visible_controls_contained": true
+        },
+        "id": "bible_verse",
+        "status": "passed"
+      },
+      {
+        "assertions": {
+          "body_footer_disjoint": true,
+          "footer_actions_visible": true,
+          "horizontal_scroll_zero": true,
+          "labels_unclipped_or_approved": true,
+          "page_bottom_reachable": true,
+          "segmented_selection_matches_model": true,
+          "target_fully_visible": true,
+          "visible_controls_contained": true
+        },
+        "id": "bible_display",
+        "status": "passed"
+      },
+      {
+        "assertions": {
+          "body_footer_disjoint": true,
+          "footer_actions_visible": true,
+          "horizontal_scroll_zero": true,
+          "labels_unclipped_or_approved": true,
+          "page_bottom_reachable": true,
+          "segmented_selection_matches_model": true,
+          "target_fully_visible": true,
+          "visible_controls_contained": true
+        },
+        "id": "about_support",
+        "status": "passed"
+      }
+    ],
+    "source": "reports/settings-structured-layout.json",
+    "status": "passed"
+  },
+  "status": "passed"
+}

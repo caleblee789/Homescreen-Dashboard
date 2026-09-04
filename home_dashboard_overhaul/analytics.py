@@ -425,7 +425,7 @@ def _history_facts_query(
     today: date,
     visible: bool,
     scope: Optional[FilterScope] = None,
-) -> List[Tuple[str, int, int, int, int, int, Tuple[int, ...]]]:
+) -> List[Tuple[str, int, int, int, int, int, Tuple[int, ...], int]]:
     resolved = scope or resolve_filter_scope(col, config)
     conditions, args = _history_filter_conditions(resolved)
     start = history_start_date(config, today, visible)
@@ -440,14 +440,17 @@ def _history_facts_query(
         "r",
         resolved.include_rescheduled_new_cards,
     )
+    # Exact card IDs are intentionally excluded from the canonical refresh.
+    # Materializing every reviewed ID with group_concat made initial load scale
+    # with the number of answers instead of the number of calendar days.  The
+    # native Browser target is resolved for one selected day on demand.
     sql = (
         "SELECT {day} AS day_index, count(*), "
         "count(DISTINCT CASE WHEN {new_cards} THEN r.cid END), "
         "coalesce(sum(CASE WHEN r.ease = 1 THEN 1 ELSE 0 END), 0), "
         "coalesce(sum(CASE WHEN {retention} AND r.ease != 1 THEN 1 ELSE 0 END), 0), "
         "coalesce(sum(CASE WHEN {retention} AND r.ease = 1 THEN 1 ELSE 0 END), 0), "
-        "group_concat(DISTINCT CASE WHEN EXISTS "
-        "(SELECT 1 FROM cards existing WHERE existing.id = r.cid) THEN r.cid END) "
+        "coalesce(sum(r.time), 0) "
         "FROM revlog r {join} {where} GROUP BY day_index ORDER BY day_index"
     ).format(
         day=day_expr,
@@ -460,8 +463,6 @@ def _history_facts_query(
     for row in _safe_all(col.db, sql, cutoff, *args):
         if not row:
             continue
-        raw_ids = str(row[6] or "").split(",") if len(row) > 6 else []
-        card_ids = tuple(sorted({int(value) for value in raw_ids if value.isdigit() and int(value) > 0}))
         output.append((
             (today + timedelta(days=int(row[0] or 0))).isoformat(),
             max(0, int(row[1] or 0)) if len(row) > 1 else 0,
@@ -469,7 +470,8 @@ def _history_facts_query(
             max(0, int(row[3] or 0)) if len(row) > 3 else 0,
             max(0, int(row[4] or 0)) if len(row) > 4 else 0,
             max(0, int(row[5] or 0)) if len(row) > 5 else 0,
-            card_ids,
+            (),
+            max(0, int(row[6] or 0)) if len(row) > 6 else 0,
         ))
     return output
 
@@ -483,7 +485,7 @@ def _history_query(
     """Backward-compatible projection of the canonical history query."""
     return [
         (iso_date, completed, new_cards)
-        for iso_date, completed, new_cards, _again_count, _passed, _failed, _card_ids in _history_facts_query(
+        for iso_date, completed, new_cards, _again_count, _passed, _failed, _card_ids, _time_millis in _history_facts_query(
             col,
             config,
             today,
@@ -572,6 +574,8 @@ def _future_due_records(
     col: Any,
     scope: FilterScope,
     max_offset: Optional[int] = None,
+    *,
+    include_card_ids: bool = True,
 ) -> Dict[int, Tuple[int, Tuple[int, ...]]]:
     """Mirror Anki 26.8.1's non-new, non-suspended future-due graph."""
     conditions = ["type != 0", "queue != -1"]
@@ -589,7 +593,8 @@ def _future_due_records(
     )
     scheduler_today = int(getattr(col.sched, "today", 0))
     cutoff = int(col.sched.day_cutoff)
-    output: Dict[int, Tuple[int, Tuple[int, ...]]] = {}
+    counts: Dict[int, int] = {}
+    ids: Dict[int, List[int]] = {}
     for row in rows:
         if len(row) < 6:
             raise RuntimeError("future-due query returned an invalid row")
@@ -613,12 +618,60 @@ def _future_due_records(
         offset = max(0, due_day)
         if max_offset is not None and offset > max(0, int(max_offset)):
             continue
-        previous_count, previous_ids = output.get(offset, (0, ()))
-        output[offset] = (
-            previous_count + 1,
-            tuple(sorted(set(previous_ids).union((card_id,)))),
+        counts[offset] = counts.get(offset, 0) + 1
+        if include_card_ids:
+            ids.setdefault(offset, []).append(card_id)
+    return {
+        offset: (
+            count,
+            tuple(sorted(set(ids.get(offset, ())))) if include_card_ids else (),
         )
-    return output
+        for offset, count in counts.items()
+    }
+
+
+def _future_due_counts(
+    col: Any,
+    scope: FilterScope,
+    max_offset: int,
+) -> Dict[int, int]:
+    """Aggregate the visible due horizon in SQLite without returning card rows."""
+
+    effective_due = "CASE WHEN odid != 0 THEN odue ELSE due END"
+    raw_offset = (
+        "CASE WHEN {due} > 1000000000 "
+        "THEN CAST(({due} - ?) / {seconds} AS INTEGER) "
+        "ELSE {due} - ? END"
+    ).format(due=effective_due, seconds=SECONDS_PER_DAY)
+    conditions = ["type != 0", "queue != -1"]
+    args: List[object] = [
+        int(col.sched.day_cutoff),
+        int(getattr(col.sched, "today", 0)),
+    ]
+    deck_condition, deck_args = _deck_scope_condition(scope)
+    if deck_condition:
+        conditions.append(deck_condition)
+        args.extend(deck_args)
+    args.append(max(0, int(max_offset)))
+    rows = _safe_all(
+        col.db,
+        "WITH eligible_due AS ("
+        "SELECT queue, {raw_offset} AS raw_offset FROM cards WHERE {where}"
+        ") SELECT CASE WHEN raw_offset < 0 THEN 0 ELSE raw_offset END AS due_offset, "
+        "count(*) FROM eligible_due "
+        "WHERE NOT (raw_offset <= 0 AND queue IN (-2, -3)) "
+        "AND (CASE WHEN raw_offset < 0 THEN 0 ELSE raw_offset END) <= ? "
+        "GROUP BY due_offset ORDER BY due_offset".format(
+            raw_offset=raw_offset,
+            where=" AND ".join(conditions),
+        ),
+        *args,
+    )
+    return {
+        max(0, int(row[0] or 0)): max(0, int(row[1] or 0))
+        for row in rows
+        if len(row) >= 2
+    }
 
 
 def _scheduled_due_details_for_day(
@@ -647,11 +700,15 @@ def _forecast_facts_query(
     resolved = scope or resolve_filter_scope(col, config)
     forecast_days = int(heatmap["forecast_days"])
     output: Dict[str, Tuple[int, Tuple[int, ...]]] = {}
-    for offset, record in _future_due_records(col, resolved, forecast_days - 1).items():
+    for offset, count in _future_due_counts(
+        col,
+        resolved,
+        forecast_days - 1,
+    ).items():
         if offset >= forecast_days:
             continue
         day = (today + timedelta(days=offset)).isoformat()
-        output[day] = record
+        output[day] = (count, ())
     return output
 
 
@@ -1253,16 +1310,19 @@ def collect_dashboard_facts(
                 retention_passed,
                 retention_failed,
                 _ids,
+                _time_millis,
             ) in history_rows
         ]
-        (
-            recent_answers,
-            recent_new_cards,
-            _recent_all_answer_again,
-            recent_retention_passed,
-            recent_retention_failed,
-            recent_time_millis,
-        ) = _history_period_aggregate(col, scope, 7)
+        recent_start = scheduling_date - timedelta(days=6)
+        recent_rows = [
+            row for row in history_rows
+            if recent_start <= date.fromisoformat(row[0]) <= scheduling_date
+        ]
+        recent_answers = sum(row[1] for row in recent_rows)
+        recent_new_cards = sum(row[2] for row in recent_rows)
+        recent_retention_passed = sum(row[4] for row in recent_rows)
+        recent_retention_failed = sum(row[5] for row in recent_rows)
+        recent_time_millis = sum(row[7] for row in recent_rows)
         recent_retention_total = recent_retention_passed + recent_retention_failed
         last_seven_days: ValueState[LastSevenDaysStats] = ValueState.available(
             LastSevenDaysStats(
@@ -1296,6 +1356,7 @@ def collect_dashboard_facts(
                 _retention_passed,
                 _retention_failed,
                 _card_ids,
+                _time_millis,
             ) in history_rows:
                 try:
                     parsed = date.fromisoformat(day)
@@ -1320,6 +1381,7 @@ def collect_dashboard_facts(
                 _retention_passed,
                 _retention_failed,
                 card_ids,
+                _time_millis,
             ) in history_rows
             if coverage.contains(day)
         }
@@ -1500,6 +1562,46 @@ def collect_day_facts(
         history_record,
         forecast_record,
         events,
+    )
+
+
+def collect_day_browse_target(
+    col: Any,
+    config: Mapping[str, Any],
+    selected_date: date,
+    scheduling_date: Optional[date] = None,
+) -> BrowseTarget:
+    """Resolve one exact native Browser target outside the dashboard refresh.
+
+    Counts remain eager because they are visible calendar facts.  Card IDs are
+    native-only and are collected lazily for the single day the user opens.
+    """
+
+    current = scheduling_date or scheduling_today(int(col.sched.day_cutoff))
+    scope = resolve_filter_scope(col, config)
+    if selected_date <= current:
+        completed, _new_cards, _again, reviewed_ids = _history_day_counts(
+            col,
+            scope,
+            selected_date,
+        )
+        if completed > 0 and reviewed_ids:
+            return _browse_target_for_ids(BrowseTargetKind.REVIEWED, reviewed_ids)
+        if selected_date < current:
+            return BrowseTarget()
+    offset = (selected_date - current).days
+    if offset < 0:
+        return BrowseTarget()
+    heatmap = config["heatmap"]
+    forecast_days = max(0, int(heatmap.get("forecast_days", 0)))
+    forecast_enabled = bool(heatmap.get("show_due_forecast", True)) and forecast_days > 0
+    if offset > 0 and (not forecast_enabled or offset >= forecast_days):
+        return BrowseTarget()
+    _count, due_ids = _scheduled_due_details_for_day(col, scope, offset)
+    return (
+        _browse_target_for_ids(BrowseTargetKind.DUE, due_ids)
+        if due_ids
+        else BrowseTarget()
     )
 
 

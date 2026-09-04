@@ -1,0 +1,409 @@
+{
+  "after_fullscreen": {
+    "canBecomeKeyWindow": 1,
+    "collectionBehavior": 128,
+    "isKeyWindow": 1,
+    "isMiniaturized": 0,
+    "isOnActiveSpace": 1,
+    "isVisible": 1,
+    "qt_minimized": false,
+    "qt_screen": "Built-in Retina Display",
+    "qt_visible": true,
+    "qt_window_state": 4,
+    "styleMask": 16399
+  },
+  "before_fullscreen": {
+    "canBecomeKeyWindow": 1,
+    "collectionBehavior": 128,
+    "isKeyWindow": 1,
+    "isMiniaturized": 0,
+    "isOnActiveSpace": 1,
+    "isVisible": 1,
+    "qt_minimized": false,
+    "qt_screen": "Built-in Retina Display",
+    "qt_visible": true,
+    "qt_window_state": 0,
+    "styleMask": 15
+  },
+  "capture_plan_sha256": "026d1bbd0190942e9faa161463aa4432a1f74000c8f0ac5848ac7d7de3ee0365",
+  "fullscreen_required": true,
+  "human_visual_approval": false,
+  "identity": {
+    "addons_inside_run_root": true,
+    "anki_version": "26.8.1",
+    "auto_sync": false,
+    "candidate": {
+      "candidate": "<candidate-package>",
+      "candidate_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.7",
+      "member_count": 24
+    },
+    "candidate_addon_root": "<disposable-run-root>/addons21/home_dashboard_overhaul",
+    "collection_inside_run_root": true,
+    "collection_path": "<disposable-run-root>/Codex QA HDO 1.8.7 UI cf112634 library verification/collection.anki2",
+    "excluded_normal_pid": null,
+    "excluded_normal_pid_alive": false,
+    "excluded_normal_process_state": "none-present-at-prelaunch",
+    "gated_before_window_interaction": true,
+    "media_sync": false,
+    "pid": 28462,
+    "probe_addon_root": "<disposable-run-root>/addons21/zz_hdo_ui_probe",
+    "processes_are_distinct": true,
+    "profile": "Codex QA HDO 1.8.7 UI cf112634 library verification",
+    "profile_matches": true,
+    "run_root": "<disposable-run-root>",
+    "single_instance_key_fingerprint": "4363ffaf8819",
+    "sync_credentials_present": false,
+    "sync_identity": "disabled-and-disconnected",
+    "window_title": "Codex QA HDO 1.8.7 UI cf112634 library verification - Anki",
+    "window_title_matches_profile": true
+  },
+  "input_method": "automated native QAction and production dashboard button",
+  "observations": [
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "both",
+      "step": "native-fullscreen"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "open"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:dashboard"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:appearance"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:calendar"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:events"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:bible_verse"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:bible_display"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:about_support"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "events-tabs"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "events-tabs"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "resize"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "resize"
+    },
+    {
+      "editor_on_active_space": true,
+      "editor_on_anki_display": true,
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "event-edit"
+    },
+    {
+      "editor_on_active_space": true,
+      "editor_on_anki_display": true,
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "verse-edit"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "save"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "menu",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "close-reopen"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "open"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:dashboard"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:appearance"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:calendar"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:events"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:bible_verse"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:bible_display"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "page:about_support"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "events-tabs"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "events-tabs"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "resize"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "resize"
+    },
+    {
+      "editor_on_active_space": true,
+      "editor_on_anki_display": true,
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "event-edit"
+    },
+    {
+      "editor_on_active_space": true,
+      "editor_on_anki_display": true,
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "verse-edit"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "save"
+    },
+    {
+      "frontmost_pid": 28462,
+      "main_window_on_active_space": true,
+      "native_fullscreen": true,
+      "qt_fullscreen": true,
+      "route": "dashboard-gear",
+      "settings_on_active_space": true,
+      "settings_on_anki_display": true,
+      "step": "close-reopen"
+    }
+  ],
+  "package_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+  "release": "1.8.7",
+  "saved_event_names": {
+    "dashboard-gear": "Release QA initial 28462 dashboard-gear",
+    "menu": "Release QA initial 28462 menu"
+  },
+  "stage": "initial",
+  "status": "passed"
+}

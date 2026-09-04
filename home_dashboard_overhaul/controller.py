@@ -21,7 +21,7 @@ from aqt.operations import QueryOp
 from aqt.qt import QTimer
 from aqt.theme import theme_manager
 
-from .analytics import collect_snapshot, scheduling_today
+from .analytics import collect_day_browse_target, collect_snapshot, scheduling_today
 from .config_schema import analytics_config_fingerprint, archive_expired_events, normalize_config
 from .insights import collect_day_insight, unavailable_day_insight
 from .migration import enabled_legacy_ids, prepare_migration
@@ -116,6 +116,11 @@ class DashboardController:
             List[Tuple[Any, int]],
         ] = {}
         self.pending_most_missed: set[Tuple[Tuple[Any, ...], str]] = set()
+        self.browse_target_cache: Dict[
+            Tuple[Tuple[Any, ...], str],
+            BrowseTarget,
+        ] = {}
+        self.inflight_browse_targets: set[Tuple[Tuple[Any, ...], str]] = set()
         self._hooks_installed = False
         self.last_event_archive_date: Optional[date] = None
         self.facts_revision = 0
@@ -193,6 +198,8 @@ class DashboardController:
         self.insight_cache.clear()
         self.inflight_insights.clear()
         self.pending_most_missed.clear()
+        self.browse_target_cache.clear()
+        self.inflight_browse_targets.clear()
         self.last_event_archive_date = None
         self._refresh_pending = False
         self._refresh_reasons.clear()
@@ -228,6 +235,8 @@ class DashboardController:
         self.insight_cache.clear()
         self.inflight_insights.clear()
         self.pending_most_missed.clear()
+        self.browse_target_cache.clear()
+        self.inflight_browse_targets.clear()
         self._refresh_pending = False
         self._refresh_reasons.clear()
         self._refresh_needs_invalidation = False
@@ -306,6 +315,8 @@ class DashboardController:
         self.insight_cache.clear()
         self.inflight_insights.clear()
         self.pending_most_missed.clear()
+        self.browse_target_cache.clear()
+        self.inflight_browse_targets.clear()
 
     def _schedule_callback(self, delay_ms: int, callback: Any) -> bool:
         try:
@@ -960,13 +971,54 @@ class DashboardController:
             return
         key = self._key()
         selected_iso = selected.isoformat()
-        target = (
-            self.snapshot.facts.for_date(selected_iso).browse_target
-            if self.snapshot is not None and self.cache_key == key
-            else None
+        if self.snapshot is None or self.cache_key != key:
+            return
+        day = self.snapshot.facts.for_date(selected_iso)
+        actionable = (
+            day.reviews_completed.is_available
+            and int(day.reviews_completed.value) > 0
+        ) or (
+            day.reviews_due.is_available
+            and int(day.reviews_due.value) > 0
         )
-        if target is not None and target.exact and target.query:
-            self._open_browser_target(target)
+        if not actionable:
+            return
+        target_key = (key, selected_iso)
+        target = self.browse_target_cache.get(target_key)
+        if target is not None:
+            if target.exact and target.query:
+                self._open_browser_target(target)
+            return
+        if target_key in self.inflight_browse_targets:
+            return
+        self.inflight_browse_targets.add(target_key)
+        frozen_config = deepcopy(self.config)
+        scheduling_date = scheduling_today(int(mw.col.sched.day_cutoff))
+
+        def operation(col: Any) -> BrowseTarget:
+            return collect_day_browse_target(
+                col,
+                frozen_config,
+                selected,
+                scheduling_date,
+            )
+
+        def finish(resolved: BrowseTarget) -> None:
+            self.inflight_browse_targets.discard(target_key)
+            if key != self._key() or self.cache_key != key:
+                return
+            self.browse_target_cache[target_key] = resolved
+            if resolved.exact and resolved.query:
+                self._open_browser_target(resolved)
+
+        def failure(_exc: Exception) -> None:
+            self.inflight_browse_targets.discard(target_key)
+
+        query = QueryOp(parent=mw, op=operation, success=finish)
+        failure_method = getattr(query, "failure", None)
+        if callable(failure_method):
+            query = failure_method(failure)
+        query.run_in_background()
 
     def open_most_missed_in_browser(self, context: Any, raw_date: object) -> None:
         """Open the lazy exact Again-ranked set, resolving it in the background."""

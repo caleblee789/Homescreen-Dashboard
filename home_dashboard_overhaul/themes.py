@@ -102,7 +102,8 @@ def contrast_ratio(left: str, right: str) -> float:
     return (high + .05) / (low + .05)
 
 
-# Stable study semantics never inherit the selected theme accent.
+# Stable study semantics use a shared baseline and never inherit the selected
+# theme accent. Explicit overrides are limited to audited visual contracts.
 SEMANTIC_PALETTES: Mapping[str, Mapping[str, str]] = {
     "light": {
         "status_new_fill": "#2F7DD3",
@@ -139,6 +140,18 @@ SEMANTIC_PALETTES: Mapping[str, Mapping[str, str]] = {
         "status_danger_text": "#ED879A",
         "status_event_fill": "#E0BF55",
         "status_event_text": "#FACC15",
+    },
+}
+
+
+SEMANTIC_THEME_OVERRIDES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
+    "Sapphire Glass": {
+        "dark": {
+            "status_learning_fill": "#F87171",
+            "status_learning_text": "#F87171",
+            "status_review_fill": "#22C55E",
+            "status_review_text": "#22C55E",
+        },
     },
 }
 
@@ -518,6 +531,7 @@ def _build_theme(theme_name: str, variant: str) -> Theme:
         else "0 2px 8px rgba(0, 0, 0, 0.48), 0 18px 38px rgba(0, 0, 0, 0.30)"
     )
     core.update(SEMANTIC_PALETTES[variant])
+    core.update(SEMANTIC_THEME_OVERRIDES.get(theme_name, {}).get(variant, {}))
     core.update(_heat_tokens(theme_name, variant, core))
     core.update({
         "ui_disabled_surface": core["ui_surface_3"],

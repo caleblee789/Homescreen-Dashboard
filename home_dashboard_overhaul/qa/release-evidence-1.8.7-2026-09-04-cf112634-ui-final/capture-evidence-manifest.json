@@ -1,0 +1,424 @@
+{
+  "automated_runtime_status": "passed",
+  "capture_plan_sha256": "026d1bbd0190942e9faa161463aa4432a1f74000c8f0ac5848ac7d7de3ee0365",
+  "contact_sheets": {
+    "capture_details": 19,
+    "details": 20,
+    "exact_once_detail_coverage": true,
+    "overview": 1,
+    "reports": 1,
+    "repository_tracking": "current-with-historical-evidence-preserved",
+    "total": 21
+  },
+  "deferred_unrun": [
+    "voiceover_review",
+    "forced_colors_review"
+  ],
+  "final_validation": "reports/final-validation.json",
+  "human_visual_approval": false,
+  "isolation": {
+    "all_four_gates_repeated_after_restart": true,
+    "initial": {
+      "candidate": {
+        "candidate": "<candidate-package>",
+        "candidate_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+        "installed_member_parity": "passed",
+        "manifest_version": "1.8.7",
+        "member_count": 24
+      },
+      "collection_path": "<disposable-run-root>/Codex QA HDO 1.8.7 UI final cf112634 Retina/collection.anki2",
+      "gated_before_window_interaction": true,
+      "gates": {
+        "filesystem": true,
+        "process": true,
+        "sync": true,
+        "window": true
+      },
+      "profile": "Codex QA HDO 1.8.7 UI final cf112634 Retina",
+      "run_root": "<disposable-run-root>",
+      "status": "passed",
+      "window_title": "Codex QA HDO 1.8.7 UI final cf112634 Retina - Anki"
+    },
+    "legacy_unversioned_capture_reports": [],
+    "restart": {
+      "candidate": {
+        "candidate": "<candidate-package>",
+        "candidate_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+        "installed_member_parity": "passed",
+        "manifest_version": "1.8.7",
+        "member_count": 24
+      },
+      "collection_path": "<disposable-run-root>/Codex QA HDO 1.8.7 UI final cf112634 Retina/collection.anki2",
+      "gated_before_window_interaction": true,
+      "gates": {
+        "filesystem": true,
+        "process": true,
+        "sync": true,
+        "window": true
+      },
+      "profile": "Codex QA HDO 1.8.7 UI final cf112634 Retina",
+      "run_root": "<disposable-run-root>",
+      "status": "passed",
+      "window_title": "Codex QA HDO 1.8.7 UI final cf112634 Retina - Anki"
+    }
+  },
+  "model_visual_review": {
+    "report": "reports/visual-review.json",
+    "status": "passed-for-retained-frames"
+  },
+  "native_captures": {
+    "initial": 113,
+    "restart": 2,
+    "total": 115
+  },
+  "native_platform_matrix": {
+    "capture_plan_sha256": "026d1bbd0190942e9faa161463aa4432a1f74000c8f0ac5848ac7d7de3ee0365",
+    "package_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+    "profiles": [
+      {
+        "anki_version": "26.8.1",
+        "application_font_percents": [
+          100
+        ],
+        "available_logical_geometry": [
+          0,
+          34,
+          1710,
+          1073
+        ],
+        "capture_plan_sha256": "026d1bbd0190942e9faa161463aa4432a1f74000c8f0ac5848ac7d7de3ee0365",
+        "device_pixel_ratio": 2.0,
+        "dpr_class": "retina",
+        "environment_scale_substitute": false,
+        "fullscreen_space_switch": {
+          "candidate_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+          "capture_plan_sha256": "026d1bbd0190942e9faa161463aa4432a1f74000c8f0ac5848ac7d7de3ee0365",
+          "desktop_space_switch_regression": "not-observed",
+          "host_platform": "macos",
+          "human_visual_approval": false,
+          "id": "macos-fullscreen-no-space-switch-menu-and-dashboard-gear",
+          "input_method": "Automated native QAction and production dashboard DOM button; per-step AppKit screen and active-Space observations",
+          "native_fullscreen": true,
+          "opening_paths": {
+            "dashboard-gear": {
+              "desktop_or_space_switch_observed": false,
+              "remained_on_anki_fullscreen_space": true,
+              "settings_opened": true,
+              "status": "passed",
+              "workflow_steps": {
+                "all-six-pages-and-bible-views": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "close-reopen": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "controlled-restart": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "event-edit": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "events-tabs": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "resize": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "save": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "verse-edit": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                }
+              }
+            },
+            "menu": {
+              "desktop_or_space_switch_observed": false,
+              "remained_on_anki_fullscreen_space": true,
+              "settings_opened": true,
+              "status": "passed",
+              "workflow_steps": {
+                "all-six-pages-and-bible-views": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "close-reopen": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "controlled-restart": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "event-edit": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "events-tabs": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "resize": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "save": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                },
+                "verse-edit": {
+                  "completed": true,
+                  "desktop_or_space_switch_observed": false,
+                  "remained_on_current_anki_space": true,
+                  "status": "passed"
+                }
+              }
+            }
+          },
+          "package_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+          "raw_reports": [
+            "reports/fullscreen-workflow/workflow-initial.json",
+            "reports/fullscreen-workflow/workflow-restart.json"
+          ],
+          "release": "1.8.7",
+          "schema_version": 2,
+          "status": "passed"
+        },
+        "host_platform": "macos",
+        "human_visual_approval": false,
+        "logical_dpi": [
+          72.0,
+          72.0
+        ],
+        "native_display_scaling": true,
+        "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+        "os_scale_percent": 100,
+        "package_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+        "physical_dpi": [
+          133.00000199745963,
+          133.0000019974596
+        ],
+        "physical_geometry": [
+          0,
+          68,
+          3420,
+          2146
+        ],
+        "qt_platform": "cocoa",
+        "release": "1.8.7",
+        "scale_environment": {
+          "QT_AUTO_SCREEN_SCALE_FACTOR": null,
+          "QT_FONT_DPI": null,
+          "QT_SCALE_FACTOR": null,
+          "QT_SCREEN_SCALE_FACTORS": null
+        },
+        "schema_version": 1,
+        "screen_name": "Built-in Retina Display",
+        "screen_physical_pixels": [
+          3420,
+          2214
+        ],
+        "settings_page_layout": {
+          "application_font_percent": 100,
+          "pages": [
+            {
+              "assertions": {
+                "body_footer_disjoint": true,
+                "footer_actions_visible": true,
+                "horizontal_scroll_zero": true,
+                "labels_unclipped_or_approved": true,
+                "page_bottom_reachable": true,
+                "segmented_selection_matches_model": true,
+                "target_fully_visible": true,
+                "visible_controls_contained": true
+              },
+              "id": "dashboard",
+              "status": "passed"
+            },
+            {
+              "assertions": {
+                "body_footer_disjoint": true,
+                "footer_actions_visible": true,
+                "horizontal_scroll_zero": true,
+                "labels_unclipped_or_approved": true,
+                "page_bottom_reachable": true,
+                "segmented_selection_matches_model": true,
+                "target_fully_visible": true,
+                "visible_controls_contained": true
+              },
+              "id": "appearance",
+              "status": "passed"
+            },
+            {
+              "assertions": {
+                "body_footer_disjoint": true,
+                "footer_actions_visible": true,
+                "horizontal_scroll_zero": true,
+                "labels_unclipped_or_approved": true,
+                "page_bottom_reachable": true,
+                "segmented_selection_matches_model": true,
+                "target_fully_visible": true,
+                "visible_controls_contained": true
+              },
+              "id": "calendar",
+              "status": "passed"
+            },
+            {
+              "assertions": {
+                "body_footer_disjoint": true,
+                "footer_actions_visible": true,
+                "horizontal_scroll_zero": true,
+                "labels_unclipped_or_approved": true,
+                "page_bottom_reachable": true,
+                "segmented_selection_matches_model": true,
+                "target_fully_visible": true,
+                "visible_controls_contained": true
+              },
+              "id": "events",
+              "status": "passed"
+            },
+            {
+              "assertions": {
+                "body_footer_disjoint": true,
+                "footer_actions_visible": true,
+                "horizontal_scroll_zero": true,
+                "labels_unclipped_or_approved": true,
+                "page_bottom_reachable": true,
+                "segmented_selection_matches_model": true,
+                "target_fully_visible": true,
+                "visible_controls_contained": true
+              },
+              "id": "bible_verse",
+              "status": "passed"
+            },
+            {
+              "assertions": {
+                "body_footer_disjoint": true,
+                "footer_actions_visible": true,
+                "horizontal_scroll_zero": true,
+                "labels_unclipped_or_approved": true,
+                "page_bottom_reachable": true,
+                "segmented_selection_matches_model": true,
+                "target_fully_visible": true,
+                "visible_controls_contained": true
+              },
+              "id": "bible_display",
+              "status": "passed"
+            },
+            {
+              "assertions": {
+                "body_footer_disjoint": true,
+                "footer_actions_visible": true,
+                "horizontal_scroll_zero": true,
+                "labels_unclipped_or_approved": true,
+                "page_bottom_reachable": true,
+                "segmented_selection_matches_model": true,
+                "target_fully_visible": true,
+                "visible_controls_contained": true
+              },
+              "id": "about_support",
+              "status": "passed"
+            }
+          ],
+          "source": "reports/settings-structured-layout.json",
+          "status": "passed"
+        },
+        "status": "passed"
+      }
+    ],
+    "release": "1.8.7",
+    "required_profile_count": 1,
+    "status": "passed"
+  },
+  "omitted_captures": [
+    {
+      "authorization": "User: Just omit that one capture.",
+      "capture_id": "PROD-PAL-HC-GOLD-L",
+      "original_sha256": "26548babd7702b1c2bd4e82dd9d5f81d1a3f5008443d4687df96b0da4c6c1021",
+      "reason": "A foreign application covered the dashboard during this compositor capture.",
+      "visual_acceptance": "omitted; no replacement or recapture requested"
+    }
+  ],
+  "package": {
+    "member_count": 24,
+    "path": "package/hdo-ui-candidate-cf112634.ankiaddon",
+    "sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+    "source_archive_byte_parity": "passed"
+  },
+  "planned_native_captures": {
+    "initial": 114,
+    "restart": 2,
+    "total": 116
+  },
+  "profile": "full",
+  "quality_status": "review-required",
+  "release": "1.8.7",
+  "release_ready": false,
+  "restart_persistence": "passed",
+  "reused_captures": [
+    {
+      "accepted_sha256": "47af32dba3d04f1f2f16175ffaefc9db3797d41aafd70627d17e4d60307cf676",
+      "candidate_and_plan_match": true,
+      "capture_id": "SET-EVENT-EDITOR-OPEN",
+      "fixture_and_rendering_dependency_match": true,
+      "helper_difference": "The full-run probe adds only OS version and Qt platform metadata to the otherwise identical release probe.",
+      "installed_package_members_match": 24,
+      "new_capture_run": false,
+      "reason": "An unrelated window obscured the editor in the full sequence. Reused the existing unobstructed exact-package focused capture.",
+      "rejected_sha256": "d7bcaa28735991d38161d6eee760990a18779a443ab76702e4981d7777850c9f",
+      "same_native_display": "Built-in Retina Display, DPR 2, 100 percent application font",
+      "source_report": "reports/editor-reuse/runtime-report-initial.json",
+      "source_report_original_sha256": "b1d1f19cff6951d88dad1b4245454096366781309cc2f128be8d8749abe2b8fb",
+      "source_report_public_sha256": "f72aa8c9c3738251b522ae59e73ff9f05100967566168bcd95d650bf0331e256"
+    }
+  ],
+  "runtime_plan_identity": "passed",
+  "schema_version": 3,
+  "status": "review-required",
+  "structured_settings_layout": {
+    "adds_png_frames": false,
+    "generated_png_count": 0,
+    "report": "reports/settings-structured-layout.json",
+    "status": "passed"
+  },
+  "supplemental_fullscreen_images": 8,
+  "visual_evidence_scope": "115 accepted frames; one user-authorized omission; one exact-package focused replacement"
+}

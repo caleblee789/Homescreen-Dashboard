@@ -1,0 +1,28 @@
+{
+  "acceptance": {
+    "absolute_median_seconds": 0.5,
+    "relative_improvement_required": 0.4
+  },
+  "fixture": {
+    "card_rows": 50000,
+    "revlog_rows": 500000
+  },
+  "measurement": {
+    "durations_seconds": [
+      0.69578,
+      0.696237,
+      0.702054,
+      0.699375,
+      0.718194,
+      0.73265,
+      0.733716
+    ],
+    "median_seconds": 0.702054,
+    "payload_bytes": 165448,
+    "query_count_median": 8,
+    "runs": 7,
+    "warmups": 2
+  },
+  "schema_version": 1,
+  "source_fingerprint": "bac046dcaf946bb2b45f6559de6c1ca5f487fec02e68743602a3e8b8402ca180"
+}

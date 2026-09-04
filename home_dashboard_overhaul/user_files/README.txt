@@ -1,8 +1,10 @@
 This directory contains profile-local runtime state created by Home Screen
 Dashboard. Anki preserves user_files across add-on updates.
 
-rotation_state.json stores only the selected Bible verse and its rotation key.
-The add-on's settings and events are stored in Anki's local add-on configuration.
+rotation_state.json stores only the current Bible verse, its mode-specific
+refresh key, and the verse-library fingerprint used to validate that selection.
+The add-on's settings, events, and verse library are stored in Anki's local
+add-on configuration.
 
 Configuration schema 8 offers exactly Sapphire Glass, Graphite, Emerald, and
 High Contrast. Retired, legacy, malformed, or unknown theme values normalize

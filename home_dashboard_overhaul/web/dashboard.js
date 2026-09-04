@@ -282,8 +282,8 @@
 
   function dashboardDensity(width) {
     var resolved = Math.max(0, Number(width) || 0);
-    if (resolved >= 860) return "wide";
-    if (resolved >= 620) return "intermediate";
+    if (resolved >= 1009) return "wide";
+    if (resolved >= 589) return "intermediate";
     return "narrow";
   }
 
@@ -521,7 +521,7 @@
     function updateDensity() {
       var width = Math.max(0, Number(root.getBoundingClientRect().width) || 0);
       root.dataset.hdoContentMode = dashboardDensity(width);
-      root.dataset.hdoMetricColumns = width >= 308 ? "2" : "1";
+      root.dataset.hdoMetricColumns = width >= 589 ? "2" : "1";
     }
 
     updateDensity();
@@ -540,6 +540,7 @@
         }
         else if (command === "diagnostics") send("diagnostics", {});
         else if (command === "calendar-settings") send("settings", { page: "calendar_data" });
+        else if (command === "bible-library") send("settings", { page: "bible_library" });
         else send("settings", {});
       });
     });
@@ -1348,8 +1349,18 @@
     var buried = availableValue(statistics.buried);
     var recent = availableValue(statistics.last_seven_days);
     var longTerm = availableValue(statistics.long_term);
+    var progressPresentation = presentation && presentation.progress || {};
     var todayPresentation = presentation && presentation.today_session || {};
     var recentPresentation = presentation && presentation.last_seven_days || {};
+    var initialCardsDue = progressPresentation.initial_cards_due;
+    var initialCardsDueAvailable = initialCardsDue !== null && initialCardsDue !== undefined &&
+      Number.isFinite(Number(initialCardsDue));
+    setMetric(
+      root,
+      "progress.initial_cards_due",
+      initialCardsDueAvailable ? formatNumber(initialCardsDue, locale) : UNAVAILABLE_TEXT,
+      initialCardsDueAvailable ? initialCardsDue : null
+    );
     if (today) {
       setMetric(root, "today.answers", todayPresentation.cards_studied || formatNumber(today.answers, locale), today.answers);
       setMetric(root, "today.new_cards_studied", todayPresentation.new_cards_studied || formatNumber(today.new_cards_studied, locale), today.new_cards_studied);
@@ -1383,7 +1394,16 @@
     } else setMetric(root, "today.cards_buried", UNAVAILABLE_TEXT, null);
     if (recent) {
       var retentionAvailable = recent.retention && recent.retention.status === "available";
+      var averageCardsPerDay = recentPresentation.average_cards_per_day;
+      var averageCardsPerDayAvailable = averageCardsPerDay !== null &&
+        averageCardsPerDay !== undefined && Number.isFinite(Number(averageCardsPerDay));
       setMetric(root, "last_seven_days.cards_studied", formatNumber(recent.cards_studied, locale), recent.cards_studied);
+      setMetric(
+        root,
+        "last_seven_days.average_cards_per_day",
+        averageCardsPerDayAvailable ? formatNumber(averageCardsPerDay, locale) : UNAVAILABLE_TEXT,
+        averageCardsPerDayAvailable ? averageCardsPerDay : null
+      );
       setMetric(root, "last_seven_days.new_cards_studied", formatNumber(recent.new_cards_studied, locale), recent.new_cards_studied);
       setMetric(root, "last_seven_days.retention", retentionAvailable ? recent.retention.percent + "%" : N_A_TEXT, recent.retention && recent.retention.percent);
       setMetric(
@@ -1401,7 +1421,7 @@
           : ""
       );
     } else {
-      ["last_seven_days.cards_studied", "last_seven_days.new_cards_studied", "last_seven_days.retention", "last_seven_days.time_spent"].forEach(function (key) {
+      ["last_seven_days.cards_studied", "last_seven_days.average_cards_per_day", "last_seven_days.retention", "last_seven_days.new_cards_studied", "last_seven_days.time_spent"].forEach(function (key) {
         setMetric(root, key, UNAVAILABLE_TEXT, null);
       });
       updateMetricSemanticRole(root, "last_seven_days.retention", "");

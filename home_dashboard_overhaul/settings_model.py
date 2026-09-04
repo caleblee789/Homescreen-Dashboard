@@ -379,6 +379,8 @@ def clamp_window_geometry(
 
 SECTION_IDS = (
     "dashboard",
+    "appearance",
+    "calendar",
     "events",
     "bible_verse",
     "about_support",
@@ -386,6 +388,8 @@ SECTION_IDS = (
 
 SECTION_LABELS = {
     "dashboard": "Dashboard",
+    "appearance": "Appearance",
+    "calendar": "Calendar",
     "events": "Events",
     "bible_verse": "Bible verse",
     "about_support": "About & support",
@@ -397,23 +401,25 @@ SECTION_GROUPS = {
 
 _SECTION_TARGETS = {
     "": ("dashboard", ""),
-    "appearance": ("dashboard", "appearance"),
-    "theme": ("dashboard", "appearance"),
-    "theme & layout": ("dashboard", "appearance"),
-    "theme_layout": ("dashboard", "appearance"),
+    "appearance": ("appearance", ""),
+    "theme": ("appearance", ""),
+    "theme & layout": ("appearance", ""),
+    "theme_layout": ("appearance", ""),
     "dashboard": ("dashboard", ""),
     "home": ("dashboard", "dashboard_sections"),
     "home screen": ("dashboard", "dashboard_sections"),
     "home_screen": ("dashboard", "dashboard_sections"),
-    "activity": ("dashboard", "calendar"),
-    "calendar": ("dashboard", "calendar"),
-    "calendar & data": ("dashboard", "calendar"),
-    "calendar_data": ("dashboard", "calendar"),
+    "activity": ("calendar", ""),
+    "calendar": ("calendar", ""),
+    "calendar & data": ("calendar", ""),
+    "calendar_data": ("calendar", ""),
     "event": ("events", ""),
     "events": ("events", ""),
     "bible": ("bible_verse", ""),
     "bible verse": ("bible_verse", ""),
     "bible_verse": ("bible_verse", ""),
+    "bible_library": ("bible_verse", "library"),
+    "bible_display": ("bible_verse", "display"),
     "about": ("about_support", ""),
     "about & credits": ("about_support", ""),
     "about & support": ("about_support", ""),
@@ -427,7 +433,7 @@ def resolve_section(value: object) -> str:
 
 
 def resolve_section_target(value: object) -> Tuple[str, str]:
-    """Return the four-page route and an optional Dashboard card anchor."""
+    """Return the settings destination and an optional card or Bible view."""
     key = str(value or "").strip().casefold()
     return _SECTION_TARGETS.get(key, ("dashboard", ""))
 
@@ -611,7 +617,6 @@ _APPEARANCE_RESET_PATHS: Tuple[Path, ...] = (
     ("appearance", "opacity"),
     ("appearance", "blur"),
     ("appearance", "text_scale"),
-    ("home_screen", "position"),
     ("heatmap", "presets_by_theme"),
 )
 _DASHBOARD_SECTIONS_RESET_PATHS: Tuple[Path, ...] = (
@@ -655,6 +660,7 @@ _BIBLE_ROTATION_RESET_PATHS: Tuple[Path, ...] = (
 
 _RESET_DEFAULT_PATHS = {
     "appearance": _APPEARANCE_RESET_PATHS,
+    "panel_placement": (("home_screen", "position"),),
     "dashboard_sections": _DASHBOARD_SECTIONS_RESET_PATHS,
     "study_metrics": _STUDY_METRICS_RESET_PATHS,
     "home_screen_legacy": (
@@ -671,9 +677,10 @@ _RESET_DEFAULT_PATHS = {
         + _LOCAL_DATA_RESET_PATHS
     ),
     "dashboard": (
-        _APPEARANCE_RESET_PATHS
-        + _DASHBOARD_SECTIONS_RESET_PATHS
+        _DASHBOARD_SECTIONS_RESET_PATHS
         + _STUDY_METRICS_RESET_PATHS
+        + _LOCAL_DATA_RESET_PATHS
+        + (("home_screen", "position"),)
     ),
     "bible_appearance": _BIBLE_APPEARANCE_RESET_PATHS,
     "bible_rotation": _BIBLE_ROTATION_RESET_PATHS,

@@ -181,11 +181,11 @@ class CapturePlanTests(unittest.TestCase):
         cases = self.plan.cases("settings")
         page_cases = [case for case in cases if case["family"] == "settings-pages"]
         self.assertEqual(self.plan.counts("settings"), {
-            "initial": 40,
+            "initial": 62,
             "restart": 1,
-            "total": 41,
+            "total": 63,
         })
-        self.assertEqual(len(page_cases), 12)
+        self.assertEqual(len(page_cases), 21)
         self.assertEqual(
             {case["width"] for case in page_cases},
             {1080, 1280, "full"},
@@ -196,7 +196,7 @@ class CapturePlanTests(unittest.TestCase):
         self.assertTrue(all("-720-" not in case["id"] for case in page_cases))
         self.assertTrue(all("-940-" not in case["id"] for case in page_cases))
         self.assertTrue(all(not case["id"].endswith("-150") for case in page_cases))
-        self.assertLessEqual(2 + len(self.plan.detail_groups("settings")), 11)
+        self.assertLessEqual(2 + len(self.plan.detail_groups("settings")), 14)
         self.assertEqual(
             self.plan.profile("settings")["required_structured_manual_results"],
             ["macos-fullscreen-no-space-switch-menu-and-dashboard-gear"],
@@ -316,16 +316,19 @@ class CapturePlanTests(unittest.TestCase):
             for profile_id in self.plan.profile_ids
         }
         self.assertEqual(capture_counts, {
-            "full": {"initial": 92, "restart": 2, "total": 94},
-            "settings": {"initial": 40, "restart": 1, "total": 41},
-            "wide-100": {"initial": 80, "restart": 2, "total": 82},
+            "full": {"initial": 114, "restart": 2, "total": 116},
+            "settings": {"initial": 62, "restart": 1, "total": 63},
+            "wide-100": {"initial": 96, "restart": 2, "total": 98},
         })
         self.assertEqual(
             [group_id for group_id, _capture_ids in detail_groups["settings"]],
             [
                 "settings-dashboard-widths",
+                "settings-appearance-widths",
+                "settings-calendar-widths",
                 "settings-events-widths",
                 "settings-bible-widths",
+                "settings-bible-display-widths",
                 "settings-about-widths",
                 "settings-events-states",
                 "settings-bible-states",
@@ -343,7 +346,7 @@ class CapturePlanTests(unittest.TestCase):
             "adds_png_frames": False,
             "work_area_logical": [0, 0, 1366, 768],
             "application_font_percents": [100],
-            "pages": ["dashboard", "events", "bible_verse", "about_support"],
+            "pages": ["dashboard", "appearance", "calendar", "events", "bible_verse", "bible_display", "about_support"],
             "restore_scenarios": [{
                 "id": "disconnected-monitor-v4",
                 "saved_geometry_logical": [1700, 100, 1180, 800],
@@ -355,7 +358,7 @@ class CapturePlanTests(unittest.TestCase):
         layout["pages"].append("mutated-copy")
         self.assertEqual(
             self.plan.structured_settings_layout()["pages"],
-            ["dashboard", "events", "bible_verse", "about_support"],
+            ["dashboard", "appearance", "calendar", "events", "bible_verse", "bible_display", "about_support"],
         )
         self.assertEqual(
             {profile_id: self.plan.ids(profile_id) for profile_id in self.plan.profile_ids},
@@ -540,7 +543,7 @@ class CapturePlanTests(unittest.TestCase):
             self.assertEqual(
                 set(path.name for path in output.iterdir()),
                 {
-                    "__init__.py", "_release_probe.py", "_probe_base.py",
+                    "__init__.py", "_release_probe.py", "_probe_base.py", "_workflow_probe.py",
                     "_capture_plan.py", "_capture_plan.json",
                     "_capture_profile.json", "manifest.json",
                 },

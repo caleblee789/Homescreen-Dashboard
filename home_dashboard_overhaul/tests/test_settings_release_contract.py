@@ -63,15 +63,15 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertEqual(self.settings_window_contract["schema_version"], 8)
         self.assertEqual(
             self.settings_window_contract["settings_profile_acceptance_gate"],
-            "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 41 PNGs cannot satisfy or waive this gate",
+            "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 63 PNGs cannot satisfy or waive this gate",
         )
         self.assertEqual(
             self.settings_window_contract["capture_surface_verification"],
-            "every PNG must sample-match the live Settings client so a same-sized Dashboard background cannot pass; all 12 page captures must use the complete decorated native Settings frame",
+            "every PNG must sample-match the live Settings client so a same-sized Dashboard background cannot pass; all 21 page captures must use the complete decorated native Settings frame",
         )
         self.assertEqual(
             self.settings_window_contract["pages"],
-            ["dashboard", "events", "bible_verse", "about_support"],
+            ["dashboard", "appearance", "calendar", "events", "bible_verse", "about_support"],
         )
         self.assertEqual(self.config["schema_version"], 8)
         self.assertEqual(self.config["appearance"]["opacity"], 96)
@@ -232,7 +232,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "outer.setRowStretch(1, 1)",
             "outer.addWidget(self.header_shell, 0, 1)",
             "outer.addWidget(self.body_shell, 1, 1)",
-            "outer.addWidget(self.footer.error_panel, 2, 1)",
+            "outer.addLayout(error_region, 2, 1)",
             "outer.addWidget(self.footer_shell, 3, 1)",
             "scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)",
             "page.setMaximumWidth(",
@@ -563,9 +563,9 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "max(36, metrics.lineSpacing() + self._ITEM_VERTICAL_INSET)",
             "def labels_fit(self) -> bool:",
             "metrics.horizontalAdvance(self.item(row).text()) <= available",
-            "self.compact_nav = QTabBar(self.header_shell)",
-            "self.compact_nav.setElideMode(Qt.TextElideMode.ElideNone)",
-            "compact = self._screen_compact_fallback or shell_width <= SETTINGS_COMPACT_BODY_WIDTH",
+            "self.compact_nav = QComboBox(self.header_shell)",
+            'self.compact_nav.setAccessibleName("Settings sections")',
+            "compact = self._screen_compact_fallback or shell_width < SETTINGS_COMPACT_BODY_WIDTH",
             "self.nav.refresh_item_sizes()",
         ):
             self.assertIn(marker, self.settings)
@@ -573,7 +573,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             '"nav_word_wrap": dialog.nav.wordWrap()',
             '"nav_elision_disabled": dialog.nav.textElideMode() == Qt.TextElideMode.ElideNone',
             '"compact_nav_visible": dialog.compact_nav.isVisible()',
-            '"compact_nav_elision_disabled": dialog.compact_nav.elideMode() == Qt.TextElideMode.ElideNone',
+            '"compact_nav_labelled": bool(dialog.compact_nav.accessibleName())',
             '"Settings rail wraps labels"',
             "expected_single_line_height = max(",
             'int(state.get("nav_font_line_spacing", 0)) + 12',
@@ -638,7 +638,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             self.assertIn(marker, self.settings_review_assembler)
         for marker in (
             "FULLSCREEN_WORKFLOW_STEP_IDS",
-            '"all-four-pages"',
+            '"all-six-pages-and-bible-views"',
             '"events-tabs"',
             '"resize"',
             '"event-edit"',
@@ -856,8 +856,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "appearance_card = self._create_appearance_card()",
             'SettingsCard(\n            "Dashboard sections"',
             'SettingsCard("Study metrics", "", "Reset")',
-            'self.calendar_display_disclosure = DisclosureHeader(\n            "Calendar display"',
-            'self.local_data_disclosure = DisclosureHeader(\n            "Local data"',
+            'SettingsCard("Panel placement", "", "Reset")',
+            "return calendar_content, data_card",
         )
         positions = [dashboard_source.index(marker) for marker in card_markers]
         self.assertEqual(positions, sorted(positions))
@@ -873,6 +873,35 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "Changes apply after you save.",
         ):
             self.assertIn(copy, self.settings)
+
+    def test_deck_exclusions_and_filters_is_the_only_local_data_card_header(self) -> None:
+        calendar_source = self.settings.split(
+            "    def _create_calendar_cards", 1
+        )[1].split("    def _build_events_page", 1)[0]
+        self.assertIn(
+            'data_card = SettingsCard("Deck exclusions and filters", "", "Reset")',
+            calendar_source,
+        )
+        self.assertIn("advanced_form = data_card.add_form()", calendar_source)
+        self.assertIn("return calendar_content, data_card", calendar_source)
+        for retained_copy in (
+            "Manual changes",
+            "Deleted cards",
+            "Excluded decks",
+            "Filter decks…",
+        ):
+            self.assertIn(retained_copy, calendar_source)
+        for removed_layer in (
+            'SettingsCard("Filters and deck exclusions"',
+            'DisclosureHeader(\n            "Date calculation"',
+            "Study counts and due forecasts follow Anki’s configured rollover",
+            'DisclosureHeader(\n            "Local data"',
+            "local_data_disclosure",
+            "calendar_advanced_button",
+        ):
+            self.assertNotIn(removed_layer, calendar_source)
+        self.assertIn('"attribute": "local_data_card"', self.release_probe)
+        self.assertNotIn("local_data_disclosure", self.release_probe)
 
     def test_sapphire_only_fields_are_hidden_without_discarding_values(self) -> None:
         source = self.settings.split("def _update_glass_controls", 1)[1].split(
@@ -1854,6 +1883,31 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertNotIn('self.event_search_clear = QPushButton("Clear")', event_source)
         self.assertNotIn('QWidget#HomeDashboardSettings QWidget#EventRow[selected="true"]', self.settings)
 
+    def test_empty_event_tab_strip_refits_after_polish_without_clipping(self) -> None:
+        event_actions = self.settings.split(
+            "    def _update_event_actions", 1
+        )[1].split("    def _select_event_date", 1)[0]
+        for marker in (
+            "EVENT_TAB_STRIP_MIN_HEIGHT = 44",
+            "EVENT_TAB_FONT_VERTICAL_PADDING = 18",
+            "EVENT_TAB_PANEL_VERTICAL_CHROME = 4",
+            "tab_bar.ensurePolished()",
+            "tab_bar.minimumSizeHint().height()",
+            "tab_bar.fontMetrics().lineSpacing()",
+            "tab_height + list_height + EVENT_TAB_PANEL_VERTICAL_CHROME",
+            "self.event_tabs.setMinimumHeight(panel_height)",
+            "self.event_tabs.setMaximumHeight(panel_height)",
+        ):
+            self.assertIn(marker, self.settings)
+        self.assertIn("else 0", event_actions)
+        dialog_source = self.settings.split("class SettingsDialog(QDialog)", 1)[1]
+        show_source = dialog_source.split(
+            "    def showEvent(self, event: Any) -> None:", 1
+        )[1].split("    def _correct_decorated_frame_if_needed", 1)[0]
+        self.assertIn(
+            "QTimer.singleShot(0, self._update_event_actions)", show_source
+        )
+
     def test_page_header_keeps_actions_beside_title_and_help(self) -> None:
         page_source = self.settings.split("def _page(", 1)[1].split(
             "def _section_title", 1
@@ -1882,11 +1936,11 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "self._rows.append((source_index, reference, excerpt))",
             "_two_line_excerpt(excerpt, excerpt_metrics, excerpt_rect.width())",
             'self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)',
-            '"{} verses".format(len(self.quotes))',
+            '"verse" if len(self.quotes) == 1 else "verses"',
             '"{} of {} verses".format(total, len(self.quotes))',
-            "target = max(180, min(520, viewport_height - 300))",
-            "self.quote_list.setMinimumHeight(target)",
-            "self.quote_list.setMaximumHeight(target)",
+            "self.quote_list.setMinimumHeight(68)",
+            "self.bible_views = QStackedWidget()",
+            "self.bible_view_tabs.addTab(\"Library\")",
             'SettingsCard(\n            "Rotation"',
             'SettingsCard(\n            "Verse library"',
             'self.quote_search_clear = _icon_button("clear", "Clear verse search")',
@@ -1898,7 +1952,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
         fit_source = self.settings.split("    def _fit_quote_list", 1)[1].split(
             "    def _open_quote_menu_for_model", 1
         )[0]
-        self.assertNotIn("16777215", fit_source)
+        self.assertNotIn("setFixedHeight", fit_source)
         for retired in (
             "VerseCardPreview",
             "class VerseRowWidget",
@@ -1984,7 +2038,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'if self._state == "saving":',
             "self.draft.replace_all(latest_saved)",
             "self._pending_close_after_save = False",
-            "outer.addWidget(self.footer.error_panel, 2, 1)",
+            "outer.addLayout(error_region, 2, 1)",
             "self.footer.setFixedHeight(SETTINGS_FOOTER_MIN_HEIGHT)",
             '"validation-error",',
             '"Fix {} error{} to save".format(',
@@ -2179,9 +2233,9 @@ class SettingsReleaseContractTests(unittest.TestCase):
             self.settings,
         )
 
-    def test_legacy_calendar_route_settles_to_the_dashboard_card(self) -> None:
+    def test_legacy_calendar_route_opens_its_dedicated_page(self) -> None:
         self.assertIn('"": ("dashboard", "")', self.model)
-        self.assertIn('"calendar": ("dashboard", "calendar")', self.model)
+        self.assertIn('"calendar": ("calendar", "")', self.model)
         constructor_tail = self.settings.split("self.open_page(initial_page", 1)[1].split(
             "def resizeEvent", 1
         )[0]

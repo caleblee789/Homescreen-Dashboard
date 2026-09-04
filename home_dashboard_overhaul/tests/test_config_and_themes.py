@@ -20,6 +20,7 @@ from home_dashboard_overhaul.themes import (
     PROJECTED_DUE_SCALES,
     REVIEWS_DUE_INDICATORS,
     SEMANTIC_PALETTES,
+    SEMANTIC_THEME_OVERRIDES,
     contrast_ratio,
     resolve_theme,
 )
@@ -273,8 +274,35 @@ class ThemeTests(unittest.TestCase):
             for mode in ("light", "dark"):
                 resolved = resolve_theme(theme_name, mode, mode == "dark")
                 self.assertFalse(required.difference(resolved))
-                for key, value in SEMANTIC_PALETTES[mode].items():
+                expected_semantics = dict(SEMANTIC_PALETTES[mode])
+                expected_semantics.update(
+                    SEMANTIC_THEME_OVERRIDES.get(theme_name, {}).get(mode, {})
+                )
+                for key, value in expected_semantics.items():
                     self.assertEqual(resolved[key], value)
+
+    def test_sapphire_dark_is_the_only_semantic_theme_override(self) -> None:
+        self.assertEqual(
+            SEMANTIC_THEME_OVERRIDES,
+            {
+                "Sapphire Glass": {
+                    "dark": {
+                        "status_learning_fill": "#F87171",
+                        "status_learning_text": "#F87171",
+                        "status_review_fill": "#22C55E",
+                        "status_review_text": "#22C55E",
+                    },
+                },
+            },
+        )
+        for theme_name in PRESETS:
+            for mode in ("light", "dark"):
+                if (theme_name, mode) == ("Sapphire Glass", "dark"):
+                    continue
+                resolved = resolve_theme(theme_name, mode, mode == "dark")
+                for key, value in SEMANTIC_PALETTES[mode].items():
+                    with self.subTest(theme=theme_name, mode=mode, role=key):
+                        self.assertEqual(resolved[key], value)
 
     def test_core_surface_hierarchy_and_target_palettes_are_explicit(self) -> None:
         light = resolve_theme("Sapphire Glass", "light", False)
@@ -292,9 +320,31 @@ class ThemeTests(unittest.TestCase):
             ["#2F7DD3", "#C76A00", "#7C3AED", "#147A42", "#E0BF55"],
         )
         self.assertEqual(
+            [
+                dark[key]
+                for key in (
+                    "status_learning_fill",
+                    "status_learning_text",
+                    "status_review_fill",
+                    "status_review_text",
+                )
+            ],
+            ["#F87171", "#F87171", "#22C55E", "#22C55E"],
+        )
+        self.assertEqual(
             [dark["heat_complete_{}".format(level)] for level in range(6)],
             list(COMPLETION_SCALES["Sapphire Glass"]["dark"]),
         )
+
+    def test_sapphire_dark_remaining_semantics_pass_contrast_on_every_card_surface(self) -> None:
+        dark = resolve_theme("Sapphire Glass", "dark", True)
+        for semantic_role in ("status_learning_text", "status_review_text"):
+            for surface_role in ("ui_surface_1", "ui_surface_2", "ui_surface_3"):
+                with self.subTest(semantic=semantic_role, surface=surface_role):
+                    self.assertGreaterEqual(
+                        contrast_ratio(dark[semantic_role], dark[surface_role]),
+                        4.5,
+                    )
 
     def test_text_button_and_heat_tokens_pass_contrast_gates(self) -> None:
         for theme_name in PRESETS:

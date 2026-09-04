@@ -242,11 +242,25 @@ def _validate_theme_contract(namespace: dict) -> None:
     dashboard_themes = namespace.get("PRESETS")
     heatmaps = namespace.get("HEATMAP_PRESETS")
     defaults = namespace.get("DEFAULT_HEATMAP_PRESETS")
+    semantic_palettes = namespace.get("SEMANTIC_PALETTES")
+    semantic_overrides = namespace.get("SEMANTIC_THEME_OVERRIDES")
     resolver = namespace.get("resolve_theme")
     if tuple(dashboard_themes or {}) != tuple(expected_themes):
         raise ValueError("release must expose exactly four ordered dashboard themes")
     if not callable(resolver) or not isinstance(heatmaps, dict) or not isinstance(defaults, dict):
         raise ValueError("theme resolver and authored heatmap presets are required")
+    expected_semantic_overrides = {
+        "Sapphire Glass": {
+            "dark": {
+                "status_learning_fill": "#F87171",
+                "status_learning_text": "#F87171",
+                "status_review_fill": "#22C55E",
+                "status_review_text": "#22C55E",
+            },
+        },
+    }
+    if not isinstance(semantic_palettes, dict) or semantic_overrides != expected_semantic_overrides:
+        raise ValueError("theme semantic baselines and audited overrides must remain explicit")
 
     required_heatmap_roles = {
         *{"heat_complete_{}".format(level) for level in range(6)},
@@ -300,7 +314,6 @@ def _validate_theme_contract(namespace: dict) -> None:
         "calendar_ring_halo", "ui_disabled_surface", "ui_disabled_border",
         "ui_control_hover", "ui_control_pressed",
     }
-    semantic_reference = {mode: None for mode in ("light", "dark")}
     for theme_name in expected_themes:
         for mode in ("light", "dark"):
             resolved = resolver(theme_name, mode, mode == "dark", defaults[theme_name])
@@ -327,10 +340,24 @@ def _validate_theme_contract(namespace: dict) -> None:
                 key: value for key, value in resolved.items() if key.startswith("status_")
                 and not key.endswith("_soft")
             }
-            if semantic_reference[mode] is None:
-                semantic_reference[mode] = semantic
-            elif semantic != semantic_reference[mode]:
-                raise ValueError("{} {} recolors stable semantic roles".format(theme_name, mode))
+            expected_semantic = dict(semantic_palettes[mode])
+            selected_overrides = semantic_overrides.get(theme_name, {}).get(mode, {})
+            expected_semantic.update(selected_overrides)
+            if semantic != expected_semantic:
+                raise ValueError("{} {} has an unapproved semantic recoloring".format(theme_name, mode))
+            for semantic_role in selected_overrides:
+                if not semantic_role.endswith("_text"):
+                    continue
+                for surface_role in ("ui_surface_1", "ui_surface_2", "ui_surface_3"):
+                    if _contrast(resolved[semantic_role], resolved[surface_role]) < 4.5:
+                        raise ValueError(
+                            "{} {} {} fails on {}".format(
+                                theme_name,
+                                mode,
+                                semantic_role,
+                                surface_role,
+                            )
+                        )
             if theme_name == "High Contrast":
                 for surface_role in ("ui_surface_1", "ui_surface_2", "ui_surface_3"):
                     if _contrast(resolved["ui_text_primary"], resolved[surface_role]) < 7:
@@ -382,6 +409,48 @@ def _validate_visual_matrix(matrix: dict) -> None:
         or len({entry.get("id") for entry in statistics_cases}) != len(statistics_cases)
     ):
         raise ValueError("statistics visual matrix must define unique responsive production shells")
+    boundary_cases = matrix.get("responsive_boundary_cases", [])
+    if [
+        (entry.get("root_width"), entry.get("layout"))
+        for entry in boundary_cases
+    ] != [
+        (1009, "wide-2x2"),
+        (1008, "stacked-rail-2x2"),
+        (589, "stacked-rail-2x2"),
+        (588, "stacked-rail-single-column"),
+    ]:
+        raise ValueError("dashboard responsive boundary matrix drifted")
+    layout = matrix.get("dashboard_layout_contract", {})
+    expected_layout = {
+        "root_width_rule": "min(1160px, calc(100% - 32px))",
+        "rendered_deck_gap_range": [28, 30],
+        "addon_top_margin_target": 30,
+        "desktop_columns": ["minmax(0, 1fr)", "360px"],
+        "desktop_column_gap": 14,
+        "rail_gap": 12,
+        "summary_grid_minimum_height": 352,
+        "summary_grid_shape": [2, 2],
+        "summary_card_minimum_width": 170,
+        "summary_card_padding": [14, 12, 13],
+        "metric_column_gap": 10,
+        "metric_minimum_visible_gap": 8,
+        "stack_root_maximum_width": 1008,
+        "metric_single_column_root_maximum_width": 588,
+        "month_bottom_alignment": {"calendar_to_bible_tolerance": 2},
+        "year_bottom_alignment": {"calendar_to_summary_grid_tolerance": 2},
+    }
+    if any(layout.get(key) != value for key, value in expected_layout.items()):
+        raise ValueError("dashboard visual spacing contract drifted")
+    year_heatmap = layout.get("year_heatmap", {})
+    if year_heatmap != {
+        "wide_cell_size": 10,
+        "gap": 2,
+        "usable_width_percent_range": [85, 90],
+        "narrow_sizing": "fluid-square",
+        "minimum_width_floor": "none",
+        "internal_horizontal_scrolling": False,
+    }:
+        raise ValueError("Year heatmap visual contract drifted")
 
 
 def validate_sources() -> dict:
@@ -429,6 +498,32 @@ def validate_sources() -> dict:
         raise ValueError("retention target must default to 80")
     if config.get("appearance", {}).get("text_scale") != 100:
         raise ValueError("dashboard text scale must default to 100")
+    dashboard_architecture = surface_contract.get("dashboard_architecture", {})
+    expected_dashboard_architecture = {
+        "width_rule": "min(1160px, calc(100% - 32px))",
+        "maximum_width": 1160,
+        "minimum_side_margin": 16,
+        "top_spacing": 30,
+        "rendered_deck_gap_range": [28, 30],
+        "desktop_column_gap": 14,
+        "desktop_rail_width": 360,
+        "stack_root_maximum_width": 1008,
+        "metric_single_column_root_maximum_width": 588,
+        "summary_grid_minimum_height": 352,
+        "summary_card_minimum_width": 170,
+        "summary_card_padding": [14, 12, 13],
+        "metric_column_gap": 10,
+        "month_calendar_to_bible_bottom_tolerance": 2,
+        "year_calendar_to_summary_grid_bottom_tolerance": 2,
+        "year_wide_cell_size": 10,
+        "year_heatmap_width_percent_range": [85, 90],
+        "year_internal_horizontal_scrolling": False,
+    }
+    if any(
+        dashboard_architecture.get(key) != value
+        for key, value in expected_dashboard_architecture.items()
+    ):
+        raise ValueError("dashboard architecture release contract drifted")
 
     sources = {
         relative: (ROOT / relative).read_text(encoding="utf-8")
@@ -484,8 +579,10 @@ def validate_sources() -> dict:
         "renderer.py": (
             "hdo-calendar-footer", "hdo-date-state-chip", "hdo-event-rows",
             "hdo-context-event-label", "hdo-summary-metrics-grid", "hdo-bible-card",
-            "New cards studied", "Cards buried", "Time spent", "hdo-progress-fill",
-            "last_seven_days.time_spent", "data-hdo-progress-label",
+            "Initial cards due", "New cards studied", "Cards buried", "Time spent",
+            "hdo-progress-fill", "progress.initial_cards_due",
+            "last_seven_days.average_cards_per_day", "last_seven_days.time_spent",
+            "data-hdo-progress-label",
             "retention_target", "day_insight_payload",
             "hdo-loading-region--calendar", "Dashboard could not load",
             "hdo-context-action--primary", "dashboard-scroll-surface",
@@ -506,7 +603,7 @@ def validate_sources() -> dict:
             "def reject(self) -> None:", "def closeEvent(self, event: Any) -> None:",
             "action.triggered.connect(controller.open_settings)",
             "self.settings_shell.setMaximumWidth(SETTINGS_SHELL_MAX_WIDTH)", "self.sidebar_panel.setFixedWidth(SETTINGS_SIDEBAR_WIDTH)",
-            "self.compact_nav = QTabBar", "SETTINGS_COMPACT_BODY_WIDTH = 860",
+            "self.compact_nav = QComboBox", "SETTINGS_COMPACT_BODY_WIDTH = 860",
             "SETTINGS_TWO_COLUMN_CONTENT_WIDTH = 760",
             "SETTINGS_SHELL_MAX_WIDTH = 1264", "SETTINGS_PAGE_MAX_WIDTH = 1080",
             "SETTINGS_ABOUT_MAX_WIDTH = 1080", "SETTINGS_HEADER_HEIGHT = 72",
@@ -545,7 +642,10 @@ def validate_sources() -> dict:
             'calendar.addEventListener("pointerover"', 'send("open_most_missed"',
             "function mountLoadingState", "Still loading your study data...",
             "progress.fill_percent", "today.cards_buried", "today.time_spent",
+            "progress.initial_cards_due", "last_seven_days.average_cards_per_day",
             "last_seven_days.time_spent", "data-hdo-progress-label",
+            "if (resolved >= 1009)", "if (resolved >= 589)",
+            'width >= 589 ? "2" : "1"',
             'send("diagnostics", {})', "document.scrollingElement",
             "function visibleBottomActionContainer(root)",
             "var clearance = footerHeight + 24", "new global.ResizeObserver(update)",
@@ -555,17 +655,28 @@ def validate_sources() -> dict:
         ),
         "web/dashboard.css": (
             "hdo-calendar-footer", "hdo-calendar-card-action", "hdo-context-action--primary",
-            "width: min(1120px, calc(100% - 40px))", "margin: 24px auto 0",
+            "width: min(1160px, calc(100% - 32px))", "max-width: 1160px",
+            "margin: 30px auto 0", "--dashboard-column-gap: 14px",
+            "--rail-gap: 12px", "--summary-pad-x: 12px", "--metric-column-gap: 10px",
             "padding: 0 0 var(--hdo-bottom-clearance)", "pointer-events: none",
             "min-width: min(190px", "max-width: min(220px",
-            "@container hdo-dashboard (min-width: 308px)",
-            "@container hdo-dashboard (min-width: 860px)",
-            "@container hdo-dashboard (max-width: 619px)",
+            "@container hdo-dashboard (min-width: 589px)",
+            "@container hdo-dashboard (min-width: 1009px)",
+            "@container hdo-dashboard (max-width: 588px)",
+            "repeat(2, minmax(170px, 1fr))", "grid-auto-rows: 1fr",
+            "min-height: 352px",
+            "padding: 14px var(--summary-pad-x) 13px",
+            "column-gap: var(--metric-column-gap)",
+            "minmax(0, 1fr) 360px",
             "@container hdo-calendar (max-width: 419px)",
-            "repeat(6, clamp(38px, 5cqi, 44px))",
+            "repeat(6, 37px)",
             "24px repeat(var(--hdo-year-weeks, 53), var(--hdo-year-cell-size))",
-            "--hdo-year-cell-size: 7px",
-            "min-block-size: 18px", "hdo-progress-label--fill",
+            "--hdo-year-cell-size: clamp(1px, calc((100cqi - 194px) / 53), 10px)",
+            "min-block-size: 18px",
+            "padding-inline: 6px", "hdo-progress-label--fill",
+            "grid-template-rows: auto 1fr auto", "padding: 15px 16px 14px",
+            'data-hdo-calendar-view="month"] .hdo-calendar-card',
+            'data-hdo-calendar-view="year"] .hdo-calendar-card',
             "var(--heat-due-mark-3)", "var(--progress-complete)",
             "hdo-event-marker", "hdo-loading-layout", "backdrop-filter",
             "hdo-year-weekday-label", "background: transparent",
@@ -665,6 +776,16 @@ def validate_sources() -> dict:
     ):
         if forbidden in dashboard_surface_source:
             raise ValueError("removed dashboard surface/copy remains: {}".format(forbidden))
+    for retired_layout in (
+        "width: min(1120px, calc(100% - 40px))",
+        "--hdo-year-cell-size: 7px",
+        "min-width: 500px",
+        "overflow-x: auto",
+    ):
+        if retired_layout in sources["web/dashboard.css"]:
+            raise ValueError(
+                "retired dashboard spacing contract remains: {}".format(retired_layout)
+            )
     if re.search(r"#[0-9a-fA-F]{3,8}\b", sources["web/dashboard.css"]):
         raise ValueError("components must consume tokens rather than hard-coded hex colors")
     if "InsightItem" in sources["models.py"] or "card.question" in sources["insights.py"]:
@@ -735,14 +856,14 @@ def validate_sources() -> dict:
         "rail_width": 184,
         "header_height": 72,
         "footer_height": 56,
-        "compact_navigation": "single-line synchronized QTabBar whenever retaining the 184 px rail would leave less than 680 logical pixels for the main region; the 860 px supported minimum is compact",
+        "compact_navigation": "labelled synchronized section dropdown below the 860 px supported minimum; the 184 px sidebar remains visible at supported widths",
         "rendered_previews": "compact five-step calendar palette ramp and live Bible appearance preview only; no embedded dashboard preview",
         "active_dialog_reference": "one temporary controller reference exists only during modal exec for re-entry routing and is cleared in finally",
         "primary_prompts": "stacked overlay children keep the Settings shell visible beneath a tokenized scrim and never create another window",
         "auxiliary_dialogs": "single-title 480-to-540 px event and verse editors are parented window-modal dialogs clamped to 80 percent of the Settings body; native file and color pickers remain parented",
         "editor_titles": "event and verse editors use one native title only, are parented and window-modal, and stage Add event, Update event, Add verse, or Update verse into the global draft",
         "save_close": "stable Save changes label during saving; mutation controls and close are disabled; failures preserve the draft; dirty close offers Cancel, Discard changes, and Save and close with pending-close cleared on failure",
-        "settings_profile_acceptance_gate": "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 41 PNGs cannot satisfy or waive this gate",
+        "settings_profile_acceptance_gate": "a structured exact-package macOS report must pass both full-screen opening paths with no desktop or Space switch; the 63 PNGs cannot satisfy or waive this gate",
         "programmatic_lifecycle_focus": False,
         "retained_dialog_object": False,
     }
@@ -770,13 +891,13 @@ def validate_sources() -> dict:
     wide_counts = capture_plan.counts("wide-100")
     if not (0 < wide_counts["initial"] <= full_counts["initial"] and wide_counts["restart"] <= full_counts["restart"]):
         raise ValueError("wide 100 percent profile is not a valid subset of the full capture plan")
-    if full_counts != {"initial": 92, "restart": 2, "total": 94}:
-        raise ValueError("corrected 1.8.7 full capture count must be 94")
+    if full_counts != {"initial": 114, "restart": 2, "total": 116}:
+        raise ValueError("corrected 1.8.7 full capture count must be 116")
     settings_counts = capture_plan.counts("settings")
-    if settings_counts != {"initial": 40, "restart": 1, "total": 41}:
-        raise ValueError("minimal 1.8.7 Settings capture count must be exactly 41")
-    if 2 + len(capture_plan.detail_groups("settings")) > 11:
-        raise ValueError("minimal 1.8.7 Settings evidence exceeds 11 sheets")
+    if settings_counts != {"initial": 62, "restart": 1, "total": 63}:
+        raise ValueError("minimal 1.8.7 Settings capture count must be exactly 63")
+    if 2 + len(capture_plan.detail_groups("settings")) > 14:
+        raise ValueError("minimal 1.8.7 Settings evidence exceeds 14 sheets")
     structured_gate_id = "macos-fullscreen-no-space-switch-menu-and-dashboard-gear"
     if capture_plan.profile("settings").get("required_structured_manual_results") != [
         structured_gate_id
@@ -789,7 +910,7 @@ def validate_sources() -> dict:
         "adds_png_frames": False,
         "opening_paths": ["menu", "dashboard-gear"],
         "workflow_steps_per_path": [
-            "all-four-pages",
+            "all-six-pages-and-bible-views",
             "events-tabs",
             "resize",
             "event-edit",

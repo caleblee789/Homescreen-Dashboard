@@ -1,0 +1,371 @@
+{
+  "archive": "hdo-ui-candidate-cf112634.ankiaddon",
+  "manifest_version": "1.8.7",
+  "member_count": 24,
+  "members": [
+    {
+      "path": "__init__.py",
+      "safe_path": true,
+      "sha256": "17aec78da575b56963586c2a062a3ed0339132780e456d11b56c350dc2dbcba0",
+      "size": 606,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "analytics.py",
+      "safe_path": true,
+      "sha256": "da89e9775c235073b988c701ed1b440b0ae0a60c3841e3d0ba9302d79f17873f",
+      "size": 64549,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "insights.py",
+      "safe_path": true,
+      "sha256": "2246bdc7aead2b10f9fced9bc9aab8cb8db00f251f3850ce1ec3ac54a6734a93",
+      "size": 4669,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "config.json",
+      "safe_path": true,
+      "sha256": "2d8bfb1a8a646ca50eb7322c7cd3542e833f556c5349cd43488d8c5a02179cfd",
+      "size": 1389,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "config.md",
+      "safe_path": true,
+      "sha256": "37200d8e0537128a12bba9419b2186c8fcdedf44179ca79c5a34c854c9ed0e45",
+      "size": 8804,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "config_schema.py",
+      "safe_path": true,
+      "sha256": "7388daca4fa71526800f0480dc6ad911981dfff293869021548165cede69b91e",
+      "size": 14556,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "controller.py",
+      "safe_path": true,
+      "sha256": "99a785b7c2582540955079df1cac1bb54a40d518f5e90ba8ccd67973388e04de",
+      "size": 58008,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "default_verses.json",
+      "safe_path": true,
+      "sha256": "000f62d94c557c364c4ecb025967f28214b2c29c3f84c94cef652364623b7f93",
+      "size": 79701,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "LICENSE.txt",
+      "safe_path": true,
+      "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+      "size": 34523,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "manifest.json",
+      "safe_path": true,
+      "sha256": "1d72c33ce398ead0e90827687c4136110d037fa3a6a8bb2641d703762f4e2630",
+      "size": 180,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "migration.py",
+      "safe_path": true,
+      "sha256": "aa721c9e11a1f083e0d92124b62ac0402fd4adcf9044c2741436b19761b16861",
+      "size": 10165,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "models.py",
+      "safe_path": true,
+      "sha256": "c5c1637e4b5f448f90b64b6932557048d7e4fb8c913f4d6a4191ced0eb1b63cc",
+      "size": 13815,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "README.md",
+      "safe_path": true,
+      "sha256": "8796a6a15894159dbea5c1004c7acfe88be286218d0b6c5d8ac0c9cf69ca57cb",
+      "size": 12516,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "CHANGELOG.md",
+      "safe_path": true,
+      "sha256": "f5fe83f27c05b46702a9a80aa2de7e711bd4148f59edef87336736494f57cdcb",
+      "size": 44283,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "renderer.py",
+      "safe_path": true,
+      "sha256": "d877c3c83342bdbfeb1fc3ca439a3f1211cbb4e1ea309fad6f20e9bab7dfd476",
+      "size": 52177,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "settings.py",
+      "safe_path": true,
+      "sha256": "0465f3d6e173ebf1f00e5c8b035ee7672da93ac0d6f6cf2276d9cf7d335ceded",
+      "size": 342788,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "settings_model.py",
+      "safe_path": true,
+      "sha256": "057b591102a22ae5f780cee61d8dd76c3f87416b10c21609e2ff739c57903a1b",
+      "size": 29559,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "themes.py",
+      "safe_path": true,
+      "sha256": "7c9a2f6be330cff00bfaaa8cd167a2f00e490381f48533cb2f4d49d16acfad8c",
+      "size": 24082,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "safe_path": true,
+      "sha256": "d602445375095c77d347b05822fb08974a42ab79527227de1080d4f272d87b4e",
+      "size": 2061,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "ui_primitives.py",
+      "safe_path": true,
+      "sha256": "ea93e040f469a427e558be4dfbcd81be271290cb0563843039e056e79151e6e7",
+      "size": 1579,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "verse.py",
+      "safe_path": true,
+      "sha256": "ed7e3dafc4b3b52d0f798334e15d8a16d0c28abc2fa97208fe654b8a8aeb9598",
+      "size": 11423,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "web/dashboard.css",
+      "safe_path": true,
+      "sha256": "8f5c6aedc94c086e2a03341a7a6bbf90919161e1374f7efaba89e1c3ade2fece",
+      "size": 42419,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "web/dashboard.js",
+      "safe_path": true,
+      "sha256": "27f2c2b2478f4394fc21546f940081a1988aa888c1af1ad6acc981cf977439df",
+      "size": 75211,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "path": "user_files/README.txt",
+      "safe_path": true,
+      "sha256": "8f351ffbe980ae5e5ec4d2da7a52b4c5e6c06a18aeaae4bbeffbb3d37719cd68",
+      "size": 866,
+      "source_byte_parity": "passed",
+      "timestamp": [
+        2026,
+        8,
+        26,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "release": "1.8.7",
+  "safe_paths": "passed",
+  "sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+  "source_archive_byte_parity": "passed"
+}
