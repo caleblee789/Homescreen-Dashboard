@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "verified_at_utc": "2026-09-05T18:48:09+00:00",
+  "version": "1.8.7",
+  "scope": "User-authorized quiet Settings coffee-button update and AnkiWeb display-name shortening.",
+  "status": "verified-and-published",
+  "implementation_pr": "https://github.com/caleblee789/Homescreen-Dashboard/pull/19",
+  "actual_package_source_merge_commit": "396e87ea08bfd7857b08febb9fd8ce518f1e63e9",
+  "merged_source_rebuild_matches_reviewed_candidate": true,
+  "artifact_name": "home-dashboard-overhaul-1.8.7.ankiaddon",
+  "artifact_sha256": "8b617376758bac40d28329e517014021cb608be9bae36b4547edf89e07148b53",
+  "artifact_size_bytes": 233203,
+  "package_member_count": 25,
+  "package_identity": "home_dashboard_overhaul",
+  "display_name": "Home Screen Dashboard",
+  "previous_artifact_sha256": "ef19b62dcdc5b0e39df02fe9e91b631b8636e01874b7765b5268f085f72b781f",
+  "previous_downloads_preserved_locally_at": "qa-runs/settings-coffee-20260905/previous-release",
+  "native_capture_verification": "home_dashboard_overhaul/qa/settings-coffee-1.8.7-2026-09-05-8b617376/verification.json",
+  "native_capture_count": 12,
+  "native_update_reports": {
+    "install": {
+      "path": "home_dashboard_overhaul/qa/settings-coffee-1.8.7-2026-09-05-8b617376/reports/ankiweb-update-install.json",
+      "sha256": "3d0ef23bb00890488a211a6819c0aa7dbdd214347af6d0f759746db7bee17eaa",
+      "status": "passed"
+    },
+    "restart": {
+      "path": "home_dashboard_overhaul/qa/settings-coffee-1.8.7-2026-09-05-8b617376/reports/ankiweb-update-restart.json",
+      "sha256": "66edc91f6a7013eced1e141099a17edbfccf801ca7554d866796fdd18081b921",
+      "status": "passed"
+    }
+  },
+  "publication": {
+    "github": {
+      "download_url": "https://github.com/caleblee789/Homescreen-Dashboard/releases/download/v1.8.7/home-dashboard-overhaul-1.8.7.ankiaddon",
+      "sha256": "8b617376758bac40d28329e517014021cb608be9bae36b4547edf89e07148b53",
+      "size_bytes": 233203,
+      "anonymous_download_matches_reviewed_candidate": true,
+      "release_url": "https://github.com/caleblee789/Homescreen-Dashboard/releases/tag/v1.8.7",
+      "tag": "v1.8.7",
+      "tag_commit": "f7d263b90e3b93ed5cb5d4efd7388a19b327ebb4",
+      "tag_unchanged": true,
+      "checksum_asset_verified": true,
+      "release_prose_unchanged": true
+    },
+    "ankiweb": {
+      "download_url": "https://ankiweb.net/shared/download/808247776?v=2.1&p=260801",
+      "sha256": "8b617376758bac40d28329e517014021cb608be9bae36b4547edf89e07148b53",
+      "size_bytes": 233203,
+      "anonymous_download_matches_reviewed_candidate": true,
+      "listing_url": "https://ankiweb.net/shared/info/808247776",
+      "id": 808247776,
+      "display_name": "Home Screen Dashboard",
+      "download_filename": "Home_Screen_Dashboard.ankiaddon",
+      "branch_index": 0,
+      "min_point_version": 260800,
+      "max_point_version": 260800,
+      "branch_bounds_unchanged": true,
+      "tags_unchanged": true,
+      "support_url_unchanged": true,
+      "description_unchanged": true,
+      "listing_screenshots_unchanged": true
+    }
+  },
+  "existing_installation_update": {
+    "native_ankiweb_update_check_and_download": "passed",
+    "all_25_installed_members_match_published_archive": true,
+    "shortened_name_survives_restart": true,
+    "settings_preserved_after_update_and_restart": true,
+    "user_files_preserved_after_update_and_restart": true,
+    "settings_and_coffee_button_open_after_restart": true,
+    "anki_version": "26.8.1",
+    "profile_is_disposable_and_sync_disabled": true
+  },
+  "unchanged_public_content": [
+    "README.md",
+    "home_dashboard_overhaul/README.md",
+    "GitHub release prose",
+    "AnkiWeb description",
+    "AnkiWeb listing screenshots"
+  ],
+  "provenance_note": "The existing v1.8.7 tag remains at its original commit. The replacement downloadable archive is reproduced by actual_package_source_merge_commit; historical release evidence is unchanged.",
+  "verification_boundary": "This record covers the requested Settings footer/name update. The historical full-release matrix was not rerun."
+}
