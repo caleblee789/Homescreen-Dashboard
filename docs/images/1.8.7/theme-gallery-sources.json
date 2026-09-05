@@ -3,42 +3,41 @@
   "galleries": [
     {
       "image": "docs/images/1.8.7/dashboard-themes-dark.png",
-      "image_sha256": "dd79dded65f1fc3efca98ee263dc05dc50662076c7b86daf8f58e6f4a2fbc0dc",
+      "image_sha256": "44630b7c3cbbe60dd828005483481140a924a895eae1d1e8cd87e354df972a0c",
       "dimensions": [
         2416,
-        1440
+        1438
       ],
       "grid": [
         2,
         2
       ],
-      "bytes": 915333
+      "bytes": 903217,
+      "published_image_url": "https://raw.githubusercontent.com/caleblee789/Homescreen-Dashboard/main/docs/images/1.8.7/dashboard-themes-dark.png?v=44630b7c3cbb"
     },
     {
       "image": "docs/images/1.8.7/dashboard-themes-light.png",
-      "image_sha256": "50902c60452166d0a3d2fd77503ae6d1b17c7923ecb9506dd4822c7352ca4bef",
+      "image_sha256": "1eec4c53bdbc1aa6eef9b727db3aea08f5e3fd780efe7f16c5c12193b02d1bf0",
       "dimensions": [
         2416,
-        1440
+        1438
       ],
       "grid": [
         2,
         2
       ],
-      "bytes": 690553
+      "bytes": 681508,
+      "published_image_url": "https://raw.githubusercontent.com/caleblee789/Homescreen-Dashboard/main/docs/images/1.8.7/dashboard-themes-light.png?v=1eec4c53bdbc"
     }
   ],
-  "capture_package_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+  "capture_package_sha256": "8b617376758bac40d28329e517014021cb608be9bae36b4547edf89e07148b53",
   "current_published_package_sha256": "8b617376758bac40d28329e517014021cb608be9bae36b4547edf89e07148b53",
-  "reuse_basis": "These existing native captures show populated Month views with due indicators enabled. Theme definitions and dashboard CSS match the current published package byte for byte. The later due-indicator default and buried-count changes do not alter these sample theme presentations.",
-  "unchanged_theme_members": [
-    "themes.py",
-    "web/dashboard.css"
-  ],
-  "source_isolation_report": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/reports/isolation-gates.json",
+  "fresh_capture": "Eight newly captured native Anki Month views from the exact published archive, with future due indicators off by default, sample review history and statistics, and a visible upcoming event.",
+  "default_show_due_forecast": false,
+  "source_isolation_report": "home_dashboard_overhaul/qa/ankiweb-themes-2026-09-05-8b617376-defaults/isolation-gates.json",
   "edits": "Crop away Anki title bar, deck list, footer, and surrounding margins; resize proportionally; add theme and palette labels outside the screenshot. Dashboard pixels are not retouched.",
   "coordinate_system": "Physical source pixels [left, top, right, bottom], right and bottom exclusive.",
-  "new_anki_launch": false,
+  "new_anki_launch": true,
   "release_validation_claimed": false,
   "images": [
     {
@@ -49,19 +48,21 @@
       "gallery": "dark",
       "mode": "dark",
       "capture_id": "PROD-PAL-SG-AMETHYST-D",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-SG-AMETHYST-D.png",
-      "source_sha256": "e48b488acc912dfcafa7b0ffe480a643c35465d9a32343adea9148e234372b0a",
+      "source": "home_dashboard_overhaul/qa/ankiweb-themes-2026-09-05-8b617376-defaults/captures/PROD-PAL-SG-AMETHYST-D.png",
+      "source_sha256": "df6cfe4b640c041a66c5aef9b0ad59e4405511a4f9c86cb54fd7098309dc0f24",
       "crop_box_pixels": [
         548,
-        630,
+        566,
         2872,
-        1786
+        1720
       ],
       "sample_review_count": 186,
       "sample_last_seven_days_count": 1214,
       "sample_lifetime_count": 82640,
       "event": "Pediatrics review",
-      "calendar_event_markers": 1
+      "calendar_event_markers": 1,
+      "future_due_markers": 0,
+      "due_legend_visible": false
     },
     {
       "row": 1,
@@ -71,19 +72,21 @@
       "gallery": "dark",
       "mode": "dark",
       "capture_id": "PROD-PAL-EM-EMERALD-D",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-EM-EMERALD-D.png",
-      "source_sha256": "64c2b463520e31ec5a3d75b738fdb6dad3abbfcd482131534679f60d27144f98",
+      "source": "home_dashboard_overhaul/qa/ankiweb-themes-2026-09-05-8b617376-defaults/captures/PROD-PAL-EM-EMERALD-D.png",
+      "source_sha256": "7740bd67c681c6106f9a517f76d0979b0b883946083b81079873c46823801792",
       "crop_box_pixels": [
         548,
-        630,
+        566,
         2872,
-        1786
+        1720
       ],
       "sample_review_count": 186,
       "sample_last_seven_days_count": 1214,
       "sample_lifetime_count": 82640,
       "event": "Pediatrics review",
-      "calendar_event_markers": 1
+      "calendar_event_markers": 1,
+      "future_due_markers": 0,
+      "due_legend_visible": false
     },
     {
       "row": 2,
@@ -93,19 +96,21 @@
       "gallery": "dark",
       "mode": "dark",
       "capture_id": "PROD-PAL-GR-SLATE-D",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-GR-SLATE-D.png",
-      "source_sha256": "78d868a354967032e380f0b3e3396451127cf4a69ed03f537a82a793d473c4dc",
+      "source": "home_dashboard_overhaul/qa/ankiweb-themes-2026-09-05-8b617376-defaults/captures/PROD-PAL-GR-SLATE-D.png",
+      "source_sha256": "365de11d9064f0a7486c940674027c95775bef920e267bfc0deb590a921f52a5",
       "crop_box_pixels": [
         548,
-        630,
+        566,
         2872,
-        1786
+        1720
       ],
       "sample_review_count": 186,
       "sample_last_seven_days_count": 1214,
       "sample_lifetime_count": 82640,
       "event": "Pediatrics review",
-      "calendar_event_markers": 1
+      "calendar_event_markers": 1,
+      "future_due_markers": 0,
+      "due_legend_visible": false
     },
     {
       "row": 2,
@@ -115,19 +120,21 @@
       "gallery": "dark",
       "mode": "dark",
       "capture_id": "PROD-PAL-SG-GLACIER-D",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-SG-GLACIER-D.png",
-      "source_sha256": "7c9b67fb59b1f44f7524666341b80fa2e43775ce01d3fc52b0432d7e20457096",
+      "source": "home_dashboard_overhaul/qa/ankiweb-themes-2026-09-05-8b617376-defaults/captures/PROD-PAL-SG-GLACIER-D.png",
+      "source_sha256": "38f6a4f7f2bdd879fed0cc6b112446fcb2b1f446bb0be0509877149ab5ab69ac",
       "crop_box_pixels": [
         548,
-        630,
+        566,
         2872,
-        1786
+        1720
       ],
       "sample_review_count": 186,
       "sample_last_seven_days_count": 1214,
       "sample_lifetime_count": 82640,
       "event": "Pediatrics review",
-      "calendar_event_markers": 1
+      "calendar_event_markers": 1,
+      "future_due_markers": 0,
+      "due_legend_visible": false
     },
     {
       "row": 1,
@@ -137,19 +144,21 @@
       "gallery": "light",
       "mode": "light",
       "capture_id": "PROD-PAL-SG-GLACIER-L",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-SG-GLACIER-L.png",
-      "source_sha256": "3a447327f17b07afd25caeb0374ee49f1fb980c3f7828b0da4745a6d60393e4b",
+      "source": "home_dashboard_overhaul/qa/ankiweb-themes-2026-09-05-8b617376-defaults/captures/PROD-PAL-SG-GLACIER-L.png",
+      "source_sha256": "2f63fa995f6b53e73189d019dcdbacd7373365a7e6497dabd989f0ff6bcae173",
       "crop_box_pixels": [
         548,
-        630,
+        566,
         2872,
-        1786
+        1720
       ],
       "sample_review_count": 186,
       "sample_last_seven_days_count": 1214,
       "sample_lifetime_count": 82640,
       "event": "Pediatrics review",
-      "calendar_event_markers": 1
+      "calendar_event_markers": 1,
+      "future_due_markers": 0,
+      "due_legend_visible": false
     },
     {
       "row": 1,
@@ -159,19 +168,21 @@
       "gallery": "light",
       "mode": "light",
       "capture_id": "PROD-PAL-GR-PLUM-L",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-GR-PLUM-L.png",
-      "source_sha256": "512902b0876ddfd82700ef0a0053185faf031f2edcac089f7d0965dceaf230a1",
+      "source": "home_dashboard_overhaul/qa/ankiweb-themes-2026-09-05-8b617376-defaults/captures/PROD-PAL-GR-PLUM-L.png",
+      "source_sha256": "d8cf587c61b67db110f21e013b1bbc0fe6627cb1096b61a4c2272774aaeea8c7",
       "crop_box_pixels": [
         548,
-        630,
+        566,
         2872,
-        1786
+        1720
       ],
       "sample_review_count": 186,
       "sample_last_seven_days_count": 1214,
       "sample_lifetime_count": 82640,
       "event": "Pediatrics review",
-      "calendar_event_markers": 1
+      "calendar_event_markers": 1,
+      "future_due_markers": 0,
+      "due_legend_visible": false
     },
     {
       "row": 2,
@@ -181,19 +192,21 @@
       "gallery": "light",
       "mode": "light",
       "capture_id": "PROD-PAL-EM-JADE-L",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-EM-JADE-L.png",
-      "source_sha256": "ff1cdbab9af63a6f7129e2479b64e37e8234ccf2e50f2b7742e83630efeaf74f",
+      "source": "home_dashboard_overhaul/qa/ankiweb-themes-2026-09-05-8b617376-defaults/captures/PROD-PAL-EM-JADE-L.png",
+      "source_sha256": "9bbe14af9043a8f43615aaab89e4aa07b4721918a1a0950f79e0ed1a93bf1f45",
       "crop_box_pixels": [
         548,
-        630,
+        566,
         2872,
-        1786
+        1720
       ],
       "sample_review_count": 186,
       "sample_last_seven_days_count": 1214,
       "sample_lifetime_count": 82640,
       "event": "Pediatrics review",
-      "calendar_event_markers": 1
+      "calendar_event_markers": 1,
+      "future_due_markers": 0,
+      "due_legend_visible": false
     },
     {
       "row": 2,
@@ -203,19 +216,22 @@
       "gallery": "light",
       "mode": "light",
       "capture_id": "PROD-PAL-EM-LAGOON-L",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-EM-LAGOON-L.png",
-      "source_sha256": "8266b9601f91e7f00be38d3c126185f61e7c12c4b076a0e40b42e0b14f5fe830",
+      "source": "home_dashboard_overhaul/qa/ankiweb-themes-2026-09-05-8b617376-defaults/captures/PROD-PAL-EM-LAGOON-L.png",
+      "source_sha256": "aefd57498d62d3be3053201ecbcb0e7b378bdb1992ddcdc9d064c4c92a669a66",
       "crop_box_pixels": [
         548,
-        630,
+        566,
         2872,
-        1786
+        1720
       ],
       "sample_review_count": 186,
       "sample_last_seven_days_count": 1214,
       "sample_lifetime_count": 82640,
       "event": "Pediatrics review",
-      "calendar_event_markers": 1
+      "calendar_event_markers": 1,
+      "future_due_markers": 0,
+      "due_legend_visible": false
     }
-  ]
+  ],
+  "visual_review": "Both 2x2 galleries inspected: all eight native dashboard crops complete, future-day due indicators absent, nonzero statistics and upcoming event visible."
 }

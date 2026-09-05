@@ -1,0 +1,2243 @@
+{
+  "authority": "eight-native-ankiweb-presentation-captures",
+  "capture_completion_status": "complete",
+  "capture_plan": {
+    "profile": "full",
+    "profile_counts": {
+      "initial": 8,
+      "restart": 0,
+      "total": 8
+    },
+    "schema_version": 1,
+    "selected_capture_ids": [
+      "PROD-PAL-SG-AMETHYST-D",
+      "PROD-PAL-SG-GLACIER-L",
+      "PROD-PAL-SG-GLACIER-D",
+      "PROD-PAL-GR-SLATE-D",
+      "PROD-PAL-GR-PLUM-L",
+      "PROD-PAL-EM-EMERALD-D",
+      "PROD-PAL-EM-JADE-L",
+      "PROD-PAL-EM-LAGOON-L"
+    ],
+    "sha256": "2e202fd31ee4ee2ee5188d8c82e73fc5e104e739b0a3dd31e4015619efb57ed6"
+  },
+  "capture_profile": {
+    "description": "Complete release contract across every production and Settings state.",
+    "full_screen": false,
+    "id": "full",
+    "resolved_counts": {
+      "initial": 8,
+      "restart": 0,
+      "total": 8
+    }
+  },
+  "captures": {
+    "PROD-PAL-EM-EMERALD-D": {
+      "capture_method": "QMainWindow.grab-isolated-native-gallery",
+      "dashboard_container_width": 1160,
+      "density": "wide",
+      "device_pixel_ratio": 2.0,
+      "dom": {
+        "bible": {
+          "bottom": 823.609375,
+          "height": 210.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 613,
+          "width": 360
+        },
+        "bodyBackgroundImage": "none",
+        "bodyOverflowX": 0,
+        "calendar": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1061,
+          "top": 249,
+          "width": 786
+        },
+        "calendarCellCount": 42,
+        "completionCount": 27,
+        "componentOverflowX": 0,
+        "controlHeights": [
+          30,
+          30,
+          30,
+          30,
+          30,
+          32
+        ],
+        "deckDashboardGap": 30,
+        "deckGapAnchor": {
+          "className": "",
+          "id": "",
+          "tag": "BR"
+        },
+        "density": "wide",
+        "documentBottomReached": true,
+        "documentOverflowX": 0,
+        "documentScrollMaximum": 0,
+        "documentScrollPaddingBlockEnd": "54px",
+        "dueLegendCount": 0,
+        "dueMarkerCount": 1,
+        "equalStatisticCardGeometry": true,
+        "eventLegendCount": 1,
+        "eventMarkerCount": 1,
+        "eventSummaryCount": 1,
+        "eventText": "Next eventPediatrics reviewThu, Sep 3 \u00b7 in 11 daysEditNo upcoming events",
+        "footerClearance": 54,
+        "footerClearanceSource": "measured",
+        "frame": {
+          "bottom": 613.171875,
+          "height": 252,
+          "left": 305,
+          "right": 1031,
+          "top": 361.171875,
+          "width": 726
+        },
+        "futureDueMarkerCount": 0,
+        "hostBackgroundClass": "",
+        "hostPreserved": "true",
+        "layout": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "layoutColumnGap": 14,
+        "layoutSideBySide": true,
+        "layoutStacked": false,
+        "loading": false,
+        "metricMinimumGap": 10,
+        "metricOrder": {
+          "hdo-all-time": [
+            "long_term.lifetime_cards_studied",
+            "long_term.average_reviews_per_active_day",
+            "long_term.lifetime_retention",
+            "long_term.current_streak",
+            "long_term.longest_streak"
+          ],
+          "hdo-last-seven": [
+            "last_seven_days.cards_studied",
+            "last_seven_days.average_cards_per_day",
+            "last_seven_days.retention",
+            "last_seven_days.new_cards_studied",
+            "last_seven_days.time_spent"
+          ],
+          "hdo-progress": [
+            "progress.initial_cards_due",
+            "queue.total",
+            "queue.new",
+            "queue.learning",
+            "queue.review"
+          ],
+          "hdo-session": [
+            "today.answers",
+            "today.new_cards_studied",
+            "today.cards_buried",
+            "today.time_spent",
+            "today.pace",
+            "queue.eta"
+          ]
+        },
+        "metricTextSingleLine": true,
+        "metricValues": {
+          "last_seven_days.average_cards_per_day": "173",
+          "last_seven_days.cards_studied": "1,214",
+          "last_seven_days.new_cards_studied": "148",
+          "last_seven_days.retention": "83%",
+          "last_seven_days.time_spent": "8 hr8h",
+          "long_term.average_reviews_per_active_day": "214",
+          "long_term.current_streak": "19 days",
+          "long_term.lifetime_cards_studied": "82,640",
+          "long_term.lifetime_retention": "83%",
+          "long_term.longest_streak": "73 days",
+          "progress.initial_cards_due": "310",
+          "queue.eta": "3:20 PM",
+          "queue.learning": "14",
+          "queue.new": "32",
+          "queue.review": "78",
+          "queue.total": "124",
+          "today.answers": "186",
+          "today.cards_buried": "7",
+          "today.new_cards_studied": "14",
+          "today.pace": "26.5 sec/card",
+          "today.time_spent": "1 hr 22 min1h 22m"
+        },
+        "metricsGrid": {
+          "bottom": 601,
+          "height": 352,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "mode": "dark",
+        "monthBottomDelta": 0,
+        "monthRows": "6",
+        "nativeFooterHeight": 30,
+        "nativeWebOffsetInFrame": {
+          "x": 0,
+          "y": 67
+        },
+        "nonSelectedCellShadowCount": 0,
+        "progressBarToMetricsGap": 10,
+        "progressHeaderToBarGap": 8,
+        "progressLabel": "60% complete",
+        "progressLabelCentered": true,
+        "progressLabelPadding": 6,
+        "progressTrackHeight": 18,
+        "progressTrackVisible": true,
+        "rail": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "railWidth": 360,
+        "ready": true,
+        "root": {
+          "bottom": 877.609375,
+          "height": 628.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "rootBackground": "rgba(0, 0, 0, 0)",
+        "rootMarginTop": "30px",
+        "rootPaddingBottom": "54px",
+        "rootPosition": "relative",
+        "rootScrollOwner": "documentElement",
+        "sectionsBelow": false,
+        "selectedBoxShadow": "rgb(120, 224, 170) 0px 0px 0px 2px inset",
+        "selectedCount": 1,
+        "showDueForecast": false,
+        "statisticColumnCount": 2,
+        "statisticColumns": "174px 174px",
+        "statisticRowCount": 2,
+        "statisticsCardCount": 4,
+        "theme": "Emerald",
+        "titleFontSize": "18px",
+        "todayCount": 1,
+        "topEdgeDelta": 0,
+        "verseColor": "rgb(242, 247, 244)",
+        "verseFontFamily": "Georgia, serif, Georgia, serif",
+        "verseFontSize": "28px",
+        "view": "month",
+        "yearBottomDelta": 222.609375,
+        "yearCellHeightMax": 0,
+        "yearCellHeightMin": 0,
+        "yearCellWidthMax": 0,
+        "yearCellWidthMin": 0,
+        "yearCellsSquare": true,
+        "yearFrameOverflowX": 0,
+        "yearFrameScrollLeft": 0,
+        "yearGridInsideFrame": true,
+        "yearHeatmapWidthRatio": 0,
+        "yearMonthLabels": [],
+        "yearWeekdayLabels": [],
+        "yearWeeks": ""
+      },
+      "file": "captures/PROD-PAL-EM-EMERALD-D.png",
+      "fixture": "populated",
+      "layout": "wide",
+      "logical_frame": {
+        "height": 1073,
+        "width": 1710,
+        "x": 0,
+        "y": 34
+      },
+      "mode": "dark",
+      "native_window_dimensions": [
+        1710,
+        1073
+      ],
+      "physical_pixels": [
+        3420,
+        2082
+      ],
+      "production_deck_browser_mount": true,
+      "sampled_color_count": 24,
+      "sha256": "7740bd67c681c6106f9a517f76d0979b0b883946083b81079873c46823801792",
+      "state_label": "",
+      "tags": [
+        "palette",
+        "production_month_tree",
+        "ankiweb-presentation",
+        "future-due-default-off"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "month",
+      "window_title": "Codex QA HDO 1.8.7 Gallery Defaults 20260905 v2 - Anki",
+      "window_title_matches_profile": true
+    },
+    "PROD-PAL-EM-JADE-L": {
+      "capture_method": "QMainWindow.grab-isolated-native-gallery",
+      "dashboard_container_width": 1160,
+      "density": "wide",
+      "device_pixel_ratio": 2.0,
+      "dom": {
+        "bible": {
+          "bottom": 823.609375,
+          "height": 210.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 613,
+          "width": 360
+        },
+        "bodyBackgroundImage": "none",
+        "bodyOverflowX": 0,
+        "calendar": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1061,
+          "top": 249,
+          "width": 786
+        },
+        "calendarCellCount": 42,
+        "completionCount": 27,
+        "componentOverflowX": 0,
+        "controlHeights": [
+          30,
+          30,
+          30,
+          30,
+          30,
+          32
+        ],
+        "deckDashboardGap": 30,
+        "deckGapAnchor": {
+          "className": "",
+          "id": "",
+          "tag": "BR"
+        },
+        "density": "wide",
+        "documentBottomReached": true,
+        "documentOverflowX": 0,
+        "documentScrollMaximum": 0,
+        "documentScrollPaddingBlockEnd": "54px",
+        "dueLegendCount": 0,
+        "dueMarkerCount": 1,
+        "equalStatisticCardGeometry": true,
+        "eventLegendCount": 1,
+        "eventMarkerCount": 1,
+        "eventSummaryCount": 1,
+        "eventText": "Next eventPediatrics reviewThu, Sep 3 \u00b7 in 11 daysEditNo upcoming events",
+        "footerClearance": 54,
+        "footerClearanceSource": "measured",
+        "frame": {
+          "bottom": 613.171875,
+          "height": 252,
+          "left": 305,
+          "right": 1031,
+          "top": 361.171875,
+          "width": 726
+        },
+        "futureDueMarkerCount": 0,
+        "hostBackgroundClass": "",
+        "hostPreserved": "true",
+        "layout": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "layoutColumnGap": 14,
+        "layoutSideBySide": true,
+        "layoutStacked": false,
+        "loading": false,
+        "metricMinimumGap": 10,
+        "metricOrder": {
+          "hdo-all-time": [
+            "long_term.lifetime_cards_studied",
+            "long_term.average_reviews_per_active_day",
+            "long_term.lifetime_retention",
+            "long_term.current_streak",
+            "long_term.longest_streak"
+          ],
+          "hdo-last-seven": [
+            "last_seven_days.cards_studied",
+            "last_seven_days.average_cards_per_day",
+            "last_seven_days.retention",
+            "last_seven_days.new_cards_studied",
+            "last_seven_days.time_spent"
+          ],
+          "hdo-progress": [
+            "progress.initial_cards_due",
+            "queue.total",
+            "queue.new",
+            "queue.learning",
+            "queue.review"
+          ],
+          "hdo-session": [
+            "today.answers",
+            "today.new_cards_studied",
+            "today.cards_buried",
+            "today.time_spent",
+            "today.pace",
+            "queue.eta"
+          ]
+        },
+        "metricTextSingleLine": true,
+        "metricValues": {
+          "last_seven_days.average_cards_per_day": "173",
+          "last_seven_days.cards_studied": "1,214",
+          "last_seven_days.new_cards_studied": "148",
+          "last_seven_days.retention": "83%",
+          "last_seven_days.time_spent": "8 hr8h",
+          "long_term.average_reviews_per_active_day": "214",
+          "long_term.current_streak": "19 days",
+          "long_term.lifetime_cards_studied": "82,640",
+          "long_term.lifetime_retention": "83%",
+          "long_term.longest_streak": "73 days",
+          "progress.initial_cards_due": "310",
+          "queue.eta": "3:20 PM",
+          "queue.learning": "14",
+          "queue.new": "32",
+          "queue.review": "78",
+          "queue.total": "124",
+          "today.answers": "186",
+          "today.cards_buried": "7",
+          "today.new_cards_studied": "14",
+          "today.pace": "26.5 sec/card",
+          "today.time_spent": "1 hr 22 min1h 22m"
+        },
+        "metricsGrid": {
+          "bottom": 601,
+          "height": 352,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "mode": "light",
+        "monthBottomDelta": 0,
+        "monthRows": "6",
+        "nativeFooterHeight": 30,
+        "nativeWebOffsetInFrame": {
+          "x": 0,
+          "y": 67
+        },
+        "nonSelectedCellShadowCount": 0,
+        "progressBarToMetricsGap": 10,
+        "progressHeaderToBarGap": 8,
+        "progressLabel": "60% complete",
+        "progressLabelCentered": true,
+        "progressLabelPadding": 6,
+        "progressTrackHeight": 18,
+        "progressTrackVisible": true,
+        "rail": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "railWidth": 360,
+        "ready": true,
+        "root": {
+          "bottom": 877.609375,
+          "height": 628.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "rootBackground": "rgba(0, 0, 0, 0)",
+        "rootMarginTop": "30px",
+        "rootPaddingBottom": "54px",
+        "rootPosition": "relative",
+        "rootScrollOwner": "documentElement",
+        "sectionsBelow": false,
+        "selectedBoxShadow": "rgb(68, 166, 123) 0px 0px 0px 2px inset",
+        "selectedCount": 1,
+        "showDueForecast": false,
+        "statisticColumnCount": 2,
+        "statisticColumns": "174px 174px",
+        "statisticRowCount": 2,
+        "statisticsCardCount": 4,
+        "theme": "Emerald",
+        "titleFontSize": "18px",
+        "todayCount": 1,
+        "topEdgeDelta": 0,
+        "verseColor": "rgb(23, 35, 28)",
+        "verseFontFamily": "Georgia, serif, Georgia, serif",
+        "verseFontSize": "28px",
+        "view": "month",
+        "yearBottomDelta": 222.609375,
+        "yearCellHeightMax": 0,
+        "yearCellHeightMin": 0,
+        "yearCellWidthMax": 0,
+        "yearCellWidthMin": 0,
+        "yearCellsSquare": true,
+        "yearFrameOverflowX": 0,
+        "yearFrameScrollLeft": 0,
+        "yearGridInsideFrame": true,
+        "yearHeatmapWidthRatio": 0,
+        "yearMonthLabels": [],
+        "yearWeekdayLabels": [],
+        "yearWeeks": ""
+      },
+      "file": "captures/PROD-PAL-EM-JADE-L.png",
+      "fixture": "populated",
+      "layout": "wide",
+      "logical_frame": {
+        "height": 1073,
+        "width": 1710,
+        "x": 0,
+        "y": 34
+      },
+      "mode": "light",
+      "native_window_dimensions": [
+        1710,
+        1073
+      ],
+      "physical_pixels": [
+        3420,
+        2082
+      ],
+      "production_deck_browser_mount": true,
+      "sampled_color_count": 23,
+      "sha256": "9bbe14af9043a8f43615aaab89e4aa07b4721918a1a0950f79e0ed1a93bf1f45",
+      "state_label": "",
+      "tags": [
+        "palette",
+        "production_month_tree",
+        "ankiweb-presentation",
+        "future-due-default-off"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "month",
+      "window_title": "Codex QA HDO 1.8.7 Gallery Defaults 20260905 v2 - Anki",
+      "window_title_matches_profile": true
+    },
+    "PROD-PAL-EM-LAGOON-L": {
+      "capture_method": "QMainWindow.grab-isolated-native-gallery",
+      "dashboard_container_width": 1160,
+      "density": "wide",
+      "device_pixel_ratio": 2.0,
+      "dom": {
+        "bible": {
+          "bottom": 823.609375,
+          "height": 210.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 613,
+          "width": 360
+        },
+        "bodyBackgroundImage": "none",
+        "bodyOverflowX": 0,
+        "calendar": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1061,
+          "top": 249,
+          "width": 786
+        },
+        "calendarCellCount": 42,
+        "completionCount": 27,
+        "componentOverflowX": 0,
+        "controlHeights": [
+          30,
+          30,
+          30,
+          30,
+          30,
+          32
+        ],
+        "deckDashboardGap": 30,
+        "deckGapAnchor": {
+          "className": "",
+          "id": "",
+          "tag": "BR"
+        },
+        "density": "wide",
+        "documentBottomReached": true,
+        "documentOverflowX": 0,
+        "documentScrollMaximum": 0,
+        "documentScrollPaddingBlockEnd": "54px",
+        "dueLegendCount": 0,
+        "dueMarkerCount": 1,
+        "equalStatisticCardGeometry": true,
+        "eventLegendCount": 1,
+        "eventMarkerCount": 1,
+        "eventSummaryCount": 1,
+        "eventText": "Next eventPediatrics reviewThu, Sep 3 \u00b7 in 11 daysEditNo upcoming events",
+        "footerClearance": 54,
+        "footerClearanceSource": "measured",
+        "frame": {
+          "bottom": 613.171875,
+          "height": 252,
+          "left": 305,
+          "right": 1031,
+          "top": 361.171875,
+          "width": 726
+        },
+        "futureDueMarkerCount": 0,
+        "hostBackgroundClass": "",
+        "hostPreserved": "true",
+        "layout": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "layoutColumnGap": 14,
+        "layoutSideBySide": true,
+        "layoutStacked": false,
+        "loading": false,
+        "metricMinimumGap": 10,
+        "metricOrder": {
+          "hdo-all-time": [
+            "long_term.lifetime_cards_studied",
+            "long_term.average_reviews_per_active_day",
+            "long_term.lifetime_retention",
+            "long_term.current_streak",
+            "long_term.longest_streak"
+          ],
+          "hdo-last-seven": [
+            "last_seven_days.cards_studied",
+            "last_seven_days.average_cards_per_day",
+            "last_seven_days.retention",
+            "last_seven_days.new_cards_studied",
+            "last_seven_days.time_spent"
+          ],
+          "hdo-progress": [
+            "progress.initial_cards_due",
+            "queue.total",
+            "queue.new",
+            "queue.learning",
+            "queue.review"
+          ],
+          "hdo-session": [
+            "today.answers",
+            "today.new_cards_studied",
+            "today.cards_buried",
+            "today.time_spent",
+            "today.pace",
+            "queue.eta"
+          ]
+        },
+        "metricTextSingleLine": true,
+        "metricValues": {
+          "last_seven_days.average_cards_per_day": "173",
+          "last_seven_days.cards_studied": "1,214",
+          "last_seven_days.new_cards_studied": "148",
+          "last_seven_days.retention": "83%",
+          "last_seven_days.time_spent": "8 hr8h",
+          "long_term.average_reviews_per_active_day": "214",
+          "long_term.current_streak": "19 days",
+          "long_term.lifetime_cards_studied": "82,640",
+          "long_term.lifetime_retention": "83%",
+          "long_term.longest_streak": "73 days",
+          "progress.initial_cards_due": "310",
+          "queue.eta": "3:20 PM",
+          "queue.learning": "14",
+          "queue.new": "32",
+          "queue.review": "78",
+          "queue.total": "124",
+          "today.answers": "186",
+          "today.cards_buried": "7",
+          "today.new_cards_studied": "14",
+          "today.pace": "26.5 sec/card",
+          "today.time_spent": "1 hr 22 min1h 22m"
+        },
+        "metricsGrid": {
+          "bottom": 601,
+          "height": 352,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "mode": "light",
+        "monthBottomDelta": 0,
+        "monthRows": "6",
+        "nativeFooterHeight": 30,
+        "nativeWebOffsetInFrame": {
+          "x": 0,
+          "y": 67
+        },
+        "nonSelectedCellShadowCount": 0,
+        "progressBarToMetricsGap": 10,
+        "progressHeaderToBarGap": 8,
+        "progressLabel": "60% complete",
+        "progressLabelCentered": true,
+        "progressLabelPadding": 6,
+        "progressTrackHeight": 18,
+        "progressTrackVisible": true,
+        "rail": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "railWidth": 360,
+        "ready": true,
+        "root": {
+          "bottom": 877.609375,
+          "height": 628.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "rootBackground": "rgba(0, 0, 0, 0)",
+        "rootMarginTop": "30px",
+        "rootPaddingBottom": "54px",
+        "rootPosition": "relative",
+        "rootScrollOwner": "documentElement",
+        "sectionsBelow": false,
+        "selectedBoxShadow": "rgb(68, 166, 123) 0px 0px 0px 2px inset",
+        "selectedCount": 1,
+        "showDueForecast": false,
+        "statisticColumnCount": 2,
+        "statisticColumns": "174px 174px",
+        "statisticRowCount": 2,
+        "statisticsCardCount": 4,
+        "theme": "Emerald",
+        "titleFontSize": "18px",
+        "todayCount": 1,
+        "topEdgeDelta": 0,
+        "verseColor": "rgb(23, 35, 28)",
+        "verseFontFamily": "Georgia, serif, Georgia, serif",
+        "verseFontSize": "28px",
+        "view": "month",
+        "yearBottomDelta": 222.609375,
+        "yearCellHeightMax": 0,
+        "yearCellHeightMin": 0,
+        "yearCellWidthMax": 0,
+        "yearCellWidthMin": 0,
+        "yearCellsSquare": true,
+        "yearFrameOverflowX": 0,
+        "yearFrameScrollLeft": 0,
+        "yearGridInsideFrame": true,
+        "yearHeatmapWidthRatio": 0,
+        "yearMonthLabels": [],
+        "yearWeekdayLabels": [],
+        "yearWeeks": ""
+      },
+      "file": "captures/PROD-PAL-EM-LAGOON-L.png",
+      "fixture": "populated",
+      "layout": "wide",
+      "logical_frame": {
+        "height": 1073,
+        "width": 1710,
+        "x": 0,
+        "y": 34
+      },
+      "mode": "light",
+      "native_window_dimensions": [
+        1710,
+        1073
+      ],
+      "physical_pixels": [
+        3420,
+        2082
+      ],
+      "production_deck_browser_mount": true,
+      "sampled_color_count": 23,
+      "sha256": "aefd57498d62d3be3053201ecbcb0e7b378bdb1992ddcdc9d064c4c92a669a66",
+      "state_label": "",
+      "tags": [
+        "palette",
+        "production_month_tree",
+        "ankiweb-presentation",
+        "future-due-default-off"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Emerald",
+      "ui_scale_percent": 100,
+      "view": "month",
+      "window_title": "Codex QA HDO 1.8.7 Gallery Defaults 20260905 v2 - Anki",
+      "window_title_matches_profile": true
+    },
+    "PROD-PAL-GR-PLUM-L": {
+      "capture_method": "QMainWindow.grab-isolated-native-gallery",
+      "dashboard_container_width": 1160,
+      "density": "wide",
+      "device_pixel_ratio": 2.0,
+      "dom": {
+        "bible": {
+          "bottom": 823.609375,
+          "height": 210.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 613,
+          "width": 360
+        },
+        "bodyBackgroundImage": "none",
+        "bodyOverflowX": 0,
+        "calendar": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1061,
+          "top": 249,
+          "width": 786
+        },
+        "calendarCellCount": 42,
+        "completionCount": 27,
+        "componentOverflowX": 0,
+        "controlHeights": [
+          30,
+          30,
+          30,
+          30,
+          30,
+          32
+        ],
+        "deckDashboardGap": 30,
+        "deckGapAnchor": {
+          "className": "",
+          "id": "",
+          "tag": "BR"
+        },
+        "density": "wide",
+        "documentBottomReached": true,
+        "documentOverflowX": 0,
+        "documentScrollMaximum": 0,
+        "documentScrollPaddingBlockEnd": "54px",
+        "dueLegendCount": 0,
+        "dueMarkerCount": 1,
+        "equalStatisticCardGeometry": true,
+        "eventLegendCount": 1,
+        "eventMarkerCount": 1,
+        "eventSummaryCount": 1,
+        "eventText": "Next eventPediatrics reviewThu, Sep 3 \u00b7 in 11 daysEditNo upcoming events",
+        "footerClearance": 54,
+        "footerClearanceSource": "measured",
+        "frame": {
+          "bottom": 613.171875,
+          "height": 252,
+          "left": 305,
+          "right": 1031,
+          "top": 361.171875,
+          "width": 726
+        },
+        "futureDueMarkerCount": 0,
+        "hostBackgroundClass": "",
+        "hostPreserved": "true",
+        "layout": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "layoutColumnGap": 14,
+        "layoutSideBySide": true,
+        "layoutStacked": false,
+        "loading": false,
+        "metricMinimumGap": 10,
+        "metricOrder": {
+          "hdo-all-time": [
+            "long_term.lifetime_cards_studied",
+            "long_term.average_reviews_per_active_day",
+            "long_term.lifetime_retention",
+            "long_term.current_streak",
+            "long_term.longest_streak"
+          ],
+          "hdo-last-seven": [
+            "last_seven_days.cards_studied",
+            "last_seven_days.average_cards_per_day",
+            "last_seven_days.retention",
+            "last_seven_days.new_cards_studied",
+            "last_seven_days.time_spent"
+          ],
+          "hdo-progress": [
+            "progress.initial_cards_due",
+            "queue.total",
+            "queue.new",
+            "queue.learning",
+            "queue.review"
+          ],
+          "hdo-session": [
+            "today.answers",
+            "today.new_cards_studied",
+            "today.cards_buried",
+            "today.time_spent",
+            "today.pace",
+            "queue.eta"
+          ]
+        },
+        "metricTextSingleLine": true,
+        "metricValues": {
+          "last_seven_days.average_cards_per_day": "173",
+          "last_seven_days.cards_studied": "1,214",
+          "last_seven_days.new_cards_studied": "148",
+          "last_seven_days.retention": "83%",
+          "last_seven_days.time_spent": "8 hr8h",
+          "long_term.average_reviews_per_active_day": "214",
+          "long_term.current_streak": "19 days",
+          "long_term.lifetime_cards_studied": "82,640",
+          "long_term.lifetime_retention": "83%",
+          "long_term.longest_streak": "73 days",
+          "progress.initial_cards_due": "310",
+          "queue.eta": "3:20 PM",
+          "queue.learning": "14",
+          "queue.new": "32",
+          "queue.review": "78",
+          "queue.total": "124",
+          "today.answers": "186",
+          "today.cards_buried": "7",
+          "today.new_cards_studied": "14",
+          "today.pace": "26.5 sec/card",
+          "today.time_spent": "1 hr 22 min1h 22m"
+        },
+        "metricsGrid": {
+          "bottom": 601,
+          "height": 352,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "mode": "light",
+        "monthBottomDelta": 0,
+        "monthRows": "6",
+        "nativeFooterHeight": 30,
+        "nativeWebOffsetInFrame": {
+          "x": 0,
+          "y": 67
+        },
+        "nonSelectedCellShadowCount": 0,
+        "progressBarToMetricsGap": 10,
+        "progressHeaderToBarGap": 8,
+        "progressLabel": "60% complete",
+        "progressLabelCentered": true,
+        "progressLabelPadding": 6,
+        "progressTrackHeight": 18,
+        "progressTrackVisible": true,
+        "rail": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "railWidth": 360,
+        "ready": true,
+        "root": {
+          "bottom": 877.609375,
+          "height": 628.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "rootBackground": "rgba(0, 0, 0, 0)",
+        "rootMarginTop": "30px",
+        "rootPaddingBottom": "54px",
+        "rootPosition": "relative",
+        "rootScrollOwner": "documentElement",
+        "sectionsBelow": false,
+        "selectedBoxShadow": "rgb(86, 107, 128) 0px 0px 0px 2px inset",
+        "selectedCount": 1,
+        "showDueForecast": false,
+        "statisticColumnCount": 2,
+        "statisticColumns": "174px 174px",
+        "statisticRowCount": 2,
+        "statisticsCardCount": 4,
+        "theme": "Graphite",
+        "titleFontSize": "18px",
+        "todayCount": 1,
+        "topEdgeDelta": 0,
+        "verseColor": "rgb(25, 28, 32)",
+        "verseFontFamily": "Georgia, serif, Georgia, serif",
+        "verseFontSize": "28px",
+        "view": "month",
+        "yearBottomDelta": 222.609375,
+        "yearCellHeightMax": 0,
+        "yearCellHeightMin": 0,
+        "yearCellWidthMax": 0,
+        "yearCellWidthMin": 0,
+        "yearCellsSquare": true,
+        "yearFrameOverflowX": 0,
+        "yearFrameScrollLeft": 0,
+        "yearGridInsideFrame": true,
+        "yearHeatmapWidthRatio": 0,
+        "yearMonthLabels": [],
+        "yearWeekdayLabels": [],
+        "yearWeeks": ""
+      },
+      "file": "captures/PROD-PAL-GR-PLUM-L.png",
+      "fixture": "populated",
+      "layout": "wide",
+      "logical_frame": {
+        "height": 1073,
+        "width": 1710,
+        "x": 0,
+        "y": 34
+      },
+      "mode": "light",
+      "native_window_dimensions": [
+        1710,
+        1073
+      ],
+      "physical_pixels": [
+        3420,
+        2082
+      ],
+      "production_deck_browser_mount": true,
+      "sampled_color_count": 24,
+      "sha256": "d8cf587c61b67db110f21e013b1bbc0fe6627cb1096b61a4c2272774aaeea8c7",
+      "state_label": "",
+      "tags": [
+        "palette",
+        "production_month_tree",
+        "ankiweb-presentation",
+        "future-due-default-off"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "month",
+      "window_title": "Codex QA HDO 1.8.7 Gallery Defaults 20260905 v2 - Anki",
+      "window_title_matches_profile": true
+    },
+    "PROD-PAL-GR-SLATE-D": {
+      "capture_method": "QMainWindow.grab-isolated-native-gallery",
+      "dashboard_container_width": 1160,
+      "density": "wide",
+      "device_pixel_ratio": 2.0,
+      "dom": {
+        "bible": {
+          "bottom": 823.609375,
+          "height": 210.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 613,
+          "width": 360
+        },
+        "bodyBackgroundImage": "none",
+        "bodyOverflowX": 0,
+        "calendar": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1061,
+          "top": 249,
+          "width": 786
+        },
+        "calendarCellCount": 42,
+        "completionCount": 27,
+        "componentOverflowX": 0,
+        "controlHeights": [
+          30,
+          30,
+          30,
+          30,
+          30,
+          32
+        ],
+        "deckDashboardGap": 30,
+        "deckGapAnchor": {
+          "className": "",
+          "id": "",
+          "tag": "BR"
+        },
+        "density": "wide",
+        "documentBottomReached": true,
+        "documentOverflowX": 0,
+        "documentScrollMaximum": 0,
+        "documentScrollPaddingBlockEnd": "54px",
+        "dueLegendCount": 0,
+        "dueMarkerCount": 1,
+        "equalStatisticCardGeometry": true,
+        "eventLegendCount": 1,
+        "eventMarkerCount": 1,
+        "eventSummaryCount": 1,
+        "eventText": "Next eventPediatrics reviewThu, Sep 3 \u00b7 in 11 daysEditNo upcoming events",
+        "footerClearance": 54,
+        "footerClearanceSource": "measured",
+        "frame": {
+          "bottom": 613.171875,
+          "height": 252,
+          "left": 305,
+          "right": 1031,
+          "top": 361.171875,
+          "width": 726
+        },
+        "futureDueMarkerCount": 0,
+        "hostBackgroundClass": "",
+        "hostPreserved": "true",
+        "layout": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "layoutColumnGap": 14,
+        "layoutSideBySide": true,
+        "layoutStacked": false,
+        "loading": false,
+        "metricMinimumGap": 10,
+        "metricOrder": {
+          "hdo-all-time": [
+            "long_term.lifetime_cards_studied",
+            "long_term.average_reviews_per_active_day",
+            "long_term.lifetime_retention",
+            "long_term.current_streak",
+            "long_term.longest_streak"
+          ],
+          "hdo-last-seven": [
+            "last_seven_days.cards_studied",
+            "last_seven_days.average_cards_per_day",
+            "last_seven_days.retention",
+            "last_seven_days.new_cards_studied",
+            "last_seven_days.time_spent"
+          ],
+          "hdo-progress": [
+            "progress.initial_cards_due",
+            "queue.total",
+            "queue.new",
+            "queue.learning",
+            "queue.review"
+          ],
+          "hdo-session": [
+            "today.answers",
+            "today.new_cards_studied",
+            "today.cards_buried",
+            "today.time_spent",
+            "today.pace",
+            "queue.eta"
+          ]
+        },
+        "metricTextSingleLine": true,
+        "metricValues": {
+          "last_seven_days.average_cards_per_day": "173",
+          "last_seven_days.cards_studied": "1,214",
+          "last_seven_days.new_cards_studied": "148",
+          "last_seven_days.retention": "83%",
+          "last_seven_days.time_spent": "8 hr8h",
+          "long_term.average_reviews_per_active_day": "214",
+          "long_term.current_streak": "19 days",
+          "long_term.lifetime_cards_studied": "82,640",
+          "long_term.lifetime_retention": "83%",
+          "long_term.longest_streak": "73 days",
+          "progress.initial_cards_due": "310",
+          "queue.eta": "3:20 PM",
+          "queue.learning": "14",
+          "queue.new": "32",
+          "queue.review": "78",
+          "queue.total": "124",
+          "today.answers": "186",
+          "today.cards_buried": "7",
+          "today.new_cards_studied": "14",
+          "today.pace": "26.5 sec/card",
+          "today.time_spent": "1 hr 22 min1h 22m"
+        },
+        "metricsGrid": {
+          "bottom": 601,
+          "height": 352,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "mode": "dark",
+        "monthBottomDelta": 0,
+        "monthRows": "6",
+        "nativeFooterHeight": 30,
+        "nativeWebOffsetInFrame": {
+          "x": 0,
+          "y": 67
+        },
+        "nonSelectedCellShadowCount": 0,
+        "progressBarToMetricsGap": 10,
+        "progressHeaderToBarGap": 8,
+        "progressLabel": "60% complete",
+        "progressLabelCentered": true,
+        "progressLabelPadding": 6,
+        "progressTrackHeight": 18,
+        "progressTrackVisible": true,
+        "rail": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "railWidth": 360,
+        "ready": true,
+        "root": {
+          "bottom": 877.609375,
+          "height": 628.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "rootBackground": "rgba(0, 0, 0, 0)",
+        "rootMarginTop": "30px",
+        "rootPaddingBottom": "54px",
+        "rootPosition": "relative",
+        "rootScrollOwner": "documentElement",
+        "sectionsBelow": false,
+        "selectedBoxShadow": "rgb(124, 178, 240) 0px 0px 0px 2px inset",
+        "selectedCount": 1,
+        "showDueForecast": false,
+        "statisticColumnCount": 2,
+        "statisticColumns": "174px 174px",
+        "statisticRowCount": 2,
+        "statisticsCardCount": 4,
+        "theme": "Graphite",
+        "titleFontSize": "18px",
+        "todayCount": 1,
+        "topEdgeDelta": 0,
+        "verseColor": "rgb(244, 246, 248)",
+        "verseFontFamily": "Georgia, serif, Georgia, serif",
+        "verseFontSize": "28px",
+        "view": "month",
+        "yearBottomDelta": 222.609375,
+        "yearCellHeightMax": 0,
+        "yearCellHeightMin": 0,
+        "yearCellWidthMax": 0,
+        "yearCellWidthMin": 0,
+        "yearCellsSquare": true,
+        "yearFrameOverflowX": 0,
+        "yearFrameScrollLeft": 0,
+        "yearGridInsideFrame": true,
+        "yearHeatmapWidthRatio": 0,
+        "yearMonthLabels": [],
+        "yearWeekdayLabels": [],
+        "yearWeeks": ""
+      },
+      "file": "captures/PROD-PAL-GR-SLATE-D.png",
+      "fixture": "populated",
+      "layout": "wide",
+      "logical_frame": {
+        "height": 1073,
+        "width": 1710,
+        "x": 0,
+        "y": 34
+      },
+      "mode": "dark",
+      "native_window_dimensions": [
+        1710,
+        1073
+      ],
+      "physical_pixels": [
+        3420,
+        2082
+      ],
+      "production_deck_browser_mount": true,
+      "sampled_color_count": 24,
+      "sha256": "365de11d9064f0a7486c940674027c95775bef920e267bfc0deb590a921f52a5",
+      "state_label": "",
+      "tags": [
+        "palette",
+        "production_month_tree",
+        "ankiweb-presentation",
+        "future-due-default-off"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Graphite",
+      "ui_scale_percent": 100,
+      "view": "month",
+      "window_title": "Codex QA HDO 1.8.7 Gallery Defaults 20260905 v2 - Anki",
+      "window_title_matches_profile": true
+    },
+    "PROD-PAL-SG-AMETHYST-D": {
+      "capture_method": "QMainWindow.grab-isolated-native-gallery",
+      "dashboard_container_width": 1160,
+      "density": "wide",
+      "device_pixel_ratio": 2.0,
+      "dom": {
+        "bible": {
+          "bottom": 823.609375,
+          "height": 210.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 613,
+          "width": 360
+        },
+        "bodyBackgroundImage": "none",
+        "bodyOverflowX": 0,
+        "calendar": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1061,
+          "top": 249,
+          "width": 786
+        },
+        "calendarCellCount": 42,
+        "completionCount": 27,
+        "componentOverflowX": 0,
+        "controlHeights": [
+          30,
+          30,
+          30,
+          30,
+          30,
+          32
+        ],
+        "deckDashboardGap": 30,
+        "deckGapAnchor": {
+          "className": "",
+          "id": "",
+          "tag": "BR"
+        },
+        "density": "wide",
+        "documentBottomReached": true,
+        "documentOverflowX": 0,
+        "documentScrollMaximum": 0,
+        "documentScrollPaddingBlockEnd": "54px",
+        "dueLegendCount": 0,
+        "dueMarkerCount": 1,
+        "equalStatisticCardGeometry": true,
+        "eventLegendCount": 1,
+        "eventMarkerCount": 1,
+        "eventSummaryCount": 1,
+        "eventText": "Next eventPediatrics reviewThu, Sep 3 \u00b7 in 11 daysEditNo upcoming events",
+        "footerClearance": 54,
+        "footerClearanceSource": "measured",
+        "frame": {
+          "bottom": 613.171875,
+          "height": 252,
+          "left": 305,
+          "right": 1031,
+          "top": 361.171875,
+          "width": 726
+        },
+        "futureDueMarkerCount": 0,
+        "hostBackgroundClass": "",
+        "hostPreserved": "true",
+        "layout": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "layoutColumnGap": 14,
+        "layoutSideBySide": true,
+        "layoutStacked": false,
+        "loading": false,
+        "metricMinimumGap": 10,
+        "metricOrder": {
+          "hdo-all-time": [
+            "long_term.lifetime_cards_studied",
+            "long_term.average_reviews_per_active_day",
+            "long_term.lifetime_retention",
+            "long_term.current_streak",
+            "long_term.longest_streak"
+          ],
+          "hdo-last-seven": [
+            "last_seven_days.cards_studied",
+            "last_seven_days.average_cards_per_day",
+            "last_seven_days.retention",
+            "last_seven_days.new_cards_studied",
+            "last_seven_days.time_spent"
+          ],
+          "hdo-progress": [
+            "progress.initial_cards_due",
+            "queue.total",
+            "queue.new",
+            "queue.learning",
+            "queue.review"
+          ],
+          "hdo-session": [
+            "today.answers",
+            "today.new_cards_studied",
+            "today.cards_buried",
+            "today.time_spent",
+            "today.pace",
+            "queue.eta"
+          ]
+        },
+        "metricTextSingleLine": true,
+        "metricValues": {
+          "last_seven_days.average_cards_per_day": "173",
+          "last_seven_days.cards_studied": "1,214",
+          "last_seven_days.new_cards_studied": "148",
+          "last_seven_days.retention": "83%",
+          "last_seven_days.time_spent": "8 hr8h",
+          "long_term.average_reviews_per_active_day": "214",
+          "long_term.current_streak": "19 days",
+          "long_term.lifetime_cards_studied": "82,640",
+          "long_term.lifetime_retention": "83%",
+          "long_term.longest_streak": "73 days",
+          "progress.initial_cards_due": "310",
+          "queue.eta": "3:20 PM",
+          "queue.learning": "14",
+          "queue.new": "32",
+          "queue.review": "78",
+          "queue.total": "124",
+          "today.answers": "186",
+          "today.cards_buried": "7",
+          "today.new_cards_studied": "14",
+          "today.pace": "26.5 sec/card",
+          "today.time_spent": "1 hr 22 min1h 22m"
+        },
+        "metricsGrid": {
+          "bottom": 601,
+          "height": 352,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "mode": "dark",
+        "monthBottomDelta": 0,
+        "monthRows": "6",
+        "nativeFooterHeight": 30,
+        "nativeWebOffsetInFrame": {
+          "x": 0,
+          "y": 67
+        },
+        "nonSelectedCellShadowCount": 0,
+        "progressBarToMetricsGap": 10,
+        "progressHeaderToBarGap": 8,
+        "progressLabel": "60% complete",
+        "progressLabelCentered": true,
+        "progressLabelPadding": 6,
+        "progressTrackHeight": 18,
+        "progressTrackVisible": true,
+        "rail": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "railWidth": 360,
+        "ready": true,
+        "root": {
+          "bottom": 877.609375,
+          "height": 628.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "rootBackground": "rgba(0, 0, 0, 0)",
+        "rootMarginTop": "30px",
+        "rootPaddingBottom": "54px",
+        "rootPosition": "relative",
+        "rootScrollOwner": "documentElement",
+        "sectionsBelow": false,
+        "selectedBoxShadow": "rgb(152, 200, 255) 0px 0px 0px 2px inset",
+        "selectedCount": 1,
+        "showDueForecast": false,
+        "statisticColumnCount": 2,
+        "statisticColumns": "174px 174px",
+        "statisticRowCount": 2,
+        "statisticsCardCount": 4,
+        "theme": "Sapphire Glass",
+        "titleFontSize": "18px",
+        "todayCount": 1,
+        "topEdgeDelta": 0,
+        "verseColor": "rgb(243, 247, 251)",
+        "verseFontFamily": "Georgia, serif, Georgia, serif",
+        "verseFontSize": "28px",
+        "view": "month",
+        "yearBottomDelta": 222.609375,
+        "yearCellHeightMax": 0,
+        "yearCellHeightMin": 0,
+        "yearCellWidthMax": 0,
+        "yearCellWidthMin": 0,
+        "yearCellsSquare": true,
+        "yearFrameOverflowX": 0,
+        "yearFrameScrollLeft": 0,
+        "yearGridInsideFrame": true,
+        "yearHeatmapWidthRatio": 0,
+        "yearMonthLabels": [],
+        "yearWeekdayLabels": [],
+        "yearWeeks": ""
+      },
+      "file": "captures/PROD-PAL-SG-AMETHYST-D.png",
+      "fixture": "populated",
+      "layout": "wide",
+      "logical_frame": {
+        "height": 1073,
+        "width": 1710,
+        "x": 0,
+        "y": 34
+      },
+      "mode": "dark",
+      "native_window_dimensions": [
+        1710,
+        1073
+      ],
+      "physical_pixels": [
+        3420,
+        2082
+      ],
+      "production_deck_browser_mount": true,
+      "sampled_color_count": 24,
+      "sha256": "df6cfe4b640c041a66c5aef9b0ad59e4405511a4f9c86cb54fd7098309dc0f24",
+      "state_label": "",
+      "tags": [
+        "palette",
+        "production_month_tree",
+        "ankiweb-presentation",
+        "future-due-default-off"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month",
+      "window_title": "Codex QA HDO 1.8.7 Gallery Defaults 20260905 v2 - Anki",
+      "window_title_matches_profile": true
+    },
+    "PROD-PAL-SG-GLACIER-D": {
+      "capture_method": "QMainWindow.grab-isolated-native-gallery",
+      "dashboard_container_width": 1160,
+      "density": "wide",
+      "device_pixel_ratio": 2.0,
+      "dom": {
+        "bible": {
+          "bottom": 823.609375,
+          "height": 210.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 613,
+          "width": 360
+        },
+        "bodyBackgroundImage": "none",
+        "bodyOverflowX": 0,
+        "calendar": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1061,
+          "top": 249,
+          "width": 786
+        },
+        "calendarCellCount": 42,
+        "completionCount": 27,
+        "componentOverflowX": 0,
+        "controlHeights": [
+          30,
+          30,
+          30,
+          30,
+          30,
+          32
+        ],
+        "deckDashboardGap": 30,
+        "deckGapAnchor": {
+          "className": "",
+          "id": "",
+          "tag": "BR"
+        },
+        "density": "wide",
+        "documentBottomReached": true,
+        "documentOverflowX": 0,
+        "documentScrollMaximum": 0,
+        "documentScrollPaddingBlockEnd": "54px",
+        "dueLegendCount": 0,
+        "dueMarkerCount": 1,
+        "equalStatisticCardGeometry": true,
+        "eventLegendCount": 1,
+        "eventMarkerCount": 1,
+        "eventSummaryCount": 1,
+        "eventText": "Next eventPediatrics reviewThu, Sep 3 \u00b7 in 11 daysEditNo upcoming events",
+        "footerClearance": 54,
+        "footerClearanceSource": "measured",
+        "frame": {
+          "bottom": 613.171875,
+          "height": 252,
+          "left": 305,
+          "right": 1031,
+          "top": 361.171875,
+          "width": 726
+        },
+        "futureDueMarkerCount": 0,
+        "hostBackgroundClass": "",
+        "hostPreserved": "true",
+        "layout": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "layoutColumnGap": 14,
+        "layoutSideBySide": true,
+        "layoutStacked": false,
+        "loading": false,
+        "metricMinimumGap": 10,
+        "metricOrder": {
+          "hdo-all-time": [
+            "long_term.lifetime_cards_studied",
+            "long_term.average_reviews_per_active_day",
+            "long_term.lifetime_retention",
+            "long_term.current_streak",
+            "long_term.longest_streak"
+          ],
+          "hdo-last-seven": [
+            "last_seven_days.cards_studied",
+            "last_seven_days.average_cards_per_day",
+            "last_seven_days.retention",
+            "last_seven_days.new_cards_studied",
+            "last_seven_days.time_spent"
+          ],
+          "hdo-progress": [
+            "progress.initial_cards_due",
+            "queue.total",
+            "queue.new",
+            "queue.learning",
+            "queue.review"
+          ],
+          "hdo-session": [
+            "today.answers",
+            "today.new_cards_studied",
+            "today.cards_buried",
+            "today.time_spent",
+            "today.pace",
+            "queue.eta"
+          ]
+        },
+        "metricTextSingleLine": true,
+        "metricValues": {
+          "last_seven_days.average_cards_per_day": "173",
+          "last_seven_days.cards_studied": "1,214",
+          "last_seven_days.new_cards_studied": "148",
+          "last_seven_days.retention": "83%",
+          "last_seven_days.time_spent": "8 hr8h",
+          "long_term.average_reviews_per_active_day": "214",
+          "long_term.current_streak": "19 days",
+          "long_term.lifetime_cards_studied": "82,640",
+          "long_term.lifetime_retention": "83%",
+          "long_term.longest_streak": "73 days",
+          "progress.initial_cards_due": "310",
+          "queue.eta": "3:20 PM",
+          "queue.learning": "14",
+          "queue.new": "32",
+          "queue.review": "78",
+          "queue.total": "124",
+          "today.answers": "186",
+          "today.cards_buried": "7",
+          "today.new_cards_studied": "14",
+          "today.pace": "26.5 sec/card",
+          "today.time_spent": "1 hr 22 min1h 22m"
+        },
+        "metricsGrid": {
+          "bottom": 601,
+          "height": 352,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "mode": "dark",
+        "monthBottomDelta": 0,
+        "monthRows": "6",
+        "nativeFooterHeight": 30,
+        "nativeWebOffsetInFrame": {
+          "x": 0,
+          "y": 67
+        },
+        "nonSelectedCellShadowCount": 0,
+        "progressBarToMetricsGap": 10,
+        "progressHeaderToBarGap": 8,
+        "progressLabel": "60% complete",
+        "progressLabelCentered": true,
+        "progressLabelPadding": 6,
+        "progressTrackHeight": 18,
+        "progressTrackVisible": true,
+        "rail": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "railWidth": 360,
+        "ready": true,
+        "root": {
+          "bottom": 877.609375,
+          "height": 628.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "rootBackground": "rgba(0, 0, 0, 0)",
+        "rootMarginTop": "30px",
+        "rootPaddingBottom": "54px",
+        "rootPosition": "relative",
+        "rootScrollOwner": "documentElement",
+        "sectionsBelow": false,
+        "selectedBoxShadow": "rgb(152, 200, 255) 0px 0px 0px 2px inset",
+        "selectedCount": 1,
+        "showDueForecast": false,
+        "statisticColumnCount": 2,
+        "statisticColumns": "174px 174px",
+        "statisticRowCount": 2,
+        "statisticsCardCount": 4,
+        "theme": "Sapphire Glass",
+        "titleFontSize": "18px",
+        "todayCount": 1,
+        "topEdgeDelta": 0,
+        "verseColor": "rgb(243, 247, 251)",
+        "verseFontFamily": "Georgia, serif, Georgia, serif",
+        "verseFontSize": "28px",
+        "view": "month",
+        "yearBottomDelta": 222.609375,
+        "yearCellHeightMax": 0,
+        "yearCellHeightMin": 0,
+        "yearCellWidthMax": 0,
+        "yearCellWidthMin": 0,
+        "yearCellsSquare": true,
+        "yearFrameOverflowX": 0,
+        "yearFrameScrollLeft": 0,
+        "yearGridInsideFrame": true,
+        "yearHeatmapWidthRatio": 0,
+        "yearMonthLabels": [],
+        "yearWeekdayLabels": [],
+        "yearWeeks": ""
+      },
+      "file": "captures/PROD-PAL-SG-GLACIER-D.png",
+      "fixture": "populated",
+      "layout": "wide",
+      "logical_frame": {
+        "height": 1073,
+        "width": 1710,
+        "x": 0,
+        "y": 34
+      },
+      "mode": "dark",
+      "native_window_dimensions": [
+        1710,
+        1073
+      ],
+      "physical_pixels": [
+        3420,
+        2082
+      ],
+      "production_deck_browser_mount": true,
+      "sampled_color_count": 24,
+      "sha256": "38f6a4f7f2bdd879fed0cc6b112446fcb2b1f446bb0be0509877149ab5ab69ac",
+      "state_label": "",
+      "tags": [
+        "palette",
+        "production_month_tree",
+        "ankiweb-presentation",
+        "future-due-default-off"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month",
+      "window_title": "Codex QA HDO 1.8.7 Gallery Defaults 20260905 v2 - Anki",
+      "window_title_matches_profile": true
+    },
+    "PROD-PAL-SG-GLACIER-L": {
+      "capture_method": "QMainWindow.grab-isolated-native-gallery",
+      "dashboard_container_width": 1160,
+      "density": "wide",
+      "device_pixel_ratio": 2.0,
+      "dom": {
+        "bible": {
+          "bottom": 823.609375,
+          "height": 210.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 613,
+          "width": 360
+        },
+        "bodyBackgroundImage": "none",
+        "bodyOverflowX": 0,
+        "calendar": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1061,
+          "top": 249,
+          "width": 786
+        },
+        "calendarCellCount": 42,
+        "completionCount": 27,
+        "componentOverflowX": 0,
+        "controlHeights": [
+          30,
+          30,
+          30,
+          30,
+          30,
+          32
+        ],
+        "deckDashboardGap": 30,
+        "deckGapAnchor": {
+          "className": "",
+          "id": "",
+          "tag": "BR"
+        },
+        "density": "wide",
+        "documentBottomReached": true,
+        "documentOverflowX": 0,
+        "documentScrollMaximum": 0,
+        "documentScrollPaddingBlockEnd": "54px",
+        "dueLegendCount": 0,
+        "dueMarkerCount": 1,
+        "equalStatisticCardGeometry": true,
+        "eventLegendCount": 1,
+        "eventMarkerCount": 1,
+        "eventSummaryCount": 1,
+        "eventText": "Next eventPediatrics reviewThu, Sep 3 \u00b7 in 11 daysEditNo upcoming events",
+        "footerClearance": 54,
+        "footerClearanceSource": "measured",
+        "frame": {
+          "bottom": 613.171875,
+          "height": 252,
+          "left": 305,
+          "right": 1031,
+          "top": 361.171875,
+          "width": 726
+        },
+        "futureDueMarkerCount": 0,
+        "hostBackgroundClass": "",
+        "hostPreserved": "true",
+        "layout": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "layoutColumnGap": 14,
+        "layoutSideBySide": true,
+        "layoutStacked": false,
+        "loading": false,
+        "metricMinimumGap": 10,
+        "metricOrder": {
+          "hdo-all-time": [
+            "long_term.lifetime_cards_studied",
+            "long_term.average_reviews_per_active_day",
+            "long_term.lifetime_retention",
+            "long_term.current_streak",
+            "long_term.longest_streak"
+          ],
+          "hdo-last-seven": [
+            "last_seven_days.cards_studied",
+            "last_seven_days.average_cards_per_day",
+            "last_seven_days.retention",
+            "last_seven_days.new_cards_studied",
+            "last_seven_days.time_spent"
+          ],
+          "hdo-progress": [
+            "progress.initial_cards_due",
+            "queue.total",
+            "queue.new",
+            "queue.learning",
+            "queue.review"
+          ],
+          "hdo-session": [
+            "today.answers",
+            "today.new_cards_studied",
+            "today.cards_buried",
+            "today.time_spent",
+            "today.pace",
+            "queue.eta"
+          ]
+        },
+        "metricTextSingleLine": true,
+        "metricValues": {
+          "last_seven_days.average_cards_per_day": "173",
+          "last_seven_days.cards_studied": "1,214",
+          "last_seven_days.new_cards_studied": "148",
+          "last_seven_days.retention": "83%",
+          "last_seven_days.time_spent": "8 hr8h",
+          "long_term.average_reviews_per_active_day": "214",
+          "long_term.current_streak": "19 days",
+          "long_term.lifetime_cards_studied": "82,640",
+          "long_term.lifetime_retention": "83%",
+          "long_term.longest_streak": "73 days",
+          "progress.initial_cards_due": "310",
+          "queue.eta": "3:20 PM",
+          "queue.learning": "14",
+          "queue.new": "32",
+          "queue.review": "78",
+          "queue.total": "124",
+          "today.answers": "186",
+          "today.cards_buried": "7",
+          "today.new_cards_studied": "14",
+          "today.pace": "26.5 sec/card",
+          "today.time_spent": "1 hr 22 min1h 22m"
+        },
+        "metricsGrid": {
+          "bottom": 601,
+          "height": 352,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "mode": "light",
+        "monthBottomDelta": 0,
+        "monthRows": "6",
+        "nativeFooterHeight": 30,
+        "nativeWebOffsetInFrame": {
+          "x": 0,
+          "y": 67
+        },
+        "nonSelectedCellShadowCount": 0,
+        "progressBarToMetricsGap": 10,
+        "progressHeaderToBarGap": 8,
+        "progressLabel": "60% complete",
+        "progressLabelCentered": true,
+        "progressLabelPadding": 6,
+        "progressTrackHeight": 18,
+        "progressTrackVisible": true,
+        "rail": {
+          "bottom": 823.609375,
+          "height": 574.609375,
+          "left": 1075,
+          "right": 1435,
+          "top": 249,
+          "width": 360
+        },
+        "railWidth": 360,
+        "ready": true,
+        "root": {
+          "bottom": 877.609375,
+          "height": 628.609375,
+          "left": 275,
+          "right": 1435,
+          "top": 249,
+          "width": 1160
+        },
+        "rootBackground": "rgba(0, 0, 0, 0)",
+        "rootMarginTop": "30px",
+        "rootPaddingBottom": "54px",
+        "rootPosition": "relative",
+        "rootScrollOwner": "documentElement",
+        "sectionsBelow": false,
+        "selectedBoxShadow": "rgb(96, 151, 221) 0px 0px 0px 2px inset",
+        "selectedCount": 1,
+        "showDueForecast": false,
+        "statisticColumnCount": 2,
+        "statisticColumns": "174px 174px",
+        "statisticRowCount": 2,
+        "statisticsCardCount": 4,
+        "theme": "Sapphire Glass",
+        "titleFontSize": "18px",
+        "todayCount": 1,
+        "topEdgeDelta": 0,
+        "verseColor": "rgb(22, 34, 53)",
+        "verseFontFamily": "Georgia, serif, Georgia, serif",
+        "verseFontSize": "28px",
+        "view": "month",
+        "yearBottomDelta": 222.609375,
+        "yearCellHeightMax": 0,
+        "yearCellHeightMin": 0,
+        "yearCellWidthMax": 0,
+        "yearCellWidthMin": 0,
+        "yearCellsSquare": true,
+        "yearFrameOverflowX": 0,
+        "yearFrameScrollLeft": 0,
+        "yearGridInsideFrame": true,
+        "yearHeatmapWidthRatio": 0,
+        "yearMonthLabels": [],
+        "yearWeekdayLabels": [],
+        "yearWeeks": ""
+      },
+      "file": "captures/PROD-PAL-SG-GLACIER-L.png",
+      "fixture": "populated",
+      "layout": "wide",
+      "logical_frame": {
+        "height": 1073,
+        "width": 1710,
+        "x": 0,
+        "y": 34
+      },
+      "mode": "light",
+      "native_window_dimensions": [
+        1710,
+        1073
+      ],
+      "physical_pixels": [
+        3420,
+        2082
+      ],
+      "production_deck_browser_mount": true,
+      "sampled_color_count": 24,
+      "sha256": "2f63fa995f6b53e73189d019dcdbacd7373365a7e6497dabd989f0ff6bcae173",
+      "state_label": "",
+      "tags": [
+        "palette",
+        "production_month_tree",
+        "ankiweb-presentation",
+        "future-due-default-off"
+      ],
+      "text_scale_percent": 100,
+      "theme": "Sapphire Glass",
+      "ui_scale_percent": 100,
+      "view": "month",
+      "window_title": "Codex QA HDO 1.8.7 Gallery Defaults 20260905 v2 - Anki",
+      "window_title_matches_profile": true
+    }
+  },
+  "default_show_due_forecast": false,
+  "errors": [],
+  "identity": {
+    "addons_inside_run_root": true,
+    "anki_version": "26.8.1",
+    "auto_sync": false,
+    "candidate": {
+      "candidate": "<repository>/home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon",
+      "candidate_sha256": "8b617376758bac40d28329e517014021cb608be9bae36b4547edf89e07148b53",
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.7",
+      "member_count": 25
+    },
+    "candidate_addon_root": "<disposable-run-root>/addons21/home_dashboard_overhaul",
+    "collection_inside_run_root": true,
+    "collection_path": "<disposable-run-root>/Codex QA HDO 1.8.7 Gallery Defaults 20260905 v2/collection.anki2",
+    "excluded_normal_pid": 67108,
+    "excluded_normal_pid_alive": true,
+    "excluded_normal_process_state": "alive-and-untouched",
+    "gated_before_window_interaction": true,
+    "media_sync": false,
+    "normal_profile_window_excluded": "<excluded-normal-profile>",
+    "pid": 71200,
+    "probe_addon_root": "<disposable-run-root>/addons21/zz_hdo_gallery_probe",
+    "process_arguments_verified": true,
+    "processes_are_distinct": true,
+    "profile": "Codex QA HDO 1.8.7 Gallery Defaults 20260905 v2",
+    "profile_matches": true,
+    "run_root": "<disposable-run-root>",
+    "single_instance_key_fingerprint": "7ac4b92373b2",
+    "sync_credentials_present": false,
+    "sync_identity": "disabled-and-disconnected",
+    "window_title": "Codex QA HDO 1.8.7 Gallery Defaults 20260905 v2 - Anki",
+    "window_title_matches_profile": true
+  },
+  "multi_deck_new_limit_smoke": {
+    "assertions": [
+      {
+        "analytics": {
+          "eta_seconds": null,
+          "learning": 0,
+          "new": 10,
+          "review": 0,
+          "total": 10
+        },
+        "dom": {
+          "mounted": true,
+          "newText": "10",
+          "progressLabel": "0% complete",
+          "totalText": "10"
+        },
+        "expected_new_remaining": 10,
+        "expected_progress_label": "0% complete",
+        "expected_total_remaining": 10,
+        "label": "active-a-unexcluded",
+        "production_dashboard_mounted": true
+      },
+      {
+        "analytics": {
+          "eta_seconds": null,
+          "learning": 0,
+          "new": 3,
+          "review": 0,
+          "total": 3
+        },
+        "dom": {
+          "mounted": true,
+          "newText": "3",
+          "progressLabel": "0% complete",
+          "totalText": "3"
+        },
+        "expected_new_remaining": 3,
+        "expected_progress_label": "0% complete",
+        "expected_total_remaining": 3,
+        "label": "excluding-head-b",
+        "production_dashboard_mounted": true
+      }
+    ],
+    "fixture": {
+      "active_deck_id": 1788636128509,
+      "active_head": "A",
+      "deck_ids": {
+        "A": 1788636128509,
+        "B": 1788636128510
+      },
+      "deck_names": {
+        "A": "HDO 1.8.7 QA Head A",
+        "B": "HDO 1.8.7 QA Head B"
+      },
+      "raw_new_cards": {
+        "A": 40,
+        "B": 40
+      },
+      "remaining_limits": {
+        "A": 3,
+        "B": 7
+      }
+    },
+    "initial_dashboard_loaded_before_fixture": true,
+    "initial_dashboard_queue": {
+      "eta_seconds": 0,
+      "learning": 0,
+      "new": 0,
+      "review": 0,
+      "total": 0
+    },
+    "stage": "initial",
+    "status": "passed"
+  },
+  "native_statistics_comparison": {
+    "authority": "Anki 26.8.1 GraphsResponse true_retention, today, future_due, and scheduler due tree",
+    "dashboard": {
+      "all_time": {
+        "answers": 1184,
+        "retention": 86
+      },
+      "buried": {
+        "learning": 0,
+        "new": 0,
+        "review": 1
+      },
+      "calendar_due": {
+        "0": 3,
+        "1": 2,
+        "2": 1
+      },
+      "queue": {
+        "initial_cards_due": 1196,
+        "learning": 0,
+        "new": 10,
+        "review": 2,
+        "total": 12
+      },
+      "today": {
+        "answers": 1184,
+        "new_cards": 2,
+        "pace": 19.0,
+        "seconds": 22496.0
+      },
+      "week": {
+        "answers": 1184,
+        "average_cards_per_day": 169,
+        "internal_again": 14,
+        "new_cards": 2,
+        "retention": 86,
+        "seconds": 22496.0
+      }
+    },
+    "fixture": {
+      "all_answer_success_percent": 80,
+      "answers": 1184,
+      "eligible_failed": 153,
+      "eligible_passed": 947,
+      "native_retention_percent": 86,
+      "visible_week_time": "6 hr 15 min",
+      "week_seconds": 22496.0
+    },
+    "native_due_tree": {
+      "learning": 0,
+      "new": 10,
+      "review": 2
+    },
+    "native_future_due": {
+      "-2": 1,
+      "0": 2,
+      "1": 2,
+      "2": 1
+    },
+    "native_today": {
+      "answer_count": 1184,
+      "answer_millis": 22496000
+    },
+    "native_true_retention": {
+      "all_time": {
+        "failed": 153,
+        "passed": 947,
+        "total": 1100
+      },
+      "week": {
+        "failed": 153,
+        "passed": 947,
+        "total": 1100
+      }
+    },
+    "status": "passed",
+    "upstream_reference": "ankitects/anki@26.08.1:rslib/src/stats/graphs/retention.rs"
+  },
+  "production_matrix": {
+    "capture_plan_sha256": "2e202fd31ee4ee2ee5188d8c82e73fc5e104e739b0a3dd31e4015619efb57ed6",
+    "capture_profile": "full",
+    "case_count": 8,
+    "case_ids": [
+      "PROD-PAL-SG-AMETHYST-D",
+      "PROD-PAL-SG-GLACIER-L",
+      "PROD-PAL-SG-GLACIER-D",
+      "PROD-PAL-GR-SLATE-D",
+      "PROD-PAL-GR-PLUM-L",
+      "PROD-PAL-EM-EMERALD-D",
+      "PROD-PAL-EM-JADE-L",
+      "PROD-PAL-EM-LAGOON-L"
+    ],
+    "host": "actual isolated Anki main Deck Browser",
+    "renderer": "exact installed production controller and renderer"
+  },
+  "release": "1.8.7",
+  "release_validation_claimed": false,
+  "review_history_rows": 1184,
+  "scale_policy": {
+    "environment_variable_scale_substitutes": false,
+    "native_only": true,
+    "production_ui_percent": 100,
+    "required_native_profiles": [
+      {
+        "dpr_class": "retina",
+        "host_platform": "macos",
+        "os_scale_percent": 100
+      }
+    ],
+    "settings_application_font_percent": [
+      100
+    ],
+    "structured_settings_application_font_percent": [
+      100
+    ]
+  },
+  "schema_version": 3,
+  "scope": "Eight selected themes with the published future-due default off; populated sample study data and an upcoming event.",
+  "screen": {
+    "available_geometry": [
+      0,
+      34,
+      1710,
+      1073
+    ],
+    "device_pixel_ratio": 2.0,
+    "name": "Built-in Retina Display"
+  },
+  "stage": "initial",
+  "status": "passed"
+}

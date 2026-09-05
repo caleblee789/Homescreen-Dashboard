@@ -1,0 +1,63 @@
+{
+  "ankiweb_id": "",
+  "candidate_package": "home_dashboard_overhaul",
+  "capture_plan_sha256": "2e202fd31ee4ee2ee5188d8c82e73fc5e104e739b0a3dd31e4015619efb57ed6",
+  "capture_profile": "full",
+  "conflicts": [],
+  "expected_capture_count": 8,
+  "expected_capture_counts": {
+    "initial": 8,
+    "restart": 0,
+    "total": 8
+  },
+  "helper_files": {
+    "__init__.py": {
+      "sha256": "6e493a3e51f1c0a8b73c2a3971df2c7d493a9770bb369191299a5051d33b8198",
+      "source": "runtime_probe_profile_entrypoint.py"
+    },
+    "_capture_plan.json": {
+      "sha256": "2e202fd31ee4ee2ee5188d8c82e73fc5e104e739b0a3dd31e4015619efb57ed6",
+      "source": "capture_plan.json"
+    },
+    "_capture_plan.py": {
+      "sha256": "51fe8600e5c0412083ec223c4373e6bc7a32f76b3b9acb842e2ef4818e9a1a2f",
+      "source": "capture_plan.py"
+    },
+    "_probe_base.py": {
+      "sha256": "859f7d05e5176ef982f86ce75f23f13e4cd3210f07c9b51c002a61b99d3bba76",
+      "source": "runtime_probe_release_1_8_4.py"
+    },
+    "_release_probe.py": {
+      "sha256": "592a1ecd034ade09b6ea6c8af6e0317736cad205dbe04fab36d0eab1eb79b82b",
+      "source": "runtime_probe_release_1_8_7.py"
+    },
+    "_workflow_probe.py": {
+      "sha256": "8005fa59f7a674a0ea656f3975c5ef6d32afd4bc38485d136ff82d7e3ba15c94",
+      "source": "runtime_probe_settings_workflow_1_8_7.py"
+    },
+    "_gallery_capture.py": {
+      "sha256": "6a8e9144d2607cea3f26b9f627077eeb2528855a6acf0c8063c3123de4fe77a2",
+      "source": "gallery_capture_adapter.py"
+    }
+  },
+  "homepage": "",
+  "name": "Home Dashboard 1.8.7 full capture probe",
+  "package": "zz_hdo_1_8_7_full_probe",
+  "required_structured_manual_results": [],
+  "schema_version": 1,
+  "selected_capture_ids": [
+    "PROD-PAL-SG-AMETHYST-D",
+    "PROD-PAL-SG-GLACIER-L",
+    "PROD-PAL-SG-GLACIER-D",
+    "PROD-PAL-GR-SLATE-D",
+    "PROD-PAL-GR-PLUM-L",
+    "PROD-PAL-EM-EMERALD-D",
+    "PROD-PAL-EM-JADE-L",
+    "PROD-PAL-EM-LAGOON-L"
+  ],
+  "stages": [
+    "initial"
+  ],
+  "purpose": "Eight AnkiWeb presentation captures, future due default off",
+  "capture_method": "Direct isolated QMainWindow grab for AnkiWeb component crops; not screen-compositor host-placement evidence."
+}

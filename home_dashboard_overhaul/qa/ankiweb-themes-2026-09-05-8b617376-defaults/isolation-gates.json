@@ -1,0 +1,17 @@
+{
+  "anki_version": "26.8.1",
+  "profile": "Codex QA HDO 1.8.7 Gallery Defaults 20260905 v2",
+  "key_fingerprint": "7ac4b92373b2",
+  "gates": {
+    "process": true,
+    "window": true,
+    "filesystem": true,
+    "sync": true
+  },
+  "auto_sync": false,
+  "media_sync": false,
+  "sync_credentials_present": false,
+  "installed_candidate_members_match": 25,
+  "isolated_process_exited": true,
+  "excluded_normal_process_remains_running": true
+}
