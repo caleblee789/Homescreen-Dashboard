@@ -16,18 +16,36 @@
     "ankiweb_github_and_local_bytes_match": "passed",
     "ankiweb_screenshot_count": 2,
     "both_screenshots_loaded": true,
-    "github_and_support_links_present": true
+    "github_and_support_links_present": true,
+    "screenshot_update": {
+      "github_image_commit": "4808dd5297e76ce229f6345cda1f125477f7fe4c",
+      "ankiweb_caption": "Sapphire Glass in Year view, shown with a custom Anki background.",
+      "screenshot_count": 2,
+      "both_images_loaded_at_original_dimensions": true,
+      "settings_screenshot_unchanged": true,
+      "live_layout_visually_checked": true
+    }
   },
   "screenshots": [
     {
-      "path": "docs/images/1.8.7/dashboard-sapphire-dark.png",
-      "native_dimensions": [3420, 2082]
+      "path": "docs/images/1.8.7/dashboard-sapphire-year.png",
+      "native_dimensions": [
+        3420,
+        2214
+      ],
+      "sha256": "41cbceef9dde3340f4f98d75fafeeb34fc078d07b79d4e8b17c61e012ef17807",
+      "source": "User-selected full-resolution screenshot",
+      "calendar_view": "year"
     },
     {
       "path": "docs/images/1.8.7/settings-appearance-dark.png",
-      "native_dimensions": [2560, 1600]
+      "native_dimensions": [
+        2560,
+        1600
+      ]
     }
   ],
   "validation_record": "1.8.7-verification.json",
-  "note": "Publication does not change historical native evidence or imply new native validation."
+  "note": "The Year screenshot was supplied and selected by the user. This screenshot update does not change the published add-on archive or historical native evidence, and makes no new package-validation claim.",
+  "screenshots_updated_date_utc": "2026-09-05"
 }
