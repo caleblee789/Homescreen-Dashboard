@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "stage": "install",
+  "errors": [],
+  "identity": {
+    "pid": 65770,
+    "base": "/private/tmp/anki-release-qa.uxpti4bs",
+    "profile": "Codex QA HDO 1.8.7 Coffee Update 20260905",
+    "window_title": "Codex QA HDO 1.8.7 Coffee Update 20260905 - Anki",
+    "collection_inside_base": true,
+    "addons_inside_base": true,
+    "single_instance_key_matches": true,
+    "sync_disabled_and_disconnected": true,
+    "excluded_normal_pid": 54425,
+    "normal_process_alive_and_distinct": true,
+    "gated_before_interaction": true,
+    "anki_version": "26.8.1"
+  },
+  "previous_package": {
+    "sha256": "ef19b62dcdc5b0e39df02fe9e91b631b8636e01874b7765b5268f085f72b781f",
+    "member_count": 24,
+    "all_installed_members_match": true
+  },
+  "previous_name": "Home Screen Dashboard  Study Calendar  Progress",
+  "updated_package": {
+    "sha256": "8b617376758bac40d28329e517014021cb608be9bae36b4547edf89e07148b53",
+    "member_count": 25,
+    "all_installed_members_match": true
+  },
+  "update": {
+    "native_update_check_and_download": "passed",
+    "display_name": "Home Screen Dashboard",
+    "installed_mod_time": 1788633686,
+    "settings_preserved": true,
+    "user_file_preserved": true,
+    "compatible": true
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "stage": "restart",
+  "errors": [],
+  "identity": {
+    "pid": 65865,
+    "base": "/private/tmp/anki-release-qa.uxpti4bs",
+    "profile": "Codex QA HDO 1.8.7 Coffee Update 20260905",
+    "window_title": "Codex QA HDO 1.8.7 Coffee Update 20260905 - Anki",
+    "collection_inside_base": true,
+    "addons_inside_base": true,
+    "single_instance_key_matches": true,
+    "sync_disabled_and_disconnected": true,
+    "excluded_normal_pid": 54425,
+    "normal_process_alive_and_distinct": true,
+    "gated_before_interaction": true,
+    "anki_version": "26.8.1"
+  },
+  "updated_package": {
+    "sha256": "8b617376758bac40d28329e517014021cb608be9bae36b4547edf89e07148b53",
+    "member_count": 25,
+    "all_installed_members_match": true
+  },
+  "restart": {
+    "display_name": "Home Screen Dashboard",
+    "settings_preserved": true,
+    "user_file_preserved": true,
+    "controller_loaded": true,
+    "dashboard_snapshot_ready": true,
+    "selected_preferences": {
+      "preset": "Graphite",
+      "calendar_view": "month",
+      "retention_target": 87,
+      "events_sort": "name"
+    }
+  },
+  "settings_after_restart": {
+    "opened": true,
+    "coffee_button_visible": true,
+    "coffee_size": [
+      98,
+      28
+    ],
+    "draft_clean": true
+  }
+}
