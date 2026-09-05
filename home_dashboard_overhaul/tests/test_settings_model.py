@@ -417,7 +417,7 @@ class SettingsDraftTests(unittest.TestCase):
             draft.dependency_state,
             {
                 "visibility.events": False,
-                "heatmap.forecast_days": False,
+                "heatmap.forecast_days": True,
                 "bible.font_color": False,
             },
         )
@@ -590,7 +590,7 @@ class SettingsUtilityTests(unittest.TestCase):
         baseline = normalize_config({
             "heatmap": {
                 "calendar_view": "month",
-                "show_due_forecast": False,
+                "show_due_forecast": True,
                 "exclude_deleted_cards": True,
             }
         })
@@ -604,6 +604,9 @@ class SettingsUtilityTests(unittest.TestCase):
         self.assertFalse(draft.scope_differs_from_defaults("calendar_display"))
         self.assertEqual(draft.values["heatmap"]["exclude_deleted_cards"], local_before)
         self.assertTrue(draft.dirty)
+        self.assertTrue(draft.reset_card("calendar_range"))
+        self.assertFalse(draft.values["heatmap"]["show_due_forecast"])
+        self.assertFalse(draft.scope_differs_from_defaults("calendar_range"))
 
     def test_routes_keep_old_aliases(self) -> None:
         self.assertEqual(resolve_section_target(""), ("dashboard", ""))
@@ -675,7 +678,7 @@ class SettingsUtilityTests(unittest.TestCase):
         original = normalize_config(
             {
                 "appearance": {"mode": "dark", "opacity": 95},
-                "heatmap": {"history_days": 45, "excluded_deck_ids": [2, 8]},
+                "heatmap": {"history_days": 45, "excluded_deck_ids": [2, 8], "show_due_forecast": True},
                 "events": {"sort": "descending"},
                 "future": {"nested": {"value": [1, 2, 3]}},
             }

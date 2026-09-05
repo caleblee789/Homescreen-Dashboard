@@ -198,7 +198,7 @@ def normalize_config(raw: object) -> Dict[str, Any]:
     heatmap["ignore_before"] = _date(heatmap.get("ignore_before"))
     heatmap["exclude_manual_reschedules"] = _bool(heatmap.get("exclude_manual_reschedules"), True)
     heatmap["exclude_deleted_cards"] = _bool(heatmap.get("exclude_deleted_cards"), False)
-    heatmap["show_due_forecast"] = _bool(heatmap.get("show_due_forecast"), True)
+    heatmap["show_due_forecast"] = _bool(heatmap.get("show_due_forecast"), False)
     raw_theme_presets = raw_heatmap.get("presets_by_theme", {})
     raw_theme_presets = raw_theme_presets if isinstance(raw_theme_presets, Mapping) else {}
     legacy_heatmap_preset = raw_heatmap.get("preset", raw_heatmap.get("heatmap_preset"))
@@ -320,7 +320,7 @@ def archive_expired_events(config: MutableMapping[str, Any], today: date | None 
 def analytics_config_fingerprint(config: Mapping[str, Any]) -> str:
     """Fingerprint only settings that change collection analytics.
 
-    Calendar view, theme, visibility, events, and Bible presentation
+    Calendar view, due indicators, theme, visibility, events, and Bible presentation
     are render-only preferences.  Excluding them prevents a Month/Year switch
     or visual save from repeating collection SQL.
     """
@@ -337,7 +337,6 @@ def analytics_config_fingerprint(config: Mapping[str, Any]) -> str:
                 "exclude_manual_reschedules",
                 "exclude_deleted_cards",
                 "excluded_deck_ids",
-                "show_due_forecast",
             )
         },
     }

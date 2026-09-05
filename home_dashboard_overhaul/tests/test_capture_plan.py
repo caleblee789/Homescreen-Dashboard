@@ -209,7 +209,7 @@ class CapturePlanTests(unittest.TestCase):
         )
         self.assertEqual(
             future_on["visible_target"],
-            {"kind": "widget", "attribute": "forecast_days"},
+            {"kind": "widget", "attribute": "show_forecast"},
         )
         self.assertEqual(
             future_on["compare_with"],

@@ -270,9 +270,10 @@ class DashboardController:
         if new_state != "deckBrowser" or old_state == "deckBrowser":
             return
         self._check_scheduler_day()
-        if self._snapshot_needs_retry() or self._insight_cache_needs_retry():
-            self.initial_failure = False
-            self._schedule_refresh("view_entry_retry", delay_ms=0)
+        # Entering a deck builds its sibling-filtered queue without changing
+        # persisted card rows. Re-read the grey +counts when returning home.
+        self.initial_failure = False
+        self._schedule_refresh("view_entry", delay_ms=0)
 
     def _external_config_update(self, raw: object) -> None:
         data_changed = self._adopt_config(normalize_config(raw), persist=False)

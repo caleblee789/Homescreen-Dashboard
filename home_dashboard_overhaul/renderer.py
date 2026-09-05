@@ -861,6 +861,7 @@ def dashboard_facts_payload(
             else None
         ),
         "due_load_reference": max(0.0, float(facts.due_load_reference)),
+        "show_due_forecast": bool(config.get("heatmap", {}).get("show_due_forecast", False)),
         "statistics": {
             "today": _value_state_payload(facts.today),
             "queue": _value_state_payload(facts.queue),
@@ -927,14 +928,12 @@ def _calendar(
         else ""
     )
     due_legend = (
-        '<div class="hdo-legend-group hdo-legend-due">'
+        '<div class="hdo-legend-group hdo-legend-due"{}>'
         '<span class="hdo-legend-title">Due cards</span>'
         '<span class="hdo-legend-scale hdo-due-legend" aria-hidden="true">'
         '<i data-due-level="2"></i>'
         '</span></div>'
-        if config.get("heatmap", {}).get("show_due_forecast", True)
-        else ""
-    )
+    ).format("" if payload["show_due_forecast"] else " hidden")
     event_summary = (
         '<div class="hdo-event-sections hdo-calendar-footer__event" data-hdo-context-event>'
         '<section class="hdo-event-section" data-hdo-event-section>'

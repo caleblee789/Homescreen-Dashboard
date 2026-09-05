@@ -670,10 +670,10 @@
           "page": "calendar",
           "special": "future-off",
           "sheet_group": "settings-calendar-widths",
-          "caption": "Calendar \u00b7 future range visible and disabled",
+          "caption": "Calendar \u00b7 future due indicators off, hover range enabled",
           "visible_target": {
             "kind": "widget",
-            "attribute": "forecast_days"
+            "attribute": "show_forecast"
           }
         },
         {
@@ -681,10 +681,10 @@
           "page": "calendar",
           "special": "future-on",
           "sheet_group": "settings-calendar-widths",
-          "caption": "Calendar \u00b7 future range visible and enabled",
+          "caption": "Calendar \u00b7 future due indicators on, hover range enabled",
           "visible_target": {
             "kind": "widget",
-            "attribute": "forecast_days"
+            "attribute": "show_forecast"
           },
           "compare_with": "SET-DASHBOARD-FUTURE-OFF",
           "minimum_image_difference_ratio": 0.0005

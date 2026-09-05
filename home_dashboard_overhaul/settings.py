@@ -4284,10 +4284,10 @@ class SettingsDialog(QDialog):
             "History range",
             "Choose how much past study history to show.",
         )
-        _set_accessibility(self.forecast_days, "Future range", "Choose how far ahead to display due markers.")
+        _set_accessibility(self.forecast_days, "Future range", "Choose how far ahead due counts are available on hover.")
         forecast_row, self.show_forecast = _switch_row(
-            "Show future due cards",
-            "Show upcoming due-card markers.",
+            "Show future due indicators",
+            "Due counts remain available on hover.",
             heatmap["show_due_forecast"],
         )
         form.addRow(
@@ -4373,9 +4373,7 @@ class SettingsDialog(QDialog):
             _field_label("Excluded decks", "A checked parent excludes its descendants across dashboard study data; full deck paths are retained."),
             deck_wrap,
         )
-        self.show_forecast.toggled.connect(self._update_forecast_range_visibility)
         self.history_range.currentIndexChanged.connect(self._update_history_range_visibility)
-        self._update_forecast_range_visibility()
         self._update_history_range_visibility()
         calendar_content = QWidget()
         calendar_content.setMinimumWidth(0)
@@ -5556,9 +5554,9 @@ class SettingsDialog(QDialog):
             view.viewport().update()
 
     def _update_forecast_range_visibility(self, *_args: object) -> None:
-        """Keep the forecast range stable while reflecting its dependency."""
+        """Keep the forecast range available for hover counts in either marker state."""
 
-        self.forecast_days.setEnabled(self.show_forecast.isChecked())
+        self.forecast_days.setEnabled(True)
         self.forecast_days.setVisible(True)
         self.forecast_range_label.setVisible(True)
 

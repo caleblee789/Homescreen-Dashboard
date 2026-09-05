@@ -50,6 +50,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config["study"]["retention_target"], 80)
         self.assertNotIn("buried", config["visibility"])
         self.assertEqual(config["heatmap"]["presets_by_theme"], dict(DEFAULT_HEATMAP_PRESETS))
+        self.assertFalse(config["heatmap"]["show_due_forecast"])
         self.assertEqual(len(default_config()["bible"]["quotes"]), 483)
 
     def test_schema_eight_removes_known_retired_slots_and_is_idempotent(self) -> None:
@@ -167,6 +168,7 @@ class ConfigTests(unittest.TestCase):
         changed["appearance"]["text_scale"] = 150
         changed["heatmap"]["calendar_view"] = "month"
         changed["heatmap"]["presets_by_theme"]["Emerald"] = "Lagoon"
+        changed["heatmap"]["show_due_forecast"] = True
         changed["study"]["retention_target"] = 92
         self.assertEqual(analytics_config_fingerprint(base), analytics_config_fingerprint(changed))
         changed["heatmap"]["excluded_deck_ids"] = [123]

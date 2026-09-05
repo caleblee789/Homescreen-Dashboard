@@ -762,7 +762,7 @@ base.DOM_REPORT_SCRIPT = r"""
     controlHeights:controls.map(function(n){return Math.round(n.getBoundingClientRect().height);}),
     progressTrackVisible:visible(progressTrack),
     progressTrackHeight:visible(progressTrack)?rect(progressTrack).height:0,
-    dueLegendCount:qa('.hdo-legend-due').length,
+    dueLegendCount:qa('.hdo-legend-due').filter(visible).length,
     eventLegendCount:qa('.hdo-legend-event').length,
     eventSummaryCount:qa('[data-hdo-context-event]').length,
     todayCount:qa('.hdo-calendar-day.is-today').length,
@@ -2744,6 +2744,10 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
             getattr(dialog, "forecast_days", None)
             and dialog.forecast_days.isEnabled()
         ),
+        "future_due_indicators_enabled": bool(
+            getattr(dialog, "show_forecast", None)
+            and dialog.show_forecast.isChecked()
+        ),
         "advanced_appearance_expanded": bool(getattr(dialog, "appearance_advanced_button", None) and dialog.appearance_advanced_button.isChecked()),
         "close_prompt_titles": prompt_titles,
         "close_prompt_actions": prompt_actions,
@@ -3019,19 +3023,16 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
             and bool(target.get("fully_visible")),
             "the final long verse row is not fully visible above the footer",
         )
-    if special == "future-off":
-        base._require(bool(state.get("forecast_range_visible")), "Future range moved when forecasting was disabled")
-        base._require(not bool(state.get("forecast_range_enabled")), "Future range remains enabled while forecasting is off")
+    if special in {"future-off", "future-on"}:
+        base._require(bool(state.get("forecast_range_visible")), "Future range is hidden")
+        base._require(bool(state.get("forecast_range_enabled")), "Future range is disabled despite hover counts remaining available")
         base._require(
-            bool(state.get("visible_target", {}).get("fully_visible")),
-            "disabled Future range is not visible in its assigned capture",
+            bool(state.get("future_due_indicators_enabled")) == (special == "future-on"),
+            "Future due indicators do not match the requested switch state",
         )
-    if special == "future-on":
-        base._require(bool(state.get("forecast_range_visible")), "Future range is hidden while forecasting is on")
-        base._require(bool(state.get("forecast_range_enabled")), "Future range is disabled while forecasting is on")
         base._require(
             bool(state.get("visible_target", {}).get("fully_visible")),
-            "enabled Future range is not visible in its assigned capture",
+            "Future due indicator switch is not visible in its assigned capture",
         )
     if special == "advanced-appearance":
         base._require(bool(state.get("advanced_appearance_expanded")), "Advanced appearance did not expand")

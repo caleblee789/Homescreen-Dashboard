@@ -723,7 +723,7 @@ class SettingsDraft:
         visibility = self.values["visibility"]
         return {
             "visibility.events": bool(visibility["heatmap"]),
-            "heatmap.forecast_days": bool(self.values["heatmap"]["show_due_forecast"]),
+            "heatmap.forecast_days": True,
             "bible.font_color": not bool(self.values["bible"]["theme_aware_color"]),
         }
 
