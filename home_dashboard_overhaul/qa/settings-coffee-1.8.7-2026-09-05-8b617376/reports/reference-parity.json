@@ -1,0 +1,8 @@
+{
+  "methods_identical": {
+    "_donate_button_style": true,
+    "_build_donate_button": true,
+    "_open_donation_page": true
+  },
+  "image_sha256": "a7e8174c892355a24fbaec083cbef385d097a0b488fd4823dbbb0061643bb5e2"
+}

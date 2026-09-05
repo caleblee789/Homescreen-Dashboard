@@ -40,6 +40,7 @@ PACKAGE_FILES = [
     "web/dashboard.css",
     "web/dashboard.js",
     "user_files/README.txt",
+    "assets/buy_me_a_coffee.png",
 ]
 DEFERRED_SOURCE_FILES = frozenset({
     "calendar_manager_model.py",
@@ -69,7 +70,7 @@ RELEASE_CONTRACT_FILES = (
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 FIXED_TIMESTAMP = (2026, 8, 26, 0, 0, 0)
-EXPECTED_PACKAGE_MEMBER_COUNT = 24
+EXPECTED_PACKAGE_MEMBER_COUNT = 25
 EXPECTED_PACKAGE_LINKS = frozenset({
     "https://fsf.org/",
     "https://github.com/caleblee789/Homescreen-Dashboard",
@@ -77,6 +78,7 @@ EXPECTED_PACKAGE_LINKS = frozenset({
     "https://github.com/glutanimate/review-heatmap",
     "https://www.gnu.org/licenses/",
     "https://www.tyndale.com/permissions",
+    "https://www.buymeacoffee.com/caleblee78f",
 })
 SECRET_PATTERNS = (
     ("private key", re.compile(r"-----BEGIN (?:RSA |DSA |EC |OPENSSH )?PRIVATE KEY-----")),
@@ -123,7 +125,7 @@ def _validate_no_packaged_secrets(sources: dict[str, str]) -> None:
 
 def _validate_package_inputs() -> None:
     if len(PACKAGE_FILES) != EXPECTED_PACKAGE_MEMBER_COUNT:
-        raise ValueError("package allowlist must contain exactly 24 members")
+        raise ValueError("package allowlist must contain exactly 25 members")
     if len(PACKAGE_FILES) != len(set(PACKAGE_FILES)):
         raise ValueError("package allowlist contains duplicate members")
     unsafe = [name for name in PACKAGE_FILES if not _archive_path_is_safe(name)]
@@ -136,9 +138,14 @@ def _validate_package_inputs() -> None:
     if deferred:
         raise ValueError("deferred calendar sources cannot be packaged: {}".format(", ".join(deferred)))
 
-    sources = {
-        relative: (ROOT / relative).read_text(encoding="utf-8")
+    payloads = {
+        relative: (ROOT / relative).read_bytes()
         for relative in PACKAGE_FILES
+    }
+    sources = {
+        relative: payload.decode("utf-8")
+        for relative, payload in payloads.items()
+        if Path(relative).suffix.casefold() != ".png"
     }
     for relative, source in sources.items():
         if relative.endswith(".py"):

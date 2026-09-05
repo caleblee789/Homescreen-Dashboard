@@ -174,7 +174,7 @@ def _candidate_install_identity() -> dict[str, Any]:
     compared: list[str] = []
     with zipfile.ZipFile(candidate) as archive:
         members = sorted(info.filename for info in archive.infolist() if not info.is_dir())
-        _require(len(members) == 24, "candidate archive member count is not 24")
+        _require(len(members) == 25, "candidate archive member count is not 25")
         for member in members:
             installed = ADDON_ROOT / member
             _require(installed.is_file(), "installed candidate member is missing: {}".format(member))

@@ -161,7 +161,7 @@ def _validate_report(
     candidate = identity.get("candidate", {})
     require(isinstance(candidate, Mapping), "{} report lacks candidate identity".format(stage))
     require(candidate.get("candidate_sha256") == candidate_hash, "{} report used another package".format(stage))
-    require(candidate.get("member_count") == 24, "{} report package member count is not 24".format(stage))
+    require(candidate.get("member_count") == 25, "{} report package member count is not 25".format(stage))
     require(candidate.get("installed_member_parity") == "passed", "{} installed bytes drifted".format(stage))
     require(identity.get("processes_are_distinct") is True, "{} process isolation failed".format(stage))
     require(identity.get("window_title_matches_profile") is True, "{} window isolation failed".format(stage))
@@ -181,7 +181,7 @@ def _validate_report(
 def _archive_summary(candidate: Path) -> dict[str, Any]:
     with zipfile.ZipFile(candidate) as archive:
         members = [info.filename for info in archive.infolist() if not info.is_dir()]
-        require(len(members) == 24, "candidate archive does not have 24 members")
+        require(len(members) == 25, "candidate archive does not have 25 members")
         for member in members:
             path = PurePosixPath(member)
             require(not path.is_absolute() and ".." not in path.parts, "unsafe archive path")
