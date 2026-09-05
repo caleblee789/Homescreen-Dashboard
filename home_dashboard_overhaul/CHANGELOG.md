@@ -1,7 +1,14 @@
 # Changelog
 
-## Unreleased
+## 1.8.7 — 2026-09-04
 
+- Made future due indicators optional and off by default for new settings.
+  Due counts remain available when hovering over a date or selecting it,
+  and the Future range can be adjusted whether indicators are on or off.
+
+- Corrected Cards buried to include the selected deck's sibling cards hidden
+  by Anki's study queue, matching its grey +counts and Progressbar. Returning
+  to the home screen refreshes the count. Future buried cards remain excluded.
 - Organized Settings into Dashboard, Appearance, Calendar, Events, Bible verse,
   and About & support without changing schema 8 or stored values. Moved scoped
   resets with their controls and retained the native modal lifecycle.
@@ -19,7 +26,7 @@
   evidence remains unchanged; release approval requires fresh validation and
   human visual review.
 
-## 1.8.7 — 2026-08-25
+### Earlier 1.8.7 changes
 
 - Kept the parented native `QDialog(mw)` and local `exec()` lifecycle while
   replacing the Settings geometry contract with a logical 1080×760 default,

@@ -459,6 +459,7 @@
       calendar_date: payload.calendar_date || "",
       scheduling_date: payload.scheduling_date || "",
       due_load_reference: Number(payload.due_load_reference) || 0,
+      show_due_forecast: payload.show_due_forecast === true,
       view: payload.view || "",
       week_start: Number(payload.week_start) || 0
     });
@@ -617,6 +618,7 @@
     var primaryAction = root.querySelector("[data-hdo-primary-action]");
     var mostMissed = root.querySelector("[data-hdo-most-missed]");
     var liveStatus = root.querySelector("[data-hdo-calendar-status]");
+    var dueLegend = root.querySelector(".hdo-legend-due");
 
     function cachedDayModel(day, view) {
       if (!day) return null;
@@ -935,13 +937,15 @@
       };
       var dateObject = parseDate(dayIso);
       var model = cachedDayModel(day, view);
+      var dueLevel = model && (model.relation !== "future" || state.payload.show_due_forecast === true)
+        ? model.dueLoad : 0;
       var cell = document.createElement("button");
       cell.type = "button";
       cell.className = "hdo-calendar-day";
       cell.dataset.date = dayIso;
       cell.dataset.level = String(model ? model.intensity : 0);
-      cell.dataset.dueLevel = String(model ? model.dueLoad : 0);
-      cell.dataset.heatKind = model && model.relation === "future" && model.dueLoad > 0
+      cell.dataset.dueLevel = String(dueLevel);
+      cell.dataset.heatKind = model && model.relation === "future" && dueLevel > 0
         ? "due"
         : "completion";
       cell.setAttribute("role", "gridcell");
@@ -1065,6 +1069,7 @@
     }
 
     function renderCalendar() {
+      if (dueLegend) dueLegend.hidden = state.payload.show_due_forecast !== true;
       if (state.view === "year" && yearScrollFrame && state.yearInitialCentered) {
         state.yearScrollLeft = yearScrollFrame.scrollLeft;
       }

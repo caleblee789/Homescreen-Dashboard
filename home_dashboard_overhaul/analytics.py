@@ -695,7 +695,7 @@ def _forecast_facts_query(
     scope: Optional[FilterScope] = None,
 ) -> Dict[str, Tuple[int, Tuple[int, ...]]]:
     heatmap = config["heatmap"]
-    if not heatmap.get("show_due_forecast", True) or int(heatmap.get("forecast_days", 0)) <= 0:
+    if int(heatmap.get("forecast_days", 0)) <= 0:
         return {}
     resolved = scope or resolve_filter_scope(col, config)
     forecast_days = int(heatmap["forecast_days"])
@@ -1067,16 +1067,42 @@ def _scheduler_limited_new_remaining(
     )[0]
 
 
+def _scheduler_hidden_buried(col: Any, scope: FilterScope) -> BuriedStats:
+    """Read the selected deck's grey +counts from Anki's overview calculation."""
+    empty = BuriedStats(0, 0, 0)
+    if scope.excluded_deck_ids:
+        # The built queue cannot exclude dashboard-only decks. Comparing it
+        # with a scoped due tree would mislabel excluded work as buried.
+        return empty
+    try:
+        deck_id = col.decks.get_current_id()
+        queued = col.sched.get_queued_cards(fetch_limit=0)
+        node = col.sched.deck_due_tree(deck_id)
+        if node is None or node.deck_id != deck_id:
+            return empty
+        return BuriedStats(
+            max(0, int(node.new_count) - int(queued.new_count)),
+            max(0, int(node.learn_count) - int(queued.learning_count)),
+            max(0, int(node.review_count) - int(queued.review_count)),
+        )
+    except Exception:
+        # Older schedulers or a temporarily unavailable queue must not discard
+        # the independently available persisted buried-card count.
+        return empty
+
+
 def _buried(col: Any, scope: Optional[FilterScope] = None) -> BuriedStats:
-    """Return explicitly buried cards that would otherwise be eligible today.
+    """Return due buried cards plus siblings Anki will hide for today's study.
 
     New cards have no scheduler-day due date, so every explicitly buried New
     card is eligible. Learning/relearning cards may store either a scheduler
     day or an intraday timestamp; Review cards store a scheduler day. Future
-    Learning/Review cards and transient siblings not yet in queues -2/-3 are
-    deliberately excluded.
+    Learning/Review cards are excluded. The selected deck's native grey +counts
+    cover siblings hidden by queue construction before they enter -2/-3, as in
+    Progressbar. Do not compare that unfiltered queue with dashboard exclusions.
     """
     resolved = scope or FilterScope()
+    hidden = _scheduler_hidden_buried(col, resolved)
     scheduler_today = int(getattr(col.sched, "today", 0))
     day_cutoff = int(getattr(col.sched, "day_cutoff", 0))
     conditions = [
@@ -1101,9 +1127,9 @@ def _buried(col: Any, scope: Optional[FilterScope] = None) -> BuriedStats:
         *args,
     )
     return BuriedStats(
-        max(0, int(row[0] or 0)) if row else 0,
-        max(0, int(row[1] or 0)) if len(row) > 1 else 0,
-        max(0, int(row[2] or 0)) if len(row) > 2 else 0,
+        hidden.new + (max(0, int(row[0] or 0)) if row else 0),
+        hidden.learning + (max(0, int(row[1] or 0)) if len(row) > 1 else 0),
+        hidden.review + (max(0, int(row[2] or 0)) if len(row) > 2 else 0),
     )
 
 
@@ -1394,7 +1420,7 @@ def collect_dashboard_facts(
 
     heatmap = config["heatmap"]
     forecast_days = max(0, int(heatmap.get("forecast_days", 0)))
-    forecast_enabled = bool(heatmap.get("show_due_forecast", True)) and forecast_days > 0
+    forecast_enabled = forecast_days > 0
     try:
         if forecast_enabled:
             forecast = _forecast_facts_query(col, config, scheduling_date, scope)
@@ -1533,7 +1559,7 @@ def collect_day_facts(
 
     heatmap = config["heatmap"]
     forecast_days = max(0, int(heatmap.get("forecast_days", 0)))
-    forecast_enabled = bool(heatmap.get("show_due_forecast", True)) and forecast_days > 0
+    forecast_enabled = forecast_days > 0
     forecast_record: Optional[Tuple[int, Tuple[int, ...]]] = None
     if forecast_enabled:
         forecast_coverage: ValueState[DateCoverage] = ValueState.available(DateCoverage(
@@ -1594,7 +1620,7 @@ def collect_day_browse_target(
         return BrowseTarget()
     heatmap = config["heatmap"]
     forecast_days = max(0, int(heatmap.get("forecast_days", 0)))
-    forecast_enabled = bool(heatmap.get("show_due_forecast", True)) and forecast_days > 0
+    forecast_enabled = forecast_days > 0
     if offset > 0 and (not forecast_enabled or offset >= forecast_days):
         return BrowseTarget()
     _count, due_ids = _scheduled_due_details_for_day(col, scope, offset)

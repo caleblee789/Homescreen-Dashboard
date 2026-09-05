@@ -52,8 +52,11 @@ and Review is green.
 `heatmap.calendar_view` accepts `month` or `year`; `week_start` accepts 0–6.
 History, forecast, manual-reschedule, deleted-card, and deck-exclusion options
 form one scope shared by calendar counts and exact Browser targets.
-`forecast_days: 0` or `show_due_forecast: false` retains Today's due value but
-omits unsupported future due rows and actions.
+`heatmap.show_due_forecast` controls future due indicators and the Due cards
+legend, and defaults to `false`. Due counts remain available on hover and in
+date actions with indicators either on or off, within `forecast_days`.
+The Future range setting remains editable in both states. `forecast_days: 0`
+retains Today's due value but omits unsupported future due rows and actions.
 
 `events.sort` accepts `ascending`, `descending`, or `name`. The first two keep
 their date meanings. `name` sorts case-insensitively by event name, then date,
@@ -90,9 +93,12 @@ classified by scheduler queue: queue `0` is New, queues `1`, `3`, and `4` are
 Learning, and queue `2` is Review regardless of card type. Suspended `-1` and
 buried `-2`/`-3` queues are excluded. The selected deck is not consulted, and
 Total is always the exact sum of the three categories. Cards buried reports
-only scoped cards currently in queues `-2` or `-3` that are New or currently
-due/overdue. Future Learning and Review cards and transient queue-hidden
-siblings are excluded. While work remains, the active progress presentation
+scoped cards currently in queues `-2` or `-3` that are New or currently
+due/overdue, plus the selected deck's siblings hidden by Anki's study queue
+(the overview's grey +counts), matching Progressbar. Future Learning and Review
+cards are excluded. With dashboard deck exclusions, the buried count uses only
+scoped persisted cards because Anki's study queue does not apply those filters.
+While work remains, the active progress presentation
 places `N% complete` inside the filled bar. Initial cards due is the same
 denominator used by that bar: Cards studied today plus Total remaining. The
 visible order is Initial cards due, Total remaining, New remaining, Learning

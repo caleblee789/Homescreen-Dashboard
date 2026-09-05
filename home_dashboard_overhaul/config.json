@@ -41,7 +41,7 @@
     "exclude_manual_reschedules": true,
     "exclude_deleted_cards": false,
     "excluded_deck_ids": [],
-    "show_due_forecast": true,
+    "show_due_forecast": false,
     "presets_by_theme": {
       "Sapphire Glass": "Sapphire",
       "Graphite": "Slate",

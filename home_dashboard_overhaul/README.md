@@ -47,9 +47,11 @@ Browser or statistics classes.
 - Today’s Session counts rated answer events and elapsed review time in the
   active scheduler period, distinct qualifying new introductions, and cards
   presently in scoped explicit buried queues -2/-3 that are New or currently
-  due/overdue. Future Learning and Review cards and transient queue-hidden
-  siblings are excluded. Pace remains seconds per answer and ETA keeps the
-  existing empirical policy with a whole-minute ceiling.
+  due/overdue, plus the selected deck's siblings hidden by Anki's study queue
+  (the grey +counts on the deck overview), matching Progressbar. Future
+  Learning and Review cards are excluded. With dashboard deck exclusions,
+  only scoped persisted buried cards are counted. Pace remains seconds per
+  answer and ETA keeps the existing empirical policy with a whole-minute ceiling.
 - Calendar forecasting matches Anki's non-new, non-suspended future-due logic,
   including filtered-deck original due dates and future buried cards while
   excluding buried work due in the active day. Tooltips and selected-day

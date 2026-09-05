@@ -33,20 +33,22 @@ Click an image to view it at full size.
 
 ## Installation
 
-1. Download the [1.8.7 add-on](home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/package/hdo-ui-candidate-cf112634.ankiaddon?raw=true).
+1. Download the [1.8.7 add-on](https://github.com/caleblee789/Homescreen-Dashboard/releases/download/v1.8.7/home-dashboard-overhaul-1.8.7.ankiaddon).
 2. In Anki, choose **Tools → Add-ons → Install from file** and select the file.
 3. Restart Anki.
 
 If the dashboard reports conflicting add-ons, disable the entries listed in
 its message and restart Anki.
 
-The current build is a release candidate awaiting final human review.
-[View validation details](home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/README.md).
+See [what changed in 1.8.7](docs/releases/1.8.7.md).
 
 ## Using the dashboard
 
 Switch between **Month** and **Year**, then select a day to see its reviews,
 due cards, and events.
+
+Hover over a future date to check its due cards. To also mark them on the
+calendar, turn on **Show future due indicators** in Calendar settings.
 
 Open the calendar's gear icon or
 **Caleb M. Add-ons Settings → Home Screen Dashboard settings** to customize it.

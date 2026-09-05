@@ -17,6 +17,7 @@ from home_dashboard_overhaul.analytics import (
     calculate_last_seven_days,
     calculate_long_term,
     collect_day_browse_target,
+    collect_day_facts,
     collect_dashboard_facts,
     collect_snapshot,
     pace_lower_bound,
@@ -1138,20 +1139,25 @@ class CanonicalFactsTests(unittest.TestCase):
         self.assertEqual(tomorrow_target.kind, BrowseTargetKind.FUTURE_DUE)
         self.assertTrue(tomorrow_target.exact)
 
-        disabled = collect_dashboard_facts(
-            col,
-            normalize_config({"heatmap": {
-                "excluded_deck_ids": [2],
-                "show_due_forecast": False,
-            }}),
-            date(2026, 8, 13),
-        )
-        self.assertEqual(disabled.for_date("2026-08-13").reviews_due.value, 5)
-        self.assertEqual(disabled.queue.value.review, 1)
-        self.assertEqual(
-            disabled.for_date("2026-08-14").reviews_due.reason,
-            AvailabilityReason.QUERY_FAILED,
-        )
+        for show_indicators in (False, True):
+            with self.subTest(show_indicators=show_indicators):
+                config = normalize_config({"heatmap": {
+                    "excluded_deck_ids": [2],
+                    "show_due_forecast": show_indicators,
+                }})
+                displayed = collect_dashboard_facts(col, config, date(2026, 8, 13))
+                self.assertEqual(displayed.for_date("2026-08-13").reviews_due, current.reviews_due)
+                self.assertEqual(displayed.queue, facts.queue)
+                self.assertEqual(displayed.forecast_coverage, facts.forecast_coverage)
+                self.assertEqual(displayed.for_date("2026-08-14").reviews_due, tomorrow.reviews_due)
+                selected = collect_day_facts(
+                    col, config, date(2026, 8, 14), date(2026, 8, 13), date(2026, 8, 13),
+                )
+                self.assertEqual(selected.reviews_due, tomorrow.reviews_due)
+                self.assertEqual(
+                    collect_day_browse_target(col, config, date(2026, 8, 14)),
+                    tomorrow_target,
+                )
 
     def test_forecast_failure_does_not_hide_scheduler_progress(self) -> None:
         class ForecastFailureDB(FakeDB):
@@ -1500,32 +1506,53 @@ class HistoricalTimingAndBuriedTests(unittest.TestCase):
         stats = _buried(col)
         self.assertEqual((stats.new, stats.learning, stats.review), (2, 2, 1))
 
-    def test_buried_does_not_infer_transient_queue_hidden_cards(self) -> None:
+    def test_buried_includes_native_hidden_siblings_without_double_counting(self) -> None:
         class QueueAwareScheduler:
             today = 500
             day_cutoff = int(datetime(2026, 8, 14, 4).timestamp())
 
+            def __init__(self):
+                self.tree = DueTree(new=2, learning=3, review=245, deck_id=1)
+
             def deck_due_tree(self, deck_id):
-                raise AssertionError("buried totals must not inspect the due tree")
+                return self.tree if deck_id == self.tree.deck_id else None
 
             def get_queued_cards(self, *, fetch_limit):
-                raise AssertionError("buried totals must not inspect the built queue")
+                return SimpleNamespace(new_count=2, learning_count=3, review_count=242)
 
         col = SQLiteCollection()
         col.sched = QueueAwareScheduler()
         col.decks = SimpleNamespace(get_current_id=lambda: 1)
-        col.db.connection.executemany(
-            "INSERT INTO cards (id, did, queue, due, type) VALUES (?, ?, ?, ?, ?)",
-            [
-                (1, 1, -2, 0, 0),
-                (2, 1, -3, col.sched.day_cutoff - 1, 1),
-                (3, 1, -2, col.sched.today, 2),
-            ],
-        )
-
+        # Anki's +3 can exist before any sibling has a persisted buried queue.
         stats = _buried(col)
+        self.assertEqual((stats.new, stats.learning, stats.review), (0, 0, 3))
 
+        # Already-buried cards are absent from the due tree. Moving a hidden
+        # sibling into -2 therefore preserves the total rather than adding one.
+        for queue in (-2, -3):
+            with self.subTest(queue=queue):
+                col.sched.tree = DueTree(new=4, learning=4, review=244, deck_id=1)
+                col.db.connection.execute("DELETE FROM cards")
+                col.db.connection.executemany(
+                    "INSERT INTO cards (id, did, queue, due, type) VALUES (?, ?, ?, ?, ?)",
+                    [
+                        (1, 1, queue, 0, 0),
+                        (2, 1, queue, col.sched.day_cutoff - 1, 1),
+                        (3, 1, queue, col.sched.today, 2),
+                        (4, 1, queue, col.sched.today + 1, 2),
+                    ],
+                )
+                stats = _buried(col)
+                self.assertEqual((stats.new, stats.learning, stats.review), (3, 2, 3))
+
+        # Differences can be negative as learning availability changes; they
+        # must never subtract from the persisted buried count.
+        col.sched.tree = DueTree(new=1, learning=2, review=241, deck_id=1)
+        stats = _buried(col)
         self.assertEqual((stats.new, stats.learning, stats.review), (1, 1, 1))
+
+        col.sched.get_queued_cards = lambda **_kwargs: None
+        self.assertEqual(_buried(col), stats)
 
     def test_buried_uses_sql_only_when_dashboard_deck_exclusions_are_active(self) -> None:
         class QueueAwareScheduler:

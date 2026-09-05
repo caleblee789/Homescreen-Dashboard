@@ -101,6 +101,19 @@ class ControllerReleaseMatrixRegressionTests(unittest.TestCase):
             self.assertFalse(self.controller._refresh_pending)
         self.assertEqual(self.aqt.mw.deckBrowser.refresh_count, 11)
 
+    def test_returning_from_overview_refreshes_a_healthy_snapshot(self) -> None:
+        self.controller.snapshot = sample_snapshot(date(2026, 8, 17))
+        old_key = self.controller.cache_key = self.controller._key()
+        self.aqt.mw.state = "deckBrowser"
+
+        # Queue construction can hide siblings without a collection operation.
+        self.controller.on_state_change("deckBrowser", "overview")
+        controller_support.FakeQTimer.run_next()
+
+        self.assertNotEqual(self.controller._key(), old_key)
+        self.assertEqual(len(controller_support.FakeQueryOp.pending), 1)
+        self.assertFalse(self.controller.initial_failure)
+
     def test_newer_snapshot_wins_when_queries_complete_out_of_order(self) -> None:
         older = sample_snapshot(date(2026, 8, 17))
         newer = deepcopy(older)

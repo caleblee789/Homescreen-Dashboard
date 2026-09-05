@@ -89,7 +89,9 @@ class RendererTests(unittest.TestCase):
         self.assertIn("data-hdo-most-missed", html)
 
     def test_calendar_contains_separate_completion_and_three_level_due_legends(self) -> None:
-        html = render_dashboard(self.snapshot, self.config)
+        enabled = deepcopy(self.config)
+        enabled["heatmap"]["show_due_forecast"] = True
+        html = render_dashboard(self.snapshot, enabled)
         completion = html[html.index("hdo-completion-legend"):html.index("hdo-due-legend")]
         due = html[html.index("hdo-legend-due"):html.index("hdo-calendar-context-bar")]
         self.assertEqual(completion.count("data-level="), 6)
@@ -103,10 +105,23 @@ class RendererTests(unittest.TestCase):
         disabled["visibility"]["events"] = False
         disabled["heatmap"]["show_due_forecast"] = False
         disabled_html = render_dashboard(self.snapshot, disabled)
-        self.assertNotIn("hdo-legend-due", disabled_html)
+        self.assertIn('class="hdo-legend-group hdo-legend-due" hidden', disabled_html)
         self.assertNotIn("hdo-legend-event", disabled_html)
         self.assertNotIn("hdo-calendar-footer__event", disabled_html)
         self.assertIn("hdo-calendar-footer__date-context", disabled_html)
+        for view in ("month", "year"):
+            with self.subTest(view=view):
+                disabled["heatmap"]["calendar_view"] = view
+                enabled["heatmap"]["calendar_view"] = view
+                hidden_html = render_dashboard(self.snapshot, disabled)
+                shown_html = render_dashboard(self.snapshot, enabled)
+                self.assertIn('class="hdo-legend-group hdo-legend-due" hidden', hidden_html)
+                self.assertIn('class="hdo-legend-group hdo-legend-due">', shown_html)
+                hidden_payload = payload_from(hidden_html)
+                shown_payload = payload_from(shown_html)
+                self.assertFalse(hidden_payload["show_due_forecast"])
+                self.assertTrue(shown_payload["show_due_forecast"])
+                self.assertEqual(hidden_payload["activity"], shown_payload["activity"])
 
     def test_context_bar_has_selected_event_and_only_contextual_action_shells(self) -> None:
         html = render_dashboard(self.snapshot, self.config)

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-04",
+  "version": "1.8.7",
+  "artifact": "home-dashboard-overhaul-1.8.7.ankiaddon",
+  "sha256": "ef19b62dcdc5b0e39df02fe9e91b631b8636e01874b7765b5268f085f72b781f",
+  "checks": {
+    "python_unittest": {
+      "status": "passed",
+      "tests": 326
+    },
+    "calendar_javascript": "passed",
+    "revised_ui_contract": "passed",
+    "settings_window_contract": "passed",
+    "package_allowlist_members": 24,
+    "source_archive_byte_parity": "passed",
+    "git_diff_check": "passed"
+  },
+  "native_validation": {
+    "current_artifact": "not rerun",
+    "previous_evidence": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final",
+    "previous_artifact_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
+    "note": "Historical native captures and their review-required status remain unchanged. They are presentation references, not exact-package native validation of this updated artifact."
+  },
+  "publication_authorization": "User explicitly requested updating GitHub and uploading the latest add-on and a user-friendly AnkiWeb page with two screenshots.",
+  "ankiweb_screenshots": [
+    "docs/images/1.8.7/dashboard-sapphire-dark.png",
+    "docs/images/1.8.7/settings-appearance-dark.png"
+  ]
+}
