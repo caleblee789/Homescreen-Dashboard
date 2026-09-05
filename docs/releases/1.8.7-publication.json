@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "published_date_utc": "2026-09-05",
+  "version": "1.8.7",
+  "ankiweb_id": "808247776",
+  "ankiweb_url": "https://ankiweb.net/shared/info/808247776",
+  "github_url": "https://github.com/caleblee789/Homescreen-Dashboard",
+  "github_visibility": "public",
+  "github_release_url": "https://github.com/caleblee789/Homescreen-Dashboard/releases/tag/v1.8.7",
+  "release_commit": "f7d263b90e3b93ed5cb5d4efd7388a19b327ebb4",
+  "artifact_sha256": "ef19b62dcdc5b0e39df02fe9e91b631b8636e01874b7765b5268f085f72b781f",
+  "artifact_size_bytes": 227799,
+  "verification": {
+    "anonymous_github_download": "passed",
+    "anonymous_ankiweb_download": "passed",
+    "ankiweb_github_and_local_bytes_match": "passed",
+    "ankiweb_screenshot_count": 2,
+    "both_screenshots_loaded": true,
+    "github_and_support_links_present": true
+  },
+  "screenshots": [
+    {
+      "path": "docs/images/1.8.7/dashboard-sapphire-dark.png",
+      "native_dimensions": [3420, 2082]
+    },
+    {
+      "path": "docs/images/1.8.7/settings-appearance-dark.png",
+      "native_dimensions": [2560, 1600]
+    }
+  ],
+  "validation_record": "1.8.7-verification.json",
+  "note": "Publication does not change historical native evidence or imply new native validation."
+}

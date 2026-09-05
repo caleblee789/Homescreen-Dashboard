@@ -33,9 +33,13 @@ Click an image to view it at full size.
 
 ## Installation
 
-1. Download the [1.8.7 add-on](https://github.com/caleblee789/Homescreen-Dashboard/releases/download/v1.8.7/home-dashboard-overhaul-1.8.7.ankiaddon).
-2. In Anki, choose **Tools → Add-ons → Install from file** and select the file.
+1. In Anki, choose **Tools → Add-ons → Get Add-ons**.
+2. Enter **808247776** and click **OK**.
 3. Restart Anki.
+
+[View on AnkiWeb](https://ankiweb.net/shared/info/808247776).
+You can also download the [1.8.7 add-on file](https://github.com/caleblee789/Homescreen-Dashboard/releases/download/v1.8.7/home-dashboard-overhaul-1.8.7.ankiaddon)
+and choose **Tools → Add-ons → Install from file**.
 
 If the dashboard reports conflicting add-ons, disable the entries listed in
 its message and restart Anki.
