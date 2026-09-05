@@ -17,9 +17,9 @@ screen.
 
 Click an image to view it at full size.
 
-**Sapphire Glass · Month view**
+**Sapphire Glass · Year view**
 
-[![Sapphire Glass dashboard with a blue Month calendar, progress bar, four statistics cards, and optional verse](docs/images/1.8.7/dashboard-sapphire-dark.png)](docs/images/1.8.7/dashboard-sapphire-dark.png)
+[![Sapphire Glass dashboard with a blue Year calendar, progress bar, four statistics cards, and optional verse](docs/images/1.8.7/dashboard-sapphire-year.png)](docs/images/1.8.7/dashboard-sapphire-year.png)
 
 | Emerald · dark Month view | Graphite · Year overview |
 | --- | --- |
