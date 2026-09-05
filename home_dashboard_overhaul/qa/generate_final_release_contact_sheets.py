@@ -265,7 +265,7 @@ def validate_evidence(
         fixture.get("candidate_payload_matches_archive") is True,
         "installed package payload did not match the archive",
     )
-    require(fixture.get("archive_file_count") == 24, "exact package must contain 24 files")
+    require(fixture.get("archive_file_count") == 25, "exact package must contain 25 files")
     with zipfile.ZipFile(package) as archive:
         require(archive.testzip() is None, "exact package archive integrity check failed")
         members = [info for info in archive.infolist() if not info.is_dir()]
@@ -296,7 +296,7 @@ def validate_evidence(
                 source.read_bytes() == archive.read(name),
                 f"exact package member differs from current source: {name}",
             )
-    require(member_count == 24, f"exact package contains {member_count} files instead of 24")
+    require(member_count == 25, f"exact package contains {member_count} files instead of 25")
 
     captures = runtime.get("captures")
     require(isinstance(captures, dict), "native runtime report has no capture map")

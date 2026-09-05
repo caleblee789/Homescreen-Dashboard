@@ -277,7 +277,7 @@ class PersistenceAndPrivacyReleaseMatrixTests(unittest.TestCase):
         builder = runpy.run_path(str(ROOT / "tools" / "build_ankiaddon.py"))
         members = tuple(builder["PACKAGE_FILES"])
         deferred = set(builder["DEFERRED_SOURCE_FILES"])
-        self.assertEqual(len(members), 24)
+        self.assertEqual(len(members), 25)
         self.assertTrue(deferred.isdisjoint(members))
         self.assertFalse(any(name.startswith("_vendor/") for name in members))
 

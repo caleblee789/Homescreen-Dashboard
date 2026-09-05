@@ -131,6 +131,9 @@ ACTION_TEXT = "Home Screen Dashboard settings"
 PROJECT_URL = "https://github.com/caleblee789/Homescreen-Dashboard"
 ISSUES_URL = "https://github.com/caleblee789/Homescreen-Dashboard/issues"
 PACKAGE_ROOT = Path(__file__).resolve().parent
+DONATE_URL = "https://www.buymeacoffee.com/caleblee78f"
+DONATE_TOOLTIP = "Donate to support the creator"
+DONATE_IMAGE_PATH = Path(__file__).resolve().parent / "assets" / "buy_me_a_coffee.png"
 MAX_VERSE_IMPORT_BYTES = 16 * 1024 * 1024
 
 SETTINGS_ROW_PRIMITIVE_ROLE = Qt.ItemDataRole.UserRole + 1
@@ -1821,6 +1824,10 @@ class SettingsStatusIndicator(QWidget):
             _settings_vector_icon(icon_kind).paint(painter, self.rect())
 
 
+def _open_donation_page() -> None:
+    QDesktopServices.openUrl(QUrl(DONATE_URL))
+
+
 class SettingsFooter(QWidget):
     """Sticky action-local feedback footer; it never overlays page content."""
 
@@ -1899,14 +1906,50 @@ class SettingsFooter(QWidget):
         self.buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
         )
-        self.grid.addWidget(self.status_container, 0, 0)
-        self.grid.addWidget(self.left_container, 0, 1)
-        self.grid.addWidget(self.buttons, 0, 2, Qt.AlignmentFlag.AlignRight)
-        self.grid.setColumnStretch(0, 1)
+        self._donate_btn = self._build_donate_button()
+        self.grid.addWidget(self._donate_btn, 0, 0)
+        self.grid.addWidget(self.status_container, 0, 1)
+        self.grid.addWidget(self.left_container, 0, 2)
+        self.grid.addWidget(self.buttons, 0, 3, Qt.AlignmentFlag.AlignRight)
+        self.grid.setColumnStretch(1, 1)
         self.outer.addLayout(self.grid)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setFixedHeight(SETTINGS_FOOTER_MIN_HEIGHT)
         self._compact = False
+
+    def _donate_button_style(self) -> str:
+        image_path = DONATE_IMAGE_PATH.as_posix()
+        return f"""
+            QToolButton#buyMeACoffeeButton {{
+                border: none;
+                border-image: url(\"{image_path}\") 0 0 0 0 stretch stretch;
+                background: transparent;
+                padding: 0px;
+            }}
+            QToolButton#buyMeACoffeeButton:hover {{
+                border: none;
+                border-image: url(\"{image_path}\") 0 0 0 0 stretch stretch;
+                background: transparent;
+            }}
+        """
+
+    def _build_donate_button(self) -> QToolButton:
+        button = QToolButton()
+        button.setObjectName("buyMeACoffeeButton")
+        button.setCursor(Qt.CursorShape.PointingHandCursor)
+        button.setToolTip(DONATE_TOOLTIP)
+        button.setAccessibleName("Buy Me a Coffee")
+        button.setAccessibleDescription(DONATE_TOOLTIP)
+        button.clicked.connect(_open_donation_page)
+        button.setFixedSize(98, 28)
+        button.setStyleSheet(self._donate_button_style())
+
+        if DONATE_IMAGE_PATH.exists():
+            button.setIcon(QIcon())
+        else:
+            button.setText("Buy me a coffee")
+
+        return button
 
     def inline_width_hint(self) -> int:
         margins = self.grid.contentsMargins()
@@ -5532,6 +5575,7 @@ class SettingsDialog(QDialog):
         stylesheet = _settings_style(config, self.controller.is_dark())
         if self.styleSheet() != stylesheet:
             self.setStyleSheet(stylesheet)
+        self.footer._donate_btn.setStyleSheet(self.footer._donate_button_style())
         _apply_role_fonts(self)
         self._update_color_swatch()
         self._refresh_heatmap_palette_preview()

@@ -728,7 +728,7 @@ def archive_inspection(candidate: Path) -> dict[str, Any]:
     members: list[dict[str, Any]] = []
     with zipfile.ZipFile(candidate) as archive:
         infos = [info for info in archive.infolist() if not info.is_dir()]
-        require(len(infos) == 24, "candidate archive must contain 24 files")
+        require(len(infos) == 25, "candidate archive must contain 25 files")
         names = [info.filename for info in infos]
         require(len(names) == len(set(names)), "candidate archive contains duplicate paths")
         for info in infos:
@@ -1109,7 +1109,7 @@ This immutable evidence set was assembled from the exact reproducible package
   gates.
 - `reports/settings-structured-layout.json` retains the non-PNG canonical 100%
   application-font checks plus disconnected-monitor v4 restoration proof.
-- `reports/archive-inspection.json` proves the 24-member allowlist, safe paths,
+- `reports/archive-inspection.json` proves the 25-member allowlist, safe paths,
   and source/archive byte parity.
 - `reports/native-platform-matrix.json` proves the required macOS 100 percent
   application-font Retina profile uses the identical package and capture-plan
@@ -1236,7 +1236,7 @@ def _assemble_to_directory(
         "package": {
             "path": packaged.relative_to(output).as_posix(),
             "sha256": candidate_hash,
-            "member_count": 24,
+            "member_count": 25,
             "source_archive_byte_parity": "passed",
         },
         "native_captures": counts,

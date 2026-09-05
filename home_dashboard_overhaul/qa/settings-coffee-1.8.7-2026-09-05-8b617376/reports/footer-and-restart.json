@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "checks": [
+    {
+      "theme": "dark",
+      "state": "clean",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "dark",
+      "state": "dirty",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "dark",
+      "state": "validation-error",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "dark",
+      "state": "discarded",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "dark",
+      "state": "saving",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "dark",
+      "state": "saved",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "dark",
+      "state": "save-error",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "dark",
+      "state": "discard-after-error",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "light",
+      "state": "clean",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "light",
+      "state": "dirty",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "light",
+      "state": "validation-error",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "light",
+      "state": "discarded",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "light",
+      "state": "saving",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "light",
+      "state": "saved",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "light",
+      "state": "save-error",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    },
+    {
+      "theme": "light",
+      "state": "discard-after-error",
+      "window_size": [
+        860,
+        640
+      ],
+      "footer_height": 56,
+      "coffee_size": [
+        98,
+        28
+      ],
+      "controls_contained": true,
+      "overlap": false
+    }
+  ],
+  "errors": [],
+  "identity": {
+    "gated_before_window_interaction": true,
+    "pid": 63146,
+    "excluded_normal_pid": 54425,
+    "excluded_normal_process_state": "alive-and-untouched",
+    "excluded_normal_pid_alive": true,
+    "processes_are_distinct": true,
+    "run_root": "/private/tmp/anki-release-qa.f6r6dxra",
+    "profile": "Codex QA HDO 1.8.7 Coffee 20260905 Final",
+    "profile_matches": true,
+    "collection_path": "/private/tmp/anki-release-qa.f6r6dxra/Codex QA HDO 1.8.7 Coffee 20260905 Final/collection.anki2",
+    "collection_inside_run_root": true,
+    "candidate_addon_root": "/private/tmp/anki-release-qa.f6r6dxra/addons21/home_dashboard_overhaul",
+    "probe_addon_root": "/private/tmp/anki-release-qa.f6r6dxra/addons21/zz_hdo_coffee_probe",
+    "addons_inside_run_root": true,
+    "window_title": "Codex QA HDO 1.8.7 Coffee 20260905 Final - Anki",
+    "window_title_matches_profile": true,
+    "sync_credentials_present": false,
+    "auto_sync": false,
+    "media_sync": false,
+    "sync_identity": "disabled-and-disconnected",
+    "single_instance_key_fingerprint": "ebea5e7f514f",
+    "anki_version": "26.8.1",
+    "candidate": {
+      "candidate": "/Users/test/Documents/ChatGPT.nosync/Homescreen Statistics Overhaul/qa-runs/settings-coffee-20260905/home-dashboard-overhaul-1.8.7.ankiaddon",
+      "candidate_sha256": "8b617376758bac40d28329e517014021cb608be9bae36b4547edf89e07148b53",
+      "member_count": 25,
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.7"
+    }
+  },
+  "restart_persistence": {
+    "calendar_view": "year",
+    "events_sort": "name",
+    "status": "passed"
+  },
+  "donation_click": {
+    "url": "https://www.buymeacoffee.com/caleblee78f",
+    "system_open_succeeded": true,
+    "dialog_remained_open": true,
+    "draft_preserved": true,
+    "stored_settings_unchanged": true
+  }
+}

@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-05",
+  "version": "1.8.7",
+  "scope": "Requested coffee-button update: six Settings pages in native light and dark mode, plus footer behavior and controlled restart.",
+  "candidate_sha256": "8b617376758bac40d28329e517014021cb608be9bae36b4547edf89e07148b53",
+  "package_members": 25,
+  "application_font_percent": 100,
+  "settings_size": [
+    1080,
+    760
+  ],
+  "capture_count": 12,
+  "captures": [
+    {
+      "id": "SET-PAGE-DASHBOARD-1080-100",
+      "page": "dashboard",
+      "anki_theme": "dark",
+      "file": "captures/SET-PAGE-DASHBOARD-1080-100.png",
+      "sha256": "893fa2850bc7d42e0d92c19d4bfc30f24cef7f0ce54013dede0bcbcce371fdf3",
+      "physical_pixels": [
+        2160,
+        1584
+      ],
+      "visual_review": "passed"
+    },
+    {
+      "id": "SET-PAGE-APPEARANCE-1080-100",
+      "page": "appearance",
+      "anki_theme": "dark",
+      "file": "captures/SET-PAGE-APPEARANCE-1080-100.png",
+      "sha256": "b72b90c96ae3e0644cc07e1c9660298572846393a39a0cdfca804cb36f2fa754",
+      "physical_pixels": [
+        2160,
+        1584
+      ],
+      "visual_review": "passed"
+    },
+    {
+      "id": "SET-PAGE-CALENDAR-1080-100",
+      "page": "calendar",
+      "anki_theme": "dark",
+      "file": "captures/SET-PAGE-CALENDAR-1080-100.png",
+      "sha256": "d3269bc06c4de638deb36a7bd5018caccfad4895a44203e5fefc1c7030530e76",
+      "physical_pixels": [
+        2160,
+        1584
+      ],
+      "visual_review": "passed"
+    },
+    {
+      "id": "SET-PAGE-EVENTS-1080-100",
+      "page": "events",
+      "anki_theme": "dark",
+      "file": "captures/SET-PAGE-EVENTS-1080-100.png",
+      "sha256": "961664a6707ca7f96ac388bbe110fe4e87408daa5078f8934d23f8dd865eee59",
+      "physical_pixels": [
+        2160,
+        1584
+      ],
+      "visual_review": "passed"
+    },
+    {
+      "id": "SET-PAGE-BIBLE-1080-100",
+      "page": "bible_verse",
+      "anki_theme": "dark",
+      "file": "captures/SET-PAGE-BIBLE-1080-100.png",
+      "sha256": "33c30bdccb69fe5e3a478e76fcd872c74137b0df20f0153006242b47b3df1a92",
+      "physical_pixels": [
+        2160,
+        1584
+      ],
+      "visual_review": "passed"
+    },
+    {
+      "id": "SET-PAGE-ABOUT-1080-100",
+      "page": "about_support",
+      "anki_theme": "dark",
+      "file": "captures/SET-PAGE-ABOUT-1080-100.png",
+      "sha256": "23e2a34f9bf592545873fbb94195200f26b2911d09f1bca43cdfa327d5a05eb3",
+      "physical_pixels": [
+        2160,
+        1584
+      ],
+      "visual_review": "passed"
+    },
+    {
+      "id": "SET-THEME-LIGHT",
+      "page": "appearance",
+      "anki_theme": "light",
+      "file": "captures/SET-THEME-LIGHT.png",
+      "sha256": "48dc19c9119939a2a59328f12c492ce72872a48a54e0140bc98aa39a0073234b",
+      "physical_pixels": [
+        2160,
+        1584
+      ],
+      "visual_review": "passed"
+    },
+    {
+      "id": "SET-LIGHT-DASHBOARD",
+      "page": "dashboard",
+      "anki_theme": "light",
+      "file": "captures/SET-LIGHT-DASHBOARD.png",
+      "sha256": "7f1737666472d524ce8e60aa56a8a6c411b915a2999800f15e3982a4f3c163a4",
+      "physical_pixels": [
+        2160,
+        1584
+      ],
+      "visual_review": "passed"
+    },
+    {
+      "id": "SET-LIGHT-CALENDAR",
+      "page": "calendar",
+      "anki_theme": "light",
+      "file": "captures/SET-LIGHT-CALENDAR.png",
+      "sha256": "c7619518fa69fb676dc1560e859274d1ef3bd3047f949940207aab0fdaf97b10",
+      "physical_pixels": [
+        2160,
+        1584
+      ],
+      "visual_review": "passed"
+    },
+    {
+      "id": "SET-LIGHT-EVENTS",
+      "page": "events",
+      "anki_theme": "light",
+      "file": "captures/SET-LIGHT-EVENTS.png",
+      "sha256": "f6cc553ef20e66aebfc09e03cc24c6f675d86e8ba2bd3cf80c2ac26afa87d41c",
+      "physical_pixels": [
+        2160,
+        1584
+      ],
+      "visual_review": "passed"
+    },
+    {
+      "id": "SET-LIGHT-BIBLE",
+      "page": "bible_verse",
+      "anki_theme": "light",
+      "file": "captures/SET-LIGHT-BIBLE.png",
+      "sha256": "4ffd75093c8c8b840b5fd6ae5f22aa39b289b116c0de19100e49605a61ad47c0",
+      "physical_pixels": [
+        2160,
+        1584
+      ],
+      "visual_review": "passed"
+    },
+    {
+      "id": "SET-LIGHT-ABOUT",
+      "page": "about_support",
+      "anki_theme": "light",
+      "file": "captures/SET-LIGHT-ABOUT.png",
+      "sha256": "5dace7ba284845135117b9cb2ce498f41a33af56ffd5e20947b9f2cafb41765e",
+      "physical_pixels": [
+        2160,
+        1584
+      ],
+      "visual_review": "passed"
+    }
+  ],
+  "quality_status": "passed",
+  "visual_review": {
+    "reviewer": "Codex",
+    "result": "All 12 full native frames inspected; reference button matches, footer spacing is consistent, and no changed-surface clipping or overlap was observed."
+  },
+  "automated_checks": {
+    "python_unittest": {
+      "total": 326,
+      "passed": 308,
+      "skipped": 18
+    },
+    "calendar_javascript": "passed",
+    "capture_plan": "passed",
+    "revised_ui_contract": "passed",
+    "settings_window_contract": "passed",
+    "source_archive_byte_parity": "passed",
+    "reference_asset_and_code_parity": "passed",
+    "native_structured_layout": "passed",
+    "footer_behavior": {
+      "status": "passed",
+      "checks": 16
+    },
+    "controlled_restart": "passed"
+  },
+  "full_release_matrix": "Not rerun; this is the user-requested scoped update evidence. Historical full-release evidence remains unchanged."
+}
