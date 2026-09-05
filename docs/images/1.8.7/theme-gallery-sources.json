@@ -1,14 +1,32 @@
 {
   "purpose": "AnkiWeb presentation gallery; cropped native screenshots with sample data.",
-  "image": "docs/images/1.8.7/dashboard-theme-gallery.png",
-  "image_sha256": "ad32ebdb8fae94c988098ae7ef7ea868a77ab097d9ac7560c65a469dc7091477",
-  "dimensions": [
-    4808,
-    3246
-  ],
-  "grid": [
-    4,
-    4
+  "galleries": [
+    {
+      "image": "docs/images/1.8.7/dashboard-themes-dark.png",
+      "image_sha256": "dd79dded65f1fc3efca98ee263dc05dc50662076c7b86daf8f58e6f4a2fbc0dc",
+      "dimensions": [
+        2416,
+        1440
+      ],
+      "grid": [
+        2,
+        2
+      ],
+      "bytes": 915333
+    },
+    {
+      "image": "docs/images/1.8.7/dashboard-themes-light.png",
+      "image_sha256": "50902c60452166d0a3d2fd77503ae6d1b17c7923ecb9506dd4822c7352ca4bef",
+      "dimensions": [
+        2416,
+        1440
+      ],
+      "grid": [
+        2,
+        2
+      ],
+      "bytes": 690553
+    }
   ],
   "capture_package_sha256": "cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4",
   "current_published_package_sha256": "8b617376758bac40d28329e517014021cb608be9bae36b4547edf89e07148b53",
@@ -28,6 +46,7 @@
       "column": 1,
       "theme": "Sapphire Glass",
       "palette": "Amethyst",
+      "gallery": "dark",
       "mode": "dark",
       "capture_id": "PROD-PAL-SG-AMETHYST-D",
       "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-SG-AMETHYST-D.png",
@@ -47,54 +66,13 @@
     {
       "row": 1,
       "column": 2,
-      "theme": "Sapphire Glass",
-      "palette": "Glacier",
-      "mode": "light",
-      "capture_id": "PROD-PAL-SG-GLACIER-L",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-SG-GLACIER-L.png",
-      "source_sha256": "3a447327f17b07afd25caeb0374ee49f1fb980c3f7828b0da4745a6d60393e4b",
-      "crop_box_pixels": [
-        548,
-        630,
-        2872,
-        1786
-      ],
-      "sample_review_count": 186,
-      "sample_last_seven_days_count": 1214,
-      "sample_lifetime_count": 82640,
-      "event": "Pediatrics review",
-      "calendar_event_markers": 1
-    },
-    {
-      "row": 1,
-      "column": 3,
-      "theme": "Sapphire Glass",
-      "palette": "Sea Glass",
+      "theme": "Emerald",
+      "palette": "Emerald",
+      "gallery": "dark",
       "mode": "dark",
-      "capture_id": "PROD-PAL-SG-SEA-GLASS-D",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-SG-SEA-GLASS-D.png",
-      "source_sha256": "471bf1d4dd65d67775a7caf6495ecc01c7e4253334e18383e5cb6b4d7532d3cb",
-      "crop_box_pixels": [
-        548,
-        630,
-        2872,
-        1786
-      ],
-      "sample_review_count": 186,
-      "sample_last_seven_days_count": 1214,
-      "sample_lifetime_count": 82640,
-      "event": "Pediatrics review",
-      "calendar_event_markers": 1
-    },
-    {
-      "row": 1,
-      "column": 4,
-      "theme": "Sapphire Glass",
-      "palette": "Sapphire",
-      "mode": "light",
-      "capture_id": "PROD-PAL-SG-SAPPHIRE-L",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-SG-SAPPHIRE-L.png",
-      "source_sha256": "c9df462d3e40f6f774c097a56e83c7b596ee34b86845ffcacdd349568fb74ec9",
+      "capture_id": "PROD-PAL-EM-EMERALD-D",
+      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-EM-EMERALD-D.png",
+      "source_sha256": "64c2b463520e31ec5a3d75b738fdb6dad3abbfcd482131534679f60d27144f98",
       "crop_box_pixels": [
         548,
         630,
@@ -112,6 +90,7 @@
       "column": 1,
       "theme": "Graphite",
       "palette": "Slate",
+      "gallery": "dark",
       "mode": "dark",
       "capture_id": "PROD-PAL-GR-SLATE-D",
       "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-GR-SLATE-D.png",
@@ -131,12 +110,13 @@
     {
       "row": 2,
       "column": 2,
-      "theme": "Graphite",
-      "palette": "Steel",
-      "mode": "light",
-      "capture_id": "PROD-PAL-GR-STEEL-L",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-GR-STEEL-L.png",
-      "source_sha256": "45cb614d1ed239531474d927e3b3056940c575c2c49e15656fa2f1556a32c62a",
+      "theme": "Sapphire Glass",
+      "palette": "Glacier",
+      "gallery": "dark",
+      "mode": "dark",
+      "capture_id": "PROD-PAL-SG-GLACIER-D",
+      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-SG-GLACIER-D.png",
+      "source_sha256": "7c9b67fb59b1f44f7524666341b80fa2e43775ce01d3fc52b0432d7e20457096",
       "crop_box_pixels": [
         548,
         630,
@@ -150,14 +130,37 @@
       "calendar_event_markers": 1
     },
     {
-      "row": 2,
-      "column": 3,
+      "row": 1,
+      "column": 1,
+      "theme": "Sapphire Glass",
+      "palette": "Glacier",
+      "gallery": "light",
+      "mode": "light",
+      "capture_id": "PROD-PAL-SG-GLACIER-L",
+      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-SG-GLACIER-L.png",
+      "source_sha256": "3a447327f17b07afd25caeb0374ee49f1fb980c3f7828b0da4745a6d60393e4b",
+      "crop_box_pixels": [
+        548,
+        630,
+        2872,
+        1786
+      ],
+      "sample_review_count": 186,
+      "sample_last_seven_days_count": 1214,
+      "sample_lifetime_count": 82640,
+      "event": "Pediatrics review",
+      "calendar_event_markers": 1
+    },
+    {
+      "row": 1,
+      "column": 2,
       "theme": "Graphite",
       "palette": "Plum",
-      "mode": "dark",
-      "capture_id": "PROD-PAL-GR-PLUM-D",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-GR-PLUM-D.png",
-      "source_sha256": "90befdc86bb31304f6dad687be3193b913249b6e304fb0162c7c6a7060b16101",
+      "gallery": "light",
+      "mode": "light",
+      "capture_id": "PROD-PAL-GR-PLUM-L",
+      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-GR-PLUM-L.png",
+      "source_sha256": "512902b0876ddfd82700ef0a0053185faf031f2edcac089f7d0965dceaf230a1",
       "crop_box_pixels": [
         548,
         630,
@@ -172,51 +175,10 @@
     },
     {
       "row": 2,
-      "column": 4,
-      "theme": "Graphite",
-      "palette": "Mint",
-      "mode": "light",
-      "capture_id": "PROD-PAL-GR-MINT-L",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-GR-MINT-L.png",
-      "source_sha256": "43741b7d67ccef69c5068db02e1d2b40da02eb3f7180125b7a0275ad5400cf5a",
-      "crop_box_pixels": [
-        548,
-        630,
-        2872,
-        1786
-      ],
-      "sample_review_count": 186,
-      "sample_last_seven_days_count": 1214,
-      "sample_lifetime_count": 82640,
-      "event": "Pediatrics review",
-      "calendar_event_markers": 1
-    },
-    {
-      "row": 3,
       "column": 1,
       "theme": "Emerald",
-      "palette": "Emerald",
-      "mode": "dark",
-      "capture_id": "PROD-PAL-EM-EMERALD-D",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-EM-EMERALD-D.png",
-      "source_sha256": "64c2b463520e31ec5a3d75b738fdb6dad3abbfcd482131534679f60d27144f98",
-      "crop_box_pixels": [
-        548,
-        630,
-        2872,
-        1786
-      ],
-      "sample_review_count": 186,
-      "sample_last_seven_days_count": 1214,
-      "sample_lifetime_count": 82640,
-      "event": "Pediatrics review",
-      "calendar_event_markers": 1
-    },
-    {
-      "row": 3,
-      "column": 2,
-      "theme": "Emerald",
       "palette": "Jade",
+      "gallery": "light",
       "mode": "light",
       "capture_id": "PROD-PAL-EM-JADE-L",
       "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-EM-JADE-L.png",
@@ -234,119 +196,15 @@
       "calendar_event_markers": 1
     },
     {
-      "row": 3,
-      "column": 3,
-      "theme": "Emerald",
-      "palette": "Moss",
-      "mode": "dark",
-      "capture_id": "PROD-PAL-EM-MOSS-D",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-EM-MOSS-D.png",
-      "source_sha256": "a80140df5c5012fcdc0cf19ef8b2ebb6008f2ba19f1d06fd61eb0ce7d4e799b7",
-      "crop_box_pixels": [
-        548,
-        630,
-        2872,
-        1786
-      ],
-      "sample_review_count": 186,
-      "sample_last_seven_days_count": 1214,
-      "sample_lifetime_count": 82640,
-      "event": "Pediatrics review",
-      "calendar_event_markers": 1
-    },
-    {
-      "row": 3,
-      "column": 4,
+      "row": 2,
+      "column": 2,
       "theme": "Emerald",
       "palette": "Lagoon",
+      "gallery": "light",
       "mode": "light",
       "capture_id": "PROD-PAL-EM-LAGOON-L",
       "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-EM-LAGOON-L.png",
       "source_sha256": "8266b9601f91e7f00be38d3c126185f61e7c12c4b076a0e40b42e0b14f5fe830",
-      "crop_box_pixels": [
-        548,
-        630,
-        2872,
-        1786
-      ],
-      "sample_review_count": 186,
-      "sample_last_seven_days_count": 1214,
-      "sample_lifetime_count": 82640,
-      "event": "Pediatrics review",
-      "calendar_event_markers": 1
-    },
-    {
-      "row": 4,
-      "column": 1,
-      "theme": "High Contrast",
-      "palette": "Cyan",
-      "mode": "dark",
-      "capture_id": "PROD-PAL-HC-CYAN-D",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-HC-CYAN-D.png",
-      "source_sha256": "709d5be97d38f4167283161273e0921011513cedcd7d61df27ca80b0028572fb",
-      "crop_box_pixels": [
-        548,
-        630,
-        2872,
-        1786
-      ],
-      "sample_review_count": 186,
-      "sample_last_seven_days_count": 1214,
-      "sample_lifetime_count": 82640,
-      "event": "Pediatrics review",
-      "calendar_event_markers": 1
-    },
-    {
-      "row": 4,
-      "column": 2,
-      "theme": "High Contrast",
-      "palette": "Gold",
-      "mode": "dark",
-      "capture_id": "PROD-PAL-HC-GOLD-D",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-HC-GOLD-D.png",
-      "source_sha256": "357a1e285c83eb4bf9cdc294606f383b13cf493d26e967a38ddde992842ed704",
-      "crop_box_pixels": [
-        548,
-        630,
-        2872,
-        1786
-      ],
-      "sample_review_count": 186,
-      "sample_last_seven_days_count": 1214,
-      "sample_lifetime_count": 82640,
-      "event": "Pediatrics review",
-      "calendar_event_markers": 1
-    },
-    {
-      "row": 4,
-      "column": 3,
-      "theme": "High Contrast",
-      "palette": "Magenta",
-      "mode": "dark",
-      "capture_id": "PROD-PAL-HC-MAGENTA-D",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-HC-MAGENTA-D.png",
-      "source_sha256": "ebfeb8f4e7f195c1c47992f7ca2d1ca18d87b42176de6d1469219dfbac30b2fa",
-      "crop_box_pixels": [
-        548,
-        630,
-        2872,
-        1786
-      ],
-      "sample_review_count": 186,
-      "sample_last_seven_days_count": 1214,
-      "sample_lifetime_count": 82640,
-      "event": "Pediatrics review",
-      "calendar_event_markers": 1
-    },
-    {
-      "row": 4,
-      "column": 4,
-      "theme": "High Contrast",
-      "palette": "Monochrome",
-      "mode": "light",
-      "capture_id": "PROD-PAL-HC-MONOCHROME-L",
-      "source": "home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/PROD-PAL-HC-MONOCHROME-L.png",
-      "source_sha256": "c1dff2585b4ec6012fc45c46fa5bf7c14c7da1a9d8836ba8b17de8c7bc59ce28",
       "crop_box_pixels": [
         548,
         630,
