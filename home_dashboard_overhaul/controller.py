@@ -695,6 +695,7 @@ class DashboardController:
                     self._refresh_deck_browser()
                 return
             had_visible_snapshot = self.snapshot is not None
+            verse_changed = had_visible_snapshot and self.snapshot.verse != snapshot.verse
             self.snapshot = snapshot
             self.last_updated_at = datetime.now().astimezone().isoformat(timespec="seconds")
             self.cache_key = key
@@ -703,7 +704,7 @@ class DashboardController:
             self.refresh_error = False
             self.facts_revision += 1
             self._schedule_rollover()
-            if had_visible_snapshot and self._deliver_dashboard_facts(snapshot):
+            if had_visible_snapshot and not verse_changed and self._deliver_dashboard_facts(snapshot):
                 return
             self._refresh_deck_browser()
 
@@ -855,6 +856,8 @@ class DashboardController:
                 self.request_settings_open()
             elif page == "calendar_data":
                 self.request_settings_open("calendar_data")
+            elif page == "bible_library":
+                self.request_settings_open("bible_library")
             elif page == "events":
                 date_value = str(selected_date) if self._valid_bridge_date(selected_date) else ""
                 event_value = str(event_id)[:80] if isinstance(event_id, (str, int)) else ""
@@ -1109,7 +1112,7 @@ class DashboardController:
             if insight_key in self.pending_most_missed:
                 self.pending_most_missed.discard(insight_key)
                 target = insight.browse_target
-                if target.exact and target.query:
+                if selected_iso == self.selected_date and target.exact and target.query:
                     self._open_browser_target(target)
 
         def failure(_exc: Exception) -> None:

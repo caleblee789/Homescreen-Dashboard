@@ -67,7 +67,11 @@ class RendererTests(unittest.TestCase):
                     metrics = html.index("hdo-summary-metrics-grid")
                     bible = html.index("hdo-bible-card")
                     self.assertLess(calendar, metrics)
-                    self.assertLess(metrics, bible)
+                    if view == "month":
+                        self.assertLess(metrics, bible)
+                    else:
+                        self.assertLess(html.index("hdo-calendar-footer-content"), bible)
+                        self.assertLess(bible, metrics)
                     self.assertEqual(html.count("hdo-dashboard-layout"), 1)
                     self.assertEqual(html.count("hdo-insight-rail"), 1)
                     self.assertEqual(html.count("hdo-calendar-context-bar"), 1)
@@ -135,7 +139,7 @@ class RendererTests(unittest.TestCase):
         self.assertIn("data-hdo-date-state", context)
         self.assertIn("data-hdo-context-date", context)
         self.assertIn("data-hdo-event-rows", context)
-        self.assertIn("data-hdo-context-event-label", context)
+        self.assertIn("hdo-calendar-date-group", context)
         self.assertIn("No upcoming event", context)
         self.assertIn("data-hdo-primary-action", context)
         self.assertIn("data-hdo-most-missed", context)
@@ -591,7 +595,8 @@ class RendererTests(unittest.TestCase):
             replace(self.snapshot, verse=VerseContent("", "")),
             config,
         )
-        self.assertIn("No verse selected", empty)
+        self.assertNotIn("hdo-bible-card", empty)
+        self.assertIn('data-hdo-footer-verse="false"', empty)
 
         config["visibility"]["bible"] = False
         hidden = render_dashboard(self.snapshot, config)

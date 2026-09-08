@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "messages": [
+    {
+      "command": "open_day",
+      "payload": {
+        "date": "2026-08-17"
+      }
+    },
+    {
+      "command": "open_most_missed",
+      "payload": {
+        "date": "2026-08-17"
+      }
+    },
+    {
+      "command": "settings",
+      "payload": {
+        "page": "events",
+        "date": "2026-08-28",
+        "event_id": "fixture-event"
+      }
+    },
+    {
+      "command": "settings",
+      "payload": {
+        "page": "events",
+        "date": "2026-08-28"
+      }
+    }
+  ]
+}

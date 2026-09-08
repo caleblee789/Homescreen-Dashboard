@@ -1,0 +1,28 @@
+{
+  "anki_version": "26.8.1",
+  "base": "/private/tmp/anki-release-qa.2c9wvnt4",
+  "candidate": "/Users/test/Documents/ChatGPT.nosync/Homescreen Statistics Overhaul/home_dashboard_overhaul/qa/footer-separation-2026-09-07/package/home-dashboard-overhaul-1.8.7.ankiaddon",
+  "candidate_sha256": "388ecd56c9b2b9e8f5c7d01d42673e408df9538936cd57b1419a572bc97c4418",
+  "created_at": "2026-09-08T03:46:21+00:00",
+  "launch": {
+    "argv": [
+      "/Applications/Anki.app/Contents/MacOS/anki",
+      "-b",
+      "/private/tmp/anki-release-qa.2c9wvnt4",
+      "-p",
+      "Codex QA HDO 1.8.7 Footer Anking Month 20260907"
+    ],
+    "env": {
+      "ANKI_SINGLE_INSTANCE_KEY": "codex-anki-qa-532873d7d6196c439e88508a7119f610"
+    }
+  },
+  "profile": "Codex QA HDO 1.8.7 Footer Anking Month 20260907",
+  "repository": "/Users/test/Documents/ChatGPT.nosync/Homescreen Statistics Overhaul",
+  "run_root": "/private/tmp/anki-release-qa.2c9wvnt4",
+  "schema": 1,
+  "seed_base": "/Users/test/.codex/state/launch-isolated-anki/seeds/anki-26.8.1/base",
+  "seed_created_at": "2026-08-15T21:24:34+00:00",
+  "single_instance_key": "codex-anki-qa-532873d7d6196c439e88508a7119f610",
+  "single_instance_key_fingerprint": "9046d69d794a",
+  "sync": "disabled-and-disconnected"
+}

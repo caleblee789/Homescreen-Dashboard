@@ -45,6 +45,17 @@ human review of the sheets and native interactions is recorded.
   and measured clearance above Anki's visible bottom actions.
 - Month remains a 42-cell six-week grid. Year remains a real 53-week grid.
   Completion, selection, Today, due, and event semantics remain independent.
+- Month groups date/actions and event/Edit side by side at sufficient calendar
+  width and collapses empty contexts to one wrapping row. Its verse keeps the
+  standalone card below statistics. Year embeds that same verse in the footer,
+  using 16 px left-aligned text beside the date/event group, or below it when
+  narrow. Its left column stacks date, left-aligned cards actions, then events.
+  A theme-aware 1 px strong border separates the Year columns with 18 px on
+  each side, becoming a horizontal separator in the stacked layout. Shared
+  footer actions use 28 px controls; the status badge is a distinct 21 px chip.
+  Edit follows short titles and moves below metadata when a title needs to wrap.
+  Absent verses reserve no space or divider. Both calendars finish at the footer
+  with natural height; neither is stretched to match the statistics or verse.
 - Existing theme IDs, heatmap palette IDs, events, verses, study statistics,
   schema 8 behavior, and restart semantics do not change.
 

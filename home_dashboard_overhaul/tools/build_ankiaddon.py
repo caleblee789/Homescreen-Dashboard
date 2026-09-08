@@ -443,8 +443,8 @@ def _validate_visual_matrix(matrix: dict) -> None:
         "metric_minimum_visible_gap": 8,
         "stack_root_maximum_width": 1008,
         "metric_single_column_root_maximum_width": 588,
-        "month_bottom_alignment": {"calendar_to_bible_tolerance": 2},
-        "year_bottom_alignment": {"calendar_to_summary_grid_tolerance": 2},
+        "month_bottom_alignment": {"calendar_to_bible_tolerance": None},
+        "year_bottom_alignment": {"calendar_to_summary_grid_tolerance": None},
     }
     if any(layout.get(key) != value for key, value in expected_layout.items()):
         raise ValueError("dashboard visual spacing contract drifted")
@@ -520,8 +520,8 @@ def validate_sources() -> dict:
         "summary_card_minimum_width": 170,
         "summary_card_padding": [14, 12, 13],
         "metric_column_gap": 10,
-        "month_calendar_to_bible_bottom_tolerance": 2,
-        "year_calendar_to_summary_grid_bottom_tolerance": 2,
+        "month_calendar_to_bible_bottom_tolerance": None,
+        "year_calendar_to_summary_grid_bottom_tolerance": None,
         "year_wide_cell_size": 10,
         "year_heatmap_width_percent_range": [85, 90],
         "year_internal_horizontal_scrolling": False,
@@ -585,7 +585,7 @@ def validate_sources() -> dict:
         ),
         "renderer.py": (
             "hdo-calendar-footer", "hdo-date-state-chip", "hdo-event-rows",
-            "hdo-context-event-label", "hdo-summary-metrics-grid", "hdo-bible-card",
+            "hdo-calendar-footer-content", "hdo-summary-metrics-grid", "hdo-bible-card",
             "Initial cards due", "New cards studied", "Cards buried", "Time spent",
             "hdo-progress-fill", "progress.initial_cards_due",
             "last_seven_days.average_cards_per_day", "last_seven_days.time_spent",
@@ -682,8 +682,8 @@ def validate_sources() -> dict:
             "min-block-size: 18px",
             "padding-inline: 6px", "hdo-progress-label--fill",
             "grid-template-rows: auto 1fr auto", "padding: 15px 16px 14px",
-            'data-hdo-calendar-view="month"] .hdo-calendar-card',
-            'data-hdo-calendar-view="year"] .hdo-calendar-card',
+            'data-hdo-calendar-view="month"] .hdo-calendar-context',
+            'data-hdo-calendar-view="year"] .hdo-calendar-footer-content',
             "var(--heat-due-mark-3)", "var(--progress-complete)",
             "hdo-event-marker", "hdo-loading-layout", "backdrop-filter",
             "hdo-year-weekday-label", "background: transparent",

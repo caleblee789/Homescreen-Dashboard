@@ -1,0 +1,121 @@
+--- a/home_dashboard_overhaul/controller.py
++++ b/home_dashboard_overhaul/controller.py
+@@ -695,6 +695,7 @@
+                     self._refresh_deck_browser()
+                 return
+             had_visible_snapshot = self.snapshot is not None
++            verse_changed = had_visible_snapshot and self.snapshot.verse != snapshot.verse
+             self.snapshot = snapshot
+             self.last_updated_at = datetime.now().astimezone().isoformat(timespec="seconds")
+             self.cache_key = key
+@@ -703,7 +704,7 @@
+             self.refresh_error = False
+             self.facts_revision += 1
+             self._schedule_rollover()
+-            if had_visible_snapshot and self._deliver_dashboard_facts(snapshot):
++            if had_visible_snapshot and not verse_changed and self._deliver_dashboard_facts(snapshot):
+                 return
+             self._refresh_deck_browser()
+ 
+@@ -855,6 +856,8 @@
+                 self.request_settings_open()
+             elif page == "calendar_data":
+                 self.request_settings_open("calendar_data")
++            elif page == "bible_library":
++                self.request_settings_open("bible_library")
+             elif page == "events":
+                 date_value = str(selected_date) if self._valid_bridge_date(selected_date) else ""
+                 event_value = str(event_id)[:80] if isinstance(event_id, (str, int)) else ""
+@@ -1109,7 +1112,7 @@
+             if insight_key in self.pending_most_missed:
+                 self.pending_most_missed.discard(insight_key)
+                 target = insight.browse_target
+-                if target.exact and target.query:
++                if selected_iso == self.selected_date and target.exact and target.query:
+                     self._open_browser_target(target)
+ 
+         def failure(_exc: Exception) -> None:
+--- a/home_dashboard_overhaul/web/dashboard.js
++++ b/home_dashboard_overhaul/web/dashboard.js
+@@ -599,6 +599,39 @@
+     }
+ 
+     adoptPayload(payload, false, false);
++    state.receiveDashboardFacts = function (envelope) {
++      if (!envelope || !envelope.facts || Number(envelope.revision) < Number(state.payload.revision || 0)) return;
++      var priorSelected = state.selected;
++      var priorSchedulingDate = state.payload.scheduling_date;
++      var revisionChanged = Number(envelope.revision) !== Number(state.payload.revision || 0);
++      var calendarChanged = calendarPayloadFingerprint(state.payload) !== calendarPayloadFingerprint(envelope.facts);
++      if (revisionChanged) {
++        state.mostMissed = Object.create(null);
++        state.latestInsightRequest = Object.create(null);
++      }
++      adoptPayload(envelope.facts, true, !calendarChanged);
++      state.selected = state.followsToday ? String(envelope.facts.scheduling_date || priorSelected) : priorSelected;
++      if (calendar) {
++        if (state.followsToday && priorSchedulingDate !== envelope.facts.scheduling_date) {
++          state.anchor = dateValue(state.selected) || state.anchor;
++        }
++        if (calendarChanged) {
++          renderCalendar();
++          // The mounted period may differ from the snapshot's selected-date range.
++          requestRange();
++        } else updateContext();
++      }
++      updateMetricValues(
++        root,
++        envelope.facts.statistics,
++        envelope.facts.presentation,
++        locale,
++        envelope.facts.retention_target
++      );
++      setDashboardUpdating(root, false);
++      var refreshWarning = root.querySelector(".hdo-refresh-warning");
++      if (refreshWarning) refreshWarning.remove();
++    };
+     if (!calendar) return state;
+ 
+     var shell = root.querySelector(".hdo-calendar-shell");
+@@ -1234,6 +1267,7 @@
+     state.receiveCalendarRange = function (envelope) {
+       if (
+         !envelope || Number(envelope.request_id) !== state.latestRangeRequest ||
++        Number(envelope.revision) !== Number(state.payload.revision || 0) ||
+         envelope.view !== state.view || String(envelope.source_revision || "") !== String(state.payload.source_revision || "")
+       ) return;
+       (Array.isArray(envelope.activity) ? envelope.activity : []).forEach(function (day) {
+@@ -1247,31 +1281,13 @@
+     };
+ 
+     state.receiveDayInsight = function (envelope) {
+-      if (!envelope || !parseDate(envelope.date)) return;
++      if (!envelope || !parseDate(envelope.date) ||
++        Number(envelope.revision) !== Number(state.payload.revision || 0)) return;
+       if (Number(envelope.request_id) !== Number(state.latestInsightRequest[envelope.date])) return;
+       state.mostMissed[envelope.date] = Boolean(envelope.insight && envelope.insight.most_missed_available === true);
+       if (envelope.date === state.selected) updateContext();
+     };
+ 
+-    state.receiveDashboardFacts = function (envelope) {
+-      if (!envelope || !envelope.facts || Number(envelope.revision) < Number(state.payload.revision || 0)) return;
+-      var priorSelected = state.selected;
+-      var calendarChanged = calendarPayloadFingerprint(state.payload) !== calendarPayloadFingerprint(envelope.facts);
+-      adoptPayload(envelope.facts, true, !calendarChanged);
+-      state.selected = state.followsToday ? String(envelope.facts.scheduling_date || priorSelected) : priorSelected;
+-      if (calendarChanged) renderCalendar();
+-      else updateContext();
+-      updateMetricValues(
+-        root,
+-        envelope.facts.statistics,
+-        envelope.facts.presentation,
+-        locale,
+-        envelope.facts.retention_target
+-      );
+-      setDashboardUpdating(root, false);
+-      var refreshWarning = root.querySelector(".hdo-refresh-warning");
+-      if (refreshWarning) refreshWarning.remove();
+-    };
+ 
+     renderCalendar();
+     updateMetricValues(root, payload.statistics, payload.presentation, locale, payload.retention_target);

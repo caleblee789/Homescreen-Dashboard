@@ -1,0 +1,9 @@
+{
+  "reRequested": true,
+  "rejectedStaleInsight": true,
+  "currentInsightWorks": true,
+  "rolloverTitle": "2027",
+  "rolloverPassed": true,
+  "rangeUsesCurrentRevision": true,
+  "errors": []
+}

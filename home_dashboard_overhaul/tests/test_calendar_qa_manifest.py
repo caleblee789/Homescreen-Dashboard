@@ -83,14 +83,14 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(dashboard["summary_card_padding"], [14, 12, 13])
         self.assertEqual(dashboard["metric_column_gap"], 10)
         self.assertEqual(dashboard["metric_minimum_visible_gap"], 8)
-        self.assertEqual(dashboard["month_calendar_minimum_height"], 546)
+        self.assertEqual(dashboard["month_calendar_minimum_height"], 0)
         self.assertEqual(dashboard["bible_card_minimum_height"], 182)
         self.assertEqual(
-            dashboard["month_calendar_to_bible_bottom_tolerance"], 2
+            dashboard["month_calendar_to_bible_bottom_tolerance"], None
         )
-        self.assertEqual(dashboard["year_calendar_minimum_height"], 352)
+        self.assertEqual(dashboard["year_calendar_minimum_height"], 0)
         self.assertEqual(
-            dashboard["year_calendar_to_summary_grid_bottom_tolerance"], 2
+            dashboard["year_calendar_to_summary_grid_bottom_tolerance"], None
         )
         self.assertEqual(dashboard["month_cell_height_range"], [38, 44])
         self.assertEqual(dashboard["month_rows"], 6)
@@ -252,10 +252,10 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
                 "stack_root_maximum_width": 1008,
                 "metric_single_column_root_maximum_width": 588,
                 "month_bottom_alignment": {
-                    "calendar_to_bible_tolerance": 2
+                    "calendar_to_bible_tolerance": None
                 },
                 "year_bottom_alignment": {
-                    "calendar_to_summary_grid_tolerance": 2
+                    "calendar_to_summary_grid_tolerance": None
                 },
                 "year_heatmap": {
                     "wide_cell_size": 10,
@@ -305,8 +305,8 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
                 "centered-1160px-shell-with-16px-minimum-side-insets",
                 "single-owner-28-to-30px-rendered-deck-gap",
                 "aligned-calendar-and-top-summary-card-edges",
-                "month-calendar-bottom-to-bible-bottom-within-2px",
-                "year-calendar-bottom-to-summary-grid-bottom-within-2px",
+                "month-footer-content-height-with-standalone-verse-below-statistics",
+                "year-footer-content-height-with-embedded-verse-and-metrics-only-rail",
                 "year-heatmap-at-least-85-percent-wide-with-square-complete-cells",
                 "no-document-or-component-horizontal-overflow",
                 "no-internal-dashboard-scrollbars",

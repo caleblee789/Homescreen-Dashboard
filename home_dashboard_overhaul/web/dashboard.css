@@ -766,37 +766,33 @@
 
 #hdo-dashboard .hdo-calendar-context {
   align-items: start;
-  column-gap: 16px;
   display: grid;
-  grid-template-areas:
-    "date actions"
-    "event event";
-  grid-template-columns: minmax(0, 1fr) auto;
-  min-block-size: 56px;
-  padding: 12px 14px 15px;
-  row-gap: 14px;
+  gap: 8px 18px;
+  min-width: 0;
+  padding: 10px 14px;
 }
 
-#hdo-dashboard .hdo-calendar-context--no-event {
-  grid-template-areas: "date actions";
-  grid-template-columns: minmax(0, 1fr) auto;
+#hdo-dashboard .hdo-calendar-date-group {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  min-width: 0;
 }
 
 #hdo-dashboard .hdo-selected-date-line {
   align-items: center;
   color: var(--ui-text-primary);
   display: flex;
-  flex-wrap: wrap;
-  font-size: calc(13.5px * var(--hdo-scale));
+  font-size: calc(13px * var(--hdo-scale));
   font-variant-numeric: tabular-nums;
   font-weight: 650;
   gap: 8px;
-  grid-area: date;
   min-width: 0;
 }
 
 #hdo-dashboard .hdo-selected-date-line time {
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
 }
 
 #hdo-dashboard .hdo-date-state-chip {
@@ -805,8 +801,11 @@
   border-radius: 999px;
   color: var(--ui-text-secondary);
   flex: none;
+  align-items: center;
+  display: inline-flex;
   font-size: calc(10.75px * var(--hdo-scale));
-  font-weight: 750;
+  font-weight: 650;
+  min-height: 21px;
   letter-spacing: .04em;
   line-height: 1.35;
   padding: 2px 6px;
@@ -823,54 +822,73 @@
   display: grid;
   font-size: calc(12.5px * var(--hdo-scale));
   gap: 8px;
-  grid-area: event;
   min-width: 0;
 }
 
 #hdo-dashboard .hdo-context-label {
   color: var(--ui-text-tertiary);
-  font-size: calc(10.75px * var(--hdo-scale));
-  font-weight: 700;
-  letter-spacing: .055em;
-  text-transform: uppercase;
-  white-space: nowrap;
+  font-size: calc(11.5px * var(--hdo-scale));
+  font-weight: 400;
 }
 
 #hdo-dashboard .hdo-context-event-marker {
   height: 7px;
+  margin-top: 10px;
   width: 7px;
 }
 
-#hdo-dashboard .hdo-event-section,
 #hdo-dashboard .hdo-event-rows {
   display: grid;
   gap: 8px;
   min-width: 0;
 }
 
-#hdo-dashboard .hdo-event-section > .hdo-context-label {
-  margin: 0;
-}
-
 #hdo-dashboard .hdo-event-row {
   align-items: start;
   display: grid;
   gap: 3px 8px;
-  grid-template-columns: 7px minmax(0, 1fr) max-content;
+  grid-template-columns: 7px minmax(0, 1fr);
   min-width: 0;
 }
 
 #hdo-dashboard .hdo-event-copy {
-  display: grid;
-  gap: 1px;
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
   min-width: 0;
 }
 
-#hdo-dashboard .hdo-event-title {
+#hdo-dashboard .hdo-event-heading {
+  align-items: center;
+  display: flex;
+  flex: 0 1 auto;
+  min-height: 28px;
+  min-width: 0;
+}
+
+#hdo-dashboard .hdo-event-copy > .hdo-event-meta {
+  flex-basis: 100%;
+  order: 2;
+}
+
+#hdo-dashboard .hdo-event-row--wrapped .hdo-event-heading {
+  flex-basis: 100%;
+}
+
+#hdo-dashboard .hdo-event-row--wrapped .hdo-context-event-marker {
+  margin-top: 6px;
+}
+
+#hdo-dashboard .hdo-event-row--wrapped button.hdo-event-edit {
+  order: 3;
+}
+
+#hdo-dashboard button.hdo-event-title {
   background: transparent !important;
   border-color: transparent !important;
   color: var(--ui-text-primary) !important;
-  display: -webkit-box;
+  display: inline;
   font-size: calc(12.5px * var(--hdo-scale));
   font-weight: 650;
   min-height: 0 !important;
@@ -880,8 +898,6 @@
   overflow: visible;
   overflow-wrap: anywhere;
   text-overflow: clip;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
   white-space: normal;
 }
 
@@ -911,43 +927,142 @@
 
 #hdo-dashboard .hdo-event-empty {
   color: var(--ui-text-secondary);
+  margin: 0;
 }
 
-#hdo-dashboard .hdo-event-edit {
-  background: transparent;
+#hdo-dashboard .hdo-event-meta,
+#hdo-dashboard .hdo-event-empty {
+  font-size: calc(11.5px * var(--hdo-scale));
+}
+
+#hdo-dashboard button.hdo-context-action,
+#hdo-dashboard button.hdo-event-edit {
+  align-items: center;
+  background: var(--ui-surface-2);
   border: 1px solid var(--ui-border-default);
   border-radius: 8px;
   color: var(--ui-text-secondary);
-  min-height: 30px;
-  padding: 3px 9px;
+  display: inline-flex;
+  flex: none;
+  font-size: calc(11.5px * var(--hdo-scale));
+  height: 28px;
+  justify-content: center;
+  min-height: 28px !important;
+  padding: 3px 9px !important;
+  white-space: nowrap;
+}
+
+#hdo-dashboard button.hdo-event-edit {
+  background: transparent;
+  border-color: var(--ui-border-subtle);
+  order: 1;
 }
 
 #hdo-dashboard .hdo-context-actions {
   align-self: start;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  grid-area: actions;
-  justify-content: flex-end;
+  gap: 7px;
+  justify-content: flex-start;
   margin: 0;
 }
 
-#hdo-dashboard .hdo-context-action {
-  font-size: calc(12px * var(--hdo-scale));
-  min-height: 30px !important;
-  padding-block: 3px !important;
-  white-space: nowrap;
+#hdo-dashboard .hdo-calendar-card-action {
+  background: var(--ui-surface-2) !important;
+  border-color: var(--ui-border-default) !important;
+  border-radius: 8px !important;
+  color: var(--ui-text-secondary) !important;
+  font-weight: 600;
+  padding-inline: 9px !important;
 }
 
-#hdo-dashboard .hdo-calendar-card-action {
-  background: var(--ui-accent-soft) !important;
-  border-color: var(--ui-accent-border) !important;
-  border-radius: 8px !important;
-  color: var(--ui-accent) !important;
-  font-weight: 700;
-  height: 30px;
-  min-width: 112px;
-  padding-inline: 11px !important;
+/* Month uses a single row when no event is displayed. Its verse stays in the rail. */
+#hdo-dashboard[data-hdo-calendar-view="month"] .hdo-calendar-context[data-hdo-has-event="false"] {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#hdo-dashboard[data-hdo-calendar-view="month"] .hdo-calendar-context[data-hdo-has-event="false"] .hdo-event-sections {
+  margin-inline-start: auto;
+}
+
+@container hdo-calendar (min-width: 640px) {
+  #hdo-dashboard[data-hdo-calendar-view="month"] .hdo-calendar-context[data-hdo-has-event="true"] {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  }
+
+  #hdo-dashboard[data-hdo-calendar-view="month"] .hdo-calendar-context[data-hdo-has-event="true"] .hdo-calendar-date-group {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* Year reuses the same verse node inside the calendar, with its own typography. */
+#hdo-dashboard[data-hdo-calendar-view="year"] .hdo-calendar-footer-content {
+  align-items: start;
+  display: grid;
+  gap: 12px 18px;
+  padding: 12px 14px;
+}
+
+#hdo-dashboard[data-hdo-calendar-view="year"] .hdo-calendar-context {
+  row-gap: 11px;
+  padding: 0;
+}
+
+#hdo-dashboard[data-hdo-calendar-view="year"] .hdo-calendar-date-group {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 7px;
+}
+
+#hdo-dashboard .hdo-calendar-footer-content > .hdo-bible-card {
+  align-content: start;
+  align-self: stretch;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: 0;
+  border-block-start: 1px solid var(--ui-border-strong);
+  border-radius: 0;
+  box-shadow: none;
+  gap: 6px;
+  grid-template-rows: auto auto auto;
+  min-height: 0;
+  padding: 12px 0 0;
+}
+
+#hdo-dashboard .hdo-calendar-footer-content .hdo-verse {
+  font-size: calc(16px * var(--hdo-scale));
+  justify-self: start;
+  line-height: 1.35;
+  margin: 0;
+  max-width: none;
+  text-align: left;
+}
+
+#hdo-dashboard .hdo-calendar-footer-content .hdo-eyebrow {
+  margin-bottom: 0;
+}
+
+#hdo-dashboard .hdo-calendar-footer-content .hdo-verse-reference {
+  justify-self: start;
+  margin: 0;
+  text-align: left;
+}
+
+@container hdo-calendar (min-width: 660px) {
+  #hdo-dashboard[data-hdo-calendar-view="year"] .hdo-calendar-footer-content[data-hdo-footer-verse="true"] {
+    grid-template-columns: minmax(0, 52fr) minmax(0, 48fr);
+  }
+
+  #hdo-dashboard .hdo-calendar-footer-content > .hdo-bible-card {
+    border-block-start: 0;
+    border-inline-start: 1px solid var(--ui-border-strong);
+    padding: 0;
+    padding-inline-start: 18px;
+  }
 }
 
 #hdo-dashboard .hdo-calendar-card-action:hover:not(:disabled) {
@@ -1281,17 +1396,6 @@
   text-align: center;
 }
 
-#hdo-dashboard .hdo-verse--empty {
-  color: var(--ui-text-secondary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: calc(12px * var(--hdo-scale));
-  font-style: normal;
-  max-width: none;
-}
-
-#hdo-dashboard .hdo-verse-empty-state { display: block; }
-#hdo-dashboard .hdo-verse-choose { margin-top: 12px; min-height: 34px; }
-
 #hdo-dashboard .hdo-data-warning {
   align-items: center;
   background: var(--status-warning-soft);
@@ -1544,15 +1648,6 @@
     min-height: 182px;
   }
 
-  #hdo-dashboard[data-hdo-calendar-view="month"] .hdo-calendar-card {
-    align-self: stretch;
-    min-height: 546px;
-  }
-
-  #hdo-dashboard[data-hdo-calendar-view="year"] .hdo-calendar-card {
-    min-height: 352px;
-  }
-
   #hdo-dashboard .hdo-metric-row dt {
     white-space: nowrap;
   }
@@ -1599,17 +1694,6 @@
 
 }
 
-@container hdo-calendar (max-width: 759px) {
-  #hdo-dashboard .hdo-calendar-context {
-    grid-template-areas:
-      "date actions"
-      "event event";
-    grid-template-columns: minmax(0, 1fr) auto;
-    row-gap: 8px;
-  }
-
-}
-
 @container hdo-calendar (max-width: 419px) {
   #hdo-dashboard .hdo-calendar-legend {
     padding-inline: 9px;
@@ -1619,45 +1703,13 @@
     flex-basis: 100%;
   }
 
-  #hdo-dashboard .hdo-calendar-context {
-    grid-template-areas:
-      "date date"
-      "event event"
-      ". actions";
-    column-gap: 6px;
-    grid-template-columns: minmax(0, 1fr) auto;
-    padding-inline: 9px;
-    row-gap: 6px;
-  }
-
   #hdo-dashboard .hdo-period-controls button[data-hdo-calendar="today"] {
     min-width: 0;
     padding-inline: 4px;
   }
 
-  #hdo-dashboard .hdo-selected-date-line {
-    font-size: calc(12px * var(--hdo-scale));
-    gap: 4px;
-    white-space: normal;
-  }
-
-  #hdo-dashboard .hdo-date-state-chip {
-    font-size: calc(10px * var(--hdo-scale));
-    padding-inline: 4px;
-  }
-
-  #hdo-dashboard .hdo-event-meta {
-    flex-basis: 100%;
-  }
-
-  #hdo-dashboard .hdo-context-actions {
-    justify-content: flex-end;
-  }
-
-  #hdo-dashboard .hdo-calendar-card-action {
-    font-size: calc(11px * var(--hdo-scale));
-    min-width: 104px;
-    padding-inline: 7px !important;
+  #hdo-dashboard[data-hdo-calendar-view="month"] .hdo-calendar-context[data-hdo-has-event="false"] .hdo-event-sections {
+    margin-inline-start: 0;
   }
 }
 

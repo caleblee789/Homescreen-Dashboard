@@ -1,0 +1,4557 @@
+{
+  "states": [
+    {
+      "theme": "Sapphire Glass",
+      "mode": "dark",
+      "view": "month",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 487.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 493.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 521.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 493.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 493.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 574.015625,
+            "y": 466.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 615.09375,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 487.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 403.1875,
+        "y": 466.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 566.015625,
+        "bottom": 494.765625
+      },
+      "edit": {
+        "x": 574.015625,
+        "y": 466.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 615.09375,
+        "bottom": 494.765625
+      },
+      "meta": {
+        "x": 403.1875,
+        "y": 498.765625,
+        "width": 427.8125,
+        "height": 16.328125,
+        "right": 831,
+        "bottom": 515.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "Sapphire Glass",
+      "mode": "dark",
+      "view": "month",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 491.265625
+      },
+      "actions": {
+        "x": 269.5625,
+        "y": 466.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 476.640625,
+        "bottom": 494.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 269.5625,
+            "y": 466.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 380.640625,
+            "bottom": 494.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 387.640625,
+            "y": 466.765625,
+            "width": 89,
+            "height": 28,
+            "right": 476.640625,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 491.265625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "Sapphire Glass",
+      "mode": "dark",
+      "view": "year",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 260.828125,
+            "y": 333.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 301.90625,
+            "bottom": 361.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 139.328125,
+        "right": 845,
+        "bottom": 394.09375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 115.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 115.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": {
+        "x": 90,
+        "y": 333.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 252.828125,
+        "bottom": 361.765625
+      },
+      "edit": {
+        "x": 260.828125,
+        "y": 333.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 301.90625,
+        "bottom": 361.765625
+      },
+      "meta": {
+        "x": 90,
+        "y": 365.765625,
+        "width": 368.75,
+        "height": 16.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "Sapphire Glass",
+      "mode": "dark",
+      "view": "year",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 110.40625,
+        "right": 845,
+        "bottom": 365.171875
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 83.328125,
+        "right": 458.75,
+        "bottom": 350.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 86.40625,
+        "right": 831,
+        "bottom": 353.171875
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "Sapphire Glass",
+      "mode": "light",
+      "view": "month",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 487.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 493.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 521.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 493.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 493.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 574.015625,
+            "y": 466.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 615.09375,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 487.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 403.1875,
+        "y": 466.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 566.015625,
+        "bottom": 494.765625
+      },
+      "edit": {
+        "x": 574.015625,
+        "y": 466.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 615.09375,
+        "bottom": 494.765625
+      },
+      "meta": {
+        "x": 403.1875,
+        "y": 498.765625,
+        "width": 427.8125,
+        "height": 16.328125,
+        "right": 831,
+        "bottom": 515.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "Sapphire Glass",
+      "mode": "light",
+      "view": "month",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 491.265625
+      },
+      "actions": {
+        "x": 269.5625,
+        "y": 466.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 476.640625,
+        "bottom": 494.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 269.5625,
+            "y": 466.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 380.640625,
+            "bottom": 494.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 387.640625,
+            "y": 466.765625,
+            "width": 89,
+            "height": 28,
+            "right": 476.640625,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 491.265625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "Sapphire Glass",
+      "mode": "light",
+      "view": "year",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 260.828125,
+            "y": 333.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 301.90625,
+            "bottom": 361.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 139.328125,
+        "right": 845,
+        "bottom": 394.09375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 115.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 115.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": {
+        "x": 90,
+        "y": 333.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 252.828125,
+        "bottom": 361.765625
+      },
+      "edit": {
+        "x": 260.828125,
+        "y": 333.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 301.90625,
+        "bottom": 361.765625
+      },
+      "meta": {
+        "x": 90,
+        "y": 365.765625,
+        "width": 368.75,
+        "height": 16.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "Sapphire Glass",
+      "mode": "light",
+      "view": "year",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 110.40625,
+        "right": 845,
+        "bottom": 365.171875
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 83.328125,
+        "right": 458.75,
+        "bottom": 350.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 86.40625,
+        "right": 831,
+        "bottom": 353.171875
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "Graphite",
+      "mode": "dark",
+      "view": "month",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 487.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 493.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 521.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 493.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 493.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 574.015625,
+            "y": 466.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 615.09375,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 487.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 403.1875,
+        "y": 466.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 566.015625,
+        "bottom": 494.765625
+      },
+      "edit": {
+        "x": 574.015625,
+        "y": 466.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 615.09375,
+        "bottom": 494.765625
+      },
+      "meta": {
+        "x": 403.1875,
+        "y": 498.765625,
+        "width": 427.8125,
+        "height": 16.328125,
+        "right": 831,
+        "bottom": 515.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "Graphite",
+      "mode": "dark",
+      "view": "month",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 491.265625
+      },
+      "actions": {
+        "x": 269.5625,
+        "y": 466.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 476.640625,
+        "bottom": 494.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 269.5625,
+            "y": 466.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 380.640625,
+            "bottom": 494.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 387.640625,
+            "y": 466.765625,
+            "width": 89,
+            "height": 28,
+            "right": 476.640625,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 491.265625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "Graphite",
+      "mode": "dark",
+      "view": "year",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 260.828125,
+            "y": 333.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 301.90625,
+            "bottom": 361.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 139.328125,
+        "right": 845,
+        "bottom": 394.09375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 115.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 115.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": {
+        "x": 90,
+        "y": 333.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 252.828125,
+        "bottom": 361.765625
+      },
+      "edit": {
+        "x": 260.828125,
+        "y": 333.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 301.90625,
+        "bottom": 361.765625
+      },
+      "meta": {
+        "x": 90,
+        "y": 365.765625,
+        "width": 368.75,
+        "height": 16.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "Graphite",
+      "mode": "dark",
+      "view": "year",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 110.40625,
+        "right": 845,
+        "bottom": 365.171875
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 83.328125,
+        "right": 458.75,
+        "bottom": 350.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 86.40625,
+        "right": 831,
+        "bottom": 353.171875
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "Graphite",
+      "mode": "light",
+      "view": "month",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 487.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 493.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 521.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 493.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 493.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 574.015625,
+            "y": 466.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 615.09375,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 487.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 403.1875,
+        "y": 466.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 566.015625,
+        "bottom": 494.765625
+      },
+      "edit": {
+        "x": 574.015625,
+        "y": 466.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 615.09375,
+        "bottom": 494.765625
+      },
+      "meta": {
+        "x": 403.1875,
+        "y": 498.765625,
+        "width": 427.8125,
+        "height": 16.328125,
+        "right": 831,
+        "bottom": 515.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "Graphite",
+      "mode": "light",
+      "view": "month",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 491.265625
+      },
+      "actions": {
+        "x": 269.5625,
+        "y": 466.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 476.640625,
+        "bottom": 494.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 269.5625,
+            "y": 466.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 380.640625,
+            "bottom": 494.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 387.640625,
+            "y": 466.765625,
+            "width": 89,
+            "height": 28,
+            "right": 476.640625,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 491.265625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "Graphite",
+      "mode": "light",
+      "view": "year",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 260.828125,
+            "y": 333.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 301.90625,
+            "bottom": 361.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 139.328125,
+        "right": 845,
+        "bottom": 394.09375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 115.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 115.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": {
+        "x": 90,
+        "y": 333.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 252.828125,
+        "bottom": 361.765625
+      },
+      "edit": {
+        "x": 260.828125,
+        "y": 333.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 301.90625,
+        "bottom": 361.765625
+      },
+      "meta": {
+        "x": 90,
+        "y": 365.765625,
+        "width": 368.75,
+        "height": 16.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "Graphite",
+      "mode": "light",
+      "view": "year",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 110.40625,
+        "right": 845,
+        "bottom": 365.171875
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 83.328125,
+        "right": 458.75,
+        "bottom": 350.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 86.40625,
+        "right": 831,
+        "bottom": 353.171875
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "Emerald",
+      "mode": "dark",
+      "view": "month",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 487.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 493.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 521.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 493.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 493.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 574.015625,
+            "y": 466.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 615.09375,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 487.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 403.1875,
+        "y": 466.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 566.015625,
+        "bottom": 494.765625
+      },
+      "edit": {
+        "x": 574.015625,
+        "y": 466.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 615.09375,
+        "bottom": 494.765625
+      },
+      "meta": {
+        "x": 403.1875,
+        "y": 498.765625,
+        "width": 427.8125,
+        "height": 16.328125,
+        "right": 831,
+        "bottom": 515.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "Emerald",
+      "mode": "dark",
+      "view": "month",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 491.265625
+      },
+      "actions": {
+        "x": 269.5625,
+        "y": 466.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 476.640625,
+        "bottom": 494.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 269.5625,
+            "y": 466.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 380.640625,
+            "bottom": 494.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 387.640625,
+            "y": 466.765625,
+            "width": 89,
+            "height": 28,
+            "right": 476.640625,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 491.265625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "Emerald",
+      "mode": "dark",
+      "view": "year",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 260.828125,
+            "y": 333.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 301.90625,
+            "bottom": 361.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 139.328125,
+        "right": 845,
+        "bottom": 394.09375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 115.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 115.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": {
+        "x": 90,
+        "y": 333.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 252.828125,
+        "bottom": 361.765625
+      },
+      "edit": {
+        "x": 260.828125,
+        "y": 333.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 301.90625,
+        "bottom": 361.765625
+      },
+      "meta": {
+        "x": 90,
+        "y": 365.765625,
+        "width": 368.75,
+        "height": 16.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "Emerald",
+      "mode": "dark",
+      "view": "year",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 110.40625,
+        "right": 845,
+        "bottom": 365.171875
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 83.328125,
+        "right": 458.75,
+        "bottom": 350.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 86.40625,
+        "right": 831,
+        "bottom": 353.171875
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "Emerald",
+      "mode": "light",
+      "view": "month",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 487.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 493.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 521.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 493.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 493.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 574.015625,
+            "y": 466.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 615.09375,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 487.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 403.1875,
+        "y": 466.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 566.015625,
+        "bottom": 494.765625
+      },
+      "edit": {
+        "x": 574.015625,
+        "y": 466.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 615.09375,
+        "bottom": 494.765625
+      },
+      "meta": {
+        "x": 403.1875,
+        "y": 498.765625,
+        "width": 427.8125,
+        "height": 16.328125,
+        "right": 831,
+        "bottom": 515.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "Emerald",
+      "mode": "light",
+      "view": "month",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 491.265625
+      },
+      "actions": {
+        "x": 269.5625,
+        "y": 466.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 476.640625,
+        "bottom": 494.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 269.5625,
+            "y": 466.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 380.640625,
+            "bottom": 494.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 387.640625,
+            "y": 466.765625,
+            "width": 89,
+            "height": 28,
+            "right": 476.640625,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 491.265625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "Emerald",
+      "mode": "light",
+      "view": "year",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 260.828125,
+            "y": 333.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 301.90625,
+            "bottom": 361.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 139.328125,
+        "right": 845,
+        "bottom": 394.09375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 115.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 115.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": {
+        "x": 90,
+        "y": 333.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 252.828125,
+        "bottom": 361.765625
+      },
+      "edit": {
+        "x": 260.828125,
+        "y": 333.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 301.90625,
+        "bottom": 361.765625
+      },
+      "meta": {
+        "x": 90,
+        "y": 365.765625,
+        "width": 368.75,
+        "height": 16.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "Emerald",
+      "mode": "light",
+      "view": "year",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 110.40625,
+        "right": 845,
+        "bottom": 365.171875
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 83.328125,
+        "right": 458.75,
+        "bottom": 350.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 86.40625,
+        "right": 831,
+        "bottom": 353.171875
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "High Contrast",
+      "mode": "dark",
+      "view": "month",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 487.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 493.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 521.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 493.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 493.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 574.015625,
+            "y": 466.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 615.09375,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 487.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 403.1875,
+        "y": 466.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 566.015625,
+        "bottom": 494.765625
+      },
+      "edit": {
+        "x": 574.015625,
+        "y": 466.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 615.09375,
+        "bottom": 494.765625
+      },
+      "meta": {
+        "x": 403.1875,
+        "y": 498.765625,
+        "width": 427.8125,
+        "height": 16.328125,
+        "right": 831,
+        "bottom": 515.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "High Contrast",
+      "mode": "dark",
+      "view": "month",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 491.265625
+      },
+      "actions": {
+        "x": 269.5625,
+        "y": 466.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 476.640625,
+        "bottom": 494.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 269.5625,
+            "y": 466.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 380.640625,
+            "bottom": 494.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 387.640625,
+            "y": 466.765625,
+            "width": 89,
+            "height": 28,
+            "right": 476.640625,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 491.265625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "High Contrast",
+      "mode": "dark",
+      "view": "year",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 260.828125,
+            "y": 333.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 301.90625,
+            "bottom": 361.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 139.328125,
+        "right": 845,
+        "bottom": 394.09375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 115.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 115.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": {
+        "x": 90,
+        "y": 333.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 252.828125,
+        "bottom": 361.765625
+      },
+      "edit": {
+        "x": 260.828125,
+        "y": 333.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 301.90625,
+        "bottom": 361.765625
+      },
+      "meta": {
+        "x": 90,
+        "y": 365.765625,
+        "width": 368.75,
+        "height": 16.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "High Contrast",
+      "mode": "dark",
+      "view": "year",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 110.40625,
+        "right": 845,
+        "bottom": 365.171875
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 83.328125,
+        "right": 458.75,
+        "bottom": 350.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 86.40625,
+        "right": 831,
+        "bottom": 353.171875
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "High Contrast",
+      "mode": "light",
+      "view": "month",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 487.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 493.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 521.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 493.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 493.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 574.015625,
+            "y": 466.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 615.09375,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 487.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 403.1875,
+        "y": 466.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 566.015625,
+        "bottom": 494.765625
+      },
+      "edit": {
+        "x": 574.015625,
+        "y": 466.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 615.09375,
+        "bottom": 494.765625
+      },
+      "meta": {
+        "x": 403.1875,
+        "y": 498.765625,
+        "width": 427.8125,
+        "height": 16.328125,
+        "right": 831,
+        "bottom": 515.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "High Contrast",
+      "mode": "light",
+      "view": "month",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 491.265625
+      },
+      "actions": {
+        "x": 269.5625,
+        "y": 466.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 476.640625,
+        "bottom": 494.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 269.5625,
+            "y": 466.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 380.640625,
+            "bottom": 494.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 387.640625,
+            "y": 466.765625,
+            "width": 89,
+            "height": 28,
+            "right": 476.640625,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 470.265625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 491.265625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 48,
+        "right": 845,
+        "bottom": 504.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "theme": "High Contrast",
+      "mode": "light",
+      "view": "year",
+      "state": "event",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 260.828125,
+            "y": 333.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 301.90625,
+            "bottom": 361.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 139.328125,
+        "right": 845,
+        "bottom": 394.09375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 115.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 115.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": {
+        "x": 90,
+        "y": 333.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 252.828125,
+        "bottom": 361.765625
+      },
+      "edit": {
+        "x": 260.828125,
+        "y": 333.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 301.90625,
+        "bottom": 361.765625
+      },
+      "meta": {
+        "x": 90,
+        "y": 365.765625,
+        "width": 368.75,
+        "height": 16.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "theme": "High Contrast",
+      "mode": "light",
+      "view": "year",
+      "state": "empty",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 110.40625,
+        "right": 845,
+        "bottom": 365.171875
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 83.328125,
+        "right": 458.75,
+        "bottom": 350.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 86.40625,
+        "right": 831,
+        "bottom": 353.171875
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "name": "year-stacked",
+      "date": {
+        "x": 39,
+        "y": 253.53125,
+        "width": 184.5625,
+        "height": 21,
+        "right": 223.5625,
+        "bottom": 274.53125
+      },
+      "actions": {
+        "x": 39,
+        "y": 281.53125,
+        "width": 207.078125,
+        "height": 28,
+        "right": 246.078125,
+        "bottom": 309.53125
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 39,
+            "y": 281.53125,
+            "width": 111.078125,
+            "height": 28,
+            "right": 150.078125,
+            "bottom": 309.53125
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 157.078125,
+            "y": 281.53125,
+            "width": 89,
+            "height": 28,
+            "right": 246.078125,
+            "bottom": 309.53125
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 224.828125,
+            "y": 320.53125,
+            "width": 41.078125,
+            "height": 28,
+            "right": 265.90625,
+            "bottom": 348.53125
+          }
+        }
+      ],
+      "chip": {
+        "x": 39,
+        "y": 253.53125,
+        "width": 53.828125,
+        "height": 21,
+        "right": 92.828125,
+        "bottom": 274.53125
+      },
+      "footer": {
+        "x": 25,
+        "y": 241.53125,
+        "width": 656,
+        "height": 250.734375,
+        "right": 681,
+        "bottom": 492.265625
+      },
+      "context": {
+        "x": 39,
+        "y": 253.53125,
+        "width": 628,
+        "height": 115.328125,
+        "right": 667,
+        "bottom": 368.859375
+      },
+      "verse": {
+        "x": 39,
+        "y": 380.859375,
+        "width": 628,
+        "height": 99.40625,
+        "right": 667,
+        "bottom": 480.265625
+      },
+      "divider": {
+        "vertical": 0,
+        "horizontal": 1,
+        "padding": 0
+      },
+      "title": {
+        "x": 54,
+        "y": 320.53125,
+        "width": 162.828125,
+        "height": 28,
+        "right": 216.828125,
+        "bottom": 348.53125
+      },
+      "edit": {
+        "x": 224.828125,
+        "y": 320.53125,
+        "width": 41.078125,
+        "height": 28,
+        "right": 265.90625,
+        "bottom": 348.53125
+      },
+      "meta": {
+        "x": 54,
+        "y": 352.53125,
+        "width": 613,
+        "height": 16.328125,
+        "right": 667,
+        "bottom": 368.859375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "name": "month-stacked",
+      "date": {
+        "x": 39,
+        "y": 470.265625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 223.5625,
+        "bottom": 491.265625
+      },
+      "actions": {
+        "x": 233.5625,
+        "y": 466.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 440.640625,
+        "bottom": 494.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 233.5625,
+            "y": 466.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 344.640625,
+            "bottom": 494.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 351.640625,
+            "y": 466.765625,
+            "width": 89,
+            "height": 28,
+            "right": 440.640625,
+            "bottom": 494.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 224.828125,
+            "y": 502.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 265.90625,
+            "bottom": 530.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 39,
+        "y": 470.265625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 92.828125,
+        "bottom": 491.265625
+      },
+      "footer": {
+        "x": 25,
+        "y": 456.765625,
+        "width": 656,
+        "height": 104.328125,
+        "right": 681,
+        "bottom": 561.09375
+      },
+      "context": {
+        "x": 25,
+        "y": 456.765625,
+        "width": 656,
+        "height": 104.328125,
+        "right": 681,
+        "bottom": 561.09375
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 54,
+        "y": 502.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 216.828125,
+        "bottom": 530.765625
+      },
+      "edit": {
+        "x": 224.828125,
+        "y": 502.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 265.90625,
+        "bottom": 530.765625
+      },
+      "meta": {
+        "x": 54,
+        "y": 534.765625,
+        "width": 613,
+        "height": 16.328125,
+        "right": 667,
+        "bottom": 551.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "name": "year-small",
+      "date": {
+        "x": 39,
+        "y": 286.609375,
+        "width": 184.5625,
+        "height": 21,
+        "right": 223.5625,
+        "bottom": 307.609375
+      },
+      "actions": {
+        "x": 39,
+        "y": 314.609375,
+        "width": 207.078125,
+        "height": 28,
+        "right": 246.078125,
+        "bottom": 342.609375
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 39,
+            "y": 314.609375,
+            "width": 111.078125,
+            "height": 28,
+            "right": 150.078125,
+            "bottom": 342.609375
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 157.078125,
+            "y": 314.609375,
+            "width": 89,
+            "height": 28,
+            "right": 246.078125,
+            "bottom": 342.609375
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 224.828125,
+            "y": 353.609375,
+            "width": 41.078125,
+            "height": 28,
+            "right": 265.90625,
+            "bottom": 381.609375
+          }
+        }
+      ],
+      "chip": {
+        "x": 39,
+        "y": 286.609375,
+        "width": 53.828125,
+        "height": 21,
+        "right": 92.828125,
+        "bottom": 307.609375
+      },
+      "footer": {
+        "x": 25,
+        "y": 274.609375,
+        "width": 380,
+        "height": 250.734375,
+        "right": 405,
+        "bottom": 525.34375
+      },
+      "context": {
+        "x": 39,
+        "y": 286.609375,
+        "width": 352,
+        "height": 115.328125,
+        "right": 391,
+        "bottom": 401.9375
+      },
+      "verse": {
+        "x": 39,
+        "y": 413.9375,
+        "width": 352,
+        "height": 99.40625,
+        "right": 391,
+        "bottom": 513.34375
+      },
+      "divider": {
+        "vertical": 0,
+        "horizontal": 1,
+        "padding": 0
+      },
+      "title": {
+        "x": 54,
+        "y": 353.609375,
+        "width": 162.828125,
+        "height": 28,
+        "right": 216.828125,
+        "bottom": 381.609375
+      },
+      "edit": {
+        "x": 224.828125,
+        "y": 353.609375,
+        "width": 41.078125,
+        "height": 28,
+        "right": 265.90625,
+        "bottom": 381.609375
+      },
+      "meta": {
+        "x": 54,
+        "y": 385.609375,
+        "width": 337,
+        "height": 16.328125,
+        "right": 391,
+        "bottom": 401.9375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "name": "month-small",
+      "date": {
+        "x": 39,
+        "y": 530.375,
+        "width": 184.5625,
+        "height": 21,
+        "right": 223.5625,
+        "bottom": 551.375
+      },
+      "actions": {
+        "x": 39,
+        "y": 557.375,
+        "width": 207.078125,
+        "height": 28,
+        "right": 246.078125,
+        "bottom": 585.375
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 39,
+            "y": 557.375,
+            "width": 111.078125,
+            "height": 28,
+            "right": 150.078125,
+            "bottom": 585.375
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 157.078125,
+            "y": 557.375,
+            "width": 89,
+            "height": 28,
+            "right": 246.078125,
+            "bottom": 585.375
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 224.828125,
+            "y": 593.375,
+            "width": 41.078125,
+            "height": 28,
+            "right": 265.90625,
+            "bottom": 621.375
+          }
+        }
+      ],
+      "chip": {
+        "x": 39,
+        "y": 530.375,
+        "width": 53.828125,
+        "height": 21,
+        "right": 92.828125,
+        "bottom": 551.375
+      },
+      "footer": {
+        "x": 25,
+        "y": 520.375,
+        "width": 380,
+        "height": 131.328125,
+        "right": 405,
+        "bottom": 651.703125
+      },
+      "context": {
+        "x": 25,
+        "y": 520.375,
+        "width": 380,
+        "height": 131.328125,
+        "right": 405,
+        "bottom": 651.703125
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 54,
+        "y": 593.375,
+        "width": 162.828125,
+        "height": 28,
+        "right": 216.828125,
+        "bottom": 621.375
+      },
+      "edit": {
+        "x": 224.828125,
+        "y": 593.375,
+        "width": 41.078125,
+        "height": 28,
+        "right": 265.90625,
+        "bottom": 621.375
+      },
+      "meta": {
+        "x": 54,
+        "y": 625.375,
+        "width": 337,
+        "height": 16.328125,
+        "right": 391,
+        "bottom": 641.703125
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "name": "year-long",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 178.265625,
+        "height": 21,
+        "right": 253.265625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 90,
+            "y": 395.59375,
+            "width": 41.078125,
+            "height": 28,
+            "right": 131.078125,
+            "bottom": 423.59375
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 180.828125,
+        "right": 845,
+        "bottom": 435.59375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 156.828125,
+        "right": 458.75,
+        "bottom": 423.59375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 156.828125,
+        "right": 831,
+        "bottom": 423.59375
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": {
+        "x": 90,
+        "y": 333.765625,
+        "width": 368.75,
+        "height": 37.5,
+        "right": 458.75,
+        "bottom": 371.265625
+      },
+      "edit": {
+        "x": 90,
+        "y": 395.59375,
+        "width": 41.078125,
+        "height": 28,
+        "right": 131.078125,
+        "bottom": 423.59375
+      },
+      "meta": {
+        "x": 90,
+        "y": 375.265625,
+        "width": 368.75,
+        "height": 16.328125,
+        "right": 458.75,
+        "bottom": 391.59375
+      },
+      "wrapped": true,
+      "empty": "No upcoming events",
+      "event": "Next event: Comprehensive Pediatric NBME Readiness Assessment and Long-Range Study Planning Session",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "name": "month-long",
+      "date": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 178.265625,
+        "height": 21,
+        "right": 253.265625,
+        "bottom": 487.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 493.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 521.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 493.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 493.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 403.1875,
+            "y": 528.59375,
+            "width": 41.078125,
+            "height": 28,
+            "right": 444.265625,
+            "bottom": 556.59375
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 487.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 109.828125,
+        "right": 845,
+        "bottom": 566.59375
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 109.828125,
+        "right": 845,
+        "bottom": 566.59375
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 403.1875,
+        "y": 466.765625,
+        "width": 427.8125,
+        "height": 37.5,
+        "right": 831,
+        "bottom": 504.265625
+      },
+      "edit": {
+        "x": 403.1875,
+        "y": 528.59375,
+        "width": 41.078125,
+        "height": 28,
+        "right": 444.265625,
+        "bottom": 556.59375
+      },
+      "meta": {
+        "x": 403.1875,
+        "y": 508.265625,
+        "width": 427.8125,
+        "height": 16.328125,
+        "right": 831,
+        "bottom": 524.59375
+      },
+      "wrapped": true,
+      "empty": "No upcoming events",
+      "event": "Next event: Comprehensive Pediatric NBME Readiness Assessment and Long-Range Study Planning Session",
+      "verseCount": 1,
+      "verseRail": true,
+      "overflow": 0
+    },
+    {
+      "name": "year-no-verse",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 260.828125,
+            "y": 333.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 301.90625,
+            "bottom": 361.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 139.328125,
+        "right": 845,
+        "bottom": 394.09375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 756,
+        "height": 115.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 90,
+        "y": 333.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 252.828125,
+        "bottom": 361.765625
+      },
+      "edit": {
+        "x": 260.828125,
+        "y": 333.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 301.90625,
+        "bottom": 361.765625
+      },
+      "meta": {
+        "x": 90,
+        "y": 365.765625,
+        "width": 741,
+        "height": 16.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 0,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "name": "month-no-verse",
+      "date": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 487.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 493.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 521.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 493.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 493.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 521.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 574.015625,
+            "y": 466.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 615.09375,
+            "bottom": 494.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 466.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 487.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "context": {
+        "x": 61,
+        "y": 456.765625,
+        "width": 784,
+        "height": 75,
+        "right": 845,
+        "bottom": 531.765625
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 403.1875,
+        "y": 466.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 566.015625,
+        "bottom": 494.765625
+      },
+      "edit": {
+        "x": 574.015625,
+        "y": 466.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 615.09375,
+        "bottom": 494.765625
+      },
+      "meta": {
+        "x": 403.1875,
+        "y": 498.765625,
+        "width": 427.8125,
+        "height": 16.328125,
+        "right": 831,
+        "bottom": 515.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 0,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "name": "year-unavailable-verse",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 260.828125,
+            "y": 333.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 301.90625,
+            "bottom": 361.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 139.328125,
+        "right": 845,
+        "bottom": 394.09375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 756,
+        "height": 115.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "verse": null,
+      "divider": null,
+      "title": {
+        "x": 90,
+        "y": 333.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 252.828125,
+        "bottom": 361.765625
+      },
+      "edit": {
+        "x": 260.828125,
+        "y": 333.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 301.90625,
+        "bottom": 361.765625
+      },
+      "meta": {
+        "x": 90,
+        "y": 365.765625,
+        "width": 741,
+        "height": 16.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 0,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "name": "year-empty-no-verse",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 184.5625,
+        "height": 21,
+        "right": 259.5625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 207.078125,
+        "height": 28,
+        "right": 282.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Most missed",
+          "rect": {
+            "x": 193.078125,
+            "y": 294.765625,
+            "width": 89,
+            "height": 28,
+            "right": 282.078125,
+            "bottom": 322.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 53.828125,
+        "height": 21,
+        "right": 128.828125,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 107.328125,
+        "right": 845,
+        "bottom": 362.09375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 756,
+        "height": 83.328125,
+        "right": 831,
+        "bottom": 350.09375
+      },
+      "verse": null,
+      "divider": null,
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "verseCount": 0,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "name": "selected-fallback",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 235.765625,
+        "height": 21,
+        "right": 310.765625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 111.078125,
+        "height": 28,
+        "right": 186.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        },
+        {
+          "text": "Edit",
+          "rect": {
+            "x": 260.828125,
+            "y": 333.765625,
+            "width": 41.078125,
+            "height": 28,
+            "right": 301.90625,
+            "bottom": 361.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 107.96875,
+        "height": 21,
+        "right": 182.96875,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 139.328125,
+        "right": 845,
+        "bottom": 394.09375
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 115.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 115.328125,
+        "right": 831,
+        "bottom": 382.09375
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": {
+        "x": 90,
+        "y": 333.765625,
+        "width": 162.828125,
+        "height": 28,
+        "right": 252.828125,
+        "bottom": 361.765625
+      },
+      "edit": {
+        "x": 260.828125,
+        "y": 333.765625,
+        "width": 41.078125,
+        "height": 28,
+        "right": 301.90625,
+        "bottom": 361.765625
+      },
+      "meta": {
+        "x": 90,
+        "y": 365.765625,
+        "width": 368.75,
+        "height": 16.328125,
+        "right": 458.75,
+        "bottom": 382.09375
+      },
+      "wrapped": false,
+      "empty": "No upcoming events",
+      "event": "Next event: Pediatric NBME",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    },
+    {
+      "name": "selected-empty",
+      "date": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 235.765625,
+        "height": 21,
+        "right": 310.765625,
+        "bottom": 287.765625
+      },
+      "actions": {
+        "x": 75,
+        "y": 294.765625,
+        "width": 111.078125,
+        "height": 28,
+        "right": 186.078125,
+        "bottom": 322.765625
+      },
+      "buttons": [
+        {
+          "text": "Reviewed cards",
+          "rect": {
+            "x": 75,
+            "y": 294.765625,
+            "width": 111.078125,
+            "height": 28,
+            "right": 186.078125,
+            "bottom": 322.765625
+          }
+        }
+      ],
+      "chip": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 107.96875,
+        "height": 21,
+        "right": 182.96875,
+        "bottom": 287.765625
+      },
+      "footer": {
+        "x": 61,
+        "y": 254.765625,
+        "width": 784,
+        "height": 110.40625,
+        "right": 845,
+        "bottom": 365.171875
+      },
+      "context": {
+        "x": 75,
+        "y": 266.765625,
+        "width": 383.75,
+        "height": 83.328125,
+        "right": 458.75,
+        "bottom": 350.09375
+      },
+      "verse": {
+        "x": 476.75,
+        "y": 266.765625,
+        "width": 354.25,
+        "height": 86.40625,
+        "right": 831,
+        "bottom": 353.171875
+      },
+      "divider": {
+        "vertical": 1,
+        "horizontal": 0,
+        "padding": 18
+      },
+      "title": null,
+      "edit": null,
+      "meta": null,
+      "wrapped": false,
+      "empty": "No events on this date",
+      "verseCount": 1,
+      "verseRail": false,
+      "overflow": 0
+    }
+  ],
+  "switch_cycles": 6,
+  "status": "passed"
+}

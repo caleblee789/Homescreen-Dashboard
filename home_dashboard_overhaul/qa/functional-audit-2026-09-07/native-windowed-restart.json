@@ -1,0 +1,409 @@
+{
+  "release": "1.8.7",
+  "stage": "restart",
+  "status": "passed",
+  "package_sha256": "c6834df3a93d98607a04deafc516727cfa32affe55009be79087bab38f2514bf",
+  "capture_plan_sha256": "2e202fd31ee4ee2ee5188d8c82e73fc5e104e739b0a3dd31e4015619efb57ed6",
+  "observations": [
+    {
+      "route": "both",
+      "step": "native-fullscreen",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "open",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "page:dashboard",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "page:appearance",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "page:calendar",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "page:events",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "page:bible_verse",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "page:bible_display",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "page:about_support",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "events-tabs",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "events-tabs",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "resize",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "resize",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "event-edit",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "editor_on_anki_display": true,
+      "editor_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "verse-edit",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "editor_on_anki_display": true,
+      "editor_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "save",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "menu",
+      "step": "close-reopen",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "open",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "page:dashboard",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "page:appearance",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "page:calendar",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "page:events",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "page:bible_verse",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "page:bible_display",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "page:about_support",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "events-tabs",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "events-tabs",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "resize",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "resize",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "event-edit",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "editor_on_anki_display": true,
+      "editor_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "verse-edit",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "editor_on_anki_display": true,
+      "editor_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "save",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    },
+    {
+      "route": "dashboard-gear",
+      "step": "close-reopen",
+      "qt_fullscreen": false,
+      "native_fullscreen": false,
+      "main_window_on_active_space": true,
+      "settings_on_anki_display": true,
+      "settings_on_active_space": true,
+      "frontmost_pid": 38965
+    }
+  ],
+  "input_method": "automated native QAction and production dashboard button",
+  "human_visual_approval": false,
+  "fullscreen_required": false,
+  "saved_event_names": {
+    "menu": "Release QA restart 38965 menu",
+    "dashboard-gear": "Release QA restart 38965 dashboard-gear"
+  },
+  "identity": {
+    "gated_before_window_interaction": true,
+    "pid": 38965,
+    "excluded_normal_pid": 37774,
+    "excluded_normal_process_state": "alive-and-untouched",
+    "excluded_normal_pid_alive": true,
+    "processes_are_distinct": true,
+    "run_root": "/private/tmp/anki-release-qa.9gwt43qn",
+    "profile": "Codex QA Functional Audit 20260907",
+    "profile_matches": true,
+    "collection_path": "/private/tmp/anki-release-qa.9gwt43qn/Codex QA Functional Audit 20260907/collection.anki2",
+    "collection_inside_run_root": true,
+    "candidate_addon_root": "/private/tmp/anki-release-qa.9gwt43qn/addons21/home_dashboard_overhaul",
+    "probe_addon_root": "/private/tmp/anki-release-qa.9gwt43qn/addons21/zz_hdo_audit_probe",
+    "addons_inside_run_root": true,
+    "window_title": "Codex QA Functional Audit 20260907 - Anki",
+    "window_title_matches_profile": true,
+    "sync_credentials_present": false,
+    "auto_sync": false,
+    "media_sync": false,
+    "sync_identity": "disabled-and-disconnected",
+    "single_instance_key_fingerprint": "3fc9aeffab81",
+    "anki_version": "26.8.1",
+    "candidate": {
+      "candidate": "/Users/test/Documents/ChatGPT.nosync/Homescreen Statistics Overhaul/home_dashboard_overhaul/dist/home-dashboard-overhaul-1.8.7.ankiaddon",
+      "candidate_sha256": "c6834df3a93d98607a04deafc516727cfa32affe55009be79087bab38f2514bf",
+      "member_count": 25,
+      "installed_member_parity": "passed",
+      "manifest_version": "1.8.7"
+    }
+  },
+  "before_fullscreen": {
+    "qt_visible": true,
+    "qt_minimized": false,
+    "qt_window_state": 0,
+    "qt_screen": "Built-in Retina Display",
+    "styleMask": 15,
+    "collectionBehavior": 128,
+    "isVisible": 1,
+    "isMiniaturized": 0,
+    "canBecomeKeyWindow": 1,
+    "isKeyWindow": 1,
+    "isOnActiveSpace": 1
+  },
+  "after_fullscreen": {
+    "qt_visible": true,
+    "qt_minimized": false,
+    "qt_window_state": 0,
+    "qt_screen": "Built-in Retina Display",
+    "styleMask": 15,
+    "collectionBehavior": 128,
+    "isVisible": 1,
+    "isMiniaturized": 0,
+    "canBecomeKeyWindow": 1,
+    "isKeyWindow": 1,
+    "isOnActiveSpace": 1
+  }
+}

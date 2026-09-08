@@ -34,7 +34,8 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertLess(layout, calendar)
         self.assertLess(calendar, metrics)
         self.assertLess(rail, metrics)
-        self.assertLess(metrics, bible)
+        self.assertLess(self.html.index("hdo-calendar-footer-content"), bible)
+        self.assertLess(bible, rail)
         self.assertEqual(self.html.count("hdo-dashboard-layout"), 1)
         self.assertEqual(self.html.count("hdo-insight-rail"), 1)
 
@@ -60,7 +61,7 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn('data-hdo-date-state', calendar)
         self.assertIn('data-hdo-context-date', calendar)
         self.assertIn('data-hdo-event-rows', calendar)
-        self.assertIn('data-hdo-context-event-label', calendar)
+        self.assertIn('hdo-calendar-date-group', calendar)
         self.assertIn('data-hdo-event-empty', calendar)
         self.assertIn('data-hdo-primary-action', calendar)
         self.assertIn('data-hdo-most-missed hidden', calendar)
@@ -187,8 +188,6 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("@container hdo-calendar (max-width: 419px)", self.css)
         for retired in ("308px", "640px", "860px", "900px", "1000px", "1220px"):
             self.assertNotIn("hdo-dashboard (min-width: {})".format(retired), self.css)
-        self.assertIn('data-hdo-calendar-view="month"] .hdo-calendar-card', self.css)
-        self.assertIn('data-hdo-calendar-view="year"] .hdo-calendar-card', self.css)
         self.assertNotRegex(self.css, r"grid-template-columns:\s*repeat\(3")
         self.assertIn("font-variant-numeric: tabular-nums", self.css)
         metrics_grid_rule = self.css.split(".hdo-summary-metrics-grid {", 1)[1].split("}", 1)[0]
@@ -197,7 +196,7 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         desktop_rules = self.css.split(
             "@container hdo-dashboard (min-width: 1009px)", 1
         )[1].split("@container hdo-calendar", 1)[0]
-        self.assertIn("min-height: 546px", desktop_rules)
+        self.assertNotIn("min-height: 546px", desktop_rules)
         self.assertIn("min-height: 352px", desktop_rules)
         self.assertIn("min-height: 182px", desktop_rules)
         stat_card_rule = self.css.rsplit(".hdo-statistics-card {", 1)[1].split("}", 1)[0]
@@ -307,41 +306,36 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         legend_group_rule = self.css.split(".hdo-legend-group {", 1)[1].split("}", 1)[0]
         self.assertIn("gap: 6px", legend_group_rule)
         context_rule = self.css.split(".hdo-calendar-context {", 1)[1].split("}", 1)[0]
-        self.assertIn("column-gap: 16px", context_rule)
-        self.assertIn("padding: 12px 14px 15px", context_rule)
-        self.assertIn("row-gap: 14px", context_rule)
+        self.assertIn("gap: 8px 18px", context_rule)
+        self.assertIn("padding: 10px 14px", context_rule)
+        self.assertNotIn("min-block-size", context_rule)
         selected_rule = self.css.split(".hdo-selected-date-line {", 1)[1].split("}", 1)[0]
         self.assertIn("gap: 8px", selected_rule)
-        bible_rule = self.css.split(".hdo-bible-card {", 2)[2].split("}", 1)[0]
+        bible_rule = self.css.split("#hdo-dashboard .hdo-bible-card {", 2)[2].split("}", 1)[0]
         self.assertIn("grid-template-rows: auto 1fr auto", bible_rule)
         self.assertIn("padding: 15px 16px 14px", bible_rule)
-        verse_rule = self.css.split(".hdo-verse {", 1)[1].split("}", 1)[0]
+        verse_rule = self.css.split("#hdo-dashboard .hdo-verse {", 1)[1].split("}", 1)[0]
         self.assertIn("max-width: 300px", verse_rule)
-        reference_rule = self.css.split(".hdo-verse-reference {", 1)[1].split("}", 1)[0]
+        reference_rule = self.css.split("#hdo-dashboard .hdo-verse-reference {", 1)[1].split("}", 1)[0]
         self.assertIn("margin: 11px 0 0", reference_rule)
         event_section_rule = self.css.split(
-            ".hdo-event-section,\n#hdo-dashboard .hdo-event-rows {", 1
+            ".hdo-event-rows {", 1
         )[1].split("}", 1)[0]
         self.assertIn("gap: 8px", event_section_rule)
-        self.assertIn('"date actions"\n    "event event"', self.css)
-        compact = self.css.split("@container hdo-calendar (max-width: 759px)", 1)[1]
-        self.assertIn('"date actions"', compact)
-        self.assertIn('"event event"', compact)
-        smallest = self.css.split("@container hdo-calendar (max-width: 419px)", 1)[1]
-        self.assertIn('"date date"', smallest)
-        self.assertIn('"event event"', smallest)
-        self.assertIn('". actions"', smallest)
+        self.assertIn("@container hdo-calendar (min-width: 640px)", self.css)
+        self.assertIn("@container hdo-calendar (min-width: 660px)", self.css)
         self.assertIn("hdo-event-row", self.css)
         label_rule = self.css.split(".hdo-context-label {", 1)[1].split("}", 1)[0]
-        self.assertIn("white-space: nowrap", label_rule)
+        self.assertNotIn("text-transform: uppercase", label_rule)
         action_rule = self.css.split(".hdo-calendar-card-action {", 1)[1].split("}", 1)[0]
-        self.assertIn("background: var(--ui-accent-soft)", action_rule)
-        self.assertIn("border-color: var(--ui-accent-border)", action_rule)
-        self.assertIn("height: 30px", action_rule)
+        self.assertIn("background: var(--ui-surface-2)", action_rule)
+        self.assertIn("border-color: var(--ui-border-default)", action_rule)
+        self.assertNotIn("height:", action_rule)
         event_title_rule = self.css.split(".hdo-event-title {", 1)[1].split("}", 1)[0]
         self.assertIn("overflow-wrap: anywhere", event_title_rule)
         self.assertIn("white-space: normal", event_title_rule)
         self.assertNotIn("text-overflow: ellipsis", event_title_rule)
+        self.assertNotIn("line-clamp", event_title_rule)
 
     def test_refresh_failure_is_one_timestamped_full_width_banner(self) -> None:
         self.assertEqual(
@@ -359,7 +353,7 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertNotIn("https://", self.css + self.js)
         self.assertTrue(all(
             selector.lstrip().startswith(("#hdo-dashboard", "@", "from", "to"))
-            for selector in re.findall(r"(?:^|\n)([^{}]+)\{", self.css)
+            for selector in re.findall(r"(?:^|\n)([^{}]+)\{", re.sub(r"/\*.*?\*/", "", self.css, flags=re.DOTALL))
             if selector.strip()
         ))
 

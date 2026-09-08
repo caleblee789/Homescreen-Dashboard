@@ -164,8 +164,29 @@ class PreviewHandler(BaseHTTPRequestHandler):
         snapshot = (
             stress_snapshot(date(2026, 8, 22), events_enabled=events_enabled)
             if fixture == "stress"
-            else sample_snapshot(date(2026, 8, 17))
+            else sample_snapshot(date(2026, 8, 23) if fixture == "footer" else date(2026, 8, 17))
         )
+        if fixture == "footer":
+            today_iso = snapshot.facts.scheduling_date
+            days = dict(snapshot.facts.days)
+            days[today_iso] = replace(
+                days[today_iso],
+                again_count=ValueState.available(0),
+                most_missed_target=BrowseTarget(),
+                domain_state=DayDomainState.NO_AGAIN,
+            )
+            snapshot = replace(snapshot, facts=replace(snapshot.facts, days=days))
+        if not events_enabled:
+            snapshot = replace(snapshot, facts=replace(
+                snapshot.facts,
+                events=ValueState.available(()),
+                days={
+                    iso: replace(day, events=ValueState.available(()))
+                    for iso, day in snapshot.facts.days.items()
+                },
+            ))
+        if query.get("verse", [""])[0] == "none":
+            snapshot = replace(snapshot, verse=VerseContent("", ""))
         if query.get("verse", [""])[0] == "long":
             snapshot = replace(
                 snapshot,

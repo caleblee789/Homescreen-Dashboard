@@ -381,10 +381,10 @@
     "stack_root_maximum_width": 1008,
     "metric_single_column_root_maximum_width": 588,
     "month_bottom_alignment": {
-      "calendar_to_bible_tolerance": 2
+      "calendar_to_bible_tolerance": null
     },
     "year_bottom_alignment": {
-      "calendar_to_summary_grid_tolerance": 2
+      "calendar_to_summary_grid_tolerance": null
     },
     "year_heatmap": {
       "wide_cell_size": 10,
@@ -412,8 +412,8 @@
     "centered-1160px-shell-with-16px-minimum-side-insets",
     "single-owner-28-to-30px-rendered-deck-gap",
     "aligned-calendar-and-top-summary-card-edges",
-    "month-calendar-bottom-to-bible-bottom-within-2px",
-    "year-calendar-bottom-to-summary-grid-bottom-within-2px",
+    "month-footer-content-height-with-standalone-verse-below-statistics",
+    "year-footer-content-height-with-embedded-verse-and-metrics-only-rail",
     "year-heatmap-at-least-85-percent-wide-with-square-complete-cells",
     "no-document-or-component-horizontal-overflow",
     "no-internal-dashboard-scrollbars",

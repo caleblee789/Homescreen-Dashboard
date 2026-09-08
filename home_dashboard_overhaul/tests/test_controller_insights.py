@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import replace
 from datetime import date, datetime, timedelta
 import importlib
 import json
@@ -15,6 +16,7 @@ from home_dashboard_overhaul.models import (
     BrowseTarget,
     BrowseTargetKind,
     DayInsight,
+    VerseContent,
 )
 from home_dashboard_overhaul.config_schema import normalize_config
 from home_dashboard_overhaul.tests.fixtures import sample_snapshot
@@ -383,6 +385,10 @@ class ControllerCapabilityTests(unittest.TestCase):
             ("calendar_data", "", ""),
             ("events", "2026-08-28", "exam-42"),
         ])
+        library = "hdo:" + json.dumps({"command": "settings", "payload": {"page": "bible_library"}})
+        self.controller.on_bridge_message((False, None), library, context)
+        FakeQTimer.run_next()
+        self.assertEqual(calls[-1], ("bible_library", "", ""))
 
     def test_bridge_routes_loading_diagnostics_to_about_support(self) -> None:
         calls = []
@@ -634,6 +640,13 @@ class ControllerCapabilityTests(unittest.TestCase):
         self.assertEqual(len(FakeQueryOp.pending), 1)
         self.assertEqual(len(self.aqt.dialogs.opened), 2)
 
+        # Navigating away while the query runs cancels its pending Browser action.
+        self.controller.invalidate()
+        self.controller.open_most_missed_in_browser(context, selected.isoformat())
+        self.controller.selected_date = "2026-08-18"
+        FakeQueryOp.pending[-1].complete()
+        self.assertEqual(len(self.aqt.dialogs.opened), 2)
+
     def test_most_missed_rejects_nonselected_date_and_query_failure(self) -> None:
         context = FakeDeckBrowser()
         self.controller.selected_date = "2026-08-17"
@@ -767,6 +780,20 @@ class ControllerCapabilityTests(unittest.TestCase):
 
         self.assertEqual(self.module.ROTATION_STATE_PATH.read_bytes(), previous_rotation)
         self.assertNotEqual(self.controller.config["bible"]["rotation_mode"], "manual")
+
+    def test_refresh_displays_a_new_verse_without_remounting_unchanged_verses(self) -> None:
+        previous = sample_snapshot(date(2026, 8, 17))
+        self.controller.snapshot = previous
+        self.controller._request_snapshot(self.controller._key())
+        FakeQueryOp.pending[-1].success(previous)
+        self.assertEqual(self.aqt.mw.deckBrowser.refresh_count, 0)
+
+        updated = replace(previous, verse=VerseContent("New daily verse", "New reference"))
+        self.controller.invalidate()
+        self.controller._request_snapshot(self.controller._key())
+        FakeQueryOp.pending[-1].success(updated)
+        self.assertEqual(self.controller.snapshot.verse, updated.verse)
+        self.assertEqual(self.aqt.mw.deckBrowser.refresh_count, 1)
 
     def test_refresh_failure_retains_previous_snapshot_and_exposes_retry_state(self) -> None:
         previous = sample_snapshot(date(2026, 8, 17))

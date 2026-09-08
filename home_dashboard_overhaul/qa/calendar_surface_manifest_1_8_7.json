@@ -66,11 +66,11 @@
     ],
     "metric_column_gap": 10,
     "metric_minimum_visible_gap": 8,
-    "month_calendar_minimum_height": 546,
+    "month_calendar_minimum_height": 0,
     "bible_card_minimum_height": 182,
-    "month_calendar_to_bible_bottom_tolerance": 2,
-    "year_calendar_minimum_height": 352,
-    "year_calendar_to_summary_grid_bottom_tolerance": 2,
+    "month_calendar_to_bible_bottom_tolerance": null,
+    "year_calendar_minimum_height": 0,
+    "year_calendar_to_summary_grid_bottom_tolerance": null,
     "month_cell_height_range": [
       38,
       44
@@ -381,7 +381,7 @@
         "calendar",
         "geometry"
       ],
-      "requirement": "Calendar and top summary cards share a top edge; in Month view the approximately 546 px calendar bottom aligns with the Bible card bottom within 2 px, while in Year view the approximately 352 px calendar bottom aligns with the summary-grid bottom within 2 px and does not extend to the distinct lower-right Bible card."
+      "requirement": "Calendar and top summary cards share a top edge. Both calendar views finish at the footer with natural content height, without stretching or a minimum height to align with the rail. Month keeps the verse below the statistics; Year embeds it in the footer and the rail ends after the summary grid."
     },
     {
       "id": "CAL-HEADER",
@@ -413,7 +413,7 @@
         "calendar",
         "footer"
       ],
-      "requirement": "The legend has a 36 px minimum height, 10 px 14 px padding, 18 px group gaps, and 6 px inner gaps; details use 12 px 14 px 15 px padding, a 16 px selected-row gap, an 8 px identity gap, and 14 px and 8 px event spacing while browsing, editing, adding, tooltips, date selection, and Most Missed remain intact."
+      "requirement": "The legend remains unchanged. Month details use 10 px 14 px padding, 40/60 date-event columns with an 18 px gap above 640 px of calendar content width, and a wrapping single row when empty. Year uses 12 px 14 px padding and 52/48 context-verse columns with a 16 px gap above 660 px, stacking with a 12 px gap below. Dates retain an 8 px badge gap, cards actions stay with their date, event context is inline, Edit stays beside its title, and metadata follows within 3 px. Titles wrap completely; empty contexts contain one appropriate status without event rows or controls. Existing lookup, fallback, browsing, editing, adding, tooltips, selection, and Most Missed behavior remain intact."
     },
     {
       "id": "DASH-VERSE",
@@ -422,7 +422,7 @@
         "bible",
         "geometry"
       ],
-      "requirement": "The Bible card keeps 15 px 16 px 14 px padding and auto 1fr auto rows; its centered verse is capped at 300 px, its citation has an 11 px top gap, and its Month-view minimum height is approximately 182 px without changing the existing typography or visual design."
+      "requirement": "Month keeps the standalone Bible card below statistics with 15 px 16 px 14 px padding, auto 1fr auto rows, centered configured typography capped at 300 px, an 11 px citation gap, and a desktop minimum height of 182 px. Year moves that single verse instance into the footer, with no nested card, left-aligned 16 px verse text at 1.35 line height, the existing 11 px label/reference, and 6 px gaps. A 1 px theme-aware divider separates the Year columns with 18 px spacing on each side, becoming horizontal in the stacked layout. Disabled or unavailable verses reserve no space or divider; switching views preserves the source, selection, settings, and refresh behavior."
     },
     {
       "id": "CAL-PALETTES",
@@ -446,7 +446,7 @@
         "bible",
         "rendering"
       ],
-      "requirement": "Production renders the configured verse font, size, and color exactly across responsive layouts."
+      "requirement": "Production preserves the configured verse font and color. Month and calendar-hidden standalone cards retain the configured size; the Year footer uses 16 px text scaled only by the existing dashboard text-scale setting. Both treatments show the complete verse and reference."
     },
     {
       "id": "EVENT-NAME-SORT",

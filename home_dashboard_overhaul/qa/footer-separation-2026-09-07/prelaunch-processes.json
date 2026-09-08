@@ -1,0 +1,13 @@
+{
+  "pids": [
+    27851
+  ],
+  "commands": [
+    "27851 /Applications/Anki.app/Contents/MacOS/anki -b /private/tmp/anki-release-qa.pyeawwth -p Codex QA Functional 20260907"
+  ],
+  "windows": [
+    ""
+  ],
+  "anki_version": "26.8.1",
+  "instance_key_supported": true
+}

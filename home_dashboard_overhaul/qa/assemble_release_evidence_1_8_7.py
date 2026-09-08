@@ -919,6 +919,9 @@ def make_capture_sheet(
     columns: int,
     thumb: tuple[int, int],
     profile_id: str,
+    *,
+    subtitle: str | None = None,
+    captions: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     tile_width, tile_height = thumb[0] + 32, thumb[1] + 78
     rows = max(1, (len(capture_ids) + columns - 1) // columns)
@@ -927,11 +930,11 @@ def make_capture_sheet(
     draw.text((24, 20), title, font=font(30, True), fill="#f8fafc")
     draw.text(
         (24, 58),
-        "Home Screen Dashboard {} · {} · native exact-package evidence".format(RELEASE, profile_id),
+        subtitle or "Home Screen Dashboard {} · {} · native exact-package evidence".format(RELEASE, profile_id),
         font=font(16),
         fill="#cbd5e1",
     )
-    captions = {
+    captions = captions if captions is not None else {
         str(case["id"]): str(case.get("caption", ""))
         for case in CAPTURE_PLAN.cases(profile_id)
     }

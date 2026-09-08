@@ -523,6 +523,7 @@
       var width = Math.max(0, Number(root.getBoundingClientRect().width) || 0);
       root.dataset.hdoContentMode = dashboardDensity(width);
       root.dataset.hdoMetricColumns = width >= 589 ? "2" : "1";
+      layoutEventActions();
     }
 
     updateDensity();
@@ -598,6 +599,39 @@
     }
 
     adoptPayload(payload, false, false);
+    state.receiveDashboardFacts = function (envelope) {
+      if (!envelope || !envelope.facts || Number(envelope.revision) < Number(state.payload.revision || 0)) return;
+      var priorSelected = state.selected;
+      var priorSchedulingDate = state.payload.scheduling_date;
+      var revisionChanged = Number(envelope.revision) !== Number(state.payload.revision || 0);
+      var calendarChanged = calendarPayloadFingerprint(state.payload) !== calendarPayloadFingerprint(envelope.facts);
+      if (revisionChanged) {
+        state.mostMissed = Object.create(null);
+        state.latestInsightRequest = Object.create(null);
+      }
+      adoptPayload(envelope.facts, true, !calendarChanged);
+      state.selected = state.followsToday ? String(envelope.facts.scheduling_date || priorSelected) : priorSelected;
+      if (calendar) {
+        if (state.followsToday && priorSchedulingDate !== envelope.facts.scheduling_date) {
+          state.anchor = dateValue(state.selected) || state.anchor;
+        }
+        if (calendarChanged) {
+          renderCalendar();
+          // The mounted period may differ from the snapshot's selected-date range.
+          requestRange();
+        } else updateContext();
+      }
+      updateMetricValues(
+        root,
+        envelope.facts.statistics,
+        envelope.facts.presentation,
+        locale,
+        envelope.facts.retention_target
+      );
+      setDashboardUpdating(root, false);
+      var refreshWarning = root.querySelector(".hdo-refresh-warning");
+      if (refreshWarning) refreshWarning.remove();
+    };
     if (!calendar) return state;
 
     var shell = root.querySelector(".hdo-calendar-shell");
@@ -611,14 +645,28 @@
     if (tooltip && tooltip.parentElement !== root) root.appendChild(tooltip);
     var dateState = root.querySelector("[data-hdo-date-state]");
     var contextDate = root.querySelector("[data-hdo-context-date]");
+    var calendarContext = root.querySelector(".hdo-calendar-context");
+    var footerContent = root.querySelector(".hdo-calendar-footer-content");
+    var insightRail = root.querySelector(".hdo-insight-rail");
+    var bible = root.querySelector(".hdo-bible-card");
     var contextEvent = root.querySelector("[data-hdo-context-event]");
-    var contextEventLabel = root.querySelector("[data-hdo-context-event-label]");
     var eventRows = root.querySelector("[data-hdo-event-rows]");
     var eventEmpty = root.querySelector("[data-hdo-event-empty]");
     var primaryAction = root.querySelector("[data-hdo-primary-action]");
     var mostMissed = root.querySelector("[data-hdo-most-missed]");
     var liveStatus = root.querySelector("[data-hdo-calendar-status]");
     var dueLegend = root.querySelector(".hdo-legend-due");
+
+    function placeVerse() {
+      if (!bible || !footerContent || !insightRail) return;
+      var embedded = state.view === "year";
+      var destination = embedded ? footerContent : insightRail;
+      if (bible.parentElement !== destination) destination.appendChild(bible);
+      footerContent.dataset.hdoFooterVerse = String(embedded);
+      insightRail.dataset.hdoHasBible = String(!embedded);
+      insightRail.hidden = !insightRail.childElementCount;
+      root.dataset.hdoHasInsights = String(!insightRail.hidden);
+    }
 
     function cachedDayModel(day, view) {
       if (!day) return null;
@@ -709,29 +757,54 @@
       send("date_insight", { date: day.date, request_id: state.requestId });
     }
 
+    function layoutEventActions() {
+      if (!eventRows) return;
+      eventRows.querySelectorAll(".hdo-event-row").forEach(function (row) {
+        var copy = row.querySelector(".hdo-event-copy");
+        var title = row.querySelector(".hdo-event-title");
+        var edit = row.querySelector(".hdo-event-edit");
+        // Measure the heading's intrinsic width independently of its current
+        // layout so moving Edit below the metadata cannot cause resize loops.
+        title.style.whiteSpace = "nowrap";
+        title.style.flex = "none";
+        var headingWidth = title.getBoundingClientRect().width;
+        title.style.removeProperty("white-space");
+        title.style.removeProperty("flex");
+        row.classList.toggle("hdo-event-row--wrapped",
+          headingWidth + edit.getBoundingClientRect().width + 8 > copy.clientWidth);
+      });
+    }
+
     function renderEventRows(target, items, relationship, todayIso) {
       target.replaceChildren();
-      items.slice(0, 2).forEach(function (item) {
+      items.slice(0, 2).forEach(function (item, index) {
         var row = document.createElement("div");
         row.className = "hdo-event-row";
         var marker = document.createElement("span");
         marker.className = "hdo-context-event-marker";
         marker.setAttribute("aria-hidden", "true");
-        var copy = document.createElement("span");
+        var copy = document.createElement("div");
         copy.className = "hdo-event-copy";
+        var heading = document.createElement("div");
+        heading.className = "hdo-event-heading";
         var link = document.createElement("button");
         link.type = "button";
         link.className = "hdo-event-title";
         link.dataset.hdoOpenEvents = "";
         link.dataset.eventDate = item.date;
-        link.textContent = item.name;
+        if (index === 0) {
+          var context = document.createElement("span");
+          context.className = "hdo-context-label";
+          context.textContent = relationship + ": ";
+          link.appendChild(context);
+        }
+        link.appendChild(document.createTextNode(item.name));
         link.title = relationship + ": " + item.name;
         var meta = document.createElement("span");
         meta.className = "hdo-event-meta";
         var countdown = eventCountdown(item.date, todayIso, locale);
-        meta.textContent = formatEventDate(item.date, todayIso, locale) + (countdown ? " · " + countdown : "");
-        copy.appendChild(link);
-        copy.appendChild(meta);
+        meta.textContent = formatEventDate(item.date, todayIso, locale) + (countdown ? " (" + countdown + ")" : "");
+        heading.appendChild(link);
         var edit = document.createElement("button");
         edit.type = "button";
         edit.className = "hdo-event-edit";
@@ -740,9 +813,11 @@
         edit.dataset.eventDate = item.date;
         edit.textContent = "Edit";
         edit.setAttribute("aria-label", "Edit event: " + item.name);
+        copy.appendChild(heading);
+        copy.appendChild(meta);
+        copy.appendChild(edit);
         row.appendChild(marker);
         row.appendChild(copy);
-        row.appendChild(edit);
         target.appendChild(row);
       });
       if (items.length > 2) {
@@ -770,20 +845,21 @@
       }
       var eventContext = getContextEvent(state.events, state.selected, todayIso);
       if (contextEvent && eventRows && eventEmpty) {
-        contextEvent.querySelectorAll("[data-hdo-generated-event-section]").forEach(function (section) {
-          section.remove();
-        });
         var selectedEvent = eventContext && eventContext.event;
         var secondaryUpcoming = eventContext && eventContext.kind === "empty_selected"
           ? eventContext.upcoming
           : null;
-        if (contextEventLabel) contextEventLabel.textContent = eventContext.relationship;
+        // Preserve the selected-date lookup and its upcoming fallback, but show
+        // just the displayed event or one empty status in the compact footer.
+        var displayedEvent = selectedEvent || (secondaryUpcoming && secondaryUpcoming.event);
+        calendarContext.dataset.hdoHasEvent = String(Boolean(displayedEvent));
         eventRows.replaceChildren();
-        if (selectedEvent) {
+        eventRows.hidden = !displayedEvent;
+        if (displayedEvent) {
           renderEventRows(
             eventRows,
-            state.eventsByDate[selectedEvent.date] || [selectedEvent],
-            eventContext.relationship,
+            state.eventsByDate[displayedEvent.date] || [displayedEvent],
+            selectedEvent ? eventContext.relationship : "Next event",
             todayIso
           );
           eventEmpty.hidden = true;
@@ -792,25 +868,6 @@
             ? "No upcoming events"
             : "No events on this date";
           eventEmpty.hidden = false;
-        }
-        if (secondaryUpcoming && secondaryUpcoming.event) {
-          var nextSection = document.createElement("section");
-          nextSection.className = "hdo-event-section";
-          nextSection.dataset.hdoGeneratedEventSection = "";
-          var nextLabel = document.createElement("p");
-          nextLabel.className = "hdo-context-label";
-          nextLabel.textContent = "Next event";
-          var nextRows = document.createElement("div");
-          nextRows.className = "hdo-event-rows";
-          renderEventRows(
-            nextRows,
-            state.eventsByDate[secondaryUpcoming.event.date] || [secondaryUpcoming.event],
-            "Next event",
-            todayIso
-          );
-          nextSection.appendChild(nextLabel);
-          nextSection.appendChild(nextRows);
-          contextEvent.appendChild(nextSection);
         }
       }
       var day = state.days[state.selected];
@@ -835,6 +892,9 @@
         var available = capabilities.mostMissedCandidate && state.mostMissed[state.selected] === true;
         setButtonHidden(mostMissed, !available);
       }
+      var actions = root.querySelector(".hdo-context-actions");
+      if (actions) actions.hidden = !actions.querySelector("button:not([hidden])");
+      layoutEventActions();
       if (day) requestMostMissedCapability(day);
     }
 
@@ -1076,6 +1136,7 @@
       calendar.replaceChildren();
       shell.dataset.hdoCalendarView = state.view;
       root.dataset.hdoCalendarView = state.view;
+      placeVerse();
       root.querySelectorAll("[data-hdo-view]").forEach(function (button) {
         button.setAttribute("aria-pressed", button.dataset.hdoView === state.view ? "true" : "false");
       });
@@ -1206,6 +1267,7 @@
     state.receiveCalendarRange = function (envelope) {
       if (
         !envelope || Number(envelope.request_id) !== state.latestRangeRequest ||
+        Number(envelope.revision) !== Number(state.payload.revision || 0) ||
         envelope.view !== state.view || String(envelope.source_revision || "") !== String(state.payload.source_revision || "")
       ) return;
       (Array.isArray(envelope.activity) ? envelope.activity : []).forEach(function (day) {
@@ -1219,31 +1281,13 @@
     };
 
     state.receiveDayInsight = function (envelope) {
-      if (!envelope || !parseDate(envelope.date)) return;
+      if (!envelope || !parseDate(envelope.date) ||
+        Number(envelope.revision) !== Number(state.payload.revision || 0)) return;
       if (Number(envelope.request_id) !== Number(state.latestInsightRequest[envelope.date])) return;
       state.mostMissed[envelope.date] = Boolean(envelope.insight && envelope.insight.most_missed_available === true);
       if (envelope.date === state.selected) updateContext();
     };
 
-    state.receiveDashboardFacts = function (envelope) {
-      if (!envelope || !envelope.facts || Number(envelope.revision) < Number(state.payload.revision || 0)) return;
-      var priorSelected = state.selected;
-      var calendarChanged = calendarPayloadFingerprint(state.payload) !== calendarPayloadFingerprint(envelope.facts);
-      adoptPayload(envelope.facts, true, !calendarChanged);
-      state.selected = state.followsToday ? String(envelope.facts.scheduling_date || priorSelected) : priorSelected;
-      if (calendarChanged) renderCalendar();
-      else updateContext();
-      updateMetricValues(
-        root,
-        envelope.facts.statistics,
-        envelope.facts.presentation,
-        locale,
-        envelope.facts.retention_target
-      );
-      setDashboardUpdating(root, false);
-      var refreshWarning = root.querySelector(".hdo-refresh-warning");
-      if (refreshWarning) refreshWarning.remove();
-    };
 
     renderCalendar();
     updateMetricValues(root, payload.statistics, payload.presentation, locale, payload.retention_target);

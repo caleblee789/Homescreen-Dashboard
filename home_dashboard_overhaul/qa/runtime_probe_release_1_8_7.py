@@ -795,8 +795,11 @@ base.DOM_REPORT_SCRIPT = r"""
     layoutColumnGap:!!calendarRect&&!!railRect?railRect.left-calendarRect.right:0,
     topEdgeDelta:!!calendarRect&&!!railRect?Math.abs(calendarRect.top-railRect.top):0,
     railWidth:railRect?railRect.width:0,
-    monthBottomDelta:!!calendarRect&&!!bibleRect?Math.abs(calendarRect.bottom-bibleRect.bottom):null,
-    yearBottomDelta:!!calendarRect&&!!metricsRect?Math.abs(calendarRect.bottom-metricsRect.bottom):null,
+    calendarFooterBottomDelta:calendarRect&&q('.hdo-calendar-footer')?Math.abs(calendarRect.bottom-rect(q('.hdo-calendar-footer')).bottom):null,
+    verseInFooter:!!q('.hdo-calendar-footer-content > .hdo-bible-card'),
+    verseInRail:!!q('.hdo-insight-rail > .hdo-bible-card'),
+    verseCount:qa('.hdo-bible-card').length,
+    railBottomDelta:railRect&&metricsRect?Math.abs(railRect.bottom-metricsRect.bottom):null,
     deckDashboardGap:previousBoxRect?rootRect.top-previousBoxRect.bottom:null,
     deckGapAnchor:previousBox?{tag:previousBox.tagName,id:previousBox.id||'',className:String(previousBox.className||'')}:null,
     yearMonthLabels:qa('.hdo-year-month-label').map(function(node){return node.textContent.trim();}),
@@ -893,9 +896,16 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
 
     expected_density = "wide" if root_width >= 1009 else "intermediate" if root_width >= 589 else "narrow"
     base._require(state.get("density") == expected_density, "dashboard density differs from the 588/589 and 1008/1009 boundaries")
-    calendar = state.get("calendar") or {}
     metrics_grid = state.get("metricsGrid") or {}
     bible = state.get("bible") or {}
+    base._require(float(state.get("calendarFooterBottomDelta", 99)) <= 1.5, "calendar has unused space below its footer")
+    base._require(int(state.get("verseCount", 0)) == (1 if bible else 0), "verse instance is duplicated")
+    if bible:
+        destination = "verseInRail" if case.get("view") == "month" else "verseInFooter"
+        base._require(bool(state.get(destination)), "verse is in the wrong calendar-view destination")
+    if case.get("view") == "year":
+        base._require(not bool(state.get("verseInRail")), "Year retains a standalone verse card")
+        base._require(float(state.get("railBottomDelta", 99)) <= 1, "Year rail reserves space below statistics")
     if root_width >= 1009:
         base._require(bool(state.get("layoutSideBySide")), "wide dashboard did not place calendar and rail side by side")
         base._require(abs(float(state.get("railWidth", 0)) - 360) <= 1, "wide statistics rail is not 360px")
@@ -904,13 +914,8 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
         gap = state.get("deckDashboardGap")
         base._require(gap is not None and 28 <= float(gap) <= 30.5, "native deck-to-dashboard gap is not 28-30px")
         base._require(float(metrics_grid.get("height", 0)) >= 351, "wide summary grid is below its 352px target")
-        if case.get("view") == "month":
-            base._require(float(calendar.get("height", 0)) >= 545, "wide Month calendar is below its 546px target")
+        if case.get("view") == "month" and bible:
             base._require(float(bible.get("height", 0)) >= 181, "wide Bible card is below its 182px target")
-            base._require(float(state.get("monthBottomDelta", 99)) <= 2, "Month calendar and Bible card bottoms do not align")
-        else:
-            base._require(float(calendar.get("height", 0)) >= 351, "wide Year calendar is below its 352px target")
-            base._require(float(state.get("yearBottomDelta", 99)) <= 2, "Year calendar and summary grid bottoms do not align")
     else:
         base._require(bool(state.get("layoutStacked")), "1008px-or-narrower dashboard did not stack")
     base._require(
@@ -972,7 +977,8 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
         base._require(float(state.get("documentScrollMaximum", 0)) > 0, "bottom-clearance case has no document scroll range")
         base._require(bool(state.get("documentBottomReached")), "bottom-clearance case did not reach the document bottom")
     if special == "verse-exact":
-        base._require(abs(_pixels(state.get("verseFontSize")) - 36) <= 0.1, "configured verse size is not exact")
+        expected_verse_size = 16 if case.get("view") == "year" else 36
+        base._require(abs(_pixels(state.get("verseFontSize")) - expected_verse_size) <= 0.1, "view-specific verse size is not exact")
         base._require("Avenir Next" in str(state.get("verseFontFamily")), "configured verse font is not exact")
     if str(case.get("fixture", "")) == "native-statistics":
         raw_metrics = state.get("metricValues")
