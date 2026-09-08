@@ -566,12 +566,23 @@
   z-index: 4;
 }
 
+#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day.is-today {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 0;
+}
+
+#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day.is-today:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--ui-focus), inset 0 0 0 3px var(--ui-on-accent);
+}
+
 #hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day.is-today .hdo-date-number {
   align-items: center;
-  background: var(--calendar-today-ring);
-  box-shadow: 0 0 0 1px var(--calendar-ring-halo);
-  color: var(--calendar-ring-halo);
+  background: var(--ui-accent);
+  box-shadow: 0 0 0 1px var(--ui-on-accent);
+  color: var(--ui-on-accent);
   display: inline-flex;
+  flex-shrink: 0;
+  font-weight: 800;
   justify-content: center;
   min-height: 20px;
   min-width: 20px;
@@ -638,10 +649,24 @@
   width: 100%;
 }
 
-#hdo-dashboard .hdo-calendar-grid--year .hdo-calendar-day.is-today .hdo-date-number {
-  background: var(--calendar-today-ring);
-  border-radius: 1px;
-  box-shadow: inset 0 0 0 1px var(--calendar-ring-halo);
+#hdo-dashboard .hdo-calendar-grid--year .hdo-calendar-day:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--ui-focus);
+  outline: 1px solid var(--calendar-ring-halo);
+  outline-offset: 0;
+}
+
+#hdo-dashboard .hdo-calendar-grid--year .hdo-calendar-day.is-today {
+  border-color: var(--ui-accent);
+  outline: 1px solid var(--ui-on-accent);
+  outline-offset: 0;
+}
+
+#hdo-dashboard .hdo-calendar-grid--year .hdo-calendar-day.is-today.is-selected {
+  box-shadow: inset 0 0 0 1px var(--calendar-selected-ring);
+}
+
+#hdo-dashboard .hdo-calendar-grid--year .hdo-calendar-day.is-today:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--ui-on-accent);
 }
 
 #hdo-dashboard .hdo-calendar-grid--year .hdo-event-marker {
@@ -1584,8 +1609,8 @@
   border-color: var(--ui-border-subtle);
 }
 
-#hdo-dashboard[data-hdo-high-contrast="true"] .hdo-calendar-day[data-heat-kind="completion"][data-level="0"],
-#hdo-dashboard[data-hdo-high-contrast="true"] .hdo-calendar-day.is-future[data-due-level="0"] {
+#hdo-dashboard[data-hdo-high-contrast="true"] .hdo-calendar-day:not(.is-today)[data-heat-kind="completion"][data-level="0"],
+#hdo-dashboard[data-hdo-high-contrast="true"] .hdo-calendar-day:not(.is-today).is-future[data-due-level="0"] {
   border-color: var(--ui-border-default);
 }
 

@@ -1023,7 +1023,11 @@
       if (outOfMonth) cell.classList.add("is-out-of-month");
       if (model && model.relation === "future") cell.classList.add("is-future");
       if (dayIso === state.selected) cell.classList.add("is-selected");
-      if (dayIso === String(state.payload.calendar_date || "")) cell.classList.add("is-today");
+      var isToday = dayIso === String(state.payload.calendar_date || "");
+      if (isToday) {
+        cell.classList.add("is-today");
+        cell.setAttribute("aria-current", "date");
+      }
       if (dateObject && dateObject.getDate() === 1) cell.classList.add("is-month-start");
 
       var number = document.createElement("span");

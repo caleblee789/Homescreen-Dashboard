@@ -261,7 +261,6 @@ assert(css.includes('.hdo-calendar-day.is-future[data-due-level="1"]'));
 assert(css.includes("background: var(--heat-due-mark-3)"));
 assert(css.includes("block-size: 3px"));
 assert(css.includes("background: var(--calendar-empty-bg)"));
-assert(css.includes("background: var(--calendar-today-ring)"));
 assert(css.includes("box-shadow: inset 0 0 0 2px var(--calendar-selected-ring)"));
 assert(js.includes('weekdayLabel.className = "hdo-year-weekday-label"'));
 assert(js.includes("setYearScrollPosition"));
