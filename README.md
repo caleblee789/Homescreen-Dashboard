@@ -84,6 +84,12 @@ See the [build and test instructions](home_dashboard_overhaul/README.md#build-an
 [capture workflow](home_dashboard_overhaul/docs/qa/capture-workflow.md), and
 [changelog](home_dashboard_overhaul/CHANGELOG.md) for technical details.
 
+Unused external-calendar sources and their tests are preserved in the
+[September 8 deferred snapshot](deferred/calendar_sources_vnext/snapshots/2026-09-08/README.md).
+Historical references to `tests/test_calendar_repository.py` and
+`tests/test_calendar_manager_model.py` now refer to that snapshot. Run its tests
+separately using the documented runner; active add-on test discovery excludes them.
+
 ## License
 
 [AGPL-3.0-or-later](home_dashboard_overhaul/LICENSE.txt) ·
