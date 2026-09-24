@@ -84,10 +84,10 @@ Browser or statistics classes.
   retains the complete draft for retry and keeps technical details behind a
   disclosure. All controls remain native Qt and draft state writes nothing
   until Save.
-- Dashboard theme and Calendar heatmap palette share one responsive Appearance
-  row.
-  Their layout-changing staged updates run after the native combo popup closes,
-  and save locking restores both selectors and their nested popup views.
+- Dashboard theme and Calendar heatmap palette use native exclusive choice
+  cards with surface swatches and five-step color samples. Each group reflows
+  to four, two, or one column and supports arrow-key selection. Palette choices
+  remain remembered independently for each theme and are saved with the draft.
 - Month is always 42 cells. Year uses one responsive 53-week tree with 10 px
   cells at the wide reference and fluid square cells when narrower; it has no
   minimum-width floor or internal horizontal scrolling. Calendar legend and
@@ -127,7 +127,10 @@ studied, Avg cards/day, Retention, New cards studied, and Time spent. All Time
 contains Cards studied, Avg cards/day, Retention, Current streak, and Longest
 streak. The configured
 Bible verse is rendered at its exact font, size, and color. While work remains,
-Today's Progress displays `N% complete` inside the filled progress bar.
+Today's Progress displays `N% complete` above a slim progress bar. The label
+and fill use the same rounded integer percentage. The other three statistic
+cards promote their existing Cards studied value to a headline without
+duplicating or removing a metric.
 
 The compact calendar footer retains date selection, tooltip, Browser routing,
 event edit/add, and Most Missed behavior. Due and event legend/summary groups
@@ -142,7 +145,7 @@ baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only production rendering; Settings shows
-the five-step heatmap palette and compact Bible appearance previews while
+five-step samples on all four heatmap choices and a compact Bible appearance preview while
 retaining the custom-color input well.
 Settings is a movable, resizable `QDialog(mw)` with a 1080×760 logical default,
 860×640 normal minimum, default Qt flags, and a local `exec()` call. It resolves the

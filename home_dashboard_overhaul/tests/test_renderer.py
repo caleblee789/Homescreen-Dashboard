@@ -208,8 +208,9 @@ class RendererTests(unittest.TestCase):
         self.assertIn("data-hdo-progress-track", html)
         self.assertNotIn("data-hdo-progress-segment=", html)
         self.assertRegex(html, r'data-hdo-progress-state="in_progress"[^>]*aria-valuenow="77"')
-        self.assertIn(">77% complete</span>", html)
-        self.assertEqual(html.count("data-hdo-progress-label"), 2)
+        self.assertIn("data-hdo-progress-number>77%</span>", html)
+        self.assertEqual(html.count("data-hdo-progress-label"), 1)
+        self.assertEqual(html.count("hdo-metric-headline"), 3)
         self.assertNotIn("hdo-progress-heading-value", html)
         for label in (
             "Cards studied", "New cards studied", "Cards buried",

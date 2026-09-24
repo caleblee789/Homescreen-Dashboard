@@ -81,6 +81,7 @@ from aqt.qt import (
     QTreeWidgetItem,
     Qt,
     QModelIndex,
+    pyqtSignal,
 )
 
 from .config_schema import normalize_config
@@ -325,14 +326,14 @@ def _settings_style(
         focus_offset=str(FOCUS_RING_OFFSET_PX),
     )
     return """
-QDialog#HomeDashboardSettings {{ background: {window}; border: 1px solid {border}; border-radius: 10px; color: {text}; }}
+QDialog#HomeDashboardSettings {{ background: {window}; border: 1px solid {border}; border-radius: 12px; color: {text}; }}
 QWidget#HomeDashboardSettings QLabel,
 QWidget#HomeDashboardSettings QCheckBox {{ color: {text}; }}
 QWidget#HomeDashboardSettings QWidget#SettingsSidebarPanel {{ background: {sidebar}; border: 0; border-right: 1px solid {border}; }}
 QWidget#HomeDashboardSettings QListWidget#SettingsNav {{ background: transparent; border: 0; color: {text}; padding: 0; font-weight: 600; }}
-QWidget#HomeDashboardSettings QListWidget#SettingsNav::item {{ border: 1px solid transparent; border-left: 3px solid transparent; border-radius: 6px; color: {secondary}; margin: 2px 0; min-height: 44px; padding: 0 8px; }}
+QWidget#HomeDashboardSettings QListWidget#SettingsNav::item {{ border: 1px solid transparent; border-left: 1px solid transparent; border-radius: 6px; color: {secondary}; margin: 2px 0; min-height: 44px; padding: 0 8px; }}
 QWidget#HomeDashboardSettings QListWidget#SettingsNav::item:hover:!selected {{ background: {hover}; color: {text}; }}
-QWidget#HomeDashboardSettings QListWidget#SettingsNav::item:selected {{ background: {accent_soft}; border-color: {border_strong}; border-left-color: {highlight}; color: {text}; font-weight: 650; }}
+QWidget#HomeDashboardSettings QListWidget#SettingsNav::item:selected {{ background: {accent_soft}; border-color: {highlight}; color: {highlight}; font-weight: 650; }}
 QWidget#HomeDashboardSettings QListWidget#SettingsNav::item:focus {{ border: {focus_ring}px solid {focus}; }}
 QWidget#HomeDashboardSettings QTabBar#CompactSettingsNav {{ background: {sidebar}; border: 1px solid {border}; border-radius: 8px; }}
 QWidget#HomeDashboardSettings QTabBar#CompactSettingsNav::tab {{ background: transparent; border: 1px solid transparent; border-bottom: 3px solid transparent; color: {secondary}; min-height: 38px; padding: 0 12px; }}
@@ -340,7 +341,7 @@ QWidget#HomeDashboardSettings QTabBar#CompactSettingsNav::tab:hover:!selected {{
 QWidget#HomeDashboardSettings QTabBar#CompactSettingsNav::tab:selected {{ background: {accent_soft}; border-color: {border_strong}; border-bottom-color: {highlight}; color: {text}; font-weight: 650; }}
 QWidget#HomeDashboardSettings QScrollArea {{ background: transparent; border: 0; }}
 QWidget#HomeDashboardSettings QWidget#SettingsPage {{ background: transparent; border: 0; }}
-QWidget#HomeDashboardSettings QWidget#SettingsCard {{ background: {base}; border: 1px solid {border}; border-radius: 10px; }}
+QWidget#HomeDashboardSettings QWidget#SettingsCard {{ background: {base}; border: 1px solid {border}; border-radius: 12px; }}
 QWidget#HomeDashboardSettings QWidget#SettingsSubsection {{ background: transparent; border: 0; }}
 QWidget#HomeDashboardSettings QWidget#SettingsHeader {{ background: {window}; border: 0; border-bottom: 1px solid {border}; }}
 QWidget#HomeDashboardSettings QLabel#GlobalTitle {{ font-weight: 650; color: {text}; }}
@@ -368,6 +369,12 @@ QWidget#HomeDashboardSettings QWidget#SaveErrorPanel {{ background: {base}; bord
 QWidget#HomeDashboardSettings QLabel#InlineSaveError {{ color: {danger}; }}
 QWidget#HomeDashboardSettings QLabel#WarningText {{ color: {warning}; }}
 QWidget#HomeDashboardSettings QLabel#WarningText[state="error"] {{ color: {danger}; }}
+QWidget#HomeDashboardSettings QPushButton#ChoiceCardButton {{ background: {alternate}; border: 1px solid {border}; border-radius: 8px; color: {text}; text-align: left; padding: 10px 10px 10px 34px; }}
+QWidget#HomeDashboardSettings QPushButton#ChoiceCardButton[palette="true"] {{ padding: 10px 10px 30px; }}
+QWidget#HomeDashboardSettings QPushButton#ChoiceCardButton:hover {{ background: {hover}; border-color: {highlight}; }}
+QWidget#HomeDashboardSettings QPushButton#ChoiceCardButton:checked {{ background: {accent_soft}; border-color: {highlight}; color: {highlight}; }}
+QWidget#HomeDashboardSettings QPushButton#ChoiceCardButton:focus {{ border: {focus_ring}px solid {focus}; }}
+QWidget#HomeDashboardSettings QPushButton#ChoiceCardButton:disabled {{ color: {muted}; border-color: {border}; }}
 QWidget#HomeDashboardSettings QWidget#SegmentedControl {{ background: {alternate}; border: 1px solid {border}; border-radius: 8px; }}
 QWidget#HomeDashboardSettings QPushButton#SegmentButton {{ background: transparent; border: 0; border-right: 1px solid {border}; border-radius: 0; margin: 0; min-height: 32px; padding: 0 12px; }}
 QWidget#HomeDashboardSettings QPushButton#SegmentButton[last="true"] {{ border-right: 0; }}
@@ -461,7 +468,7 @@ def _editor_style(tokens: Optional[Mapping[str, str]] = None) -> str:
         focus_offset=str(FOCUS_RING_OFFSET_PX),
     )
     return """
-QDialog#HomeDashboardEditor {{ background: {window}; border: 1px solid {border_strong}; border-radius: 10px; color: {text}; }}
+QDialog#HomeDashboardEditor {{ background: {window}; border: 1px solid {border_strong}; border-radius: 12px; color: {text}; }}
 QDialog#HomeDashboardEditor QLabel {{ color: {text}; }}
 QDialog#HomeDashboardEditor QLabel#EditorHelp {{ color: {muted}; }}
 QDialog#HomeDashboardEditor QLabel#EditorError {{ color: {danger}; }}
@@ -1071,39 +1078,6 @@ class SliderScaleMarkers(QWidget):
             )
 
 
-class HeatmapPalettePreview(QWidget):
-    """Five-step preview of the currently selected calendar intensity ramp."""
-
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
-        super().__init__(parent)
-        self._colors: List[str] = []
-        self.setMinimumSize(120, 34)
-        self.setMaximumWidth(168)
-        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        self.setAccessibleName("Calendar heatmap palette preview")
-
-    def set_colors(self, colors: List[str], label: str) -> None:
-        self._colors = list(colors[:5])
-        self.setAccessibleDescription("Five intensity steps for {}.".format(label))
-        self.update()
-
-    def paintEvent(self, event: Any) -> None:
-        del event
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-        tokens = _palette_tokens()
-        colors = self._colors or [tokens["alternate"]] * 5
-        gap = 3
-        rect = self.rect().adjusted(1, 5, -1, -5)
-        width = max(8, (rect.width() - gap * 4) // 5)
-        for index, color in enumerate(colors):
-            left = rect.left() + index * (width + gap)
-            swatch = QRect(left, rect.top(), width, rect.height())
-            painter.setPen(QPen(QColor(tokens["border_strong"]), 1))
-            painter.setBrush(QColor(color))
-            painter.drawRoundedRect(swatch, 4, 4)
-
-
 class BibleAppearancePreview(QWidget):
     """Compact live sample of the staged verse typography and color."""
 
@@ -1283,6 +1257,128 @@ class SegmentedControl(QWidget):
                 candidate.setFocus(Qt.FocusReason.TabFocusReason)
                 candidate.click()
                 return
+
+
+class ChoiceCardButton(SegmentButton):
+    """A native checkable choice with a data-driven surface or palette sample."""
+
+    def __init__(self, label: str, owner: "ChoiceCardGroup") -> None:
+        super().__init__(label, owner)
+        self.setObjectName("ChoiceCardButton")
+        self.setProperty("palette", owner.palette_cards)
+        self.colors: List[str] = []
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+    def sizeHint(self) -> QSize:
+        return QSize(self.fontMetrics().horizontalAdvance(self.text()) + 54,
+                     max(54, self.fontMetrics().height() + 30) + (20 if self.owner.palette_cards else 0))
+
+    def minimumSizeHint(self) -> QSize:
+        return self.sizeHint()
+
+    def paintEvent(self, event: Any) -> None:
+        super().paintEvent(event)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setPen(Qt.PenStyle.NoPen)
+        colors = self.colors
+        if self.owner.palette_cards:
+            width = max(1, (self.width() - 32) / 5)
+            for index, color in enumerate(colors[:5]):
+                painter.setBrush(QColor(color))
+                painter.drawRoundedRect(QRect(12 + round(index * (width + 2)), self.height() - 25,
+                                              round(width), 13), 2, 2)
+        elif colors:
+            painter.setBrush(QColor(colors[0]))
+            painter.setPen(QPen(QColor(_palette_tokens()["border_strong"]), 1))
+            painter.drawRoundedRect(QRect(12, (self.height() - 24) // 2, 14, 24), 3, 3)
+
+
+class ChoiceCardGroup(SegmentedControl):
+    """One exclusive choice state, shared by mouse, keyboard, hydration and QA."""
+
+    currentIndexChanged = pyqtSignal(int)
+
+    def __init__(self, options: List[tuple[str, str]], current: str,
+                 accessible_name: str, *, palette_cards: bool = False) -> None:
+        QWidget.__init__(self)
+        self.setObjectName("ChoiceCardGroup")
+        self.setAccessibleName(accessible_name)
+        self.palette_cards = palette_cards
+        self.button_group = QButtonGroup(self)
+        self.button_group.setExclusive(True)
+        self._buttons: Dict[str, QPushButton] = {}
+        self._grid = QGridLayout(self)
+        self._grid.setContentsMargins(0, 0, 0, 0)
+        self._grid.setSpacing(10)
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.button_group.buttonClicked.connect(lambda _button: self.currentIndexChanged.emit(self.currentIndex()))
+        for label, value in options:
+            self.addItem(label, value)
+        self.setValue(current)
+
+    def clear(self) -> None:
+        for button in self._buttons.values():
+            self._grid.removeWidget(button)
+            self.button_group.removeButton(button)
+            button.hide()
+            button.deleteLater()
+        self._buttons.clear()
+
+    def addItem(self, label: str, value: str) -> None:
+        button = ChoiceCardButton(label, self)
+        button.setCheckable(True)
+        button.setProperty("hdoValue", value)
+        button.setAccessibleName("{}: {}".format(self.accessibleName(), label))
+        self.button_group.addButton(button)
+        self._buttons[value] = button
+        self._reflow()
+
+    def currentData(self) -> str:
+        return self.value()
+
+    def currentIndex(self) -> int:
+        return self.findData(self.value())
+
+    def findData(self, value: object) -> int:
+        return list(self._buttons).index(str(value)) if str(value) in self._buttons else -1
+
+    def setCurrentIndex(self, index: int) -> None:
+        if 0 <= index < len(self._buttons):
+            self.setValue(list(self._buttons)[index])
+
+    def setValue(self, value: object) -> None:
+        previous = self.value()
+        super().setValue(value)
+        if self.value() != previous:
+            self.currentIndexChanged.emit(self.currentIndex())
+
+    def connect_changed(self, callback: Callable[..., None]) -> None:
+        self.currentIndexChanged.connect(callback)
+
+    def set_samples(self, samples: Mapping[str, List[str]]) -> None:
+        for value, button in self._buttons.items():
+            button.colors = list(samples.get(value, ()))
+            button.update()
+        self._reflow()
+
+    def _reflow(self) -> None:
+        buttons = list(self._buttons.values())
+        minimum = max((button.sizeHint().width() for button in buttons), default=140)
+        columns = 4 if self.width() >= minimum * 4 + 30 else 2 if self.width() >= minimum * 2 + 10 else 1
+        while self._grid.count():
+            self._grid.takeAt(0)
+        for index, button in enumerate(buttons):
+            self._grid.addWidget(button, index // columns, index % columns)
+        for column in range(4):
+            self._grid.setColumnStretch(column, 1 if column < columns else 0)
+        self.updateGeometry()
+
+    def resizeEvent(self, event: Any) -> None:
+        super().resizeEvent(event)
+        self._reflow()
 
 
 class SettingsSwitch(QPushButton):
@@ -3109,7 +3205,7 @@ class SettingsPromptPage(QWidget):
         self.setStyleSheet(
             """
 QWidget#SettingsPromptPage {{ background: {overlay}; }}
-QFrame#SettingsPromptCard {{ background: {window}; border: 1px solid {border}; border-radius: 10px; }}
+QFrame#SettingsPromptCard {{ background: {window}; border: 1px solid {border}; border-radius: 12px; }}
 QLabel#SettingsPromptTitle {{ color: {text}; font-weight: 750; }}
 QLabel#SettingsPromptMessage {{ color: {secondary}; }}
 QPushButton {{ background: {button}; border: 1px solid {border}; border-radius: 7px; color: {button_text}; min-height: 32px; padding: 0 12px; font-weight: 600; }}
@@ -3902,24 +3998,16 @@ class SettingsDialog(QDialog):
                 lambda: self._reset_card("appearance", "Appearance")
             )
         appearance = self.staged["appearance"]
-        self.preset = _combo([(name, name) for name in PRESETS], appearance["preset"])
+        self.preset = ChoiceCardGroup([(name, name) for name in PRESETS], appearance["preset"], "Dashboard theme")
         _set_accessibility(
             self.preset,
             "Dashboard theme",
             "Choose one of four fully audited dashboard palettes.",
         )
-        self.heatmap_preset = QComboBox()
-        self.heatmap_preset.setAccessibleName("Calendar heatmap palette")
+        self.heatmap_preset = ChoiceCardGroup([], "", "Calendar heatmap palette", palette_cards=True)
         self.heatmap_preset.setAccessibleDescription(
             "Choose the calendar heatmap colors for the selected dashboard theme."
         )
-        self.heatmap_palette_preview = HeatmapPalettePreview()
-        heatmap_control = QWidget()
-        heatmap_control_layout = QHBoxLayout(heatmap_control)
-        heatmap_control_layout.setContentsMargins(0, 0, 0, 0)
-        heatmap_control_layout.setSpacing(8)
-        heatmap_control_layout.addWidget(self.heatmap_preset, 1)
-        heatmap_control_layout.addWidget(self.heatmap_palette_preview)
         self._refresh_heatmap_preset_options()
         self.heatmap_preset.currentIndexChanged.connect(
             self._heatmap_preset_changed
@@ -3974,7 +4062,7 @@ class SettingsDialog(QDialog):
         self.heatmap_palette_field = _stacked_field(
             "Calendar heatmap palette",
             "Colors used for calendar intensity within the selected theme.",
-            heatmap_control,
+            self.heatmap_preset,
         )
         self.dashboard_mode_field = _stacked_field(
             "Dashboard color mode",
@@ -4527,7 +4615,6 @@ class SettingsDialog(QDialog):
         self.event_empty_state = QWidget()
         self.event_empty_state.setObjectName("EmptyState")
         self.event_empty_state.setMinimumHeight(180)
-        self.event_empty_state.setMaximumHeight(200)
         self.event_empty_state.setSizePolicy(
             QSizePolicy.Policy.Preferred,
             QSizePolicy.Policy.Minimum,
@@ -4550,6 +4637,10 @@ class SettingsDialog(QDialog):
         )
         self.event_empty_copy.setObjectName("EmptyStateCopy")
         self.event_empty_copy.setWordWrap(True)
+        self.event_empty_copy.setSizePolicy(
+            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.Minimum,
+        )
         self.event_empty_copy.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.event_empty_copy.setMaximumWidth(360)
         empty_layout.addWidget(self.event_empty_icon, 0, Qt.AlignmentFlag.AlignCenter)
@@ -5133,6 +5224,7 @@ class SettingsDialog(QDialog):
         grid.invalidate()
 
     def _reflow_compact_grids(self) -> None:
+        self._fit_event_empty_copy()
         large_text = self.fontMetrics().lineSpacing() >= 22
         if hasattr(self, "appearance_grid"):
             width = self.appearance_card.width() if hasattr(self, "appearance_card") else 0
@@ -5143,18 +5235,10 @@ class SettingsDialog(QDialog):
                 if field.parentWidget() is None and host is not None:
                     field.setParent(host)
                     field.show()
-            if large_text or width < 680:
-                for row, field in enumerate(self.appearance_fields):
-                    self.appearance_grid.addWidget(field, row, 0)
-                self.appearance_grid.setColumnStretch(0, 1)
-                self.appearance_grid.setColumnStretch(1, 0)
-            else:
-                self.appearance_grid.addWidget(self.dashboard_theme_field, 0, 0)
-                self.appearance_grid.addWidget(self.heatmap_palette_field, 0, 1)
-                self.appearance_grid.addWidget(self.dashboard_mode_field, 1, 0, 1, 2)
-                self.appearance_grid.addWidget(self.dashboard_scale_field, 2, 0, 1, 2)
-                self.appearance_grid.setColumnStretch(0, 1)
-                self.appearance_grid.setColumnStretch(1, 1)
+            for row, field in enumerate(self.appearance_fields):
+                self.appearance_grid.addWidget(field, row, 0)
+            self.appearance_grid.setColumnStretch(0, 1)
+            self.appearance_grid.setColumnStretch(1, 0)
             self.appearance_grid.invalidate()
         if hasattr(self, "bible_display_grid"):
             width = self.bible_display_card.width()
@@ -5356,7 +5440,7 @@ class SettingsDialog(QDialog):
         self._queue_theme_palette_stage(refresh_controls=True)
 
     def _queue_theme_palette_stage(self, refresh_controls: bool = False) -> None:
-        """Finish combo changes after Qt has dismissed the active popup."""
+        """Coalesce native choice changes before updating dependent controls."""
 
         if self._building:
             return
@@ -5366,7 +5450,7 @@ class SettingsDialog(QDialog):
         self._theme_palette_stage_timer.start(0)
 
     def _flush_theme_palette_stage(self) -> None:
-        """Apply dependent controls and dirty feedback outside popup signals."""
+        """Apply dependent choices and dirty feedback in one event turn."""
 
         refresh_controls = self._theme_palette_refresh_pending
         self._theme_palette_refresh_pending = False
@@ -5461,27 +5545,21 @@ class SettingsDialog(QDialog):
     def _refresh_heatmap_palette_preview(self, *_args: object) -> None:
         if not all(
             hasattr(self, name)
-            for name in ("preset", "heatmap_preset", "heatmap_palette_preview")
+            for name in ("preset", "heatmap_preset")
         ):
             return
         theme_name = _combo_value(self.preset, "Sapphire Glass")
-        preset_name = _combo_value(
-            self.heatmap_preset,
-            DEFAULT_HEATMAP_PRESETS[theme_name],
-        )
         mode = _combo_value(self.mode, "auto") if hasattr(self, "mode") else "auto"
         variant = (
             "dark" if self.controller.is_dark() else "light"
         ) if mode == "auto" else mode
-        palette = HEATMAP_PRESETS[theme_name][preset_name][variant]
-        colors = [
-            palette["heat_complete_{}".format(index)]
-            for index in range(1, 6)
-        ]
-        self.heatmap_palette_preview.set_colors(
-            colors,
-            "{} {}".format(preset_name, variant),
-        )
+        self.heatmap_preset.set_samples({
+            name: [modes[variant]["heat_complete_{}".format(index)] for index in range(1, 6)]
+            for name, modes in HEATMAP_PRESETS[theme_name].items()
+        })
+        self.preset.set_samples({
+            name: [modes[variant]["ui_surface_1"]] for name, modes in PRESETS.items()
+        })
 
     def _update_color_swatch(self) -> None:
         if not hasattr(self, "font_color_swatch"):
@@ -6794,6 +6872,13 @@ class SettingsDialog(QDialog):
                 return True
         return False
 
+    def _fit_event_empty_copy(self) -> None:
+        if not hasattr(self, "event_empty_copy"):
+            return
+        label = self.event_empty_copy
+        width = max(1, min(label.width(), label.sizeHint().width()))
+        label.setMinimumHeight(max(label.fontMetrics().height(), label.heightForWidth(width)))
+
     def _update_event_actions(self, *_args: object) -> None:
         archived = self.event_tabs.currentIndex() == 1
         current_tree = self.archived_events if archived else self.active_events
@@ -6855,6 +6940,7 @@ class SettingsDialog(QDialog):
                 )
                 self.event_empty_clear.hide()
                 self.event_empty_add.hide()
+            self._fit_event_empty_copy()
             self.event_empty_state.show()
         else:
             self.event_empty_state.hide()

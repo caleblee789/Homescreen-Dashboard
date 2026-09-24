@@ -250,6 +250,8 @@ def _metric(
     compact_value: object | None = None,
 ) -> str:
     classes = [modifier] if modifier else []
+    if metric_key in {"today.answers", "last_seven_days.cards_studied", "long_term.lifetime_cards_studied"}:
+        classes.append("hdo-metric-headline")
     if (
         semantic
         and not unavailable
@@ -391,23 +393,23 @@ def _progress_group(snapshot: DashboardSnapshot) -> str:
         _escape(presentation.label),
     )
     lead = (
+        '<div class="hdo-progress-headline" data-hdo-progress-label '
+        'aria-label="{}"{}><span data-hdo-progress-number>{}%</span> '
+        '<span class="hdo-progress-caption">complete</span></div>'
         '<div class="hdo-progress-track" data-hdo-progress-track '
         'data-hdo-progress-state="{}" role="progressbar" aria-valuemin="0" '
         'aria-valuemax="100" aria-valuenow="{}" aria-valuetext="{}"{} '
         'style="--hdo-progress-percent:{}%">'
-        '<span class="hdo-progress-fill" data-hdo-progress-fill></span>'
-        '<span class="hdo-progress-label hdo-progress-label--track" '
-        'data-hdo-progress-label>{}</span>'
-        '<span class="hdo-progress-label hdo-progress-label--fill" '
-        'data-hdo-progress-label-fill aria-hidden="true">{}</span></div>'
+        '<span class="hdo-progress-fill" data-hdo-progress-fill></span></div>'
     ).format(
+        _escape(presentation.label),
+        "" if has_fill else " hidden",
+        percent,
         _escape(presentation.state.value),
         percent,
         _escape(presentation.label),
         "" if has_fill else " hidden",
         percent,
-        _escape(presentation.label),
-        _escape(presentation.label),
     )
     if queue_state.is_available:
         queue: QueueStats = queue_state.value

@@ -379,7 +379,7 @@ def main() -> int:
         'save_button.setText("Add verse" if title.startswith("Add") else "Update verse")',
         'save_button.setText("Update event" if item else "Save event")',
         "class SettingsEditorDialog(QDialog):",
-        "class HeatmapPalettePreview(QWidget):",
+        "class ChoiceCardGroup(SegmentedControl):",
         "class BibleAppearancePreview(QWidget):",
         'SETTINGS_GEOMETRY_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v4"',
         'SETTINGS_GEOMETRY_SCREEN_KEY = "home_dashboard_overhaul/settings_dialog_geometry/v4_screen"',

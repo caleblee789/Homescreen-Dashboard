@@ -149,8 +149,8 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         today_rule = self.css.split(
             ".hdo-calendar-grid--month .hdo-calendar-day.is-today .hdo-date-number {", 1
         )[1].split("}", 1)[0]
-        self.assertIn("background: var(--calendar-today-ring)", today_rule)
-        self.assertIn("var(--calendar-ring-halo)", today_rule)
+        self.assertIn("background: var(--ui-accent)", today_rule)
+        self.assertIn("var(--ui-on-accent)", today_rule)
         self.assertIn(".hdo-calendar-day.is-selected:focus-visible", self.css)
         self.assertIn("block-size: 3px", self.css)
         due_rule = self.css.split(
@@ -170,7 +170,7 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("margin: 30px auto 0", self.css)
         self.assertIn("--dashboard-column-gap: 14px", self.css)
         self.assertIn("--rail-gap: 12px", self.css)
-        self.assertIn("--summary-pad-x: 12px", self.css)
+        self.assertIn("--summary-pad-x: 14px", self.css)
         self.assertIn("--metric-column-gap: 10px", self.css)
         self.assertIn("--hdo-native-footer-height: 60px", self.css)
         self.assertIn("--hdo-native-footer-gap: 24px", self.css)
@@ -205,7 +205,7 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("margin-bottom: 9px", stat_header_rule)
         stat_title_rule = self.css.split(".hdo-statistics-card h3 {", 1)[1].split("}", 1)[0]
         self.assertIn("font-size: calc(10.5px * var(--hdo-scale))", stat_title_rule)
-        self.assertIn("white-space: nowrap", stat_title_rule)
+        self.assertIn("white-space: normal", stat_title_rule)
         metric_rule = self.css.split(".hdo-metric-row {", 1)[1].split("}", 1)[0]
         self.assertIn("column-gap: var(--metric-column-gap)", metric_rule)
         self.assertIn("grid-template-columns: minmax(0, 1fr) max-content", metric_rule)
@@ -223,16 +223,14 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("overflow-wrap: anywhere", progress_chip_rule)
         self.assertIn("white-space: normal", progress_chip_rule)
         progress_rule = self.css.split(".hdo-progress-track {", 1)[1].split("}", 1)[0]
-        self.assertIn("min-block-size: 18px", progress_rule)
+        self.assertIn("min-block-size: 6px", progress_rule)
         self.assertIn("margin: 0 0 10px", progress_rule)
-        progress_label_rule = self.css.split(".hdo-progress-label {", 1)[1].split("}", 1)[0]
-        self.assertIn("padding-inline: 6px", progress_label_rule)
-        progress_fill_label_rule = self.css.split(
-            ".hdo-progress-label--fill {", 1
+        progress_headline_rule = self.css.split(
+            ".hdo-progress-headline {", 1
         )[1].split("}", 1)[0]
-        self.assertIn("clip-path: inset", progress_fill_label_rule)
-        self.assertIn("color: var(--ui-on-accent)", progress_fill_label_rule)
-        self.assertEqual(self.html.count("data-hdo-progress-label"), 2)
+        self.assertIn("display: flex", progress_headline_rule)
+        self.assertIn("color: var(--ui-text-primary)", progress_headline_rule)
+        self.assertEqual(self.html.count("data-hdo-progress-label"), 1)
         self.assertEqual(self.html.count("data-hdo-progress-value"), 0)
 
     def test_live_canvas_is_transparent_while_cards_and_preview_remain_themed(self) -> None:

@@ -1339,7 +1339,6 @@
     var track = root.querySelector("[data-hdo-progress-track]");
     var fill = root.querySelector("[data-hdo-progress-fill]");
     var label = root.querySelector("[data-hdo-progress-label]");
-    var fillLabel = root.querySelector("[data-hdo-progress-label-fill]");
     var chip = root.querySelector("[data-hdo-progress-chip]");
     if (!track || !fill || !label || !chip) return;
     var progress = presentation && presentation.progress && typeof presentation.progress === "object"
@@ -1366,8 +1365,10 @@
     track.setAttribute("aria-valuenow", String(percent));
     track.setAttribute("aria-valuetext", statusLabel);
     track.style.setProperty("--hdo-progress-percent", percent + "%");
-    label.textContent = statusLabel;
-    if (fillLabel) fillLabel.textContent = statusLabel;
+    label.hidden = !hasFill;
+    label.setAttribute("aria-label", statusLabel);
+    var number = label.querySelector("[data-hdo-progress-number]");
+    if (number) number.textContent = Math.round(percent) + "%";
   }
 
   function updateMetricSemanticRole(root, key, role) {

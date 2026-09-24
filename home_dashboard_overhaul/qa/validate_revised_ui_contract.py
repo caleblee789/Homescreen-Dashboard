@@ -408,7 +408,7 @@ def validate(root: Path = ROOT) -> List[str]:
         "class DisclosureHeader(QPushButton)",
         "class VerseLibraryModel(QAbstractListModel)",
         "class VerseLibraryDelegate(QStyledItemDelegate)",
-        "self.heatmap_preset = QComboBox()",
+        "self.heatmap_preset = ChoiceCardGroup(",
         'SettingsCard("Version and support")',
         "scope_differs_from_defaults",
         "Could not save changes. Your draft is still available.",
@@ -418,7 +418,7 @@ def validate(root: Path = ROOT) -> List[str]:
         '("Save and close", "primary", self._save_and_close)',
         'self._set_status("saving", "Saving changes…")',
         "class SettingsEditorDialog(QDialog)",
-        "class HeatmapPalettePreview(QWidget)",
+        "class ChoiceCardGroup(SegmentedControl)",
         "class BibleAppearancePreview(QWidget)",
         'self.save_button.setText("Save changes")',
         "self._set_mutation_controls_enabled(False)",
@@ -460,10 +460,10 @@ def validate(root: Path = ROOT) -> List[str]:
         "def _persist_settings_transaction(",
     ))
     _require_markers(errors, "themes.py", (
-        '"ui_sidebar": "#090F15"',
-        '"ui_accent_soft": "#263B4D"',
-        '"ui_sidebar": "#E9EFF4"',
-        '"ui_accent_soft": "#DFEAF3"',
+        '"ui_sidebar": "#101215"',
+        '"ui_accent_soft": "#1B3354"',
+        '"ui_sidebar": "#F4F5F7"',
+        '"ui_accent_soft": "#EAF1FF"',
     ))
 
     settings_source = _source("settings.py")

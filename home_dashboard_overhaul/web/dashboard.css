@@ -7,7 +7,7 @@
   --dashboard-column-gap: 14px;
   --rail-gap: 12px;
   --panel-pad-x: 16px;
-  --summary-pad-x: 12px;
+  --summary-pad-x: 14px;
   --metric-column-gap: 10px;
   --hdo-year-cell-size: clamp(1px, calc((100cqi - 194px) / 53), 10px);
   --hdo-native-footer-height: 60px;
@@ -103,7 +103,7 @@
 #hdo-dashboard .hdo-calendar-card {
   background: var(--ui-card-background);
   border-color: var(--ui-border-default);
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: var(--ui-shadow-card);
   container: hdo-calendar / inline-size;
   display: flex;
@@ -117,12 +117,12 @@
 
 #hdo-dashboard .hdo-statistics-card {
   background: var(--ui-card-background);
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 #hdo-dashboard .hdo-bible-card {
   background: var(--ui-card-background);
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 #hdo-dashboard .hdo-calendar-card,
@@ -1014,12 +1014,13 @@
 
 @container hdo-calendar (min-width: 640px) {
   #hdo-dashboard[data-hdo-calendar-view="month"] .hdo-calendar-context[data-hdo-has-event="true"] {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   #hdo-dashboard[data-hdo-calendar-view="month"] .hdo-calendar-context[data-hdo-has-event="true"] .hdo-calendar-date-group {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
   }
 }
 
@@ -1049,7 +1050,7 @@
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   border: 0;
-  border-block-start: 1px solid var(--ui-border-strong);
+  border-block-start: 1px solid var(--ui-border-default);
   border-radius: 0;
   box-shadow: none;
   gap: 6px;
@@ -1079,12 +1080,12 @@
 
 @container hdo-calendar (min-width: 660px) {
   #hdo-dashboard[data-hdo-calendar-view="year"] .hdo-calendar-footer-content[data-hdo-footer-verse="true"] {
-    grid-template-columns: minmax(0, 52fr) minmax(0, 48fr);
+    grid-template-columns: minmax(0, 40fr) minmax(0, 60fr);
   }
 
   #hdo-dashboard .hdo-calendar-footer-content > .hdo-bible-card {
     border-block-start: 0;
-    border-inline-start: 1px solid var(--ui-border-strong);
+    border-inline-start: 1px solid var(--ui-border-default);
     padding: 0;
     padding-inline-start: 18px;
   }
@@ -1219,14 +1220,14 @@
 }
 
 #hdo-dashboard .hdo-statistics-card h3 {
-  color: var(--ui-eyebrow);
+  color: var(--ui-text-secondary);
   font-size: calc(10.5px * var(--hdo-scale));
   font-weight: 700;
-  letter-spacing: .045em;
+  letter-spacing: 0;
   line-height: 1.2;
   margin: 0;
-  text-transform: uppercase;
-  white-space: nowrap;
+  text-transform: none;
+  white-space: normal;
 }
 
 #hdo-dashboard .hdo-progress-card h3 {
@@ -1279,14 +1280,14 @@
   font-size: calc(11px * var(--hdo-scale));
   line-height: 1.2;
   min-width: 0;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 #hdo-dashboard .hdo-metric-row dd {
   color: var(--ui-text-primary);
   font-size: calc(12.5px * var(--hdo-scale));
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   margin: 0;
   text-align: right;
@@ -1339,10 +1340,10 @@
 
 #hdo-dashboard .hdo-progress-track {
   background: var(--ui-surface-3);
-  border: 1px solid var(--ui-border-subtle);
+  border: 0;
   border-radius: 999px;
   display: block;
-  min-block-size: 18px;
+  min-block-size: 6px;
   margin: 0 0 10px;
   overflow: hidden;
   position: relative;
@@ -1357,31 +1358,42 @@
   width: var(--hdo-progress-percent, 0%);
 }
 
-#hdo-dashboard .hdo-progress-label {
+#hdo-dashboard .hdo-progress-headline {
+  align-items: baseline;
   color: var(--ui-text-primary);
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: calc(28px * var(--hdo-scale));
+  font-weight: 650;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+#hdo-dashboard .hdo-progress-caption {
+  color: var(--ui-text-secondary);
   font-size: calc(10px * var(--hdo-scale));
-  font-variant-numeric: tabular-nums;
-  font-weight: 750;
-  inset: 0;
-  line-height: 1;
-  mix-blend-mode: normal;
-  padding-inline: 6px;
-  place-items: center;
-  position: absolute;
-  white-space: nowrap;
-  z-index: 1;
+  font-weight: 400;
 }
 
-#hdo-dashboard .hdo-progress-label--track {
-  color: var(--ui-text-primary);
+#hdo-dashboard .hdo-metric-row.hdo-metric-headline {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  margin-bottom: 9px;
 }
 
-#hdo-dashboard .hdo-progress-label--fill {
-  clip-path: inset(0 calc(100% - var(--hdo-progress-percent, 0%)) 0 0);
-  color: var(--ui-on-accent);
-  text-align: center;
-  z-index: 2;
+#hdo-dashboard .hdo-metric-headline dd {
+  font-size: calc(28px * var(--hdo-scale));
+  font-weight: 650;
+  grid-row: 1;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  text-align: left;
+  white-space: normal;
+}
+
+#hdo-dashboard .hdo-metric-headline dt {
+  grid-row: 2;
 }
 
 #hdo-dashboard .hdo-bible-card {

@@ -199,7 +199,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
                 ]
                 for level in range(6)
             ),
-            ("#1B222A", "#303A45", "#424E5B", "#566474", "#6E7E90", "#8C9BAA"),
+            ("#22262D", "#2B333D", "#434F5F", "#606F83", "#8291A4", "#AEBAC9"),
         )
 
     def test_settings_palette_is_owned_only_by_anki_appearance(self) -> None:
@@ -798,7 +798,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, self.settings)
         for marker in (
-            "class HeatmapPalettePreview(QWidget):",
+            "class ChoiceCardGroup(SegmentedControl):",
             "class BibleAppearancePreview(QWidget):",
             "class SettingsEditorDialog(QDialog):",
             "self.setWindowModality(Qt.WindowModality.WindowModal)",
@@ -839,11 +839,11 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, self.settings)
         for token in (
-            '"ui_bg": "#0B1118"',
-            '"ui_sidebar": "#090F15"',
-            '"ui_surface": "#151D26"',
-            '"ui_surface_raised": "#1B2631"',
-            '"ui_accent_soft": "#263B4D"',
+            '"ui_bg": "#101215"',
+            '"ui_sidebar": "#101215"',
+            '"ui_surface": "#191C21"',
+            '"ui_surface_raised": "#22262D"',
+            '"ui_accent_soft": "#1B3354"',
         ):
             self.assertIn(token, (ROOT / "themes.py").read_text(encoding="utf-8"))
         self.assertNotIn("WindowStaysOnTopHint", self.settings + self.release_probe)
@@ -935,7 +935,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
         self.assertNotIn("class VerseRowWidget", self.settings)
 
         self.assertIn("def _refresh_heatmap_preset_options", self.settings)
-        self.assertIn("self.heatmap_preset = QComboBox()", self.settings)
+        self.assertIn("self.heatmap_preset = ChoiceCardGroup(", self.settings)
         for retired in (
             "def _refresh_heatmap_preset_cards",
             "selected_indicator",
@@ -943,15 +943,15 @@ class SettingsReleaseContractTests(unittest.TestCase):
         ):
             self.assertNotIn(retired, self.settings)
 
-    def test_theme_and_heatmap_palette_share_a_responsive_appearance_row(self) -> None:
+    def test_theme_and_heatmap_choices_use_full_width_responsive_groups(self) -> None:
         appearance_source = self.settings.split("def _create_appearance_card", 1)[1].split(
             "def _build_dashboard_page", 1
         )[0]
         calendar_source = self.settings.split("def _create_calendar_cards", 1)[1].split(
             "def _build_events_page", 1
         )[0]
-        self.assertIn("self.heatmap_preset = QComboBox()", appearance_source)
-        self.assertNotIn("self.heatmap_preset = QComboBox()", calendar_source)
+        self.assertIn("self.heatmap_preset = ChoiceCardGroup(", appearance_source)
+        self.assertNotIn("self.heatmap_preset = ChoiceCardGroup(", calendar_source)
         self.assertLess(
             appearance_source.index("self.dashboard_theme_field"),
             appearance_source.index("self.heatmap_palette_field"),
@@ -960,15 +960,10 @@ class SettingsReleaseContractTests(unittest.TestCase):
         reflow_source = self.settings.split("def _reflow_compact_grids", 1)[1].split(
             "def _reflow_event_toolbar", 1
         )[0]
-        for marker in (
-            "if large_text or width < 680:",
-            "for row, field in enumerate(self.appearance_fields):",
-            "self.appearance_grid.addWidget(self.dashboard_theme_field, 0, 0)",
-            "self.appearance_grid.addWidget(self.heatmap_palette_field, 0, 1)",
-            "self.appearance_grid.addWidget(self.dashboard_mode_field, 1, 0, 1, 2)",
-            "self.appearance_grid.addWidget(self.dashboard_scale_field, 2, 0, 1, 2)",
-        ):
-            self.assertIn(marker, reflow_source)
+        self.assertIn("for row, field in enumerate(self.appearance_fields):", reflow_source)
+        self.assertIn("self.appearance_grid.addWidget(field, row, 0)", reflow_source)
+        self.assertIn("class ChoiceCardGroup(SegmentedControl):", self.settings)
+        self.assertIn("self.button_group.setExclusive(True)", self.settings)
 
     def test_theme_and_heatmap_choices_use_targeted_staging(self) -> None:
         apply_theme_source = self.settings.split("def _apply_theme", 1)[1].split(
@@ -1856,7 +1851,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'self.event_empty_icon.setPixmap(_settings_vector_icon("calendar", 32).pixmap(32, 32))',
             'self.event_empty_clear = QPushButton("Clear search")',
             "self.event_empty_state.setMinimumHeight(180)",
-            "self.event_empty_state.setMaximumHeight(200)",
+            "self.event_empty_copy.setSizePolicy(",
             "self.event_empty_add.show()",
             "tree.setMinimumHeight(54 + 8)",
             "tree.setMaximumHeight((5 * 54) + 8)",

@@ -68,7 +68,7 @@ from home_dashboard_overhaul.settings_model import (
     saved_window_geometry_is_valid,
     settings_screen_uses_compact_fallback,
 )
-from home_dashboard_overhaul.themes import contrast_ratio
+from home_dashboard_overhaul.themes import SETTINGS_COLOR_TOKENS, contrast_ratio
 
 from . import _capture_plan as capture_plan
 from . import _probe_base as base
@@ -669,7 +669,7 @@ base.DOM_REPORT_SCRIPT = r"""
   var yearOccupiedNodes=yearCells.concat(qa('.hdo-year-weekday-label'));
   var verse=q('.hdo-verse');
   var progressTrack=q('[data-hdo-progress-track]');
-  var progressLabels=[q('[data-hdo-progress-label]'),q('[data-hdo-progress-label-fill]')].filter(Boolean);
+  var progressHeadline=q('[data-hdo-progress-label]');
   var scroller=document.scrollingElement;
   var rootStyle=getComputedStyle(root);
   var title=q('#hdo-calendar-heading');
@@ -694,16 +694,15 @@ base.DOM_REPORT_SCRIPT = r"""
   var frameRect=rect(frame);
   var previousBox=previousVisibleBox(root);
   var previousBoxRect=rect(previousBox);
-  var metricGaps=qa('.hdo-metric-row').map(function(row){
+  var metricGaps=qa('.hdo-metric-row:not(.hdo-metric-headline)').map(function(row){
     var label=row.querySelector('dt');var value=row.querySelector('dd');
     return label&&value?rect(value).left-rect(label).right:-1;
   });
-  var metricTextSingleLine=qa('.hdo-metric-row').every(function(row){
+  var metricTextUnclipped=qa('.hdo-metric-row').every(function(row){
     var label=row.querySelector('dt');var value=row.querySelector('dd');
     if(!label||!value)return false;
-    var labelStyle=getComputedStyle(label);var valueStyle=getComputedStyle(value);
-    return labelStyle.whiteSpace==='nowrap'&&valueStyle.whiteSpace==='nowrap'&&
-      label.scrollWidth<=label.clientWidth+1&&value.scrollWidth<=value.clientWidth+1;
+    return label.scrollWidth<=label.clientWidth+1&&value.scrollWidth<=value.clientWidth+1&&
+      label.scrollHeight<=label.clientHeight+1&&value.scrollHeight<=value.clientHeight+1;
   });
   var cardWidths=statisticCards.map(function(card){return rect(card).width;});
   var cardHeights=statisticCards.map(function(card){return rect(card).height;});
@@ -714,14 +713,9 @@ base.DOM_REPORT_SCRIPT = r"""
   var componentNodes=[root,layout,calendar,rail,metricsGrid,bible,frame,grid].concat(statisticCards).filter(Boolean);
   var componentOverflowMax=componentNodes.length?Math.max.apply(null,componentNodes.map(overflowAmount)):0;
   var progressTrackRect=rect(progressTrack);
-  var progressLabelCentered=!!progressTrackRect&&progressLabels.length===2&&progressLabels.every(function(label){
-    var labelRect=rect(label);
-    return Math.abs((labelRect.left+labelRect.right)/2-(progressTrackRect.left+progressTrackRect.right)/2)<=.75;
-  });
-  var progressLabelPadding=progressLabels.length?Math.min.apply(null,progressLabels.map(function(label){
-    var style=getComputedStyle(label);return Math.min(parseFloat(style.paddingLeft)||0,parseFloat(style.paddingRight)||0);
-  })):0;
-  var progressHeader=q('.hdo-progress-card .hdo-stat-card-header');
+  var progressLabelAbove=!!progressTrackRect&&!!progressHeadline&&
+    rect(progressHeadline).bottom<=progressTrackRect.top&&
+    Math.abs(rect(progressHeadline).left-progressTrackRect.left)<=.75;
   var progressFirstMetric=q('.hdo-progress-card .hdo-metric-row');
   var progress=q('[data-hdo-progress-label]');
   return {
@@ -789,7 +783,8 @@ base.DOM_REPORT_SCRIPT = r"""
       )
     ),
     metricMinimumGap:metricGaps.length?Math.min.apply(null,metricGaps):-1,
-    metricTextSingleLine:metricTextSingleLine,
+    metricTextUnclipped:metricTextUnclipped,
+    metricHeadlineCount:qa('.hdo-metric-headline').length,
     layoutSideBySide:!!calendarRect&&!!railRect&&calendarRect.right<=railRect.left+1,
     layoutStacked:!!calendarRect&&!!railRect&&calendarRect.bottom<=railRect.top+1,
     layoutColumnGap:!!calendarRect&&!!railRect?railRect.left-calendarRect.right:0,
@@ -813,9 +808,8 @@ base.DOM_REPORT_SCRIPT = r"""
     yearCellWidthMax:yearCellWidths.length?Math.max.apply(null,yearCellWidths):0,
     yearCellHeightMin:yearCellHeights.length?Math.min.apply(null,yearCellHeights):0,
     yearCellHeightMax:yearCellHeights.length?Math.max.apply(null,yearCellHeights):0,
-    progressLabelCentered:progressLabelCentered,
-    progressLabelPadding:progressLabelPadding,
-    progressHeaderToBarGap:progressHeader&&progressTrack?rect(progressTrack).top-rect(progressHeader).bottom:null,
+    progressLabelAbove:progressLabelAbove,
+    progressHeadlineToBarGap:progressHeadline&&progressTrack?rect(progressTrack).top-rect(progressHeadline).bottom:null,
     progressBarToMetricsGap:progressTrack&&progressFirstMetric?rect(progressFirstMetric).top-rect(progressTrack).bottom:null,
     metricValues:metricValues,
     metricOrder:metricOrder,
@@ -863,14 +857,13 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     )
     if bool(state.get("progressTrackVisible")):
         base._require(
-            abs(float(state.get("progressTrackHeight", 0)) - 18) <= 0.5,
-            "numeric progress track is not 18px",
+            abs(float(state.get("progressTrackHeight", 0)) - 6) <= 0.5,
+            "numeric progress track is not 6px",
         )
-        base._require(bool(state.get("progressLabelCentered")), "progress labels are not centered over the full track")
-        base._require(float(state.get("progressLabelPadding", 0)) >= 6, "progress labels have less than 6px horizontal padding")
+        base._require(bool(state.get("progressLabelAbove")), "progress headline is not aligned above the track")
         base._require(
-            abs(float(state.get("progressHeaderToBarGap", -99)) - 8) <= 1,
-            "progress heading-to-bar gap is not 8px",
+            abs(float(state.get("progressHeadlineToBarGap", -99)) - 8) <= 1,
+            "progress headline-to-bar gap is not 8px",
         )
         base._require(
             abs(float(state.get("progressBarToMetricsGap", -99)) - 10) <= 1,
@@ -892,7 +885,8 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     )
     base._require(bool(state.get("equalStatisticCardGeometry")), "2x2 statistic cards do not have equal geometry")
     base._require(float(state.get("metricMinimumGap", -1)) >= 8, "metric label/value gap is below 8px")
-    base._require(bool(state.get("metricTextSingleLine")), "metric text wrapped or clipped")
+    base._require(bool(state.get("metricTextUnclipped")), "metric text is clipped")
+    base._require(int(state.get("metricHeadlineCount", 0)) == 3, "statistic headlines are missing or duplicated")
 
     expected_density = "wide" if root_width >= 1009 else "intermediate" if root_width >= 589 else "narrow"
     base._require(state.get("density") == expected_density, "dashboard density differs from the 588/589 and 1008/1009 boundaries")
@@ -2181,6 +2175,10 @@ def _segmented_model_failures(dialog: SettingsDialog) -> list[str]:
     failures: list[str] = []
     values = dialog.draft.values
     model_values = {
+        "preset": str(values.get("appearance", {}).get("preset", "Sapphire Glass")),
+        "heatmap_preset": str(values.get("heatmap", {}).get("presets_by_theme", {}).get(
+            values.get("appearance", {}).get("preset", "Sapphire Glass"), ""
+        )),
         "mode": str(values.get("appearance", {}).get("mode", "auto")),
         "calendar_view": str(
             values.get("heatmap", {}).get("calendar_view", "year")
@@ -2196,7 +2194,7 @@ def _segmented_model_failures(dialog: SettingsDialog) -> list[str]:
         ),
     }
     for control in dialog.findChildren(QWidget):
-        if type(control).__name__ != "SegmentedControl" or not control.isVisibleTo(dialog):
+        if type(control).__name__ not in {"SegmentedControl", "ChoiceCardGroup"} or not control.isVisibleTo(dialog):
             continue
         buttons = getattr(control, "_buttons", None)
         value_getter = getattr(control, "value", None)
@@ -2403,7 +2401,8 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
     verse_editor = getattr(dialog, "_qa_verse_editor", None)
     event_editor_state = _editor_state(event_editor, dialog)
     verse_editor_state = _editor_state(verse_editor, dialog)
-    heatmap_palette_preview = getattr(dialog, "heatmap_palette_preview", None)
+    heatmap_choices = getattr(dialog, "heatmap_preset", None)
+    heatmap_buttons = list(getattr(heatmap_choices, "_buttons", {}).values())
     bible_appearance_preview = getattr(dialog, "bible_appearance_preview", None)
     visible_add_event_ctas = [
         button
@@ -2765,18 +2764,14 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         ),
         "settings_previews": {
             "heatmap_palette_present": (
-                heatmap_palette_preview is not None
-                and type(heatmap_palette_preview).__name__
-                == "HeatmapPalettePreview"
+                heatmap_choices is not None
+                and type(heatmap_choices).__name__ == "ChoiceCardGroup"
             ),
-            "heatmap_palette_steps": len(
-                getattr(heatmap_palette_preview, "_colors", ())
+            "heatmap_palette_steps": min(
+                (len(getattr(button, "colors", ())) for button in heatmap_buttons),
+                default=0,
             ),
-            "heatmap_palette_compact": (
-                heatmap_palette_preview is not None
-                and heatmap_palette_preview.minimumHeight() == 34
-                and heatmap_palette_preview.maximumWidth() == 168
-            ),
+            "heatmap_palette_card_count": len(heatmap_buttons),
             "bible_appearance_present": (
                 bible_appearance_preview is not None
                 and type(bible_appearance_preview).__name__
@@ -2926,8 +2921,8 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
         isinstance(previews, Mapping)
         and previews.get("heatmap_palette_present") is True
         and previews.get("heatmap_palette_steps") == 5
-        and previews.get("heatmap_palette_compact") is True,
-        "the compact five-step Calendar heatmap palette preview is incomplete",
+        and previews.get("heatmap_palette_card_count") == 4,
+        "the four five-step Calendar heatmap palette choices are incomplete",
     )
     base._require(
         isinstance(previews, Mapping)
@@ -2939,7 +2934,8 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     if special == "events-empty":
         base._require(state.get("event_active_count") == 0 and state.get("event_archived_count") == 0, "empty Events state is populated")
         base._require(state.get("event_empty_title") == "No events yet", "empty Events copy is incorrect")
-        base._require(150 <= int(state.get("event_empty_height", 0)) <= 200, "empty Events state is not compact")
+        maximum_empty_height = max(200, 200 * int(case.get("font_percent", 100)) / 100)
+        base._require(150 <= int(state.get("event_empty_height", 0)) <= maximum_empty_height, "empty Events state is not compact at the configured text size")
         base._require(state.get("visible_add_event_cta_count") == 1, "empty Events state does not expose exactly one Add event action")
         base._require(state.get("event_header_add_visible") is False, "empty Events state exposes a duplicate page-header Add event action")
         base._require(state.get("event_toolbar_add_visible") is False, "empty Events state exposes the populated-list Add event action")
@@ -3217,7 +3213,7 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     if special in {"anki-light", "anki-dark"}:
         expected = "light" if special == "anki-light" else "dark"
         base._require(state.get("anki_theme") == expected, "Settings theme fixture differs from the Anki theme")
-        expected_window = "#F3F6F8" if expected == "light" else "#0B1118"
+        expected_window = SETTINGS_COLOR_TOKENS[expected]["ui_bg"]
         base._require(state.get("settings_window_token") == expected_window, "Settings shell did not follow the Anki theme")
     base._require(bool(state.get("parented_to_anki")), "Settings is not parented to Anki")
     base._require(
