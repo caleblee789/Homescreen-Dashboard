@@ -584,18 +584,20 @@ def _apply_role_fonts(root: QWidget) -> None:
     roles = {
         "GlobalTitle": role_font(16, QFont.Weight.DemiBold),
         "SidebarVersion": role_font(12),
-        "PageTitle": role_font(20, QFont.Weight.DemiBold),
-        "CardTitle": role_font(13, QFont.Weight.DemiBold),
-        "SectionTitle": role_font(13, QFont.Weight.DemiBold),
-        "EmptyStateTitle": role_font(14, QFont.Weight.DemiBold),
-        "SettingsPromptTitle": role_font(17.5, QFont.Weight.DemiBold),
+        "PageTitle": role_font(22, QFont.Weight.DemiBold),
+        "CardTitle": role_font(16, QFont.Weight.DemiBold),
+        "SectionTitle": role_font(16, QFont.Weight.DemiBold),
+        "EmptyStateTitle": role_font(16, QFont.Weight.DemiBold),
+        "SettingsPromptTitle": role_font(22, QFont.Weight.DemiBold),
         "SettingsPromptMessage": role_font(13),
-        "PageHelp": role_font(12),
-        "FieldHelp": role_font(11),
-        "EventRowTitle": role_font(13, QFont.Weight.DemiBold),
-        "EventRowMeta": role_font(11),
-        "FooterStatus": role_font(12.5, QFont.Weight.Medium),
-        "FooterStatusAction": role_font(12.5, QFont.Weight.Medium),
+        "PageHelp": role_font(13),
+        "FieldHelp": role_font(12),
+        "EditorHelp": role_font(12),
+        "EditorError": role_font(13),
+        "EventRowTitle": role_font(14, QFont.Weight.DemiBold),
+        "EventRowMeta": role_font(12),
+        "FooterStatus": role_font(12),
+        "FooterStatusAction": role_font(13, QFont.Weight.Medium),
     }
     for object_name, font in roles.items():
         for widget in root.findChildren(QWidget, object_name):
@@ -2666,6 +2668,7 @@ class SettingsEditorDialog(QDialog):
         preferred_lines: int,
         minimum_lines: int,
     ) -> None:
+        _apply_role_fonts(self)
         _apply_control_targets(self)
         metrics = self.fontMetrics()
         column_width = max(1, metrics.averageCharWidth())
@@ -2726,7 +2729,11 @@ class SettingsEditorDialog(QDialog):
     def changeEvent(self, event: Any) -> None:
         if _is_palette_change(event):
             _queue_palette_style(self, self._style_factory)
-        if event.type() == getattr(QEvent.Type, "FontChange", None):
+        if event.type() in {
+            getattr(QEvent.Type, "FontChange", None),
+            getattr(QEvent.Type, "ApplicationFontChange", None),
+        }:
+            _apply_role_fonts(self)
             _apply_control_targets(self)
         super().changeEvent(event)
 

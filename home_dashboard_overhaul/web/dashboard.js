@@ -510,6 +510,25 @@
     return { retry: start, clear: clearTimers };
   }
 
+  function layoutMetricHeadlines(root) {
+    var grid = root.querySelector(".hdo-summary-metrics-grid");
+    if (!grid) return;
+    var columns = global.getComputedStyle(grid).gridTemplateColumns.split(" ");
+    var columnWidth = parseFloat(columns[0]) || grid.clientWidth;
+    grid.querySelectorAll(".hdo-metric-headline").forEach(function (headline) {
+      var card = headline.closest(".hdo-statistics-card");
+      var label = headline.querySelector("dt");
+      var value = headline.querySelector("dd");
+      if (!card || !label || !value) return;
+      var style = global.getComputedStyle(card);
+      var inset = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) +
+        parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
+      var needed = label.getBoundingClientRect().width + value.getBoundingClientRect().width +
+        parseFloat(global.getComputedStyle(headline).columnGap);
+      card.dataset.hdoWideHeadline = columns.length > 1 && needed > columnWidth - inset ? "true" : "false";
+    });
+  }
+
   function mountDashboard(root) {
     if (!root || root.dataset.hdoMounted === "true") return null;
     root.dataset.hdoMounted = "true";
@@ -524,6 +543,7 @@
       root.dataset.hdoContentMode = dashboardDensity(width);
       root.dataset.hdoMetricColumns = width >= 589 ? "2" : "1";
       layoutEventActions();
+      layoutMetricHeadlines(root);
     }
 
     updateDensity();
@@ -1493,6 +1513,7 @@
       });
     }
     updateProgressComposition(root, statistics, presentation, locale);
+    layoutMetricHeadlines(root);
   }
 
   var activeState = null;

@@ -2206,10 +2206,10 @@ class SettingsReleaseContractTests(unittest.TestCase):
             "spin.setMaximumWidth(120)",
             "QFormLayout.RowWrapPolicy.WrapLongRows",
             "def _apply_role_fonts(root: QWidget) -> None:",
-            '"PageTitle": role_font(20, QFont.Weight.DemiBold)',
-            '"CardTitle": role_font(13, QFont.Weight.DemiBold)',
-            '"PageHelp": role_font(12)',
-            '"FieldHelp": role_font(11)',
+            '"PageTitle": role_font(22, QFont.Weight.DemiBold)',
+            '"CardTitle": role_font(16, QFont.Weight.DemiBold)',
+            '"PageHelp": role_font(13)',
+            '"FieldHelp": role_font(12)',
             "large_text = self.fontMetrics().lineSpacing() >= 22",
         ):
             self.assertIn(marker, self.settings)

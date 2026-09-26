@@ -670,15 +670,15 @@ def validate_sources() -> dict:
             "@container hdo-dashboard (min-width: 589px)",
             "@container hdo-dashboard (min-width: 1009px)",
             "@container hdo-dashboard (max-width: 588px)",
-            "repeat(2, minmax(170px, 1fr))", "grid-auto-rows: 1fr",
+            "repeat(2, minmax(170px, 1fr))", "grid-auto-rows: auto",
             "min-height: 352px",
             "padding: 14px var(--summary-pad-x) 13px",
             "column-gap: var(--metric-column-gap)",
             "minmax(0, 1fr) 360px",
             "@container hdo-calendar (max-width: 419px)",
-            "repeat(6, 37px)",
-            "24px repeat(var(--hdo-year-weeks, 53), var(--hdo-year-cell-size))",
-            "--hdo-year-cell-size: clamp(1px, calc((100cqi - 194px) / 53), 10px)",
+            "repeat(6, max(37px, calc(37px * var(--hdo-scale))))",
+            "var(--hdo-year-label-width) repeat(var(--hdo-year-weeks, 53), var(--hdo-year-cell-size))",
+            "--hdo-year-cell-size: clamp(var(--hdo-year-cell-min),",
             "min-block-size: 6px",
             "hdo-progress-headline", "hdo-metric-headline",
             "grid-template-rows: auto 1fr auto", "padding: 15px 16px 14px",
@@ -787,7 +787,6 @@ def validate_sources() -> dict:
         "width: min(1120px, calc(100% - 40px))",
         "--hdo-year-cell-size: 7px",
         "min-width: 500px",
-        "overflow-x: auto",
     ):
         if retired_layout in sources["web/dashboard.css"]:
             raise ValueError(

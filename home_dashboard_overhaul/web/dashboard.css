@@ -9,7 +9,15 @@
   --panel-pad-x: 16px;
   --summary-pad-x: 14px;
   --metric-column-gap: 10px;
-  --hdo-year-cell-size: clamp(1px, calc((100cqi - 194px) / 53), 10px);
+  --hdo-font-primary: calc(28px * var(--hdo-scale));
+  --hdo-font-screen: calc(22px * var(--hdo-scale));
+  --hdo-font-section: calc(16px * var(--hdo-scale));
+  --hdo-font-heading: calc(14px * var(--hdo-scale));
+  --hdo-font-body: calc(13px * var(--hdo-scale));
+  --hdo-font-support: calc(12px * var(--hdo-scale));
+  --hdo-year-label-width: calc(32px * var(--hdo-scale));
+  --hdo-year-cell-min: calc(7px * var(--hdo-scale));
+  --hdo-year-cell-size: clamp(var(--hdo-year-cell-min), calc((100cqi - 66px - var(--hdo-year-label-width) - var(--hdo-year-weeks, 53) * 2px) / var(--hdo-year-weeks, 53)), max(10px, var(--hdo-year-cell-min)));
   --hdo-native-footer-height: 60px;
   --hdo-native-footer-gap: 24px;
   --hdo-bottom-clearance: calc(var(--hdo-native-footer-height) + var(--hdo-native-footer-gap));
@@ -19,9 +27,9 @@
   color: var(--ui-text-primary);
   container: hdo-dashboard / inline-size;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: calc(15px * var(--hdo-scale));
+  font-size: var(--hdo-font-body);
   font-variant-numeric: tabular-nums;
-  line-height: 1.42;
+  line-height: 1.4;
   isolation: isolate;
   margin: 30px auto 0;
   max-width: 1160px;
@@ -150,7 +158,8 @@
 
 #hdo-dashboard .hdo-refresh-status {
   color: var(--ui-text-tertiary);
-  font-size: calc(11px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
+  line-height: 1.4;
   font-weight: 650;
 }
 
@@ -169,7 +178,8 @@
 #hdo-dashboard .hdo-recovery-card h2,
 #hdo-dashboard .hdo-loading-card h2 {
   color: var(--ui-text-primary);
-  font-size: calc(18px * var(--hdo-scale));
+  font-size: var(--hdo-font-screen);
+  line-height: 1.2;
   font-weight: 650;
   letter-spacing: -.015em;
   margin-bottom: 0;
@@ -177,7 +187,8 @@
 
 #hdo-dashboard .hdo-eyebrow {
   color: var(--ui-eyebrow);
-  font-size: calc(11px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
+  line-height: 1.4;
   font-weight: 650;
   letter-spacing: .06em;
   margin-bottom: 3px;
@@ -216,7 +227,8 @@
   border-radius: 8px;
   cursor: pointer;
   color: var(--ui-text-secondary);
-  font-size: calc(12px * var(--hdo-scale));
+  font-size: var(--hdo-font-body);
+  line-height: 1.4;
   min-height: 32px;
   padding: 4px 10px;
   transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
@@ -377,14 +389,17 @@
 }
 
 #hdo-dashboard .hdo-calendar-shell[data-hdo-calendar-view="year"] .hdo-calendar-grid-frame {
-  overflow: visible;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-block: 3px;
 }
 
 #hdo-dashboard .hdo-month-weekdays {
   align-items: center;
   color: var(--ui-text-primary);
   display: grid;
-  font-size: calc(12.5px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
+  line-height: 1.4;
   font-weight: 650;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   margin-bottom: 6px;
@@ -404,17 +419,17 @@
   display: grid;
   column-gap: 6px;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: repeat(6, 37px);
+  grid-template-rows: repeat(6, max(37px, calc(37px * var(--hdo-scale))));
   row-gap: 6px;
 }
 
 #hdo-dashboard .hdo-calendar-grid--year {
   display: grid;
   column-gap: 2px;
-  grid-template-columns: 24px repeat(var(--hdo-year-weeks, 53), var(--hdo-year-cell-size));
-  grid-template-rows: 18px repeat(7, var(--hdo-year-cell-size));
+  grid-template-columns: var(--hdo-year-label-width) repeat(var(--hdo-year-weeks, 53), var(--hdo-year-cell-size));
+  grid-template-rows: calc(22px * var(--hdo-scale)) repeat(7, var(--hdo-year-cell-size));
   justify-content: center;
-  min-width: 0;
+  min-width: calc(var(--hdo-year-label-width) + var(--hdo-year-weeks, 53) * (var(--hdo-year-cell-min) + 2px));
   row-gap: 2px;
   width: 100%;
 }
@@ -422,11 +437,11 @@
 #hdo-dashboard .hdo-year-month-label {
   align-self: end;
   color: var(--ui-text-secondary);
-  font-size: calc(12px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
   font-weight: 650;
   grid-column-start: var(--hdo-month-start-week);
   grid-row: 1;
-  line-height: 1;
+  line-height: 1.4;
   overflow: visible;
   padding-bottom: 4px;
   pointer-events: none;
@@ -436,11 +451,11 @@
 #hdo-dashboard .hdo-year-weekday-label {
   align-self: center;
   color: var(--ui-text-tertiary);
-  font-size: calc(10.75px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
   font-weight: 650;
   grid-column: 1;
   justify-self: start;
-  line-height: 1;
+  line-height: 1.4;
   pointer-events: none;
 }
 
@@ -555,10 +570,10 @@
 
 #hdo-dashboard .hdo-date-number {
   border-radius: 999px;
-  font-size: calc(11px * var(--hdo-scale));
+  font-size: var(--hdo-font-body);
   font-variant-numeric: tabular-nums;
   font-weight: 650;
-  line-height: 1.3;
+  line-height: 1.4;
   min-width: 0;
   padding: 0;
   position: relative;
@@ -608,9 +623,9 @@
   border: 1px solid var(--status-event-fill);
   border-radius: 999px;
   color: var(--ui-text-primary);
-  font-size: 10px;
+  font-size: var(--hdo-font-support);
   font-weight: 800;
-  line-height: 13px;
+  line-height: 1.4;
   min-width: 13px;
   padding-inline: 2px;
   pointer-events: none;
@@ -697,7 +712,8 @@
   color: var(--ui-text-secondary);
   display: flex;
   flex-wrap: wrap;
-  font-size: calc(11px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
+  line-height: 1.4;
   column-gap: 18px;
   min-height: 36px;
   padding: 10px 14px;
@@ -722,13 +738,15 @@
 
 #hdo-dashboard .hdo-legend-title {
   color: var(--ui-text-secondary);
-  font-size: calc(11px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
+  line-height: 1.4;
   font-weight: 650;
 }
 
 #hdo-dashboard .hdo-legend-endpoint {
   color: var(--ui-text-tertiary);
-  font-size: calc(10.5px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
+  line-height: 1.4;
 }
 
 #hdo-dashboard .hdo-completion-legend i {
@@ -809,7 +827,8 @@
   align-items: center;
   color: var(--ui-text-primary);
   display: flex;
-  font-size: calc(13px * var(--hdo-scale));
+  font-size: var(--hdo-font-heading);
+  line-height: 1.2;
   font-variant-numeric: tabular-nums;
   font-weight: 650;
   gap: 8px;
@@ -828,11 +847,11 @@
   flex: none;
   align-items: center;
   display: inline-flex;
-  font-size: calc(10.75px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
   font-weight: 650;
   min-height: 21px;
   letter-spacing: .04em;
-  line-height: 1.35;
+  line-height: 1.4;
   padding: 2px 6px;
   text-transform: uppercase;
 }
@@ -845,14 +864,16 @@
 
 #hdo-dashboard .hdo-event-sections {
   display: grid;
-  font-size: calc(12.5px * var(--hdo-scale));
+  font-size: var(--hdo-font-body);
+  line-height: 1.4;
   gap: 8px;
   min-width: 0;
 }
 
 #hdo-dashboard .hdo-context-label {
   color: var(--ui-text-tertiary);
-  font-size: calc(11.5px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
+  line-height: 1.4;
   font-weight: 400;
 }
 
@@ -914,7 +935,8 @@
   border-color: transparent !important;
   color: var(--ui-text-primary) !important;
   display: inline;
-  font-size: calc(12.5px * var(--hdo-scale));
+  font-size: var(--hdo-font-heading);
+  line-height: 1.2;
   font-weight: 650;
   min-height: 0 !important;
   min-width: 0 !important;
@@ -945,7 +967,8 @@
   border: 1px solid var(--ui-border-subtle);
   border-radius: 999px;
   color: var(--ui-text-secondary);
-  font-size: calc(10.5px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
+  line-height: 1.4;
   font-weight: 700;
   padding-inline: 5px;
 }
@@ -957,7 +980,8 @@
 
 #hdo-dashboard .hdo-event-meta,
 #hdo-dashboard .hdo-event-empty {
-  font-size: calc(11.5px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
+  line-height: 1.4;
 }
 
 #hdo-dashboard button.hdo-context-action,
@@ -969,7 +993,8 @@
   color: var(--ui-text-secondary);
   display: inline-flex;
   flex: none;
-  font-size: calc(11.5px * var(--hdo-scale));
+  font-size: var(--hdo-font-body);
+  line-height: 1.4;
   height: 28px;
   justify-content: center;
   min-height: 28px !important;
@@ -1147,7 +1172,8 @@
 }
 
 #hdo-dashboard .hdo-calendar-tooltip h3 {
-  font-size: calc(13.5px * var(--hdo-scale));
+  font-size: var(--hdo-font-heading);
+  line-height: 1.2;
   margin: 0 0 7px;
 }
 
@@ -1165,11 +1191,13 @@
 
 #hdo-dashboard .hdo-calendar-tooltip dt {
   color: var(--ui-text-secondary);
-  font-size: calc(13px * var(--hdo-scale));
+  font-size: var(--hdo-font-body);
+  line-height: 1.4;
 }
 
 #hdo-dashboard .hdo-calendar-tooltip dd {
-  font-size: calc(13px * var(--hdo-scale));
+  font-size: var(--hdo-font-body);
+  line-height: 1.4;
   font-variant-numeric: tabular-nums;
   margin: 0;
   text-align: right;
@@ -1190,7 +1218,7 @@
   display: grid;
   gap: var(--rail-gap);
   grid-template-columns: minmax(0, 1fr);
-  grid-auto-rows: 1fr;
+  grid-auto-rows: auto;
   min-width: 0;
 }
 
@@ -1221,7 +1249,7 @@
 
 #hdo-dashboard .hdo-statistics-card h3 {
   color: var(--ui-text-secondary);
-  font-size: calc(10.5px * var(--hdo-scale));
+  font-size: var(--hdo-font-heading);
   font-weight: 700;
   letter-spacing: 0;
   line-height: 1.2;
@@ -1246,9 +1274,9 @@
   border-radius: 999px;
   color: var(--ui-text-secondary);
   flex: 0 0 auto;
-  font-size: calc(10.5px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.4;
   max-width: 100%;
   overflow-wrap: anywhere;
   padding: 2px 6px;
@@ -1277,18 +1305,18 @@
 
 #hdo-dashboard .hdo-metric-row dt {
   color: var(--ui-text-secondary);
-  font-size: calc(11px * var(--hdo-scale));
-  line-height: 1.2;
+  font-size: var(--hdo-font-body);
+  line-height: 1.4;
   min-width: 0;
   white-space: normal;
 }
 
 #hdo-dashboard .hdo-metric-row dd {
   color: var(--ui-text-primary);
-  font-size: calc(12.5px * var(--hdo-scale));
+  font-size: var(--hdo-font-body);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.4;
   margin: 0;
   text-align: right;
   white-space: nowrap;
@@ -1364,36 +1392,51 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  font-size: calc(28px * var(--hdo-scale));
+  font-size: var(--hdo-font-primary);
   font-weight: 650;
-  line-height: 1.3;
+  line-height: 1.2;
   margin-bottom: 8px;
 }
 
 #hdo-dashboard .hdo-progress-caption {
   color: var(--ui-text-secondary);
-  font-size: calc(10px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
+  line-height: 1.4;
   font-weight: 400;
 }
 
 #hdo-dashboard .hdo-metric-row.hdo-metric-headline {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 4px;
+  align-items: baseline;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
   margin-bottom: 9px;
+  overflow-x: auto;
 }
 
-#hdo-dashboard .hdo-metric-headline dd {
-  font-size: calc(28px * var(--hdo-scale));
-  font-weight: 650;
-  grid-row: 1;
-  line-height: 1.3;
-  overflow-wrap: anywhere;
+#hdo-dashboard .hdo-statistics-card[data-hdo-wide-headline="true"] {
+  grid-column: 1 / -1;
+}
+
+#hdo-dashboard .hdo-metric-headline dd,
+#hdo-dashboard[data-hdo-enlarged-text="true"] .hdo-metric-headline dd {
+  flex: none;
+  font-size: var(--hdo-font-primary);
+  font-weight: 600;
+  line-height: 1.2;
+  order: 0;
+  overflow-wrap: normal;
   text-align: left;
-  white-space: normal;
+  white-space: nowrap;
 }
 
-#hdo-dashboard .hdo-metric-headline dt {
-  grid-row: 2;
+#hdo-dashboard .hdo-metric-headline dt,
+#hdo-dashboard[data-hdo-enlarged-text="true"] .hdo-metric-headline dt {
+  flex: none;
+  font-size: var(--hdo-font-support);
+  order: 1;
+  overflow-wrap: normal;
+  white-space: nowrap;
 }
 
 #hdo-dashboard .hdo-bible-card {
@@ -1426,7 +1469,8 @@
 
 #hdo-dashboard .hdo-verse-reference {
   color: var(--ui-text-tertiary);
-  font-size: calc(11px * var(--hdo-scale));
+  font-size: var(--hdo-font-support);
+  line-height: 1.4;
   justify-self: center;
   margin: 11px 0 0;
   overflow-wrap: anywhere;
@@ -1685,10 +1729,6 @@
     min-height: 182px;
   }
 
-  #hdo-dashboard .hdo-metric-row dt {
-    white-space: nowrap;
-  }
-
   #hdo-dashboard .hdo-value-wide { display: none; }
   #hdo-dashboard .hdo-value-compact { display: inline; }
 
@@ -1721,7 +1761,8 @@
   #hdo-dashboard .hdo-calendar-day { padding: 4px; }
 
   #hdo-dashboard .hdo-date-number {
-    font-size: calc(11px * var(--hdo-scale));
+    font-size: var(--hdo-font-body);
+    line-height: 1.4;
   }
 
   #hdo-dashboard .hdo-event-marker {
