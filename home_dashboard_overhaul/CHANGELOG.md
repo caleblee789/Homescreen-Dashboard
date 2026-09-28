@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.0 — 2026-09-27
+
+- Made the 1160-pixel Month and Year dashboard a fixed composition with a 786-pixel calendar, 14-pixel gap, and 360-pixel statistics rail. Smaller windows scroll horizontally without rearranging panels; Year month spacing is unchanged.
+- Restored four statistics cards to equal-width 2×2 rows. Cards studied captions center beside their numbers when space permits and move below at larger text sizes or with long values, without clipping digits.
+- Unified both calendar footers: selected date, actions, and event details occupy the left side; the Bible verse occupies the right. Loading placeholders use the same geometry.
+- Refined the streak badge, calendar navigation controls, selected-date actions, event separation, and quiet Edit action.
+- Kept every dashboard section visible. Previously saved visibility flags normalize to enabled, while the verse library, study metrics, themes, text scaling, events, and schema 8 remain intact.
+
 ## 1.8.7 — 2026-09-04
 
 - Made future due indicators optional and off by default for new settings.

@@ -1,15 +1,16 @@
-"""Fail-closed native production and Settings probe for release 1.8.7.
+"""Fail-closed native production and Settings probe for release 1.9.0.
 
 The disposable helper add-on installs this module as ``__init__.py`` and the
 retained 1.8.4 production harness as ``_probe_base.py``.  The retained harness
 supplies exact-package identity, scheduler-limit, Deck Browser mounting, and
 native capture plumbing.  This module replaces its release matrix and
-assertions with the canonical corrected 1.8.7 production and Settings contract.
+assertions with the canonical corrected 1.9.0 production and Settings contract.
 """
 
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import replace
 import ctypes
 from datetime import date, timedelta
 import json
@@ -49,7 +50,7 @@ from aqt.qt import (
 
 from home_dashboard_overhaul.analytics import collect_snapshot
 from home_dashboard_overhaul.config_schema import normalize_config
-from home_dashboard_overhaul.models import DashboardSnapshot, VerseContent
+from home_dashboard_overhaul.models import DashboardSnapshot, VerseContent, ValueState
 from home_dashboard_overhaul.settings import (
     EventEditDialog,
     SETTINGS_GEOMETRY_AVAILABLE_KEY,
@@ -68,7 +69,7 @@ from home_dashboard_overhaul.settings_model import (
     saved_window_geometry_is_valid,
     settings_screen_uses_compact_fallback,
 )
-from home_dashboard_overhaul.themes import contrast_ratio
+from home_dashboard_overhaul.themes import SETTINGS_COLOR_TOKENS, contrast_ratio
 
 from . import _capture_plan as capture_plan
 from . import _probe_base as base
@@ -322,8 +323,6 @@ def _config_for(case: Mapping[str, Any]) -> dict[str, Any]:
     special = str(case.get("special", ""))
     if special in {"no-due", "markers-completion", "markers-today", "markers-event"}:
         config["heatmap"]["show_due_forecast"] = False
-    if special in {"no-event", "markers-completion", "markers-due", "markers-today"}:
-        config["visibility"]["events"] = False
     if special == "verse-exact":
         config["bible"].update(
             font_family="Avenir Next, sans-serif",
@@ -345,7 +344,13 @@ def _fixture(case: Mapping[str, Any]) -> DashboardSnapshot:
     if str(case.get("fixture", "")) == "native-statistics":
         base._require(_statistics_snapshot is not None, "native statistics snapshot is unavailable")
         return _statistics_snapshot
-    return _base_fixture(case)
+    snapshot = _base_fixture(case)
+    if str(case.get("special", "")) in {"no-event", "markers-completion", "markers-due", "markers-today"}:
+        snapshot = replace(snapshot, facts=replace(snapshot.facts,
+            events=ValueState.available(()),
+            days={iso: replace(day, events=ValueState.available(()))
+                  for iso, day in snapshot.facts.days.items()}))
+    return snapshot
 
 
 base._fixture = _fixture
@@ -625,7 +630,7 @@ def _prepare_dom(case: Mapping[str, Any], callback: Any) -> None:
         else:
             QTimer.singleShot(220, callback)
 
-    _base_prepare_dom(case, prepare_host)
+    _base_prepare_dom(dict(case, container_width=None), prepare_host)
 
 
 base._prepare_dom = _prepare_dom
@@ -669,7 +674,7 @@ base.DOM_REPORT_SCRIPT = r"""
   var yearOccupiedNodes=yearCells.concat(qa('.hdo-year-weekday-label'));
   var verse=q('.hdo-verse');
   var progressTrack=q('[data-hdo-progress-track]');
-  var progressLabels=[q('[data-hdo-progress-label]'),q('[data-hdo-progress-label-fill]')].filter(Boolean);
+  var progressHeadline=q('[data-hdo-progress-label]');
   var scroller=document.scrollingElement;
   var rootStyle=getComputedStyle(root);
   var title=q('#hdo-calendar-heading');
@@ -694,16 +699,15 @@ base.DOM_REPORT_SCRIPT = r"""
   var frameRect=rect(frame);
   var previousBox=previousVisibleBox(root);
   var previousBoxRect=rect(previousBox);
-  var metricGaps=qa('.hdo-metric-row').map(function(row){
+  var metricGaps=qa('.hdo-metric-row:not(.hdo-metric-headline)').map(function(row){
     var label=row.querySelector('dt');var value=row.querySelector('dd');
     return label&&value?rect(value).left-rect(label).right:-1;
   });
-  var metricTextSingleLine=qa('.hdo-metric-row').every(function(row){
+  var metricTextUnclipped=qa('.hdo-metric-row').every(function(row){
     var label=row.querySelector('dt');var value=row.querySelector('dd');
     if(!label||!value)return false;
-    var labelStyle=getComputedStyle(label);var valueStyle=getComputedStyle(value);
-    return labelStyle.whiteSpace==='nowrap'&&valueStyle.whiteSpace==='nowrap'&&
-      label.scrollWidth<=label.clientWidth+1&&value.scrollWidth<=value.clientWidth+1;
+    return label.scrollWidth<=label.clientWidth+1&&value.scrollWidth<=value.clientWidth+1&&
+      label.scrollHeight<=label.clientHeight+1&&value.scrollHeight<=value.clientHeight+1;
   });
   var cardWidths=statisticCards.map(function(card){return rect(card).width;});
   var cardHeights=statisticCards.map(function(card){return rect(card).height;});
@@ -711,17 +715,13 @@ base.DOM_REPORT_SCRIPT = r"""
   var yearCellHeights=yearCells.map(function(cell){return rect(cell).height;});
   var occupiedLeft=yearOccupiedNodes.length?Math.min.apply(null,yearOccupiedNodes.map(function(node){return rect(node).left;})):0;
   var occupiedRight=yearOccupiedNodes.length?Math.max.apply(null,yearOccupiedNodes.map(function(node){return rect(node).right;})):0;
-  var componentNodes=[root,layout,calendar,rail,metricsGrid,bible,frame,grid].concat(statisticCards).filter(Boolean);
+  // The root includes the deliberate 16px trailing document-scroll gutter.
+  var componentNodes=[layout,calendar,rail,metricsGrid,bible,frame,grid].concat(statisticCards).filter(Boolean);
   var componentOverflowMax=componentNodes.length?Math.max.apply(null,componentNodes.map(overflowAmount)):0;
   var progressTrackRect=rect(progressTrack);
-  var progressLabelCentered=!!progressTrackRect&&progressLabels.length===2&&progressLabels.every(function(label){
-    var labelRect=rect(label);
-    return Math.abs((labelRect.left+labelRect.right)/2-(progressTrackRect.left+progressTrackRect.right)/2)<=.75;
-  });
-  var progressLabelPadding=progressLabels.length?Math.min.apply(null,progressLabels.map(function(label){
-    var style=getComputedStyle(label);return Math.min(parseFloat(style.paddingLeft)||0,parseFloat(style.paddingRight)||0);
-  })):0;
-  var progressHeader=q('.hdo-progress-card .hdo-stat-card-header');
+  var progressLabelAbove=!!progressTrackRect&&!!progressHeadline&&
+    rect(progressHeadline).bottom<=progressTrackRect.top&&
+    Math.abs(rect(progressHeadline).left-progressTrackRect.left)<=.75;
   var progressFirstMetric=q('.hdo-progress-card .hdo-metric-row');
   var progress=q('[data-hdo-progress-label]');
   return {
@@ -737,7 +737,6 @@ base.DOM_REPORT_SCRIPT = r"""
     metricsGrid:metricsRect,
     bible:bibleRect,
     frame:frameRect,
-    density:root.dataset.hdoContentMode||'',
     rootPosition:rootStyle.position,
     rootMarginTop:rootStyle.marginTop,
     rootPaddingBottom:rootStyle.paddingBottom,
@@ -747,7 +746,7 @@ base.DOM_REPORT_SCRIPT = r"""
     footerClearanceSource:root.dataset.hdoFooterClearanceSource||'',
     nativeFooterHeight:parseFloat(rootStyle.getPropertyValue('--hdo-native-footer-height'))||0,
     documentScrollPaddingBlockEnd:scroller?getComputedStyle(scroller).scrollPaddingBlockEnd:'',
-    documentOverflowX:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+    horizontalEdgesReachable:!!scroller&&rootRect.left+scroller.scrollLeft>=0&&rootRect.right+scroller.scrollLeft<=scroller.scrollWidth+1,
     bodyOverflowX:document.body.scrollWidth-document.body.clientWidth,
     componentOverflowX:componentOverflowMax,
     documentScrollMaximum:scroller?Math.max(0,scroller.scrollHeight-scroller.clientHeight):0,
@@ -783,19 +782,19 @@ base.DOM_REPORT_SCRIPT = r"""
     statisticColumnCount:bands(statisticCards,'left'),
     statisticRowCount:bands(statisticCards,'top'),
     equalStatisticCardGeometry:statisticCards.length===4&&(
-      bands(statisticCards,'left')!==2||(
+      bands(statisticCards,'left')===2&&(
         Math.max.apply(null,cardWidths)-Math.min.apply(null,cardWidths)<=1&&
-        Math.max.apply(null,cardHeights)-Math.min.apply(null,cardHeights)<=1
+        Math.abs(cardHeights[0]-cardHeights[1])<=1&&Math.abs(cardHeights[2]-cardHeights[3])<=1
       )
     ),
     metricMinimumGap:metricGaps.length?Math.min.apply(null,metricGaps):-1,
-    metricTextSingleLine:metricTextSingleLine,
+    metricTextUnclipped:metricTextUnclipped,
+    metricHeadlineCount:qa('.hdo-metric-headline').length,
     layoutSideBySide:!!calendarRect&&!!railRect&&calendarRect.right<=railRect.left+1,
-    layoutStacked:!!calendarRect&&!!railRect&&calendarRect.bottom<=railRect.top+1,
     layoutColumnGap:!!calendarRect&&!!railRect?railRect.left-calendarRect.right:0,
     topEdgeDelta:!!calendarRect&&!!railRect?Math.abs(calendarRect.top-railRect.top):0,
     railWidth:railRect?railRect.width:0,
-    calendarFooterBottomDelta:calendarRect&&q('.hdo-calendar-footer')?Math.abs(calendarRect.bottom-rect(q('.hdo-calendar-footer')).bottom):null,
+    calendarFooterBottomDelta:calendarRect&&q('.hdo-calendar-footer')?Math.abs(calendarRect.bottom-rect(q('.hdo-calendar-footer')).bottom-parseFloat(getComputedStyle(q('.hdo-calendar-card')).paddingBottom)-parseFloat(getComputedStyle(q('.hdo-calendar-card')).borderBottomWidth)):null,
     verseInFooter:!!q('.hdo-calendar-footer-content > .hdo-bible-card'),
     verseInRail:!!q('.hdo-insight-rail > .hdo-bible-card'),
     verseCount:qa('.hdo-bible-card').length,
@@ -813,9 +812,8 @@ base.DOM_REPORT_SCRIPT = r"""
     yearCellWidthMax:yearCellWidths.length?Math.max.apply(null,yearCellWidths):0,
     yearCellHeightMin:yearCellHeights.length?Math.min.apply(null,yearCellHeights):0,
     yearCellHeightMax:yearCellHeights.length?Math.max.apply(null,yearCellHeights):0,
-    progressLabelCentered:progressLabelCentered,
-    progressLabelPadding:progressLabelPadding,
-    progressHeaderToBarGap:progressHeader&&progressTrack?rect(progressTrack).top-rect(progressHeader).bottom:null,
+    progressLabelAbove:progressLabelAbove,
+    progressHeadlineToBarGap:progressHeadline&&progressTrack?rect(progressTrack).top-rect(progressHeadline).bottom:null,
     progressBarToMetricsGap:progressTrack&&progressFirstMetric?rect(progressFirstMetric).top-rect(progressTrack).bottom:null,
     metricValues:metricValues,
     metricOrder:metricOrder,
@@ -841,11 +839,10 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     base._require(state.get("view") == case.get("view"), "dashboard view mismatch")
     root = state.get("root") or {}
     root_width = float(root.get("width", 0))
-    base._require(0 < root_width <= 1160.5, "dashboard exceeds its 1160px maximum")
+    base._require(abs(root_width - 1160) <= 0.5, "dashboard is not fixed at 1160px")
     base._require(state.get("rootPosition") not in {"fixed", "sticky"}, "dashboard root left document flow")
     base._require(abs(_pixels(state.get("rootMarginTop")) - 30) <= 0.5, "dashboard top margin is not the calibrated 30px")
-    base._require(float(state.get("documentOverflowX", 0)) <= 1, "document has horizontal overflow")
-    base._require(float(state.get("bodyOverflowX", 0)) <= 1, "body has horizontal overflow")
+    base._require(bool(state.get("horizontalEdgesReachable")), "document cannot reach both dashboard edges")
     base._require(float(state.get("componentOverflowX", 0)) <= 1, "dashboard component has horizontal overflow")
     base._require(state.get("hostPreserved") == "true", "host canvas was not preserved")
     base._require(state.get("rootBackground") in {"rgba(0, 0, 0, 0)", "transparent"}, "dashboard root is not transparent")
@@ -863,61 +860,48 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     )
     if bool(state.get("progressTrackVisible")):
         base._require(
-            abs(float(state.get("progressTrackHeight", 0)) - 18) <= 0.5,
-            "numeric progress track is not 18px",
+            abs(float(state.get("progressTrackHeight", 0)) - 6) <= 0.5,
+            "numeric progress track is not 6px",
         )
-        base._require(bool(state.get("progressLabelCentered")), "progress labels are not centered over the full track")
-        base._require(float(state.get("progressLabelPadding", 0)) >= 6, "progress labels have less than 6px horizontal padding")
+        base._require(bool(state.get("progressLabelAbove")), "progress headline is not aligned above the track")
         base._require(
-            abs(float(state.get("progressHeaderToBarGap", -99)) - 8) <= 1,
-            "progress heading-to-bar gap is not 8px",
+            abs(float(state.get("progressHeadlineToBarGap", -99)) - 8) <= 1,
+            "progress headline-to-bar gap is not 8px",
         )
         base._require(
             abs(float(state.get("progressBarToMetricsGap", -99)) - 10) <= 1,
             "progress bar-to-first-metric gap is not 10px",
         )
-    expected_width = case.get("container_width")
-    if isinstance(expected_width, int):
-        base._require(abs(root_width - expected_width) <= 1, "exact dashboard container width did not settle")
-    elif str(case.get("layout", "")) == "wide":
-        base._require(abs(root_width - 1160) <= 1, "wide dashboard did not settle at 1160px")
-
     base._require(int(state.get("statisticsCardCount", 0)) == 4, "dashboard did not render four statistic cards")
-    expected_metric_columns = 1 if root_width <= 588.5 else 2
-    expected_metric_rows = 4 if expected_metric_columns == 1 else 2
+    expected_metric_columns = 2
+    expected_metric_rows = 2
     base._require(
         int(state.get("statisticColumnCount", 0)) == expected_metric_columns
         and int(state.get("statisticRowCount", 0)) == expected_metric_rows,
-        "statistic grid does not match the 588/589px responsive boundary",
+        "statistic grid is not fixed at 2x2",
     )
     base._require(bool(state.get("equalStatisticCardGeometry")), "2x2 statistic cards do not have equal geometry")
-    base._require(float(state.get("metricMinimumGap", -1)) >= 8, "metric label/value gap is below 8px")
-    base._require(bool(state.get("metricTextSingleLine")), "metric text wrapped or clipped")
+    base._require(float(state.get("metricMinimumGap", -1)) >= 5.5, "metric label/value gap is below 6px")
+    base._require(bool(state.get("metricTextUnclipped")), "metric text is clipped")
+    base._require(int(state.get("metricHeadlineCount", 0)) == 3, "statistic headlines are missing or duplicated")
 
-    expected_density = "wide" if root_width >= 1009 else "intermediate" if root_width >= 589 else "narrow"
-    base._require(state.get("density") == expected_density, "dashboard density differs from the 588/589 and 1008/1009 boundaries")
     metrics_grid = state.get("metricsGrid") or {}
     bible = state.get("bible") or {}
     base._require(float(state.get("calendarFooterBottomDelta", 99)) <= 1.5, "calendar has unused space below its footer")
     base._require(int(state.get("verseCount", 0)) == (1 if bible else 0), "verse instance is duplicated")
     if bible:
-        destination = "verseInRail" if case.get("view") == "month" else "verseInFooter"
+        destination = "verseInFooter"
         base._require(bool(state.get(destination)), "verse is in the wrong calendar-view destination")
     if case.get("view") == "year":
         base._require(not bool(state.get("verseInRail")), "Year retains a standalone verse card")
         base._require(float(state.get("railBottomDelta", 99)) <= 1, "Year rail reserves space below statistics")
-    if root_width >= 1009:
-        base._require(bool(state.get("layoutSideBySide")), "wide dashboard did not place calendar and rail side by side")
-        base._require(abs(float(state.get("railWidth", 0)) - 360) <= 1, "wide statistics rail is not 360px")
-        base._require(abs(float(state.get("layoutColumnGap", 0)) - 14) <= 1, "wide dashboard column gap is not 14px")
-        base._require(float(state.get("topEdgeDelta", 99)) <= 1, "wide calendar and statistics rail do not share a top edge")
-        gap = state.get("deckDashboardGap")
-        base._require(gap is not None and 28 <= float(gap) <= 30.5, "native deck-to-dashboard gap is not 28-30px")
-        base._require(float(metrics_grid.get("height", 0)) >= 351, "wide summary grid is below its 352px target")
-        if case.get("view") == "month" and bible:
-            base._require(float(bible.get("height", 0)) >= 181, "wide Bible card is below its 182px target")
-    else:
-        base._require(bool(state.get("layoutStacked")), "1008px-or-narrower dashboard did not stack")
+    base._require(bool(state.get("layoutSideBySide")), "wide dashboard did not place calendar and rail side by side")
+    base._require(abs(float(state.get("railWidth", 0)) - 360) <= 1, "wide statistics rail is not 360px")
+    base._require(abs(float(state.get("layoutColumnGap", 0)) - 14) <= 1, "wide dashboard column gap is not 14px")
+    base._require(float(state.get("topEdgeDelta", 99)) <= 1, "wide calendar and statistics rail do not share a top edge")
+    gap = state.get("deckDashboardGap")
+    base._require(gap is not None and 28 <= float(gap) <= 30.5, "native deck-to-dashboard gap is not 28-30px")
+    base._require(float(metrics_grid.get("height", 0)) >= 439, "wide summary grid is below its 440px target")
     base._require(
         int(state.get("nonSelectedCellShadowCount", 1)) == 0,
         "unselected calendar cells retain shadows",
@@ -943,21 +927,19 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
         base._require(float(state.get("yearFrameOverflowX", 1)) <= 1, "Year grid requires internal horizontal scrolling")
         base._require(abs(float(state.get("yearFrameScrollLeft", 1))) <= 1, "Year grid retained a horizontal scroll offset")
         base._require(bool(state.get("yearCellsSquare")), "Year heatmap cells are not square")
-        if root_width >= 1009:
-            ratio = float(state.get("yearHeatmapWidthRatio", 0))
-            base._require(ratio >= .85, "wide Year heatmap occupies less than 85 percent of its body")
-        if root_width >= 1159:
-            base._require(
-                9 <= float(state.get("yearCellWidthMin", 0))
-                and float(state.get("yearCellWidthMax", 99)) <= 10.5,
-                "1160px Year cells are outside the 9-10px target",
-            )
+        ratio = float(state.get("yearHeatmapWidthRatio", 0))
+        base._require(ratio >= .85, "wide Year heatmap occupies less than 85 percent of its body")
+        base._require(
+            9 <= float(state.get("yearCellWidthMin", 0))
+            and float(state.get("yearCellWidthMax", 99)) <= 10.5,
+            "1160px Year cells are outside the 9-10px target",
+        )
     special = str(case.get("special", ""))
     if special == "no-due":
         base._require(int(state.get("dueLegendCount", 1)) == 0, "disabled due legend remains")
     if special == "no-event":
-        base._require(int(state.get("eventLegendCount", 1)) == 0, "disabled event legend remains")
-        base._require(int(state.get("eventSummaryCount", 1)) == 0, "disabled event summary remains")
+        base._require(int(state.get("eventLegendCount", 0)) == 1, "permanent event legend missing")
+        base._require(int(state.get("eventSummaryCount", 0)) == 1, "empty event summary missing")
     if special == "markers-combined":
         base._require(int(state.get("todayCount", 0)) == 1, "today marker is missing")
         base._require(int(state.get("selectedCount", 0)) == 1, "selected marker is missing")
@@ -1060,7 +1042,7 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
             }
             base._require(
                 stable_live == canonical_stable,
-                "responsive or restart stable metric values drifted",
+                "viewport or restart stable metric values drifted",
             )
         columns = [item for item in str(state.get("statisticColumns", "")).split() if item]
         if str(case.get("layout", "")) == "wide":
@@ -2181,6 +2163,10 @@ def _segmented_model_failures(dialog: SettingsDialog) -> list[str]:
     failures: list[str] = []
     values = dialog.draft.values
     model_values = {
+        "preset": str(values.get("appearance", {}).get("preset", "Sapphire Glass")),
+        "heatmap_preset": str(values.get("heatmap", {}).get("presets_by_theme", {}).get(
+            values.get("appearance", {}).get("preset", "Sapphire Glass"), ""
+        )),
         "mode": str(values.get("appearance", {}).get("mode", "auto")),
         "calendar_view": str(
             values.get("heatmap", {}).get("calendar_view", "year")
@@ -2196,7 +2182,7 @@ def _segmented_model_failures(dialog: SettingsDialog) -> list[str]:
         ),
     }
     for control in dialog.findChildren(QWidget):
-        if type(control).__name__ != "SegmentedControl" or not control.isVisibleTo(dialog):
+        if type(control).__name__ not in {"SegmentedControl", "ChoiceCardGroup"} or not control.isVisibleTo(dialog):
             continue
         buttons = getattr(control, "_buttons", None)
         value_getter = getattr(control, "value", None)
@@ -2403,7 +2389,8 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
     verse_editor = getattr(dialog, "_qa_verse_editor", None)
     event_editor_state = _editor_state(event_editor, dialog)
     verse_editor_state = _editor_state(verse_editor, dialog)
-    heatmap_palette_preview = getattr(dialog, "heatmap_palette_preview", None)
+    heatmap_choices = getattr(dialog, "heatmap_preset", None)
+    heatmap_buttons = list(getattr(heatmap_choices, "_buttons", {}).values())
     bible_appearance_preview = getattr(dialog, "bible_appearance_preview", None)
     visible_add_event_ctas = [
         button
@@ -2765,18 +2752,14 @@ def _settings_state(dialog: SettingsDialog, case: Mapping[str, Any]) -> dict[str
         ),
         "settings_previews": {
             "heatmap_palette_present": (
-                heatmap_palette_preview is not None
-                and type(heatmap_palette_preview).__name__
-                == "HeatmapPalettePreview"
+                heatmap_choices is not None
+                and type(heatmap_choices).__name__ == "ChoiceCardGroup"
             ),
-            "heatmap_palette_steps": len(
-                getattr(heatmap_palette_preview, "_colors", ())
+            "heatmap_palette_steps": min(
+                (len(getattr(button, "colors", ())) for button in heatmap_buttons),
+                default=0,
             ),
-            "heatmap_palette_compact": (
-                heatmap_palette_preview is not None
-                and heatmap_palette_preview.minimumHeight() == 34
-                and heatmap_palette_preview.maximumWidth() == 168
-            ),
+            "heatmap_palette_card_count": len(heatmap_buttons),
             "bible_appearance_present": (
                 bible_appearance_preview is not None
                 and type(bible_appearance_preview).__name__
@@ -2926,8 +2909,8 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
         isinstance(previews, Mapping)
         and previews.get("heatmap_palette_present") is True
         and previews.get("heatmap_palette_steps") == 5
-        and previews.get("heatmap_palette_compact") is True,
-        "the compact five-step Calendar heatmap palette preview is incomplete",
+        and previews.get("heatmap_palette_card_count") == 4,
+        "the four five-step Calendar heatmap palette choices are incomplete",
     )
     base._require(
         isinstance(previews, Mapping)
@@ -2939,7 +2922,8 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     if special == "events-empty":
         base._require(state.get("event_active_count") == 0 and state.get("event_archived_count") == 0, "empty Events state is populated")
         base._require(state.get("event_empty_title") == "No events yet", "empty Events copy is incorrect")
-        base._require(150 <= int(state.get("event_empty_height", 0)) <= 200, "empty Events state is not compact")
+        maximum_empty_height = max(200, 200 * int(case.get("font_percent", 100)) / 100)
+        base._require(150 <= int(state.get("event_empty_height", 0)) <= maximum_empty_height, "empty Events state is not compact at the configured text size")
         base._require(state.get("visible_add_event_cta_count") == 1, "empty Events state does not expose exactly one Add event action")
         base._require(state.get("event_header_add_visible") is False, "empty Events state exposes a duplicate page-header Add event action")
         base._require(state.get("event_toolbar_add_visible") is False, "empty Events state exposes the populated-list Add event action")
@@ -3217,7 +3201,7 @@ def _validate_settings_state(case: Mapping[str, Any], state: Mapping[str, Any]) 
     if special in {"anki-light", "anki-dark"}:
         expected = "light" if special == "anki-light" else "dark"
         base._require(state.get("anki_theme") == expected, "Settings theme fixture differs from the Anki theme")
-        expected_window = "#F3F6F8" if expected == "light" else "#0B1118"
+        expected_window = SETTINGS_COLOR_TOKENS[expected]["ui_bg"]
         base._require(state.get("settings_window_token") == expected_window, "Settings shell did not follow the Anki theme")
     base._require(bool(state.get("parented_to_anki")), "Settings is not parented to Anki")
     base._require(
@@ -4195,30 +4179,6 @@ def _assert_scoped_settings_resets(dialog: SettingsDialog) -> None:
             },
         )
 
-        event_marker = not bool(defaults["visibility"]["events"])
-
-        def stage_dashboard_sections() -> None:
-            dialog.visibility["today"].setChecked(
-                not bool(defaults["visibility"]["today"])
-            )
-            dialog.visibility["events"].setChecked(event_marker)
-
-        exercise(
-            "dashboard_sections",
-            "Dashboard sections",
-            stage_dashboard_sections,
-            {
-                "owned Today control repainted": lambda: dialog.visibility[
-                    "today"
-                ].isChecked()
-                == bool(defaults["visibility"]["today"]),
-                "Calendar event marker preserved": lambda: dialog.visibility[
-                    "events"
-                ].isChecked()
-                == event_marker,
-            },
-        )
-
         def stage_invalid_retention() -> None:
             dialog.retention_target.setValue(
                 int(defaults["study"]["retention_target"])
@@ -4246,7 +4206,6 @@ def _assert_scoped_settings_resets(dialog: SettingsDialog) -> None:
 
         def stage_calendar_display() -> None:
             dialog._set_combo_data(dialog.calendar_view, staged_calendar_view)
-            dialog.visibility["events"].setChecked(event_marker)
 
         exercise(
             "calendar_display",
@@ -4258,10 +4217,6 @@ def _assert_scoped_settings_resets(dialog: SettingsDialog) -> None:
                     "year",
                 )
                 == default_calendar_view,
-                "owned event marker repainted": lambda: dialog.visibility[
-                    "events"
-                ].isChecked()
-                == bool(defaults["visibility"]["events"]),
             },
         )
 
@@ -5051,7 +5006,7 @@ def _complete_stage() -> None:
         if expected_statistics:
             base._require(
                 set(base.REPORT.get("statistics_responsive_parity", {})) == expected_statistics,
-                "production statistics responsive parity is incomplete",
+                "production statistics viewport parity is incomplete",
             )
         if base.STAGE == "initial":
             _persist_restart_state()

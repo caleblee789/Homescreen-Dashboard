@@ -130,7 +130,7 @@ class FakeDB:
             if self.remaining and isinstance(self.remaining[0], (tuple, list)):
                 return list(self.remaining)
             return [(1, self.remaining[0], self.remaining[1], self.remaining[2])]
-        if "WITH eligible_due AS" in sql:
+        if "GROUP BY due_offset ORDER BY due_offset" in sql:
             grouped = {}
             for due, count, *_rest in self.forecast:
                 offset = max(0, int(due) - Scheduler.today)
@@ -218,6 +218,34 @@ class SQLiteCollection:
         self.db = SQLiteDB()
         self.sched = Scheduler()
         self.decks = Decks()
+
+
+class ReadOnlySnapshotTests(unittest.TestCase):
+    def test_snapshot_preserves_anki_undo_history(self) -> None:
+        class AnkiDB(SQLiteDB):
+            undo_available = True
+
+            def query(self, sql, args):
+                # Anki's DB proxy clears undo for every non-SELECT prefix,
+                # including read-only CTEs. Exercise that platform contract.
+                if not sql.lstrip().lower().startswith("select"):
+                    self.undo_available = False
+                return self.connection.execute(sql, args)
+
+            def first(self, sql, *args):
+                return self.query(sql, args).fetchone()
+
+            def all(self, sql, *args):
+                return self.query(sql, args).fetchall()
+
+        col = SQLiteCollection()
+        col.db.connection.close()
+        col.db = AnkiDB()
+        try:
+            collect_snapshot(col, normalize_config({}), VerseContent())
+            self.assertTrue(col.db.undo_available)
+        finally:
+            col.db.connection.close()
 
 
 class LongTermTests(unittest.TestCase):
@@ -1162,7 +1190,7 @@ class CanonicalFactsTests(unittest.TestCase):
     def test_forecast_failure_does_not_hide_scheduler_progress(self) -> None:
         class ForecastFailureDB(FakeDB):
             def all(self, sql, *args):
-                if "WITH eligible_due AS" in sql:
+                if "GROUP BY due_offset ORDER BY due_offset" in sql:
                     raise RuntimeError("scheduled demand unavailable")
                 return super().all(sql, *args)
 

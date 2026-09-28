@@ -67,11 +67,8 @@ class RendererTests(unittest.TestCase):
                     metrics = html.index("hdo-summary-metrics-grid")
                     bible = html.index("hdo-bible-card")
                     self.assertLess(calendar, metrics)
-                    if view == "month":
-                        self.assertLess(metrics, bible)
-                    else:
-                        self.assertLess(html.index("hdo-calendar-footer-content"), bible)
-                        self.assertLess(bible, metrics)
+                    self.assertLess(html.index("hdo-calendar-footer-content"), bible)
+                    self.assertLess(bible, metrics)
                     self.assertEqual(html.count("hdo-dashboard-layout"), 1)
                     self.assertEqual(html.count("hdo-insight-rail"), 1)
                     self.assertEqual(html.count("hdo-calendar-context-bar"), 1)
@@ -110,8 +107,8 @@ class RendererTests(unittest.TestCase):
         disabled["heatmap"]["show_due_forecast"] = False
         disabled_html = render_dashboard(self.snapshot, disabled)
         self.assertIn('class="hdo-legend-group hdo-legend-due" hidden', disabled_html)
-        self.assertNotIn("hdo-legend-event", disabled_html)
-        self.assertNotIn("hdo-calendar-footer__event", disabled_html)
+        self.assertIn("hdo-legend-event", disabled_html)
+        self.assertIn("hdo-calendar-footer__event", disabled_html)
         self.assertIn("hdo-calendar-footer__date-context", disabled_html)
         for view in ("month", "year"):
             with self.subTest(view=view):
@@ -192,7 +189,7 @@ class RendererTests(unittest.TestCase):
         ])
         self.assertEqual(re.findall(r"<dt(?: [^>]*)?>([^<]+)</dt>", all_time), [
             "Cards studied", "Avg cards/day", "Retention",
-            "Current streak", "Longest streak",
+            "Longest streak",
         ])
         self.assertIn("1,754", recent)
         self.assertIn("251", recent)
@@ -208,8 +205,9 @@ class RendererTests(unittest.TestCase):
         self.assertIn("data-hdo-progress-track", html)
         self.assertNotIn("data-hdo-progress-segment=", html)
         self.assertRegex(html, r'data-hdo-progress-state="in_progress"[^>]*aria-valuenow="77"')
-        self.assertIn(">77% complete</span>", html)
-        self.assertEqual(html.count("data-hdo-progress-label"), 2)
+        self.assertIn("data-hdo-progress-number>77%</span>", html)
+        self.assertEqual(html.count("data-hdo-progress-label"), 1)
+        self.assertEqual(html.count("hdo-metric-headline"), 3)
         self.assertNotIn("hdo-progress-heading-value", html)
         for label in (
             "Cards studied", "New cards studied", "Cards buried",
@@ -385,7 +383,7 @@ class RendererTests(unittest.TestCase):
             "12,486",
             "1,048",
             "125.4 sec/card",
-            "1,024 days",
+            'class="hdo-streak-number">1,024</span> <span class="hdo-streak-unit">days',
             "1,517 days",
             "1,082,640",
             "continues through every season of patient study and service.",
@@ -439,6 +437,28 @@ class RendererTests(unittest.TestCase):
         self.assertNotIn("html,body,#root", html)
         self.assertIn('data-hdo-theme="Sapphire Glass"', html)
         self.assertIn('data-hdo-color-mode="light"', html)
+
+    def test_current_streak_is_shown_once_with_availability_and_visibility(self) -> None:
+        for count in (0, 1, 1_024, None):
+            with self.subTest(count=count):
+                state = (
+                    ValueState.available(replace(self.snapshot.facts.long_term.value, current_streak=count))
+                    if count is not None else ValueState.unavailable(AvailabilityReason.QUERY_FAILED)
+                )
+                snapshot = replace(self.snapshot, facts=replace(self.snapshot.facts, long_term=state))
+                for calendar in (True, False):
+                    config = deepcopy(self.config)
+                    config["visibility"]["heatmap"] = calendar
+                    rendered = render_dashboard(snapshot, config)
+                    self.assertEqual(rendered.count('data-hdo-metric="long_term.current_streak"'), 1)
+                    self.assertIn('class="hdo-current-streak', rendered)
+                    if calendar:
+                        self.assertIn('class="hdo-streak-number">{}</span>'.format(
+                            "—" if count is None else format(count, ",")), rendered)
+                        self.assertIn('class="hdo-streak-unit">{}</span>'.format(
+                            "" if count is None else "day" if count == 1 else "days"), rendered)
+                    config["visibility"]["heatmap_metrics"] = False
+                    self.assertEqual(render_dashboard(snapshot, config).count('data-hdo-metric="long_term.current_streak"'), 1)
 
     def test_unavailable_metrics_keep_stable_rows_and_zero_values_remain_neutral(self) -> None:
         facts = replace(
@@ -570,7 +590,7 @@ class RendererTests(unittest.TestCase):
         self.assertIn("rgba(255, 255, 255, 0.96)", sapphire_html)
         self.assertIn("--hdo-card-backdrop-filter:blur(12px) saturate(1.08)", sapphire_html)
 
-    def test_bible_preference_renders_exact_size_and_hiding_removes_rail_slot(self) -> None:
+    def test_bible_preferences_and_empty_state_always_keep_footer_slot(self) -> None:
         config = deepcopy(self.config)
         config["bible"]["font_size"] = "96px"
         html = render_dashboard(self.snapshot, config)
@@ -595,12 +615,13 @@ class RendererTests(unittest.TestCase):
             replace(self.snapshot, verse=VerseContent("", "")),
             config,
         )
-        self.assertNotIn("hdo-bible-card", empty)
-        self.assertIn('data-hdo-footer-verse="false"', empty)
+        self.assertIn("hdo-bible-card", empty)
+        self.assertIn("No verse selected.", empty)
+        self.assertIn('data-hdo-footer-verse="true"', empty)
 
         config["visibility"]["bible"] = False
         hidden = render_dashboard(self.snapshot, config)
-        self.assertNotIn("hdo-bible-card", hidden)
+        self.assertIn("hdo-bible-card", hidden)
         self.assertIn('data-hdo-has-metrics="true" data-hdo-has-bible="false"', hidden)
 
     def test_preview_reuses_the_production_components(self) -> None:
@@ -626,8 +647,10 @@ class RendererTests(unittest.TestCase):
             "heatmap_metrics": False,
             "bible": False,
         })
-        self.assertIn("Dashboard sections are hidden", render_dashboard(self.snapshot, hidden))
-        self.assertIn("Open settings", render_dashboard(self.snapshot, hidden))
+        self.assertNotIn("Dashboard sections are hidden", render_dashboard(self.snapshot, hidden))
+        for section in ("hdo-calendar-card", "hdo-bible-card", "hdo-summary-metrics-grid", "hdo-calendar-footer__event"):
+            self.assertIn(section, render_dashboard(self.snapshot, hidden))
+        self.assertIn("Calendar settings", render_dashboard(self.snapshot, hidden))
         loading = render_loading(self.config)
         self.assertIn("Loading your study dashboard", loading)
         self.assertIn('aria-busy="true"', loading)

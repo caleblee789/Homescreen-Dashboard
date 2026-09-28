@@ -315,7 +315,6 @@ class SettingsDraftTests(unittest.TestCase):
         for scope in (
             "appearance",
             "panel_placement",
-            "dashboard_sections",
             "study_metrics",
             "calendar_display",
             "calendar_range",
@@ -345,7 +344,7 @@ class SettingsDraftTests(unittest.TestCase):
         self.assertEqual(draft.values["bible"]["quotes"], ["Keep verse"])
         self.assertEqual(draft.values["bible"]["future"]["verse_option"], "keep")
 
-    def test_dashboard_sections_reset_does_not_own_calendar_event_markers(self) -> None:
+    def test_legacy_hidden_sections_are_restored_and_cannot_be_reset_hidden(self) -> None:
         draft = SettingsDraft(
             normalize_config(
                 {
@@ -359,12 +358,18 @@ class SettingsDraftTests(unittest.TestCase):
         )
 
         snapshot = draft.scope_snapshot("dashboard_sections")
-        self.assertTrue(draft.reset_card("dashboard_sections"))
+        self.assertFalse(draft.reset_card("dashboard_sections"))
 
         self.assertTrue(draft.values["visibility"]["today"])
         self.assertTrue(draft.values["visibility"]["heatmap"])
-        self.assertFalse(draft.values["visibility"]["events"])
+        self.assertTrue(draft.values["visibility"]["events"])
         self.assertNotIn(("visibility", "events"), snapshot)
+        for key in ("today", "remaining", "events", "heatmap", "heatmap_metrics", "bible"):
+            changed = deepcopy(draft.values)
+            changed["visibility"][key] = False
+            draft.replace_values(changed)
+            self.assertTrue(draft.values["visibility"][key])
+        self.assertFalse(draft.dirty)
 
     def test_scoped_restore_preserves_later_edits_outside_reset_card(self) -> None:
         draft = SettingsDraft(
@@ -416,7 +421,6 @@ class SettingsDraftTests(unittest.TestCase):
         self.assertEqual(
             draft.dependency_state,
             {
-                "visibility.events": False,
                 "heatmap.forecast_days": True,
                 "bible.font_color": False,
             },
@@ -618,7 +622,7 @@ class SettingsUtilityTests(unittest.TestCase):
         self.assertEqual(resolve_section("Bible Verse"), "bible_verse")
         self.assertEqual(resolve_section("About & Credits"), "about_support")
         self.assertEqual(resolve_section_target("theme_layout"), ("appearance", ""))
-        self.assertEqual(resolve_section_target("home_screen"), ("dashboard", "dashboard_sections"))
+        self.assertEqual(resolve_section_target("home_screen"), ("dashboard", ""))
         self.assertEqual(resolve_section_target("calendar_data"), ("calendar", ""))
 
     def test_section_ids_labels_and_groups_match_the_navigation_contract(self) -> None:

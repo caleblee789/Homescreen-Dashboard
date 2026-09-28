@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "release": "1.8.7",
+  "release": "1.9.0",
   "reference_date": "2026-08-23",
   "authority_files": {
     "surface_manifest": "calendar_surface_manifest_1_8_7.json",
@@ -64,7 +64,7 @@
     {
       "id": "full",
       "description": "Complete release contract across every production and Settings state.",
-      "output_directory": "hdo-release-evidence-1.8.7",
+      "output_directory": "hdo-release-evidence-1.9.0",
       "families": [
         "production-palettes",
         "production-core",
@@ -82,7 +82,7 @@
     {
       "id": "settings",
       "description": "Native Settings acceptance across six pages and both Bible views, including minimum-size, light/dark and restart persistence.",
-      "output_directory": "hdo-settings-evidence-1.8.7",
+      "output_directory": "hdo-settings-evidence-1.9.0",
       "families": [
         "settings-pages",
         "settings-contract",
@@ -106,7 +106,7 @@
     {
       "id": "wide-100",
       "description": "True-full-screen wide production and Settings coverage at 100 percent text.",
-      "output_directory": "hdo-wide-100-evidence-1.8.7",
+      "output_directory": "hdo-wide-100-evidence-1.9.0",
       "families": [
         "production-palettes",
         "production-core",
@@ -370,7 +370,7 @@
           "id": "PROD-SECTIONS-BELOW",
           "sheet_group": "production-legends-backgrounds-clearance",
           "layout": "intermediate",
-          "container_width": 720,
+          "container_width": null,
           "special": "sections-below",
           "tags": [
             "sections_below_calendar"
@@ -380,7 +380,7 @@
           "id": "PROD-BOTTOM-CLEARANCE",
           "sheet_group": "production-legends-backgrounds-clearance",
           "layout": "intermediate",
-          "container_width": 720,
+          "container_width": null,
           "special": "scroll-bottom",
           "tags": [
             "measured_bottom_clearance"
@@ -1026,7 +1026,7 @@
         {
           "id": "PROD-STATS-INTERMEDIATE",
           "layout": "intermediate",
-          "container_width": 720,
+          "container_width": null,
           "tags": [
             "statistics_accuracy",
             "intermediate"
@@ -1035,10 +1035,10 @@
         {
           "id": "PROD-STATS-NARROW",
           "layout": "narrow",
-          "container_width": 390,
+          "container_width": null,
           "tags": [
             "statistics_accuracy",
-            "narrow_stacked"
+            "narrow_viewport"
           ]
         }
       ]

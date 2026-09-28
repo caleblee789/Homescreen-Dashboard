@@ -143,7 +143,7 @@ class DashboardController:
         self._active_settings_dialog: Optional[Any] = None
 
     def start(self) -> None:
-        mw.addonManager.setWebExports(self.package, r"web/.*\.(css|js)")
+        mw.addonManager.setWebExports(self.package, r"web/.*\.(css|js|svg)")
         self._install_hooks()
         try:
             mw.addonManager.setConfigUpdatedAction(self.package, self._external_config_update)
@@ -356,7 +356,6 @@ class DashboardController:
             if (
                 self.snapshot is not None
                 and getattr(mw, "state", "") == "deckBrowser"
-                and self._has_live_fact_consumers()
             ):
                 self._set_dashboard_updating(True)
                 self._request_snapshot(self._key())
@@ -578,27 +577,6 @@ class DashboardController:
         quote = self.rotator.get_quote(list(bible["quotes"]), str(bible["rotation_mode"]))
         return verse_content(quote)
 
-    def _all_sections_hidden(self) -> bool:
-        visibility = self.config["visibility"]
-        return not any(
-            bool(visibility.get(key, True))
-            for key in (
-                "today",
-                "remaining",
-                "heatmap",
-                "heatmap_metrics",
-                "bible",
-            )
-        )
-
-    def _has_live_fact_consumers(self) -> bool:
-        """Return whether the mounted dashboard contains study-data consumers."""
-        visibility = self.config["visibility"]
-        return any(
-            bool(visibility.get(key, True))
-            for key in ("today", "remaining", "heatmap", "heatmap_metrics")
-        )
-
     def on_deck_browser_render(self, _deck_browser: DeckBrowser, content: Any) -> None:
         self._check_scheduler_day()
         if self.last_event_archive_date != date.today():
@@ -610,18 +588,6 @@ class DashboardController:
         legacy = enabled_legacy_ids(mw.addonManager)
         if legacy:
             content.stats += render_activation_required(legacy, self.config, self.is_dark())
-            return
-        # The recovery control does not depend on collection data and therefore
-        # precedes the initial loading shell in the release state machine.
-        if self._all_sections_hidden():
-            content.stats += render_dashboard(
-                DashboardSnapshot(verse=self._selected_verse()),
-                self.config,
-                self.is_dark(),
-                facts_revision=self.facts_revision,
-                last_updated_at=self.last_updated_at,
-                year_scroll_left=self.year_scroll_left,
-            )
             return
         if self.initial_failure and self.snapshot is None:
             content.stats += render_failure(self.config, self.is_dark())
@@ -687,7 +653,6 @@ class DashboardController:
                     generation == self.profile_generation
                     and self.snapshot is not None
                     and getattr(mw, "state", "") == "deckBrowser"
-                    and self._has_live_fact_consumers()
                 ):
                     self._set_dashboard_updating(True)
                     self._request_snapshot(self._key())
@@ -717,7 +682,6 @@ class DashboardController:
                     generation == self.profile_generation
                     and self.snapshot is not None
                     and getattr(mw, "state", "") == "deckBrowser"
-                    and self._has_live_fact_consumers()
                 ):
                     self._set_dashboard_updating(True)
                     self._request_snapshot(self._key())
@@ -759,8 +723,6 @@ class DashboardController:
         return getattr(deck_browser, "web", None) if deck_browser is not None else None
 
     def _set_dashboard_updating(self, updating: bool) -> bool:
-        if not self._has_live_fact_consumers():
-            return False
         web = self._dashboard_web()
         if web is None:
             return False
@@ -777,8 +739,6 @@ class DashboardController:
             return False
 
     def _set_dashboard_refresh_failed(self) -> bool:
-        if not self._has_live_fact_consumers():
-            return False
         web = self._dashboard_web()
         if web is None:
             return False
@@ -797,7 +757,6 @@ class DashboardController:
         """Atomically refresh the mounted dashboard without replacing its DOM."""
         if (
             getattr(mw, "state", "") != "deckBrowser"
-            or not self._has_live_fact_consumers()
         ):
             return False
         web = self._dashboard_web()

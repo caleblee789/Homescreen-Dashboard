@@ -87,10 +87,6 @@ assert.strictEqual(model.formatEventDate("2026-08-28", "2026-08-22", "en-US"), "
 assert.strictEqual(model.formatCompactEventDate("2026-08-28", "2026-08-22", "en-US"), "Aug 28");
 assert.strictEqual(model.eventCountdown("2026-08-28", "2026-08-22", "en-US"), "in 6 days");
 assert.strictEqual(model.eventCountdownCompact("2026-08-28", "2026-08-22", "en-US"), "6d");
-assert.strictEqual(model.dashboardDensity(1009), "wide");
-assert.strictEqual(model.dashboardDensity(1008), "intermediate");
-assert.strictEqual(model.dashboardDensity(589), "intermediate");
-assert.strictEqual(model.dashboardDensity(588), "narrow");
 
 // Exact selected-date action truth table.
 function day(date, completed, due, again) {
@@ -235,21 +231,18 @@ assert(js.includes("state.mostMissed[day.date] = null"));
 assert(css.includes("pointer-events: none"));
 assert(css.includes("min-width: min(190px"));
 assert(css.includes("max-width: min(220px"));
-assert(css.includes("width: min(1160px, calc(100% - 32px))"));
+assert(css.includes("width: 1160px"));
 assert(css.includes("max-width: 1160px"));
-assert(css.includes("margin: 30px auto 0"));
+assert(css.includes("margin: 30px max(16px, calc((100% - 1160px) / 2)) 0"));
 assert(css.includes("--dashboard-column-gap: 14px"));
 assert(css.includes("--rail-gap: 12px"));
-assert(css.includes("--metric-column-gap: 10px"));
+assert(css.includes("--metric-column-gap: 6px"));
 assert(css.includes("minmax(0, 1fr) 360px"));
-assert(css.includes("@container hdo-dashboard (min-width: 589px)"));
-assert(css.includes("@container hdo-dashboard (min-width: 1009px)"));
-assert(css.includes("@container hdo-calendar (max-width: 419px)"));
-assert(css.includes("24px repeat(var(--hdo-year-weeks, 53), var(--hdo-year-cell-size))"));
-assert(css.includes("--hdo-year-cell-size: clamp(1px, calc((100cqi - 194px) / 53), 10px)"));
+assert(css.includes("var(--hdo-year-label-width) repeat(var(--hdo-year-weeks, 53), var(--hdo-year-cell-size))"));
+assert(css.includes("--hdo-year-cell-size: clamp(var(--hdo-year-cell-min),"));
 assert(!css.includes("--hdo-year-cell-size: 7px"));
 assert(!css.includes("min-width: 500px"));
-assert(!css.includes("overflow-x: auto"));
+assert(css.includes("overflow-x: auto"));
 assert(js.includes('monthLabel.style.setProperty("--hdo-month-start-week"'));
 assert(js.includes('primaryAction.textContent = "Reviewed cards"'));
 assert(js.includes('primaryAction.textContent = "Due cards"'));

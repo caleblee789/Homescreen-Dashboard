@@ -1,11 +1,15 @@
-# Home Screen Dashboard 1.8.7
+# Home Screen Dashboard 1.9.0
 
 Home Screen Dashboard is a calendar-first Deck Browser dashboard for Anki
 Desktop 26.8. It combines study history, due work, local events, stable study
 metrics, and a rotating Bible verse without patching Anki's private Deck
 Browser or statistics classes.
 
-## What changed in 1.8.7
+## What changed in 1.9.0
+
+See the [1.9.0 changelog](CHANGELOG.md) for the fixed Month and Year layout, the shared footer, 2×2 statistics, fitted captions, and always-visible sections.
+
+## Earlier 1.8.7 changes
 
 - Settings remains a normal parented `QDialog` with default flags and a local
   `exec()` lifetime. It opens at 1080×760 logical pixels, has an 860×640 normal
@@ -84,18 +88,18 @@ Browser or statistics classes.
   retains the complete draft for retry and keeps technical details behind a
   disclosure. All controls remain native Qt and draft state writes nothing
   until Save.
-- Dashboard theme and Calendar heatmap palette share one responsive Appearance
-  row.
-  Their layout-changing staged updates run after the native combo popup closes,
-  and save locking restores both selectors and their nested popup views.
-- Month is always 42 cells. Year uses one responsive 53-week tree with 10 px
-  cells at the wide reference and fluid square cells when narrower; it has no
-  minimum-width floor or internal horizontal scrolling. Calendar legend and
-  event-summary groups disappear when their features are disabled.
-- The production root is transparent, centered, and in normal document flow at
-  a 1,160 px maximum with 16 px minimum side insets and a 30 px top margin. A
-  360 px insight rail appears at 1,009 px and stacks at 1,008 px; the summary
-  grid stays 2×2 through 589 px and becomes one column at 588 px. The root
+- Dashboard theme and Calendar heatmap palette use native exclusive choice
+  cards with surface swatches and five-step color samples. Each group reflows
+  to four, two, or one column and supports arrow-key selection. Palette choices
+  remain remembered independently for each theme and are saved with the draft.
+- Month is always 42 cells. Year uses one 53-week tree with square cells.
+  Calendar legend and event-summary groups disappear when their features are disabled.
+- The production root is transparent and stays at a fixed 1,160 CSS-pixel width
+  in normal document flow, with a 30 px top margin. It is centered when space
+  permits and keeps at least 16 px side insets. Smaller windows scroll
+  horizontally through the document without shrinking text or rearranging
+  panels. The calendar and 360 px insight rail remain side by side, with a
+  two-column statistics grid. Dashboard height follows its content. The root
   measures Anki's visible normally positioned, fixed, or sticky bottom action
   container and maintains a 24 px clearance, using 60 px only as the
   missing-height fallback.
@@ -127,7 +131,10 @@ studied, Avg cards/day, Retention, New cards studied, and Time spent. All Time
 contains Cards studied, Avg cards/day, Retention, Current streak, and Longest
 streak. The configured
 Bible verse is rendered at its exact font, size, and color. While work remains,
-Today's Progress displays `N% complete` inside the filled progress bar.
+Today's Progress displays `N% complete` above a slim progress bar. The label
+and fill use the same rounded integer percentage. The other three statistic
+cards promote their existing Cards studied value to a headline without
+duplicating or removing a metric.
 
 The compact calendar footer retains date selection, tooltip, Browser routing,
 event edit/add, and Most Missed behavior. Due and event legend/summary groups
@@ -142,7 +149,7 @@ baseline updates only after a completely successful save.
 
 The Settings chrome derives its colors solely from Anki's light/dark
 appearance. Dashboard themes affect only production rendering; Settings shows
-the five-step heatmap palette and compact Bible appearance previews while
+five-step samples on all four heatmap choices and a compact Bible appearance preview while
 retaining the custom-color input well.
 Settings is a movable, resizable `QDialog(mw)` with a 1080×760 logical default,
 860×640 normal minimum, default Qt flags, and a local `exec()` call. It resolves the
@@ -164,7 +171,7 @@ work remains deferred and is not packaged.
 
 ## Install
 
-Install `home-dashboard-overhaul-1.8.7.ankiaddon` through **Tools → Add-ons →
+Install `home-dashboard-overhaul-1.9.0.ankiaddon` through **Tools → Add-ons →
 Install from file**, restart Anki, and disable any legacy source add-ons named
 by the activation card. The manifest is pinned to Anki Desktop 26.8.
 
@@ -183,7 +190,7 @@ python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
 The builder creates one 24-member allowlisted archive, checks its version and
-safe paths, validates the 1.8.7 release authorities, and verifies every
+safe paths, validates the 1.9.0 release authorities, and verifies every
 packaged byte against source. The canonical plan contains 116 native frames,
 including 63 Settings frames at 100% application font and two total
 controlled-restart states. Settings presentation is capped at 14 sheets.
@@ -201,3 +208,7 @@ explicitly unrun, unclaimed, and nonblocking for 1.8.7.
 
 Copyright 2026. Licensed under AGPL-3.0-or-later. See
 `THIRD_PARTY_NOTICES.md` for Scripture and upstream notices.
+
+The final Month and Year dashboards share a fixed 1160 CSS-pixel layout: a 786-pixel calendar, 14-pixel gap, and 360-pixel statistics rail. Four statistics cards remain in two equal columns with 12-pixel gaps. Both views place the verse beside the selected-date and event details in the calendar footer. Narrow windows scroll horizontally; Year month spacing is unchanged.
+
+Dashboard sections are always visible, including Events. Legacy section-visibility flags are restored to enabled when configuration is loaded. An empty verse library displays “No verse selected.” in the shared footer. “Cards studied” stays vertically centered beside its number when it fits, and moves underneath at enlarged text sizes or with long values.

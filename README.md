@@ -3,15 +3,15 @@
 A study calendar, progress tracker, and statistics dashboard for Anki's home
 screen.
 
-**Version 1.8.7** · **Anki Desktop 26.8**
+**Version 1.9.0** · **Anki Desktop 26.8+**
 
 ## Features
 
 - Browse your completed reviews and upcoming due cards in Month or Year view.
 - Track today's progress, study time, retention, and streaks.
 - Add local events and see what's coming up on your calendar.
-- Customize themes, calendar colors, text size, and visible sections.
-- Display an optional Bible verse with your own library and appearance settings.
+- Customize themes, calendar colors, text size, and study preferences.
+- Display a Bible verse from your own library with appearance settings.
 
 ## Screenshots
 
@@ -19,11 +19,11 @@ Click an image to view it at full size.
 
 **Sapphire Glass · Year view**
 
-[![Sapphire Glass dashboard with a blue Year calendar, progress bar, four statistics cards, and optional verse](docs/images/1.8.7/dashboard-sapphire-year.png)](docs/images/1.8.7/dashboard-sapphire-year.png)
+[![Sapphire Glass Year dashboard with a shared verse footer and four statistics cards](docs/images/1.9.0/dashboard-sapphire-year.png)](docs/images/1.9.0/dashboard-sapphire-year.png)
 
 | Emerald · dark Month view | Graphite · Year overview |
 | --- | --- |
-| [![Emerald dashboard with a green Month calendar on Anki's dark background](docs/images/1.8.7/dashboard-emerald-dark.png)](docs/images/1.8.7/dashboard-emerald-dark.png) | [![Graphite Year view showing a full-year heatmap and study summaries](docs/images/1.8.7/dashboard-year.png)](docs/images/1.8.7/dashboard-year.png) |
+| [![Emerald dashboard with a green Month calendar on Anki's dark background](docs/images/1.9.0/dashboard-emerald-dark.png)](docs/images/1.9.0/dashboard-emerald-dark.png) | [![Graphite Year view showing a full-year heatmap and study summaries](docs/images/1.9.0/dashboard-year.png)](docs/images/1.9.0/dashboard-year.png) |
 
 **Settings**
 
@@ -38,13 +38,13 @@ Click an image to view it at full size.
 3. Restart Anki.
 
 [View on AnkiWeb](https://ankiweb.net/shared/info/808247776).
-You can also download the [1.8.7 add-on file](https://github.com/caleblee789/Homescreen-Dashboard/releases/download/v1.8.7/home-dashboard-overhaul-1.8.7.ankiaddon)
+You can also download the [1.9.0 add-on file](https://github.com/caleblee789/Homescreen-Dashboard/releases/download/v1.9.0/home-dashboard-overhaul-1.9.0.ankiaddon)
 and choose **Tools → Add-ons → Install from file**.
 
 If the dashboard reports conflicting add-ons, disable the entries listed in
 its message and restart Anki.
 
-See [what changed in 1.8.7](docs/releases/1.8.7.md).
+See [what changed in 1.9.0](home_dashboard_overhaul/CHANGELOG.md).
 
 ## Using the dashboard
 
@@ -60,9 +60,9 @@ Choose a page, make your changes, and click **Save changes**.
 
 | Settings page | What you'll find |
 | --- | --- |
-| Dashboard | Visible sections, panel placement, study preferences, and deck filters |
+| Dashboard | Study preferences and deck filters |
 | Appearance | Themes, calendar colors, text size, opacity, and blur |
-| Calendar | Default view, week start, event markers, and history and due ranges |
+| Calendar | Default view, week start, and history and due ranges |
 | Events | Add, edit, search, archive, and restore events |
 | Bible verse | Your verse library, text styling, and rotation options |
 | About & support | Version information, diagnostics, help, and verse export |

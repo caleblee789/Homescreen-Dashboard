@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "id": "macos-fullscreen-no-space-switch-menu-and-dashboard-gear",
-  "release": "1.8.7",
+  "release": "1.9.0",
   "host_platform": "macos",
   "candidate_sha256": "<exact-package-sha256>",
   "capture_plan_sha256": "<capture-plan-sha256>",

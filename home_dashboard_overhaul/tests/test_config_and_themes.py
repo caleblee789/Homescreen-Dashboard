@@ -289,10 +289,10 @@ class ThemeTests(unittest.TestCase):
             {
                 "Sapphire Glass": {
                     "dark": {
-                        "status_learning_fill": "#F87171",
-                        "status_learning_text": "#F87171",
-                        "status_review_fill": "#22C55E",
-                        "status_review_text": "#22C55E",
+                        "status_learning_fill": "#F47F8D",
+                        "status_learning_text": "#F47F8D",
+                        "status_review_fill": "#83D9A7",
+                        "status_review_text": "#83D9A7",
                     },
                 },
             },
@@ -311,15 +311,15 @@ class ThemeTests(unittest.TestCase):
         dark = resolve_theme("Sapphire Glass", "dark", True)
         self.assertEqual(
             [light[key] for key in ("ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3")],
-            ["#F4F7FB", "#FFFFFF", "#F8FAFD", "#EDF3F9"],
+            ["#F3F6FB", "#FFFFFF", "#F5F8FC", "#F5F8FC"],
         )
         self.assertEqual(
             [dark[key] for key in ("ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3")],
-            ["#0A131E", "#101D2B", "#142438", "#1B2A3D"],
+            ["#0B1220", "#111D2E", "#162438", "#162438"],
         )
         self.assertEqual(
             [light[key] for key in ("status_new_fill", "status_learning_fill", "status_review_fill", "status_success_fill", "status_event_fill")],
-            ["#2F7DD3", "#C76A00", "#7C3AED", "#147A42", "#E0BF55"],
+            ["#225FC6", "#8B610A", "#7347B1", "#19714F", "#7D5F19"],
         )
         self.assertEqual(
             [
@@ -331,7 +331,7 @@ class ThemeTests(unittest.TestCase):
                     "status_review_text",
                 )
             ],
-            ["#F87171", "#F87171", "#22C55E", "#22C55E"],
+            ["#F47F8D", "#F47F8D", "#83D9A7", "#83D9A7"],
         )
         self.assertEqual(
             [dark["heat_complete_{}".format(level)] for level in range(6)],
@@ -380,19 +380,19 @@ class ThemeTests(unittest.TestCase):
         emerald_dark = resolve_theme("Emerald", "dark", True)
         self.assertEqual(
             [emerald_dark[key] for key in ("ui_canvas", "ui_surface_1", "ui_surface_2", "ui_surface_3")],
-            ["#0B1210", "#101B17", "#14231C", "#17251F"],
+            ["#0C1512", "#13211B", "#1B2D24", "#1B2D24"],
         )
-        self.assertEqual(emerald_dark["ui_border_subtle"], "#294137")
-        self.assertEqual(emerald_dark["ui_accent"], "#3CCF8E")
+        self.assertEqual(emerald_dark["ui_border_subtle"], "#2C4437")
+        self.assertEqual(emerald_dark["ui_accent"], "#80D6AB")
         self.assertNotEqual(emerald_dark["status_success_fill"], emerald_dark["ui_accent"])
 
         graphite_light = resolve_theme("Graphite", "light", False)
-        self.assertEqual(graphite_light["ui_accent"], "#566B80")
+        self.assertEqual(graphite_light["ui_accent"], "#465B78")
         self.assertNotEqual(graphite_light["ui_accent"], graphite_light["status_new_fill"])
 
         graphite_dark = resolve_theme("Graphite", "dark", True)
-        self.assertEqual(graphite_dark["progress_complete"], "#9BA6B1")
-        self.assertEqual(graphite_dark["heat_complete_5"], "#8C9BAA")
+        self.assertEqual(graphite_dark["progress_complete"], "#A7BDDC")
+        self.assertEqual(graphite_dark["heat_complete_5"], "#AEBAC9")
         self.assertNotEqual(graphite_dark["calendar_selected_ring"], graphite_dark["ui_border_strong"])
 
         for mode in ("light", "dark"):
@@ -400,9 +400,9 @@ class ThemeTests(unittest.TestCase):
             self.assertEqual(high_contrast["ui_shadow_card"], "none")
 
     def test_light_level_one_heat_colors_match_the_release_palette(self) -> None:
-        self.assertEqual(resolve_theme("Sapphire Glass", "light", False)["heat_complete_1"], "#E7F0FA")
-        self.assertEqual(resolve_theme("Graphite", "light", False)["heat_complete_1"], "#E6EAEE")
-        self.assertEqual(resolve_theme("Emerald", "light", False)["heat_complete_1"], "#E5F3EB")
+        self.assertEqual(resolve_theme("Sapphire Glass", "light", False)["heat_complete_1"], "#E6EDFB")
+        self.assertEqual(resolve_theme("Graphite", "light", False)["heat_complete_1"], "#EAEDEF")
+        self.assertEqual(resolve_theme("Emerald", "light", False)["heat_complete_1"], "#E7F5EC")
 
 
 if __name__ == "__main__":

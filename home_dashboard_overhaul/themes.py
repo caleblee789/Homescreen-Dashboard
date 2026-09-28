@@ -13,49 +13,47 @@ DEFAULT_CUSTOM_BIBLE_COLOR = "#1E90FF"
 # selection never recolors the editor itself.
 SETTINGS_COLOR_TOKENS: Mapping[str, Mapping[str, str]] = {
     "dark": {
-        "ui_bg": "#0B1118",
-        "ui_sidebar": "#090F15",
-        "ui_surface": "#151D26",
-        "ui_surface_raised": "#1B2631",
+        "ui_bg": "#101215",
+        "ui_sidebar": "#101215",
+        "ui_surface": "#191C21",
+        "ui_surface_raised": "#22262D",
         "ui_surface_hover": "#202C37",
-        "ui_border": "#2B3948",
+        "ui_border": "#353A43",
         "ui_border_strong": "#3A4C5E",
-        "ui_text_primary": "#F1F5F9",
-        "ui_text_secondary": "#A9B4C0",
-        "ui_text_muted": "#87939F",
-        "ui_accent": "#9FBAD1",
-        "ui_accent_soft": "#263B4D",
+        "ui_text_primary": "#F2F3F5",
+        "ui_text_secondary": "#ACB3BF",
+        "ui_text_muted": "#ACB3BF",
+        "ui_accent": "#8CB6FF",
+        "ui_accent_soft": "#1B3354",
         "ui_accent_hover": "#B1C9DD",
         "ui_accent_pressed": "#8AA7BF",
-        "ui_accent_ink": "#0D131A",
+        "ui_accent_ink": "#081727",
         "ui_warning": "#E2BD57",
         "ui_success": "#63D49A",
-        "ui_danger": "#EE7880",
-        "ui_overlay": "rgba(0, 0, 0, 153)",
+        "ui_danger": "#F47F8D",
+        "ui_overlay": "rgba(0, 0, 0, 153)"
     },
     "light": {
-        "ui_bg": "#F3F6F8",
-        "ui_sidebar": "#E9EFF4",
+        "ui_bg": "#F4F5F7",
+        "ui_sidebar": "#F4F5F7",
         "ui_surface": "#FFFFFF",
-        "ui_surface_raised": "#F7F9FB",
+        "ui_surface_raised": "#F5F6F8",
         "ui_surface_hover": "#EDF1F4",
-        "ui_border": "#C7D1DB",
+        "ui_border": "#DDDFE4",
         "ui_border_strong": "#AAB8C5",
-        "ui_text_primary": "#111827",
-        "ui_text_secondary": "#52606D",
-        # The supplied #657382 baseline measured 4.44:1 on the window canvas;
-        # this explicit one-step adjustment clears the 4.5:1 release gate.
-        "ui_text_muted": "#637180",
-        "ui_accent": "#315D7A",
-        "ui_accent_soft": "#DFEAF3",
+        "ui_text_primary": "#20242B",
+        "ui_text_secondary": "#5C6470",
+        "ui_text_muted": "#5C6470",
+        "ui_accent": "#275ED6",
+        "ui_accent_soft": "#EAF1FF",
         "ui_accent_hover": "#506D87",
         "ui_accent_pressed": "#445F78",
         "ui_accent_ink": "#FFFFFF",
         "ui_warning": "#8A6815",
         "ui_success": "#2F7D50",
-        "ui_danger": "#A6424A",
-        "ui_overlay": "rgba(0, 0, 0, 140)",
-    },
+        "ui_danger": "#B1374A",
+        "ui_overlay": "rgba(0, 0, 0, 140)"
+    }
 }
 
 
@@ -106,53 +104,53 @@ def contrast_ratio(left: str, right: str) -> float:
 # theme accent. Explicit overrides are limited to audited visual contracts.
 SEMANTIC_PALETTES: Mapping[str, Mapping[str, str]] = {
     "light": {
-        "status_new_fill": "#2F7DD3",
-        "status_new_text": "#2468B6",
-        "status_learning_fill": "#C76A00",
-        "status_learning_text": "#A85A00",
-        "status_review_fill": "#7C3AED",
-        "status_review_text": "#7C3AED",
+        "status_new_fill": "#225FC6",
+        "status_new_text": "#225FC6",
+        "status_learning_fill": "#8B610A",
+        "status_learning_text": "#8B610A",
+        "status_review_fill": "#7347B1",
+        "status_review_text": "#7347B1",
         "status_buried_fill": "#64748B",
         "status_buried_text": "#64748B",
-        "status_success_fill": "#147A42",
-        "status_success_text": "#147A42",
+        "status_success_fill": "#19714F",
+        "status_success_text": "#19714F",
         "status_warning_fill": "#D0A146",
         "status_warning_text": "#845A08",
         "status_danger_fill": "#D95C74",
         "status_danger_text": "#A92948",
-        "status_event_fill": "#E0BF55",
-        "status_event_text": "#986800",
+        "status_event_fill": "#7D5F19",
+        "status_event_text": "#7D5F19"
     },
     "dark": {
-        "status_new_fill": "#60A5FA",
-        "status_new_text": "#60A5FA",
-        "status_learning_fill": "#F59E0B",
-        "status_learning_text": "#F59E0B",
-        "status_review_fill": "#C084FC",
-        "status_review_text": "#C084FC",
+        "status_new_fill": "#93BEFF",
+        "status_new_text": "#93BEFF",
+        "status_learning_fill": "#E9C16B",
+        "status_learning_text": "#E9C16B",
+        "status_review_fill": "#C5A7F0",
+        "status_review_text": "#C5A7F0",
         "status_buried_fill": "#94A3B8",
         "status_buried_text": "#94A3B8",
-        "status_success_fill": "#4ADE80",
-        "status_success_text": "#4ADE80",
+        "status_success_fill": "#91DCB2",
+        "status_success_text": "#91DCB2",
         "status_warning_fill": "#E4C05B",
         "status_warning_text": "#E4C05B",
         "status_danger_fill": "#ED879A",
         "status_danger_text": "#ED879A",
-        "status_event_fill": "#E0BF55",
-        "status_event_text": "#FACC15",
-    },
+        "status_event_fill": "#F0CB74",
+        "status_event_text": "#F0CB74"
+    }
 }
 
 
 SEMANTIC_THEME_OVERRIDES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
     "Sapphire Glass": {
         "dark": {
-            "status_learning_fill": "#F87171",
-            "status_learning_text": "#F87171",
-            "status_review_fill": "#22C55E",
-            "status_review_text": "#22C55E",
-        },
-    },
+            "status_learning_fill": "#F47F8D",
+            "status_learning_text": "#F47F8D",
+            "status_review_fill": "#83D9A7",
+            "status_review_text": "#83D9A7"
+        }
+    }
 }
 
 
@@ -172,21 +170,21 @@ REVIEWS_DUE_INDICATORS: Mapping[str, tuple[str, ...]] = {
 
 COMPLETION_SCALES: Mapping[str, Mapping[str, tuple[str, ...]]] = {
     "Sapphire Glass": {
-        "light": ("#F8FAFD", "#E7F0FA", "#D7E7F6", "#AFCDEA", "#78A8D2", "#356F9F"),
-        "dark": ("#172434", "#1F3449", "#2B4B66", "#3B6C90", "#5A96BE", "#87BCD9"),
+        "light": ("#F5F8FC", "#E6EDFB", "#C6D5F3", "#9BB6E6", "#6B8DCA", "#3C65A3",),
+        "dark": ("#162438", "#1E3355", "#2B4F7A", "#4773A4", "#729BCD", "#A6C7EF",)
     },
     "Graphite": {
-        "light": ("#F7F8FA", "#E9EDF1", "#DCE1E5", "#BAC2C9", "#8D99A3", "#5F6C76"),
-        "dark": ("#20252B", "#2B3239", "#3C4650", "#58636D", "#7E8994", "#ADB6BF"),
+        "dark": ("#22262D", "#2B333D", "#434F5F", "#606F83", "#8291A4", "#AEBAC9",),
+        "light": ("#F5F6F8", "#EAEDEF", "#D1D7DE", "#A7B2C0", "#77899E", "#4C6178",)
     },
     "Emerald": {
-        "light": ("#F8FAF9", "#E5F3EB", "#D1EBDD", "#A7D7BE", "#69B38E", "#287A55"),
-        "dark": ("#17231D", "#1D3427", "#28503A", "#397052", "#58A074", "#85C89C"),
+        "dark": ("#1B2D24", "#1E3B2E", "#2C5840", "#42815C", "#6CAF84", "#9ED4B0",),
+        "light": ("#F2F7F4", "#E7F5EC", "#BFE2CE", "#8DC6A6", "#57A879", "#287747",)
     },
     "High Contrast": {
-        "light": ("#F4F7F8", "#D9ECEF", "#ABDCE0", "#71C2C9", "#1D7F89", "#075E68"),
-        "dark": ("#11161A", "#10343A", "#0D5660", "#0A737F", "#2BA7B3", "#6ACFD8"),
-    },
+        "dark": ("#101820", "#143846", "#225C70", "#3C889F", "#6EBCD0", "#ADEDFC",),
+        "light": ("#FFFFFF", "#E4F7FC", "#B0DFED", "#70BBD0", "#378499", "#175A70",)
+    }
 }
 
 
@@ -199,272 +197,265 @@ HEATMAP_COMPLETION_SCALES: Mapping[
 ] = {
     "Sapphire Glass": {
         "Sapphire": {
-            "light": ("#F8FAFD", "#E7F0FA", "#D7E7F6", "#AFCDEA", "#78A8D2", "#356F9F"),
-            "dark": ("#172434", "#1F3449", "#2B4B66", "#3B6C90", "#5A96BE", "#87BCD9"),
+            "light": ("#F5F8FC", "#E6EDFB", "#C6D5F3", "#9BB6E6", "#6B8DCA", "#3C65A3",),
+            "dark": ("#162438", "#1E3355", "#2B4F7A", "#4773A4", "#729BCD", "#A6C7EF",)
         },
         "Amethyst": {
-            "light": ("#FAF8FC", "#EEE6F5", "#E0D3ED", "#C7ACE0", "#9B76C2", "#6E4697"),
-            "dark": ("#211A2B", "#30223E", "#443057", "#5D4275", "#7A5A94", "#A783BD"),
+            "dark": ("#162438", "#352944", "#514064", "#72548A", "#9774B0", "#C1A1D4",),
+            "light": ("#F5F8FC", "#EFE8F5", "#DAC9E8", "#BDA1D1", "#9772B2", "#73508D",)
         },
         "Glacier": {
-            "light": ("#F7FAFC", "#E6F2F7", "#D1E6EF", "#AED2E0", "#75AEC3", "#3D7F98"),
-            "dark": ("#16252B", "#1D3740", "#284C58", "#386776", "#538697", "#79AABC"),
+            "light": ("#F5F8FC", "#E4EFF3", "#BEDAE3", "#91BFCE", "#5B94AC", "#326B84",),
+            "dark": ("#162438", "#203E4B", "#2D5C6D", "#417C90", "#699FB1", "#9EC6D2",)
         },
         "Sea Glass": {
-            "light": ("#F6FAF9", "#E3F1EE", "#CEE5DF", "#A8D1C5", "#73AF9D", "#347A68"),
-            "dark": ("#172824", "#1E3A32", "#2A4F44", "#3B6B5A", "#578B74", "#7BB09A"),
-        },
+            "dark": ("#162438", "#203D35", "#2D5B4C", "#457D68", "#6CA18B", "#9BCBB5",),
+            "light": ("#F5F8FC", "#E4F2ED", "#BCDDD0", "#8FC3B2", "#5C9D88", "#327560",)
+        }
     },
     "Graphite": {
         "Slate": {
-            "light": ("#F5F7F9", "#E6EAEE", "#D7DDE3", "#B8C1CA", "#8E9BA7", "#63717F"),
-            "dark": ("#1B222A", "#303A45", "#424E5B", "#566474", "#6E7E90", "#8C9BAA"),
+            "dark": ("#22262D", "#2B333D", "#434F5F", "#606F83", "#8291A4", "#AEBAC9",),
+            "light": ("#F5F6F8", "#EAEDEF", "#D1D7DE", "#A7B2C0", "#77899E", "#4C6178",)
         },
         "Steel": {
-            "light": ("#F4F7F9", "#E1E8ED", "#CDD9E1", "#A8BBC8", "#7695A9", "#4F7289"),
-            "dark": ("#1B222A", "#283743", "#364B5B", "#476277", "#5F7F95", "#82A3BA"),
+            "light": ("#F5F6F8", "#E7EEF2", "#C5D5DF", "#9FB8C8", "#6A8FA5", "#426B82",),
+            "dark": ("#22262D", "#273641", "#3B5365", "#55788B", "#80A0B0", "#B4CFD9",)
         },
         "Plum": {
-            "light": ("#F8F5F9", "#EDE4F0", "#DDCFE2", "#C5AACD", "#A17DAE", "#785583"),
-            "dark": ("#1B222A", "#352B3E", "#4A3856", "#62496F", "#7E6092", "#A483B6"),
+            "dark": ("#22262D", "#362B3A", "#57405F", "#795680", "#9F78A8", "#C7A4CF",),
+            "light": ("#F5F6F8", "#F1E9F1", "#DFCADD", "#C4A2C1", "#9E799D", "#765371",)
         },
         "Mint": {
-            "light": ("#F4F8F6", "#E0ECE7", "#C9DDD4", "#A6C7B9", "#7FA894", "#527B68"),
-            "dark": ("#1B222A", "#24382F", "#315044", "#416958", "#58856F", "#7BA18A"),
-        },
+            "light": ("#F5F6F8", "#EBF3EF", "#D0E4DA", "#A6CBB9", "#76A68F", "#487A63",),
+            "dark": ("#22262D", "#1F3931", "#355949", "#517D65", "#7AA18A", "#AACBB4",)
+        }
     },
     "Emerald": {
         "Emerald": {
-            "light": ("#F8FAF9", "#E5F3EB", "#D1EBDD", "#A7D7BE", "#69B38E", "#287A55"),
-            "dark": ("#17231D", "#1D3427", "#28503A", "#397052", "#58A074", "#85C89C"),
+            "dark": ("#1B2D24", "#1E3B2E", "#2C5840", "#42815C", "#6CAF84", "#9ED4B0",),
+            "light": ("#F2F7F4", "#E7F5EC", "#BFE2CE", "#8DC6A6", "#57A879", "#287747",)
         },
         "Jade": {
-            "light": ("#F6FAF8", "#E1F1E9", "#CBE7D8", "#A3D2B9", "#68B18D", "#2F7A58"),
-            "dark": ("#16261F", "#1D392C", "#29503D", "#397057", "#549276", "#78B297"),
+            "light": ("#F2F7F4", "#E8F3EC", "#C4E2CF", "#98CAB0", "#61A47E", "#337650",),
+            "dark": ("#1B2D24", "#223C30", "#365B46", "#518064", "#7BA48A", "#ADD2B9",)
         },
         "Moss": {
-            "light": ("#F8F9F3", "#ECEFD9", "#DDE4BF", "#C1CE91", "#98AB5B", "#667B32"),
-            "dark": ("#22281A", "#303A23", "#43502D", "#5A6B3C", "#75894F", "#9CB06E"),
+            "dark": ("#1B2D24", "#31391F", "#4A582A", "#687B3D", "#91A761", "#BBC993",),
+            "light": ("#F2F7F4", "#EFF1DE", "#DDE2BC", "#BCC995", "#93A467", "#657A3F",)
         },
         "Lagoon": {
-            "light": ("#F5FAFA", "#DFF0EF", "#C7E4E1", "#9CCFCB", "#61ADA8", "#297B78"),
-            "dark": ("#152827", "#1C3B39", "#28524F", "#386F6B", "#52918A", "#76B6AE"),
-        },
+            "light": ("#F2F7F4", "#E4F2F1", "#BDE0DE", "#8BC4C1", "#57A29E", "#287975",),
+            "dark": ("#1B2D24", "#173F3E", "#245D5B", "#3A7F7D", "#62A5A1", "#99CECA",)
+        }
     },
     "High Contrast": {
         "Cyan": {
-            "light": ("#F4F7F8", "#D9ECEF", "#ABDCE0", "#71C2C9", "#1D7F89", "#075E68"),
-            "dark": ("#11161A", "#10343A", "#0D5660", "#0A737F", "#2BA7B3", "#6ACFD8"),
+            "dark": ("#101820", "#143846", "#225C70", "#3C889F", "#6EBCD0", "#ADEDFC",),
+            "light": ("#FFFFFF", "#E4F7FC", "#B0DFED", "#70BBD0", "#378499", "#175A70",)
         },
         "Gold": {
-            "light": ("#FCFAF2", "#F5EDCF", "#EBDDA1", "#D8BE5C", "#AD8513", "#765800"),
-            "dark": ("#1D190C", "#33270B", "#56410A", "#80600A", "#BA8E1A", "#F0C750"),
+            "dark": ("#101820", "#3F3210", "#725818", "#A5862F", "#D5B457", "#F5DA95",),
+            "light": ("#FFFFFF", "#FFF4D5", "#E7D299", "#C4A45E", "#907134", "#63470D",)
         },
         "Magenta": {
-            "light": ("#FCF7FB", "#F4DFEF", "#E9BDDE", "#D886C2", "#B23D93", "#7B1261"),
-            "dark": ("#210F1D", "#3A1432", "#5E1B4D", "#85266E", "#B33A94", "#E06ABC"),
+            "dark": ("#101820", "#462644", "#70416D", "#995995", "#C084BA", "#EDBCE4",),
+            "light": ("#FFFFFF", "#FBE6F6", "#E7B9DB", "#C688B7", "#965587", "#672D59",)
         },
         "Monochrome": {
-            "light": ("#FFFFFF", "#ECECEC", "#D4D4D4", "#ABABAB", "#747474", "#333333"),
-            "dark": ("#090909", "#242424", "#3D3D3D", "#606060", "#919191", "#D0D0D0"),
-        },
-    },
+            "light": ("#FFFFFF", "#F0F0F0", "#CCCCCC", "#999999", "#606060", "#252525",),
+            "dark": ("#101820", "#252525", "#505050", "#888888", "#BEBEBE", "#F0F0F0",)
+        }
+    }
 }
 
 
-# The supplied light tertiary hues need a very small luminance correction to
-# keep 9-12px tertiary copy at 4.5:1 on surface 3. Sapphire and Emerald focus
-# also need a small darkening so the selected-date ring clears 3:1 against its
-# one-pixel light surface halo. All other core values match the final contract.
+# Shared surfaces from the redesign; saved IDs and semantic roles stay stable.
 CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
     "Sapphire Glass": {
         "light": {
-            "ui_canvas": "#F4F7FB",
+            "ui_canvas": "#F3F6FB",
             "ui_surface_1": "#FFFFFF",
-            "ui_surface_2": "#F8FAFD",
-            "ui_surface_3": "#EDF3F9",
-            "ui_border_subtle": "#E4EBF3",
-            "ui_border_default": "#D6E1ED",
+            "ui_surface_2": "#F5F8FC",
+            "ui_surface_3": "#F5F8FC",
+            "ui_border_subtle": "#D9E2EE",
+            "ui_border_default": "#D9E2EE",
             "ui_border_strong": "#7D91A8",
-            "ui_text_primary": "#162235",
-            "ui_text_secondary": "#5E6E80",
-            "ui_text_tertiary": "#5E6E80",
+            "ui_text_primary": "#17263A",
+            "ui_text_secondary": "#52647C",
+            "ui_text_tertiary": "#52647C",
             "ui_text_disabled": "#8B99A8",
-            "ui_eyebrow": "#4D7098",
-            "ui_accent": "#2A63C7",
+            "ui_eyebrow": "#52647C",
+            "ui_accent": "#275ED6",
             "ui_accent_hover": "#2457B2",
             "ui_accent_pressed": "#1F4996",
-            "ui_accent_soft": "#E7F0FC",
+            "ui_accent_soft": "#EAF1FF",
             "ui_accent_border": "#7FA6DC",
             "ui_on_accent": "#FFFFFF",
             "ui_focus": "#6097DD",
-            "progress_complete": "#2A63C7",
-            "ui_card_gradient_start": "#FFFFFF",
-            "ui_card_gradient_end": "#FAFCFF",
+            "progress_complete": "#275ED6"
         },
         "dark": {
-            "ui_canvas": "#0A131E",
-            "ui_surface_1": "#101D2B",
-            "ui_surface_2": "#142438",
-            "ui_surface_3": "#1B2A3D",
-            "ui_border_subtle": "#1E3348",
-            "ui_border_default": "#28405A",
+            "ui_canvas": "#0B1220",
+            "ui_surface_1": "#111D2E",
+            "ui_surface_2": "#162438",
+            "ui_surface_3": "#162438",
+            "ui_border_subtle": "#29384B",
+            "ui_border_default": "#29384B",
             "ui_border_strong": "#617B96",
-            "ui_text_primary": "#F3F7FB",
-            "ui_text_secondary": "#A2B2C3",
-            "ui_text_tertiary": "#A2B2C3",
+            "ui_text_primary": "#EAF0F8",
+            "ui_text_secondary": "#A4B4C8",
+            "ui_text_tertiary": "#A4B4C8",
             "ui_text_disabled": "#637487",
-            "ui_eyebrow": "#9ABBDD",
-            "ui_accent": "#58A6FF",
+            "ui_eyebrow": "#A4B4C8",
+            "ui_accent": "#8CB6FF",
             "ui_accent_hover": "#7BB6F8",
             "ui_accent_pressed": "#478CD8",
-            "ui_accent_soft": "#173555",
+            "ui_accent_soft": "#1B3354",
             "ui_accent_border": "#477CAD",
-            "ui_on_accent": "#08111D",
+            "ui_on_accent": "#081727",
             "ui_focus": "#98C8FF",
-            "progress_complete": "#5796DF",
-            "ui_card_gradient_start": "#152234",
-            "ui_card_gradient_end": "#111A27",
-        },
+            "progress_complete": "#8CB6FF"
+        }
     },
     "Graphite": {
         "light": {
-            "ui_canvas": "#EFF1F3",
+            "ui_canvas": "#F4F5F7",
             "ui_surface_1": "#FFFFFF",
-            "ui_surface_2": "#F7F8FA",
-            "ui_surface_3": "#ECEFF2",
-            "ui_border_subtle": "#DDE2E7",
-            "ui_border_default": "#C6CDD4",
+            "ui_surface_2": "#F5F6F8",
+            "ui_surface_3": "#F5F6F8",
+            "ui_border_subtle": "#DDDFE4",
+            "ui_border_default": "#DDDFE4",
             "ui_border_strong": "#7D8791",
-            "ui_text_primary": "#191C20",
-            "ui_text_secondary": "#515A64",
-            "ui_text_tertiary": "#646E77",
+            "ui_text_primary": "#20242B",
+            "ui_text_secondary": "#5C6470",
+            "ui_text_tertiary": "#5C6470",
             "ui_text_disabled": "#979FA8",
-            "ui_eyebrow": "#5D6670",
-            "ui_accent": "#566B80",
+            "ui_eyebrow": "#5C6470",
+            "ui_accent": "#465B78",
             "ui_accent_hover": "#465B70",
             "ui_accent_pressed": "#3B4D60",
-            "ui_accent_soft": "#E7EBEF",
+            "ui_accent_soft": "#EDF0F5",
             "ui_accent_border": "#8799AB",
             "ui_on_accent": "#FFFFFF",
             "ui_focus": "#566B80",
-            "progress_complete": "#566B80",
+            "progress_complete": "#465B78"
         },
         "dark": {
-            "ui_canvas": "#101214",
-            "ui_surface_1": "#171A1D",
-            "ui_surface_2": "#1D2125",
-            "ui_surface_3": "#232A31",
-            "ui_border_subtle": "#2B333B",
-            "ui_border_default": "#343A40",
+            "ui_canvas": "#101215",
+            "ui_surface_1": "#191C21",
+            "ui_surface_2": "#22262D",
+            "ui_surface_3": "#22262D",
+            "ui_border_subtle": "#353A43",
+            "ui_border_default": "#353A43",
             "ui_border_strong": "#65717D",
-            "ui_text_primary": "#F4F6F8",
-            "ui_text_secondary": "#C2C9D0",
-            "ui_text_tertiary": "#939CA6",
+            "ui_text_primary": "#F2F3F5",
+            "ui_text_secondary": "#ACB3BF",
+            "ui_text_tertiary": "#ACB3BF",
             "ui_text_disabled": "#69737D",
-            "ui_eyebrow": "#AAB2BB",
-            "ui_accent": "#8CA0B3",
+            "ui_eyebrow": "#ACB3BF",
+            "ui_accent": "#A7BDDC",
             "ui_accent_hover": "#B4C5D6",
             "ui_accent_pressed": "#849BAF",
-            "ui_accent_soft": "#29343F",
+            "ui_accent_soft": "#28374B",
             "ui_accent_border": "#60788E",
-            "ui_on_accent": "#151A1F",
+            "ui_on_accent": "#152234",
             "ui_focus": "#7CB2F0",
-            "progress_complete": "#9BA6B1",
-        },
+            "progress_complete": "#A7BDDC"
+        }
     },
     "Emerald": {
         "light": {
-            "ui_canvas": "#EFF4F1",
+            "ui_canvas": "#F2F7F4",
             "ui_surface_1": "#FFFFFF",
-            "ui_surface_2": "#F8FAF9",
-            "ui_surface_3": "#EEF3F0",
-            "ui_border_subtle": "#D9E2DC",
-            "ui_border_default": "#C2CEC6",
+            "ui_surface_2": "#F2F7F4",
+            "ui_surface_3": "#F2F7F4",
+            "ui_border_subtle": "#D7E4DC",
+            "ui_border_default": "#D7E4DC",
             "ui_border_strong": "#789083",
-            "ui_text_primary": "#17231C",
-            "ui_text_secondary": "#4D6154",
-            "ui_text_tertiary": "#617367",
+            "ui_text_primary": "#18352A",
+            "ui_text_secondary": "#527063",
+            "ui_text_tertiary": "#527063",
             "ui_text_disabled": "#8F9F95",
-            "ui_eyebrow": "#47765C",
-            "ui_accent": "#137C55",
+            "ui_eyebrow": "#527063",
+            "ui_accent": "#087451",
             "ui_accent_hover": "#106B49",
             "ui_accent_pressed": "#0C5A3E",
-            "ui_accent_soft": "#E5F2EB",
+            "ui_accent_soft": "#E2F2E9",
             "ui_accent_border": "#77A98F",
             "ui_on_accent": "#FFFFFF",
             "ui_focus": "#44A67B",
-            "progress_complete": "#137C55",
+            "progress_complete": "#087451"
         },
         "dark": {
-            "ui_canvas": "#0B1210",
-            "ui_surface_1": "#101B17",
-            "ui_surface_2": "#14231C",
-            "ui_surface_3": "#17251F",
-            "ui_border_subtle": "#294137",
-            "ui_border_default": "#345444",
+            "ui_canvas": "#0C1512",
+            "ui_surface_1": "#13211B",
+            "ui_surface_2": "#1B2D24",
+            "ui_surface_3": "#1B2D24",
+            "ui_border_subtle": "#2C4437",
+            "ui_border_default": "#2C4437",
             "ui_border_strong": "#687E70",
-            "ui_text_primary": "#F2F7F4",
-            "ui_text_secondary": "#BBCAC1",
-            "ui_text_tertiary": "#8E9F95",
+            "ui_text_primary": "#EDF6F0",
+            "ui_text_secondary": "#ABC1B3",
+            "ui_text_tertiary": "#ABC1B3",
             "ui_text_disabled": "#65766C",
-            "ui_eyebrow": "#74B38D",
-            "ui_accent": "#3CCF8E",
+            "ui_eyebrow": "#ABC1B3",
+            "ui_accent": "#80D6AB",
             "ui_accent_hover": "#58CF94",
             "ui_accent_pressed": "#2FA76B",
-            "ui_accent_soft": "#173328",
+            "ui_accent_soft": "#204634",
             "ui_accent_border": "#3A7253",
-            "ui_on_accent": "#07150D",
+            "ui_on_accent": "#102E20",
             "ui_focus": "#78E0AA",
-            "progress_complete": "#37B577",
-        },
+            "progress_complete": "#80D6AB"
+        }
     },
     "High Contrast": {
         "light": {
             "ui_canvas": "#FFFFFF",
             "ui_surface_1": "#FFFFFF",
-            "ui_surface_2": "#FFFFFF",
-            "ui_surface_3": "#EDEFF1",
-            "ui_border_subtle": "#8C969F",
-            "ui_border_default": "#515B65",
+            "ui_surface_2": "#F3F3F3",
+            "ui_surface_3": "#F3F3F3",
+            "ui_border_subtle": "#525252",
+            "ui_border_default": "#525252",
             "ui_border_strong": "#20262D",
-            "ui_text_primary": "#000000",
-            "ui_text_secondary": "#262D34",
-            "ui_text_tertiary": "#4D5660",
+            "ui_text_primary": "#111111",
+            "ui_text_secondary": "#444444",
+            "ui_text_tertiary": "#444444",
             "ui_text_disabled": "#6F7882",
-            "ui_eyebrow": "#005FCC",
-            "ui_accent": "#005FCC",
+            "ui_eyebrow": "#444444",
+            "ui_accent": "#004FCE",
             "ui_accent_hover": "#004EA8",
             "ui_accent_pressed": "#003E86",
-            "ui_accent_soft": "#DDEBFF",
+            "ui_accent_soft": "#E7EFFF",
             "ui_accent_border": "#286FC2",
             "ui_on_accent": "#FFFFFF",
             "ui_focus": "#007BFF",
-            "progress_complete": "#005FCC",
+            "progress_complete": "#004FCE"
         },
         "dark": {
             "ui_canvas": "#000000",
-            "ui_surface_1": "#080A0D",
-            "ui_surface_2": "#0E1115",
-            "ui_surface_3": "#161A20",
-            "ui_border_subtle": "#626C76",
-            "ui_border_default": "#7B8590",
+            "ui_surface_1": "#080C11",
+            "ui_surface_2": "#101820",
+            "ui_surface_3": "#101820",
+            "ui_border_subtle": "#9BACBE",
+            "ui_border_default": "#9BACBE",
             "ui_border_strong": "#C7CDD4",
             "ui_text_primary": "#FFFFFF",
-            "ui_text_secondary": "#D8DDE3",
-            "ui_text_tertiary": "#AAB2BB",
+            "ui_text_secondary": "#D0DCE9",
+            "ui_text_tertiary": "#D0DCE9",
             "ui_text_disabled": "#747D87",
-            "ui_eyebrow": "#7CB9FF",
-            "ui_accent": "#5EA9FF",
+            "ui_eyebrow": "#D0DCE9",
+            "ui_accent": "#80CAFF",
             "ui_accent_hover": "#7DBAFF",
             "ui_accent_pressed": "#3B8DE8",
-            "ui_accent_soft": "#102A46",
+            "ui_accent_soft": "#112F44",
             "ui_accent_border": "#4D82B8",
-            "ui_on_accent": "#06111E",
+            "ui_on_accent": "#03111B",
             "ui_focus": "#9DCEFF",
-            "progress_complete": "#5EA9FF",
-        },
-    },
+            "progress_complete": "#80CAFF"
+        }
+    }
 }
 
 
@@ -473,6 +464,82 @@ HEATMAP_PRESET_NAMES: Mapping[str, tuple[str, ...]] = {
     "Graphite": ("Slate", "Steel", "Plum", "Mint"),
     "Emerald": ("Emerald", "Jade", "Moss", "Lagoon"),
     "High Contrast": ("Cyan", "Gold", "Magenta", "Monochrome"),
+}
+
+
+HEATMAP_COMPLETION_TEXT = {
+    "Sapphire Glass": {
+        "Sapphire": {
+            "light": ("#52647C", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",),
+            "dark": ("#A4B4C8", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",)
+        },
+        "Amethyst": {
+            "dark": ("#A4B4C8", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
+            "light": ("#52647C", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",)
+        },
+        "Glacier": {
+            "light": ("#52647C", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",),
+            "dark": ("#A4B4C8", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",)
+        },
+        "Sea Glass": {
+            "dark": ("#A4B4C8", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
+            "light": ("#52647C", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",)
+        }
+    },
+    "Graphite": {
+        "Slate": {
+            "dark": ("#ACB3BF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
+            "light": ("#5C6470", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",)
+        },
+        "Steel": {
+            "light": ("#5C6470", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",),
+            "dark": ("#ACB3BF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",)
+        },
+        "Plum": {
+            "dark": ("#ACB3BF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
+            "light": ("#5C6470", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",)
+        },
+        "Mint": {
+            "light": ("#5C6470", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",),
+            "dark": ("#ACB3BF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",)
+        }
+    },
+    "Emerald": {
+        "Emerald": {
+            "dark": ("#ABC1B3", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
+            "light": ("#527063", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",)
+        },
+        "Jade": {
+            "light": ("#527063", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",),
+            "dark": ("#ABC1B3", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",)
+        },
+        "Moss": {
+            "dark": ("#ABC1B3", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
+            "light": ("#527063", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",)
+        },
+        "Lagoon": {
+            "light": ("#527063", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",),
+            "dark": ("#ABC1B3", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",)
+        }
+    },
+    "High Contrast": {
+        "Cyan": {
+            "dark": ("#D0DCE9", "#FFFFFF", "#FFFFFF", "#000000", "#101820", "#101820",),
+            "light": ("#444444", "#101820", "#101820", "#101820", "#000000", "#FFFFFF",)
+        },
+        "Gold": {
+            "dark": ("#D0DCE9", "#FFFFFF", "#FFFFFF", "#101820", "#101820", "#101820",),
+            "light": ("#444444", "#101820", "#101820", "#101820", "#FFFFFF", "#FFFFFF",)
+        },
+        "Magenta": {
+            "dark": ("#D0DCE9", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
+            "light": ("#444444", "#101820", "#101820", "#101820", "#FFFFFF", "#FFFFFF",)
+        },
+        "Monochrome": {
+            "light": ("#444444", "#101820", "#101820", "#101820", "#FFFFFF", "#FFFFFF",),
+            "dark": ("#D0DCE9", "#FFFFFF", "#FFFFFF", "#101820", "#101820", "#101820",)
+        }
+    }
 }
 
 
@@ -491,10 +558,7 @@ def _heat_tokens(
 ) -> Theme:
     selected = preset_name or HEATMAP_PRESET_NAMES[theme_name][0]
     completion = HEATMAP_COMPLETION_SCALES[theme_name][selected][variant]
-    complete_text = tuple(
-        _heat_text(fill, core["ui_text_primary"])
-        for fill in completion
-    )
+    complete_text = HEATMAP_COMPLETION_TEXT[theme_name][selected][variant]
     return {
         **{"heat_complete_{}".format(level): color for level, color in enumerate(completion)},
         **{"heat_complete_text_{}".format(level): color for level, color in enumerate(complete_text)},
@@ -518,12 +582,7 @@ def _build_theme(theme_name: str, variant: str) -> Theme:
     core["ui_skeleton_highlight"] = composite_color(
         core["ui_accent"], core["ui_surface_2"], skeleton_opacity * 1.8
     )
-    core["ui_shadow_card"] = (
-        "none" if theme_name == "High Contrast"
-        else "0 1px 2px rgba(16, 24, 40, 0.05), 0 8px 20px rgba(16, 24, 40, 0.05)"
-        if variant == "light"
-        else "0 1px 1px rgba(0, 0, 0, 0.50), 0 8px 18px rgba(0, 0, 0, 0.22)"
-    )
+    core["ui_shadow_card"] = "none"
     core["ui_shadow_overlay"] = (
         "none" if theme_name == "High Contrast"
         else "0 4px 12px rgba(16, 24, 40, 0.10), 0 16px 32px rgba(16, 24, 40, 0.12)"
@@ -550,11 +609,9 @@ def _build_theme(theme_name: str, variant: str) -> Theme:
         "calendar_future_bg": core["ui_surface_3"],
         "calendar_future_text": core["ui_text_tertiary"],
         "calendar_footer_bg": core["ui_surface_2"],
-        "calendar_today_ring": "#73B2E6",
-        "calendar_selected_ring": core["ui_focus"],
-        "calendar_ring_halo": (
-            core["ui_text_primary"] if variant == "light" else core["ui_canvas"]
-        ),
+        "calendar_today_ring": core["ui_accent"],
+        "calendar_selected_ring": core["ui_accent"],
+        "calendar_ring_halo": core["ui_surface_1"],
         "calendar_event_halo": core["ui_surface_1"],
         "theme_name": theme_name,
         "color_mode": variant,
@@ -623,5 +680,6 @@ def resolve_theme(
     )
     resolved = dict(PRESETS[name][variant])
     resolved.update(available[calendar_name][variant])
+    resolved["calendar_empty_bg"] = resolved["heat_complete_0"]
     resolved["heatmap_preset"] = calendar_name
     return resolved

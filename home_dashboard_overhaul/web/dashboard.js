@@ -280,13 +280,6 @@
     }).format(parsed);
   }
 
-  function dashboardDensity(width) {
-    var resolved = Math.max(0, Number(width) || 0);
-    if (resolved >= 1009) return "wide";
-    if (resolved >= 589) return "intermediate";
-    return "narrow";
-  }
-
   function getSelectedDateCapabilities(day, schedulingDate) {
     var result = {
       primary: "",
@@ -510,6 +503,36 @@
     return { retry: start, clear: clearTimers };
   }
 
+  function layoutMetricHeadlines(root) {
+    var grid = root.querySelector(".hdo-summary-metrics-grid");
+    if (!grid) return;
+    grid.querySelectorAll(".hdo-metric-headline").forEach(function (headline) {
+      var value = headline.querySelector("dd");
+      var label = headline.querySelector("dt");
+      if (!value || !label) return;
+      // Measure intrinsic text independently of the current stacked state.
+      var probe = document.createElement("span");
+      probe.style.cssText = "position:fixed;visibility:hidden;white-space:pre;pointer-events:none";
+      root.appendChild(probe);
+      function width(node, text) {
+        var style = global.getComputedStyle(node);
+        ["fontFamily", "fontSize", "fontWeight", "fontStyle", "fontVariantNumeric", "letterSpacing"].forEach(function (key) {
+          probe.style[key] = style[key];
+        });
+        probe.textContent = text;
+        return probe.getBoundingClientRect().width;
+      }
+      var captionWidth = Math.max.apply(null, label.textContent.trim().split(/\s+/).map(function (word) {
+        return width(label, word);
+      }));
+      var gap = parseFloat(global.getComputedStyle(headline).columnGap) || 0;
+      var needed = width(value, value.innerText.trim()) + captionWidth + gap;
+      probe.remove();
+      headline.classList.toggle("hdo-metric-headline--stacked", needed > headline.clientWidth - 1);
+
+    });
+  }
+
   function mountDashboard(root) {
     if (!root || root.dataset.hdoMounted === "true") return null;
     root.dataset.hdoMounted = "true";
@@ -519,18 +542,16 @@
     var loadingState = mountLoadingState(root);
     var scrollOwner = applyDocumentScrollClearance(root);
 
-    function updateDensity() {
-      var width = Math.max(0, Number(root.getBoundingClientRect().width) || 0);
-      root.dataset.hdoContentMode = dashboardDensity(width);
-      root.dataset.hdoMetricColumns = width >= 589 ? "2" : "1";
+    function updateContentFit() {
       layoutEventActions();
+      layoutMetricHeadlines(root);
     }
 
-    updateDensity();
+    updateContentFit();
     if (typeof global.ResizeObserver === "function") {
-      new global.ResizeObserver(updateDensity).observe(root);
+      new global.ResizeObserver(updateContentFit).observe(root);
     } else {
-      global.addEventListener("resize", updateDensity);
+      global.addEventListener("resize", updateContentFit);
     }
 
     root.querySelectorAll("[data-hdo-command]").forEach(function (button) {
@@ -659,7 +680,7 @@
 
     function placeVerse() {
       if (!bible || !footerContent || !insightRail) return;
-      var embedded = state.view === "year";
+      var embedded = true;
       var destination = embedded ? footerContent : insightRail;
       if (bible.parentElement !== destination) destination.appendChild(bible);
       footerContent.dataset.hdoFooterVerse = String(embedded);
@@ -795,15 +816,15 @@
         if (index === 0) {
           var context = document.createElement("span");
           context.className = "hdo-context-label";
-          context.textContent = relationship + ": ";
-          link.appendChild(context);
+          context.textContent = relationship;
+          copy.appendChild(context);
         }
         link.appendChild(document.createTextNode(item.name));
         link.title = relationship + ": " + item.name;
         var meta = document.createElement("span");
         meta.className = "hdo-event-meta";
         var countdown = eventCountdown(item.date, todayIso, locale);
-        meta.textContent = formatEventDate(item.date, todayIso, locale) + (countdown ? " (" + countdown + ")" : "");
+        meta.textContent = formatEventDate(item.date, todayIso, locale) + (countdown ? " · " + countdown.charAt(0).toUpperCase() + countdown.slice(1) : "");
         heading.appendChild(link);
         var edit = document.createElement("button");
         edit.type = "button";
@@ -1321,6 +1342,16 @@
     }
     node.hidden = false;
     var resolved = unavailable ? UNAVAILABLE_TEXT : String(value);
+    var streakNumber = node.querySelector(".hdo-streak-number");
+    if (streakNumber) {
+      streakNumber.textContent = unavailable ? UNAVAILABLE_TEXT : String(compactValue);
+      node.querySelector(".hdo-streak-unit").textContent = unavailable ? "" : (rawValue === 1 ? "day" : "days");
+      var streak = node.closest(".hdo-current-streak");
+      streak.classList.toggle("is-unavailable", unavailable);
+      if (unavailable) streak.title = "Current streak unavailable";
+      else streak.removeAttribute("title");
+      return;
+    }
     var wide = node.querySelector(".hdo-value-wide");
     var compact = node.querySelector(".hdo-value-compact");
     if (wide && compact) {
@@ -1339,7 +1370,6 @@
     var track = root.querySelector("[data-hdo-progress-track]");
     var fill = root.querySelector("[data-hdo-progress-fill]");
     var label = root.querySelector("[data-hdo-progress-label]");
-    var fillLabel = root.querySelector("[data-hdo-progress-label-fill]");
     var chip = root.querySelector("[data-hdo-progress-chip]");
     if (!track || !fill || !label || !chip) return;
     var progress = presentation && presentation.progress && typeof presentation.progress === "object"
@@ -1366,8 +1396,10 @@
     track.setAttribute("aria-valuenow", String(percent));
     track.setAttribute("aria-valuetext", statusLabel);
     track.style.setProperty("--hdo-progress-percent", percent + "%");
-    label.textContent = statusLabel;
-    if (fillLabel) fillLabel.textContent = statusLabel;
+    label.hidden = !hasFill;
+    label.setAttribute("aria-label", statusLabel);
+    var number = label.querySelector("[data-hdo-progress-number]");
+    if (number) number.textContent = Math.round(percent) + "%";
   }
 
   function updateMetricSemanticRole(root, key, role) {
@@ -1481,7 +1513,7 @@
     }
     if (longTerm) {
       setMetric(root, "long_term.average_reviews_per_active_day", formatNumber(longTerm.average_reviews_per_active_day, locale), longTerm.average_reviews_per_active_day);
-      setMetric(root, "long_term.current_streak", formatNumber(longTerm.current_streak, locale) + (longTerm.current_streak === 1 ? " day" : " days"), longTerm.current_streak);
+      setMetric(root, "long_term.current_streak", formatNumber(longTerm.current_streak, locale) + (longTerm.current_streak === 1 ? " day" : " days"), longTerm.current_streak, formatNumber(longTerm.current_streak, locale));
       setMetric(root, "long_term.longest_streak", formatNumber(longTerm.longest_streak, locale) + (longTerm.longest_streak === 1 ? " day" : " days"), longTerm.longest_streak);
       setMetric(root, "long_term.lifetime_cards_studied", formatNumber(longTerm.lifetime_cards_studied, locale), longTerm.lifetime_cards_studied);
       setMetric(root, "long_term.lifetime_retention", longTerm.lifetime_retention && longTerm.lifetime_retention.status === "available" ? longTerm.lifetime_retention.percent + "%" : N_A_TEXT, longTerm.lifetime_retention && longTerm.lifetime_retention.percent);
@@ -1492,6 +1524,7 @@
       });
     }
     updateProgressComposition(root, statistics, presentation, locale);
+    layoutMetricHeadlines(root);
   }
 
   var activeState = null;
@@ -1763,7 +1796,6 @@
     eventCountdown: eventCountdown,
     eventCountdownCompact: eventCountdownCompact,
     formatLastUpdatedTime: formatLastUpdatedTime,
-    dashboardDensity: dashboardDensity,
     getSelectedDateCapabilities: getSelectedDateCapabilities,
     pluralLabel: pluralLabel,
     buildCalendarTooltipRows: buildCalendarTooltipRows,

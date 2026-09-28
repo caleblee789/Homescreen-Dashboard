@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the corrected Home Screen Dashboard 1.8.7 UI authorities."""
+"""Validate the corrected Home Screen Dashboard 1.9.0 UI authorities."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from typing import Any, List, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 QA_ROOT = ROOT / "qa"
-RELEASE = "1.8.7"
+RELEASE = "1.9.0"
 CURRENT_AUTHORITIES = {
     "surface": "calendar_surface_manifest_1_8_7.json",
     "matrix": "visual_regression_matrix_1_8_7.json",
@@ -75,7 +75,7 @@ def _validate_palette_matrix(errors: List[str], matrix: Mapping[str, Any]) -> No
         "initial-cards-due-matches-the-progress-denominator",
         "fixed-seven-period-average-cards-per-day-rounded-half-up",
         "no-visible-again-rate-cards-completed-or-study-days",
-        "initial-live-refresh-responsive-and-restart-parity",
+        "initial-live-refresh-fixed-layout-and-restart-parity",
         "equal-2x2-card-geometry-with-12px-gaps",
         "right-aligned-single-line-values-with-at-least-8px-label-separation",
         "long-statistics-values-fit-without-wrap-clip-overlap-ellipsis-or-font-reduction",
@@ -359,7 +359,7 @@ def validate(root: Path = ROOT) -> List[str]:
     if set(matrix.get("deferred_unrun", [])) != expected_unrun:
         errors.append("visual nonblocking boundaries are incorrect")
     if capture.get("status") != "required-before-release":
-        errors.append("fresh 1.8.7 evidence must remain required before release")
+        errors.append("fresh 1.9.0 evidence must remain required before release")
 
     renderer_source = _source("renderer.py")
     dashboard_js = _source("web/dashboard.js")
@@ -408,7 +408,7 @@ def validate(root: Path = ROOT) -> List[str]:
         "class DisclosureHeader(QPushButton)",
         "class VerseLibraryModel(QAbstractListModel)",
         "class VerseLibraryDelegate(QStyledItemDelegate)",
-        "self.heatmap_preset = QComboBox()",
+        "self.heatmap_preset = ChoiceCardGroup(",
         'SettingsCard("Version and support")',
         "scope_differs_from_defaults",
         "Could not save changes. Your draft is still available.",
@@ -418,7 +418,7 @@ def validate(root: Path = ROOT) -> List[str]:
         '("Save and close", "primary", self._save_and_close)',
         'self._set_status("saving", "Saving changes…")',
         "class SettingsEditorDialog(QDialog)",
-        "class HeatmapPalettePreview(QWidget)",
+        "class ChoiceCardGroup(SegmentedControl)",
         "class BibleAppearancePreview(QWidget)",
         'self.save_button.setText("Save changes")',
         "self._set_mutation_controls_enabled(False)",
@@ -460,10 +460,10 @@ def validate(root: Path = ROOT) -> List[str]:
         "def _persist_settings_transaction(",
     ))
     _require_markers(errors, "themes.py", (
-        '"ui_sidebar": "#090F15"',
-        '"ui_accent_soft": "#263B4D"',
-        '"ui_sidebar": "#E9EFF4"',
-        '"ui_accent_soft": "#DFEAF3"',
+        '"ui_sidebar": "#101215"',
+        '"ui_accent_soft": "#1B3354"',
+        '"ui_sidebar": "#F4F5F7"',
+        '"ui_accent_soft": "#EAF1FF"',
     ))
 
     settings_source = _source("settings.py")
