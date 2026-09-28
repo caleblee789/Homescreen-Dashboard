@@ -1,11 +1,15 @@
-# Home Screen Dashboard 1.8.7
+# Home Screen Dashboard 1.9.0
 
 Home Screen Dashboard is a calendar-first Deck Browser dashboard for Anki
 Desktop 26.8. It combines study history, due work, local events, stable study
 metrics, and a rotating Bible verse without patching Anki's private Deck
 Browser or statistics classes.
 
-## What changed in 1.8.7
+## What changed in 1.9.0
+
+See the [1.9.0 changelog](CHANGELOG.md) for the fixed Month and Year layout, the shared footer, 2×2 statistics, fitted captions, and always-visible sections.
+
+## Earlier 1.8.7 changes
 
 - Settings remains a normal parented `QDialog` with default flags and a local
   `exec()` lifetime. It opens at 1080×760 logical pixels, has an 860×640 normal
@@ -167,7 +171,7 @@ work remains deferred and is not packaged.
 
 ## Install
 
-Install `home-dashboard-overhaul-1.8.7.ankiaddon` through **Tools → Add-ons →
+Install `home-dashboard-overhaul-1.9.0.ankiaddon` through **Tools → Add-ons →
 Install from file**, restart Anki, and disable any legacy source add-ons named
 by the activation card. The manifest is pinned to Anki Desktop 26.8.
 
@@ -186,7 +190,7 @@ python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
 The builder creates one 24-member allowlisted archive, checks its version and
-safe paths, validates the 1.8.7 release authorities, and verifies every
+safe paths, validates the 1.9.0 release authorities, and verifies every
 packaged byte against source. The canonical plan contains 116 native frames,
 including 63 Settings frames at 100% application font and two total
 controlled-restart states. Settings presentation is capped at 14 sheets.

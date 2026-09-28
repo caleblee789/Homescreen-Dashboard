@@ -71,7 +71,7 @@ RELEASE_CONTRACT_FILES = (
     "qa/settings_fullscreen_acceptance_template_1_8_7.json",
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
-FIXED_TIMESTAMP = (2026, 8, 26, 0, 0, 0)
+FIXED_TIMESTAMP = (2026, 9, 27, 0, 0, 0)
 EXPECTED_PACKAGE_MEMBER_COUNT = 27
 EXPECTED_PACKAGE_LINKS = frozenset({
     "https://buymeacoffee.com/caleblee78f",
@@ -489,10 +489,10 @@ def validate_sources() -> dict:
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.8.7":
-        raise ValueError("release artifact must use semantic version 1.8.7")
-    if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260800):
-        raise ValueError("release must be pinned to Anki 26.8")
+    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.9.0":
+        raise ValueError("release artifact must use semantic version 1.9.0")
+    if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260903):
+        raise ValueError("release must support Anki 26.8 and record the tested 26.9.3 version")
     if config.get("schema_version") != 8:
         raise ValueError("config schema must be version 8")
     if config.get("layout", {}).get("order") != ["study_calendar", "summary_metrics", "bible_verse"]:
@@ -808,7 +808,7 @@ def validate_sources() -> dict:
         surface_contract, visual_matrix, capture_contract, probe_contract,
         surface_registry,
     )):
-        raise ValueError("1.8.7 release authorities use different versions")
+        raise ValueError("1.9.0 release authorities use different versions")
     if surface_registry.get("surfaces") != surface_contract.get("canonical_surfaces"):
         raise ValueError("surface registry differs from the canonical surface authority")
     if capture_plan.release != version:
@@ -895,12 +895,12 @@ def validate_sources() -> dict:
     if not (0 < wide_counts["initial"] <= full_counts["initial"] and wide_counts["restart"] <= full_counts["restart"]):
         raise ValueError("wide 100 percent profile is not a valid subset of the full capture plan")
     if full_counts != {"initial": 114, "restart": 2, "total": 116}:
-        raise ValueError("corrected 1.8.7 full capture count must be 116")
+        raise ValueError("corrected 1.9.0 full capture count must be 116")
     settings_counts = capture_plan.counts("settings")
     if settings_counts != {"initial": 62, "restart": 1, "total": 63}:
-        raise ValueError("minimal 1.8.7 Settings capture count must be exactly 63")
+        raise ValueError("minimal 1.9.0 Settings capture count must be exactly 63")
     if 2 + len(capture_plan.detail_groups("settings")) > 14:
-        raise ValueError("minimal 1.8.7 Settings evidence exceeds 14 sheets")
+        raise ValueError("minimal 1.9.0 Settings evidence exceeds 14 sheets")
     structured_gate_id = "macos-fullscreen-no-space-switch-menu-and-dashboard-gear"
     if capture_plan.profile("settings").get("required_structured_manual_results") != [
         structured_gate_id

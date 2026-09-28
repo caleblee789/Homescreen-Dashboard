@@ -37,7 +37,7 @@ from assemble_release_evidence_1_8_7 import (
 
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CANDIDATE = (
-    SOURCE_ROOT / "dist" / "home-dashboard-overhaul-1.8.7.ankiaddon"
+    SOURCE_ROOT / "dist" / "home-dashboard-overhaul-1.9.0.ankiaddon"
 )
 DECORATED_SETTINGS_CAPTURE_METHOD_PREFIXES = (
     "QScreen.grabWindow",
@@ -550,7 +550,7 @@ def assemble(
             "pass is claimed."
         )
         (staging / "README.md").write_text(
-            "# Home Screen Dashboard 1.8.7 Settings review evidence\n\n"
+            "# Home Screen Dashboard 1.9.0 Settings review evidence\n\n"
             "This directory contains {} native Settings captures at 100% application font "
             "and {} generated contact sheets for exact package `{}`.\n\n"
             "It is visual review evidence, not release approval. {} Alternate-font "

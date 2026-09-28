@@ -1,10 +1,10 @@
 # Release visual contract
 
-Status: capture requirements for Home Screen Dashboard 1.8.7. Prior release
-evidence bundles were removed during capture cleanup. This contract alone does
-not establish current release readiness.
+Status: historical capture requirements for Home Screen Dashboard 1.8.7. Its
+release evidence bundles were removed during capture cleanup. This contract is
+not evidence for the published 1.9.0 release.
 
-## Authority and current local capture
+## Authority and retained local run
 
 The current machine-readable authorities are:
 
@@ -16,12 +16,12 @@ The current machine-readable authorities are:
 - `qa/settings_window_contract_1_8_7.json`
 - `qa/runtime_probe_release_1_8_7_manifest.json`
 
-The only retained capture run is the local, Git-ignored
+The only run under `qa-runs` is the local, Git-ignored
 `qa-runs/final-dashboard-20260927-100-125` set: 156 native Dashboard frames,
-13 contact sheets, its package, and run reports. It does not include the
-Settings and full-screen release matrix required below. A release decision
-requires fresh exact-package evidence for those gates and independent human
-review; `release_ready` remains false.
+13 contact sheets, its package, and run reports. It is bound to an earlier
+candidate and does not replace the 1.9.0 release images in
+`docs/images/1.9.0`. It also does not include the Settings and full-screen
+matrix required below for a new exact-package release decision.
 
 ## Production composition
 

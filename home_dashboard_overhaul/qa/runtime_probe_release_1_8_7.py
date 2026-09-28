@@ -1,10 +1,10 @@
-"""Fail-closed native production and Settings probe for release 1.8.7.
+"""Fail-closed native production and Settings probe for release 1.9.0.
 
 The disposable helper add-on installs this module as ``__init__.py`` and the
 retained 1.8.4 production harness as ``_probe_base.py``.  The retained harness
 supplies exact-package identity, scheduler-limit, Deck Browser mounting, and
 native capture plumbing.  This module replaces its release matrix and
-assertions with the canonical corrected 1.8.7 production and Settings contract.
+assertions with the canonical corrected 1.9.0 production and Settings contract.
 """
 
 from __future__ import annotations

@@ -49,8 +49,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )
 
     def test_release_metadata_and_schema_eight_are_current(self) -> None:
-        self.assertEqual(self.manifest["human_version"], "1.8.7")
-        self.assertEqual(self.settings_window_contract["release"], "1.8.7")
+        self.assertEqual(self.manifest["human_version"], "1.9.0")
+        self.assertEqual(self.settings_window_contract["release"], "1.9.0")
         self.assertEqual(self.settings_window_contract["schema_version"], 8)
         self.assertEqual(
             self.settings_window_contract["settings_profile_acceptance_gate"],

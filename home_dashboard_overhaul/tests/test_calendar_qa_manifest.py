@@ -38,7 +38,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
 
     def test_manifest_is_the_authoritative_1_8_7_schema_eight_contract(self) -> None:
         self.assertEqual(self.manifest["schema_version"], 8)
-        self.assertEqual(self.manifest["release"], "1.8.7")
+        self.assertEqual(self.manifest["release"], "1.9.0")
         self.assertEqual(
             self.manifest["contract"],
             "corrected-native-settings-and-production-dashboard-release-ui-2026-08-26",
