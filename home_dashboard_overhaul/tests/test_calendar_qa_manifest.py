@@ -64,7 +64,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(settings["page_switching"], "native-stacked-widget-only-no-render-timer")
         dashboard = self.manifest["dashboard_architecture"]
         self.assertEqual(
-            dashboard["width_rule"], "min(1160px, calc(100% - 32px))"
+            dashboard["width_rule"], "1160px"
         )
         self.assertEqual(dashboard["maximum_width"], 1160)
         self.assertEqual(dashboard["minimum_side_margin"], 16)
@@ -73,18 +73,18 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(dashboard["desktop_calendar_width_target"], 786)
         self.assertEqual(dashboard["desktop_column_gap"], 14)
         self.assertEqual(dashboard["desktop_rail_width"], 360)
-        self.assertEqual(dashboard["stack_root_maximum_width"], 1008)
-        self.assertEqual(dashboard["metric_single_column_root_maximum_width"], 588)
+        self.assertEqual(dashboard["horizontal_scroll_owner"], "document")
+        self.assertEqual(dashboard["fixed_metric_columns"], 2)
         self.assertEqual(dashboard["rail_gap"], 12)
-        self.assertEqual(dashboard["summary_grid_minimum_height"], 352)
+        self.assertEqual(dashboard["summary_grid_minimum_height"], 440)
         self.assertEqual(dashboard["summary_grid_shape"], [2, 2])
         self.assertEqual(dashboard["summary_grid_gap"], 12)
-        self.assertEqual(dashboard["summary_card_minimum_width"], 170)
-        self.assertEqual(dashboard["summary_card_padding"], [14, 12, 13])
-        self.assertEqual(dashboard["metric_column_gap"], 10)
-        self.assertEqual(dashboard["metric_minimum_visible_gap"], 8)
+        self.assertEqual(dashboard["summary_card_minimum_width"], 174)
+        self.assertEqual(dashboard["summary_card_padding"], [14, 14, 14])
+        self.assertEqual(dashboard["metric_column_gap"], 6)
+        self.assertEqual(dashboard["metric_minimum_visible_gap"], 6)
         self.assertEqual(dashboard["month_calendar_minimum_height"], 0)
-        self.assertEqual(dashboard["bible_card_minimum_height"], 182)
+        self.assertEqual(dashboard["bible_card_minimum_height"], 0)
         self.assertEqual(
             dashboard["month_calendar_to_bible_bottom_tolerance"], None
         )
@@ -100,7 +100,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(dashboard["year_wide_cell_size"], 10)
         self.assertEqual(dashboard["year_gap"], 2)
         self.assertEqual(dashboard["year_heatmap_width_percent_range"], [85, 90])
-        self.assertEqual(dashboard["year_narrow_cell_sizing"], "fluid-square")
+        self.assertEqual(dashboard["year_cell_sizing"], "fixed-shell-square")
         self.assertEqual(dashboard["year_minimum_width_floor"], "none")
         self.assertIs(dashboard["year_internal_horizontal_scrolling"], False)
 
@@ -228,7 +228,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
                 "initial-cards-due-matches-the-progress-denominator",
                 "fixed-seven-period-average-cards-per-day-rounded-half-up",
                 "no-visible-again-rate-cards-completed-or-study-days",
-                "initial-live-refresh-responsive-and-restart-parity",
+                "initial-live-refresh-fixed-layout-and-restart-parity",
                 "equal-2x2-card-geometry-with-12px-gaps",
                 "right-aligned-single-line-values-with-at-least-8px-label-separation",
                 "long-statistics-values-fit-without-wrap-clip-overlap-ellipsis-or-font-reduction",
@@ -237,20 +237,20 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(
             self.matrix["dashboard_layout_contract"],
             {
-                "root_width_rule": "min(1160px, calc(100% - 32px))",
+                "root_width_rule": "1160px",
                 "rendered_deck_gap_range": [28, 30],
                 "addon_top_margin_target": 30,
                 "desktop_columns": ["minmax(0, 1fr)", "360px"],
                 "desktop_column_gap": 14,
                 "rail_gap": 12,
-                "summary_grid_minimum_height": 352,
+                "summary_grid_minimum_height": 440,
                 "summary_grid_shape": [2, 2],
-                "summary_card_minimum_width": 170,
-                "summary_card_padding": [14, 12, 13],
-                "metric_column_gap": 10,
-                "metric_minimum_visible_gap": 8,
-                "stack_root_maximum_width": 1008,
-                "metric_single_column_root_maximum_width": 588,
+                "summary_card_minimum_width": 174,
+                "summary_card_padding": [14, 14, 14],
+                "metric_column_gap": 6,
+                "metric_minimum_visible_gap": 6,
+                "horizontal_scroll_owner": "document",
+                "fixed_metric_columns": 2,
                 "month_bottom_alignment": {
                     "calendar_to_bible_tolerance": None
                 },
@@ -261,7 +261,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
                     "wide_cell_size": 10,
                     "gap": 2,
                     "usable_width_percent_range": [85, 90],
-                    "narrow_sizing": "fluid-square",
+                    "sizing": "fixed-shell-square",
                     "minimum_width_floor": "none",
                     "internal_horizontal_scrolling": False,
                 },
@@ -273,31 +273,16 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
                 for case in self.matrix["statistics_accuracy_cases"]
             ],
             [
-                ("PROD-STATS-WIDE-MONTH", 1160, "wide-2x2"),
-                ("PROD-STATS-WIDE-YEAR", 1160, "wide-2x2"),
-                ("PROD-STATS-INTERMEDIATE", None, "intermediate"),
-                ("PROD-STATS-NARROW", None, "narrow-stacked"),
+                ("PROD-STATS-WIDE-MONTH", 1160, "fixed-2x2"),
+                ("PROD-STATS-WIDE-YEAR", 1160, "fixed-2x2"),
+                ("PROD-STATS-INTERMEDIATE", 1160, "fixed-2x2"),
+                ("PROD-STATS-NARROW", 1160, "fixed-2x2"),
             ],
         )
         self.assertEqual(
-            [
-                (case["id"], case["root_width"], case["layout"])
-                for case in self.matrix["responsive_boundary_cases"]
-            ],
-            [
-                ("PROD-STATS-STACK-BOUNDARY-BELOW", 1009, "wide-2x2"),
-                ("PROD-STATS-STACK-BOUNDARY", 1008, "stacked-rail-2x2"),
-                (
-                    "PROD-STATS-COLUMN-BOUNDARY-ABOVE",
-                    589,
-                    "stacked-rail-2x2",
-                ),
-                (
-                    "PROD-STATS-COLUMN-BOUNDARY",
-                    588,
-                    "stacked-rail-single-column",
-                ),
-            ],
+            [(case["viewport_width"], case["root_width"], case["layout"])
+             for case in self.matrix["fixed_viewport_cases"]],
+            [(1440, 1160, "fixed-2x2"), (1191, 1160, "fixed-2x2"), (620, 1160, "fixed-2x2")],
         )
         self.assertEqual(
             self.matrix["dashboard_quality_assertions"],
@@ -305,10 +290,10 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
                 "centered-1160px-shell-with-16px-minimum-side-insets",
                 "single-owner-28-to-30px-rendered-deck-gap",
                 "aligned-calendar-and-top-summary-card-edges",
-                "month-footer-content-height-with-standalone-verse-below-statistics",
+                "month-and-year-shared-split-footer-with-verse-and-separated-event",
                 "year-footer-content-height-with-embedded-verse-and-metrics-only-rail",
                 "year-heatmap-at-least-85-percent-wide-with-square-complete-cells",
-                "no-document-or-component-horizontal-overflow",
+                "document-horizontal-scroll-without-component-overflow",
                 "no-internal-dashboard-scrollbars",
                 "month-year-switch-preserves-horizontal-shell-and-rail-geometry",
                 "native-deck-area-and-bottom-actions-unobstructed",

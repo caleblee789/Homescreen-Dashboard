@@ -75,7 +75,7 @@ def _validate_palette_matrix(errors: List[str], matrix: Mapping[str, Any]) -> No
         "initial-cards-due-matches-the-progress-denominator",
         "fixed-seven-period-average-cards-per-day-rounded-half-up",
         "no-visible-again-rate-cards-completed-or-study-days",
-        "initial-live-refresh-responsive-and-restart-parity",
+        "initial-live-refresh-fixed-layout-and-restart-parity",
         "equal-2x2-card-geometry-with-12px-gaps",
         "right-aligned-single-line-values-with-at-least-8px-label-separation",
         "long-statistics-values-fit-without-wrap-clip-overlap-ellipsis-or-font-reduction",

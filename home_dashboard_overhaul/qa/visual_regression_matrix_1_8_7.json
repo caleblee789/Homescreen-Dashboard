@@ -301,7 +301,7 @@
   "statistics_accuracy_cases": [
     {
       "id": "PROD-STATS-WIDE-MONTH",
-      "layout": "wide-2x2",
+      "layout": "fixed-2x2",
       "view": "month",
       "root_width": 1160,
       "calendar_width_target": 786,
@@ -309,7 +309,7 @@
     },
     {
       "id": "PROD-STATS-WIDE-YEAR",
-      "layout": "wide-2x2",
+      "layout": "fixed-2x2",
       "view": "year",
       "root_width": 1160,
       "calendar_width_target": 786,
@@ -317,43 +317,19 @@
     },
     {
       "id": "PROD-STATS-INTERMEDIATE",
-      "layout": "intermediate",
-      "view": "month"
+      "layout": "fixed-2x2",
+      "view": "month",
+      "root_width": 1160
     },
     {
       "id": "PROD-STATS-NARROW",
-      "layout": "narrow-stacked",
-      "view": "month"
-    }
-  ],
-  "responsive_boundary_cases": [
-    {
-      "id": "PROD-STATS-STACK-BOUNDARY-BELOW",
-      "layout": "wide-2x2",
+      "layout": "fixed-2x2",
       "view": "month",
-      "root_width": 1009
-    },
-    {
-      "id": "PROD-STATS-STACK-BOUNDARY",
-      "layout": "stacked-rail-2x2",
-      "view": "month",
-      "root_width": 1008
-    },
-    {
-      "id": "PROD-STATS-COLUMN-BOUNDARY-ABOVE",
-      "layout": "stacked-rail-2x2",
-      "view": "month",
-      "root_width": 589
-    },
-    {
-      "id": "PROD-STATS-COLUMN-BOUNDARY",
-      "layout": "stacked-rail-single-column",
-      "view": "month",
-      "root_width": 588
+      "root_width": 1160
     }
   ],
   "dashboard_layout_contract": {
-    "root_width_rule": "min(1160px, calc(100% - 32px))",
+    "root_width_rule": "1160px",
     "rendered_deck_gap_range": [
       28,
       30
@@ -365,21 +341,21 @@
     ],
     "desktop_column_gap": 14,
     "rail_gap": 12,
-    "summary_grid_minimum_height": 352,
+    "summary_grid_minimum_height": 440,
     "summary_grid_shape": [
       2,
       2
     ],
-    "summary_card_minimum_width": 170,
+    "summary_card_minimum_width": 174,
     "summary_card_padding": [
       14,
-      12,
-      13
+      14,
+      14
     ],
-    "metric_column_gap": 10,
-    "metric_minimum_visible_gap": 8,
-    "stack_root_maximum_width": 1008,
-    "metric_single_column_root_maximum_width": 588,
+    "metric_column_gap": 6,
+    "metric_minimum_visible_gap": 6,
+    "horizontal_scroll_owner": "document",
+    "fixed_metric_columns": 2,
     "month_bottom_alignment": {
       "calendar_to_bible_tolerance": null
     },
@@ -393,7 +369,7 @@
         85,
         90
       ],
-      "narrow_sizing": "fluid-square",
+      "sizing": "fixed-shell-square",
       "minimum_width_floor": "none",
       "internal_horizontal_scrolling": false
     }
@@ -403,7 +379,7 @@
     "initial-cards-due-matches-the-progress-denominator",
     "fixed-seven-period-average-cards-per-day-rounded-half-up",
     "no-visible-again-rate-cards-completed-or-study-days",
-    "initial-live-refresh-responsive-and-restart-parity",
+    "initial-live-refresh-fixed-layout-and-restart-parity",
     "equal-2x2-card-geometry-with-12px-gaps",
     "right-aligned-single-line-values-with-at-least-8px-label-separation",
     "long-statistics-values-fit-without-wrap-clip-overlap-ellipsis-or-font-reduction"
@@ -412,10 +388,10 @@
     "centered-1160px-shell-with-16px-minimum-side-insets",
     "single-owner-28-to-30px-rendered-deck-gap",
     "aligned-calendar-and-top-summary-card-edges",
-    "month-footer-content-height-with-standalone-verse-below-statistics",
+    "month-and-year-shared-split-footer-with-verse-and-separated-event",
     "year-footer-content-height-with-embedded-verse-and-metrics-only-rail",
     "year-heatmap-at-least-85-percent-wide-with-square-complete-cells",
-    "no-document-or-component-horizontal-overflow",
+    "document-horizontal-scroll-without-component-overflow",
     "no-internal-dashboard-scrollbars",
     "month-year-switch-preserves-horizontal-shell-and-rail-geometry",
     "native-deck-area-and-bottom-actions-unobstructed"
@@ -504,5 +480,28 @@
     "alternate-application-font-settings-validation",
     "voiceover_review",
     "forced_colors_review"
+  ],
+  "fixed_viewport_cases": [
+    {
+      "id": "PROD-FIXED-WIDE",
+      "viewport_width": 1440,
+      "root_width": 1160,
+      "layout": "fixed-2x2",
+      "view": "month"
+    },
+    {
+      "id": "PROD-FIXED-OVERFLOW",
+      "viewport_width": 1191,
+      "root_width": 1160,
+      "layout": "fixed-2x2",
+      "view": "month"
+    },
+    {
+      "id": "PROD-FIXED-NARROW",
+      "viewport_width": 620,
+      "root_width": 1160,
+      "layout": "fixed-2x2",
+      "view": "month"
+    }
   ]
 }

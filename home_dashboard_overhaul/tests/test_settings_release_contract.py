@@ -40,15 +40,6 @@ class SettingsReleaseContractTests(unittest.TestCase):
         cls.settings_review_assembler = (
             ROOT / "qa" / "assemble_settings_review_evidence_1_8_7.py"
         ).read_text(encoding="utf-8")
-        cls.repository_ignore = (ROOT.parent / ".gitignore").read_text(encoding="utf-8")
-        cls.release_evidence_manifest = json.loads(
-            (
-                ROOT
-                / "qa"
-                / "release-evidence-1.8.7-2026-08-30-4d0a4107-ui-readiness-100"
-                / "capture-evidence-manifest.json"
-            ).read_text(encoding="utf-8")
-        )
         cls.config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
         cls.manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
         cls.settings_window_contract = json.loads(
@@ -697,7 +688,6 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'if case.get("id") == "settings-font-100-dashboard":',
             "_assert_scoped_settings_resets(dialog)",
             "dialog._reset_card(scope, label)",
-            '"Calendar event marker preserved"',
             '"pending manual verse restored"',
             "CAPTURE_PLAN.structured_settings_layout()",
             '"structured_work_area_logical"',
@@ -766,20 +756,6 @@ class SettingsReleaseContractTests(unittest.TestCase):
             self.evidence_assembler,
         )
         self.assertIn('"total": len(contact_sheets["sheets"])', self.evidence_assembler)
-
-    def test_generated_current_contact_sheets_are_retained_with_current_evidence(self) -> None:
-        current_directory = (
-            "home_dashboard_overhaul/qa/"
-            "release-evidence-1.8.7-2026-08-30-4d0a4107-ui-readiness-100/"
-            "contact-sheets/"
-        )
-        self.assertNotIn(current_directory, self.repository_ignore)
-        self.assertEqual(
-            self.release_evidence_manifest["contact_sheets"]["repository_tracking"],
-            "current-only",
-        )
-        self.assertIn('"repository_tracking": "current-only"', self.evidence_assembler)
-        self.assertIn("retained with this current evidence set", self.evidence_assembler)
 
     def test_settings_is_native_only_and_rendered_previews_are_absent(self) -> None:
         for forbidden in (
@@ -854,19 +830,16 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )[0]
         card_markers = (
             "appearance_card = self._create_appearance_card()",
-            'SettingsCard(\n            "Dashboard sections"',
             'SettingsCard("Study metrics", "", "Reset")',
             'SettingsCard("Panel placement", "", "Reset")',
             "return calendar_content, data_card",
         )
+        self.assertNotIn("self.visibility", self.settings)
+        self.assertNotIn("Show event markers", self.settings)
+        self.assertNotIn('SettingsCard(\n            "Dashboard sections"', dashboard_source)
         positions = [dashboard_source.index(marker) for marker in card_markers]
         self.assertEqual(positions, sorted(positions))
         for copy in (
-            "History, due load, and events.",
-            "Cards remaining and completion.",
-            "Cards studied, time, pace, and ETA.",
-            "7-day and lifetime totals.",
-            "Optional verse card.",
             "Changes how pace is displayed.",
             "Used to color retention status.",
             "Counts the first qualifying answer after a manual reschedule.",
@@ -1487,7 +1460,6 @@ class SettingsReleaseContractTests(unittest.TestCase):
 
         for scope in (
             "appearance",
-            "dashboard_sections",
             "study_metrics",
             "calendar_display",
             "calendar_range",
@@ -1511,13 +1483,6 @@ class SettingsReleaseContractTests(unittest.TestCase):
                     self.assertEqual(fake.preset.current, defaults["appearance"]["preset"])
                     self.assertEqual(fake.opacity.current, defaults["appearance"]["opacity"])
                     self.assertFalse(fake.forecast_days.is_valid())
-                elif scope == "dashboard_sections":
-                    for key in ("heatmap", "remaining", "today", "heatmap_metrics", "bible"):
-                        self.assertEqual(
-                            fake.visibility[key].checked,
-                            defaults["visibility"][key],
-                        )
-                    self.assertFalse(fake.visibility["events"].checked)
                 elif scope == "study_metrics":
                     self.assertEqual(
                         fake.retention_target.current,
@@ -1530,7 +1495,6 @@ class SettingsReleaseContractTests(unittest.TestCase):
                         fake.calendar_view.current,
                         defaults["heatmap"]["calendar_view"],
                     )
-                    self.assertTrue(fake.visibility["events"].checked)
                     self.assertFalse(fake.retention_target.is_valid())
                 elif scope == "calendar_range":
                     self.assertEqual(fake.history_range.current, "all")

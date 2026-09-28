@@ -1,6 +1,0 @@
-2026-09-07 22:46:46.519 anki[29471:254419] No Python NSLog handler found. stdout/stderr will not be captured.
-2026-09-07 22:46:46.519 anki[29471:254419] To capture stdout/stderr, add 'std-nslog' to your app dependencies.
-Starting Anki 26.08.1...
-2026-09-07 22:46:46,956:INFO:aqt.mediasrv: Serving on http://127.0.0.1:53586
-Starting main loop...
-2026-09-07 22:46:51,572:WARNING:waitress: unhandled close event

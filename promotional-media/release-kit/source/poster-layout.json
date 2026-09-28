@@ -1,0 +1,37 @@
+{
+  "canvas": [
+    1080,
+    1350
+  ],
+  "master_scale": 2,
+  "branding": {
+    "name": "Home Screen Dashboard",
+    "tagline": "Your Anki. Your style.",
+    "poster_header": "HOME SCREEN DASHBOARD",
+    "poster_subtitle": "All your studying info, at a glance."
+  },
+  "lead": [
+    "sapphire-year-verse",
+    "emerald-month-event"
+  ],
+  "gallery": [
+    [
+      "sapphire-year-verse",
+      "Sapphire Glass",
+      "#568cc2",
+      224
+    ],
+    [
+      "emerald-year-verse",
+      "Emerald",
+      "#278567",
+      531
+    ],
+    [
+      "graphite-year-verse",
+      "Graphite",
+      "#596670",
+      838
+    ]
+  ]
+}

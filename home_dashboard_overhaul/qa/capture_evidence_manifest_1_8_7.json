@@ -152,8 +152,8 @@
         "shared-cards-studied-average-cards-per-day-and-retention-row-alignment",
         "fixed-seven-period-average-cards-per-day-rounded-half-up",
         "86-percent-retention-and-seven-day-time-spent-no-visible-again-rate",
-        "one-snapshot-across-responsive-shells",
-        "initial-live-refresh-responsive-and-restart-parity"
+        "one-snapshot-across-fixed-layout-viewports",
+        "initial-live-refresh-fixed-layout-and-restart-parity"
       ]
     },
     {

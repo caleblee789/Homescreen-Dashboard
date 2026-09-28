@@ -1,10 +1,10 @@
 # Release visual contract
 
-Status: Home Screen Dashboard 1.8.7 implementation, automated, exact-package,
-and required macOS native gates complete; independent human review remains
-required, so `release_ready` remains false.
+Status: capture requirements for Home Screen Dashboard 1.8.7. Prior release
+evidence bundles were removed during capture cleanup. This contract alone does
+not establish current release readiness.
 
-## Authority and retained evidence
+## Authority and current local capture
 
 The current machine-readable authorities are:
 
@@ -16,28 +16,12 @@ The current machine-readable authorities are:
 - `qa/settings_window_contract_1_8_7.json`
 - `qa/runtime_probe_release_1_8_7_manifest.json`
 
-The current exact-package candidate is
-`cf11263491f2310aba3b4785f31596a33bd430f7fb320b7e0c64da7b091121c4`.
-Its `qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final` directory retains
-115 accepted frames in 21 sheets against the unchanged 116-frame plan. All
-63 Settings frames are present. The user requested omission of the obstructed
-High Contrast Gold/light frame. The event editor uses a verified existing
-focused capture with identical package, plan, and fixture/rendering dependencies.
-The bundle's curation record distinguishes the accepted set from the original
-automated runtime results.
-
-Required macOS Retina layout and native full-screen checks passed. The menu
-and production Dashboard gear each cover page navigation, Events tabs, resize,
-event/verse edits, save, close/reopen, and controlled restart. The 66 AppKit
-observations prove parent/child display and active-Space retention. Eight
-supplemental Pending save/Current images accompany those automated reports.
-These observations do not constitute independent human acceptance.
-
-The previous 30 August release evidence and 31 August spacing inputs remain
-historical provenance. A corrected candidate must write a new evidence
-location; never overwrite a frozen result. The final release decision remains
-`quality_status: review-required` and `release_ready: false` until independent
-human review of the sheets and native interactions is recorded.
+The only retained capture run is the local, Git-ignored
+`qa-runs/final-dashboard-20260927-100-125` set: 156 native Dashboard frames,
+13 contact sheets, its package, and run reports. It does not include the
+Settings and full-screen release matrix required below. A release decision
+requires fresh exact-package evidence for those gates and independent human
+review; `release_ready` remains false.
 
 ## Production composition
 

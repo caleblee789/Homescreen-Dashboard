@@ -99,6 +99,8 @@ def _category(relative: str, line: str, literal: str) -> tuple[int, str]:
         if "status_" in lowered or "semantic_palette" in lowered:
             return 2, "centralized stable study-semantic definition"
         return 1, "centralized neutral or accent theme definition"
+    if relative == "web/streak-flame.svg":
+        return 5, "unchanged Figma asset used only as an alpha mask; CSS supplies the theme accent"
     if relative in QA_COLOR_FILES:
         return 5, "QA-only fixture or comparison framing outside the represented viewport"
     if relative in {"config.json", "default_verses.json"}:

@@ -123,9 +123,9 @@ def stress_snapshot(reference: date, *, events_enabled: bool = True):
 class PreviewHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         request = urlparse(self.path)
-        if request.path in {"/web/dashboard.css", "/web/dashboard.js"}:
+        if request.path in {"/web/dashboard.css", "/web/dashboard.js", "/web/streak-flame.svg"}:
             asset = ROOT / request.path.lstrip("/")
-            mime = "text/css" if asset.suffix == ".css" else "text/javascript"
+            mime = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml"}[asset.suffix]
             self._send(asset.read_bytes(), mime)
             return
         if request.path != "/":

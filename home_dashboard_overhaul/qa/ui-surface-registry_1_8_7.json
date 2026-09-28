@@ -128,7 +128,7 @@
     {
       "id": "DASH-METRICS",
       "owner": "SummaryMetricsGrid",
-      "fixture": "one-native-statistics-snapshot-across-explicit-2x2-or-single-column-responsive-and-restart"
+      "fixture": "one-native-statistics-snapshot-across-fixed-2x2-viewports-and-restart"
     },
     {
       "id": "DASH-VERSE",

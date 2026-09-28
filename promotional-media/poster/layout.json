@@ -1,0 +1,11 @@
+{
+  "size": [2160, 2700],
+  "background": "#f3f2ee",
+  "ink": "#192430",
+  "native_crop": [264, 498, 2616, 1236],
+  "themes": [
+    {"name": "Sapphire Glass", "file": "sapphire-glass-year.png", "accent": "#568cc2", "label_y": 408},
+    {"name": "Emerald", "file": "emerald-year.png", "accent": "#278567", "label_y": 1120},
+    {"name": "Graphite", "file": "graphite-year.png", "accent": "#596670", "label_y": 1832}
+  ]
+}

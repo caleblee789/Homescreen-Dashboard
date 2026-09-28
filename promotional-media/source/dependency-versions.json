@@ -1,0 +1,9 @@
+{
+  "python": "3.12.14",
+  "Pillow": "11.3.0",
+  "imageio_ffmpeg": "0.6.0",
+  "ffmpeg": "7.1",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "anki": "26.8.1",
+  "native_capture": "ScreenCaptureKit / macOS Swift"
+}

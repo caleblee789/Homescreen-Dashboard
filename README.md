@@ -13,24 +13,6 @@ screen.
 - Customize themes, calendar colors, text size, and visible sections.
 - Display an optional Bible verse with your own library and appearance settings.
 
-## Screenshots
-
-Click an image to view it at full size.
-
-**Sapphire Glass · Year view**
-
-[![Sapphire Glass dashboard with a blue Year calendar, progress bar, four statistics cards, and optional verse](docs/images/1.8.7/dashboard-sapphire-year.png)](docs/images/1.8.7/dashboard-sapphire-year.png)
-
-| Emerald · dark Month view | Graphite · Year overview |
-| --- | --- |
-| [![Emerald dashboard with a green Month calendar on Anki's dark background](docs/images/1.8.7/dashboard-emerald-dark.png)](docs/images/1.8.7/dashboard-emerald-dark.png) | [![Graphite Year view showing a full-year heatmap and study summaries](docs/images/1.8.7/dashboard-year.png)](docs/images/1.8.7/dashboard-year.png) |
-
-**Settings**
-
-| Appearance · dark Settings | Bible library · light Settings |
-| --- | --- |
-| [![Appearance Settings with six-page navigation, theme and palette selectors, color mode, and scale](docs/images/1.8.7/settings-appearance-dark.png)](docs/images/1.8.7/settings-appearance-dark.png) | [![Light Bible library with search, verse rows, separate display tab, and editing actions](home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/SET-LIGHT-BIBLE.png)](home_dashboard_overhaul/qa/release-evidence-1.8.7-2026-09-04-cf112634-ui-final/captures/SET-LIGHT-BIBLE.png) |
-
 ## Installation
 
 1. In Anki, choose **Tools → Add-ons → Get Add-ons**.

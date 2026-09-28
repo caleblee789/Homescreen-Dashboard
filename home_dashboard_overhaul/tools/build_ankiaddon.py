@@ -32,6 +32,7 @@ PACKAGE_FILES = [
     "CHANGELOG.md",
     "renderer.py",
     "settings.py",
+    "shared_addon_menu.py",
     "settings_model.py",
     "themes.py",
     "THIRD_PARTY_NOTICES.md",
@@ -39,6 +40,7 @@ PACKAGE_FILES = [
     "verse.py",
     "web/dashboard.css",
     "web/dashboard.js",
+    "web/streak-flame.svg",
     "user_files/README.txt",
     "assets/buy_me_a_coffee.png",
 ]
@@ -70,8 +72,13 @@ RELEASE_CONTRACT_FILES = (
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 FIXED_TIMESTAMP = (2026, 8, 26, 0, 0, 0)
-EXPECTED_PACKAGE_MEMBER_COUNT = 25
+EXPECTED_PACKAGE_MEMBER_COUNT = 27
 EXPECTED_PACKAGE_LINKS = frozenset({
+    "https://buymeacoffee.com/caleblee78f",
+    "https://ankiweb.net/shared/info/1888718775",
+    "https://ankiweb.net/shared/info/808247776",
+    "https://ankiweb.net/shared/info/1511983907",
+    "https://ankiweb.net/shared/info/1352407063",
     "https://fsf.org/",
     "https://github.com/caleblee789/Homescreen-Dashboard",
     "https://github.com/caleblee789/Homescreen-Dashboard/issues",
@@ -125,7 +132,7 @@ def _validate_no_packaged_secrets(sources: dict[str, str]) -> None:
 
 def _validate_package_inputs() -> None:
     if len(PACKAGE_FILES) != EXPECTED_PACKAGE_MEMBER_COUNT:
-        raise ValueError("package allowlist must contain exactly 25 members")
+        raise ValueError("package allowlist must contain exactly 27 members")
     if len(PACKAGE_FILES) != len(set(PACKAGE_FILES)):
         raise ValueError("package allowlist contains duplicate members")
     unsafe = [name for name in PACKAGE_FILES if not _archive_path_is_safe(name)]
@@ -173,8 +180,9 @@ def _validate_package_inputs() -> None:
     _validate_no_packaged_secrets(sources)
     links = frozenset(
         match
-        for source in sources.values()
+        for relative, source in sources.items()
         for match in re.findall(r"https?://[^\s<>\]\)\}\"']+", source)
+        if not (relative.endswith(".svg") and match == "http://www.w3.org/2000/svg")
     )
     if links != EXPECTED_PACKAGE_LINKS or any(not link.startswith("https://") for link in links):
         raise ValueError("packaged external link allowlist drifted")
@@ -415,34 +423,29 @@ def _validate_visual_matrix(matrix: dict) -> None:
         or not statistics_cases
         or len({entry.get("id") for entry in statistics_cases}) != len(statistics_cases)
     ):
-        raise ValueError("statistics visual matrix must define unique responsive production shells")
-    boundary_cases = matrix.get("responsive_boundary_cases", [])
-    if [
-        (entry.get("root_width"), entry.get("layout"))
-        for entry in boundary_cases
-    ] != [
-        (1009, "wide-2x2"),
-        (1008, "stacked-rail-2x2"),
-        (589, "stacked-rail-2x2"),
-        (588, "stacked-rail-single-column"),
+        raise ValueError("statistics visual matrix must define unique fixed-layout production cases")
+    viewport_cases = matrix.get("fixed_viewport_cases", [])
+    if [(entry.get("viewport_width"), entry.get("root_width"), entry.get("layout"))
+        for entry in viewport_cases] != [
+        (1440, 1160, "fixed-2x2"), (1191, 1160, "fixed-2x2"), (620, 1160, "fixed-2x2")
     ]:
-        raise ValueError("dashboard responsive boundary matrix drifted")
+        raise ValueError("dashboard fixed viewport matrix drifted")
     layout = matrix.get("dashboard_layout_contract", {})
     expected_layout = {
-        "root_width_rule": "min(1160px, calc(100% - 32px))",
+        "root_width_rule": "1160px",
         "rendered_deck_gap_range": [28, 30],
         "addon_top_margin_target": 30,
         "desktop_columns": ["minmax(0, 1fr)", "360px"],
         "desktop_column_gap": 14,
         "rail_gap": 12,
-        "summary_grid_minimum_height": 352,
+        "summary_grid_minimum_height": 440,
         "summary_grid_shape": [2, 2],
-        "summary_card_minimum_width": 170,
-        "summary_card_padding": [14, 12, 13],
-        "metric_column_gap": 10,
-        "metric_minimum_visible_gap": 8,
-        "stack_root_maximum_width": 1008,
-        "metric_single_column_root_maximum_width": 588,
+        "summary_card_minimum_width": 174,
+        "summary_card_padding": [14, 14, 14],
+        "metric_column_gap": 6,
+        "metric_minimum_visible_gap": 6,
+        "horizontal_scroll_owner": "document",
+        "fixed_metric_columns": 2,
         "month_bottom_alignment": {"calendar_to_bible_tolerance": None},
         "year_bottom_alignment": {"calendar_to_summary_grid_tolerance": None},
     }
@@ -453,7 +456,7 @@ def _validate_visual_matrix(matrix: dict) -> None:
         "wide_cell_size": 10,
         "gap": 2,
         "usable_width_percent_range": [85, 90],
-        "narrow_sizing": "fluid-square",
+        "sizing": "fixed-shell-square",
         "minimum_width_floor": "none",
         "internal_horizontal_scrolling": False,
     }:
@@ -507,19 +510,19 @@ def validate_sources() -> dict:
         raise ValueError("dashboard text scale must default to 100")
     dashboard_architecture = surface_contract.get("dashboard_architecture", {})
     expected_dashboard_architecture = {
-        "width_rule": "min(1160px, calc(100% - 32px))",
+        "width_rule": "1160px",
         "maximum_width": 1160,
         "minimum_side_margin": 16,
         "top_spacing": 30,
         "rendered_deck_gap_range": [28, 30],
         "desktop_column_gap": 14,
         "desktop_rail_width": 360,
-        "stack_root_maximum_width": 1008,
-        "metric_single_column_root_maximum_width": 588,
-        "summary_grid_minimum_height": 352,
-        "summary_card_minimum_width": 170,
-        "summary_card_padding": [14, 12, 13],
-        "metric_column_gap": 10,
+        "horizontal_scroll_owner": "document",
+        "fixed_metric_columns": 2,
+        "summary_grid_minimum_height": 440,
+        "summary_card_minimum_width": 174,
+        "summary_card_padding": [14, 14, 14],
+        "metric_column_gap": 6,
         "month_calendar_to_bible_bottom_tolerance": None,
         "year_calendar_to_summary_grid_bottom_tolerance": None,
         "year_wide_cell_size": 10,
@@ -651,8 +654,6 @@ def validate_sources() -> dict:
             "progress.fill_percent", "today.cards_buried", "today.time_spent",
             "progress.initial_cards_due", "last_seven_days.average_cards_per_day",
             "last_seven_days.time_spent", "data-hdo-progress-label",
-            "if (resolved >= 1009)", "if (resolved >= 589)",
-            'width >= 589 ? "2" : "1"',
             'send("diagnostics", {})', "document.scrollingElement",
             "function visibleBottomActionContainer(root)",
             "var clearance = footerHeight + 24", "new global.ResizeObserver(update)",
@@ -662,28 +663,24 @@ def validate_sources() -> dict:
         ),
         "web/dashboard.css": (
             "hdo-calendar-footer", "hdo-calendar-card-action", "hdo-context-action--primary",
-            "width: min(1160px, calc(100% - 32px))", "max-width: 1160px",
-            "margin: 30px auto 0", "--dashboard-column-gap: 14px",
-            "--rail-gap: 12px", "--summary-pad-x: 14px", "--metric-column-gap: 10px",
+            "width: 1160px", "max-width: 1160px",
+            "margin: 30px max(16px, calc((100% - 1160px) / 2)) 0", "--dashboard-column-gap: 14px",
+            "--rail-gap: 12px", "--summary-pad-x: 14px", "--metric-column-gap: 6px",
             "padding: 0 0 var(--hdo-bottom-clearance)", "pointer-events: none",
             "min-width: min(190px", "max-width: min(220px",
-            "@container hdo-dashboard (min-width: 589px)",
-            "@container hdo-dashboard (min-width: 1009px)",
-            "@container hdo-dashboard (max-width: 588px)",
             "repeat(2, minmax(170px, 1fr))", "grid-auto-rows: auto",
-            "min-height: 352px",
-            "padding: 14px var(--summary-pad-x) 13px",
+            "min-height: 440px",
+            "padding: 14px var(--summary-pad-x)",
             "column-gap: var(--metric-column-gap)",
             "minmax(0, 1fr) 360px",
-            "@container hdo-calendar (max-width: 419px)",
             "repeat(6, max(37px, calc(37px * var(--hdo-scale))))",
             "var(--hdo-year-label-width) repeat(var(--hdo-year-weeks, 53), var(--hdo-year-cell-size))",
             "--hdo-year-cell-size: clamp(var(--hdo-year-cell-min),",
             "min-block-size: 6px",
             "hdo-progress-headline", "hdo-metric-headline",
             "grid-template-rows: auto 1fr auto", "padding: 15px 16px 14px",
-            'data-hdo-calendar-view="month"] .hdo-calendar-context',
-            'data-hdo-calendar-view="year"] .hdo-calendar-footer-content',
+            'hdo-calendar-footer-content .hdo-calendar-context',
+            'hdo-calendar-footer-content[data-hdo-footer-verse="true"]',
             "var(--heat-due-mark-3)", "var(--progress-complete)",
             "hdo-event-marker", "hdo-loading-layout", "backdrop-filter",
             "hdo-year-weekday-label", "background: transparent",

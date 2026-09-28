@@ -370,7 +370,7 @@
           "id": "PROD-SECTIONS-BELOW",
           "sheet_group": "production-legends-backgrounds-clearance",
           "layout": "intermediate",
-          "container_width": 720,
+          "container_width": null,
           "special": "sections-below",
           "tags": [
             "sections_below_calendar"
@@ -380,7 +380,7 @@
           "id": "PROD-BOTTOM-CLEARANCE",
           "sheet_group": "production-legends-backgrounds-clearance",
           "layout": "intermediate",
-          "container_width": 720,
+          "container_width": null,
           "special": "scroll-bottom",
           "tags": [
             "measured_bottom_clearance"
@@ -1026,7 +1026,7 @@
         {
           "id": "PROD-STATS-INTERMEDIATE",
           "layout": "intermediate",
-          "container_width": 720,
+          "container_width": null,
           "tags": [
             "statistics_accuracy",
             "intermediate"
@@ -1035,10 +1035,10 @@
         {
           "id": "PROD-STATS-NARROW",
           "layout": "narrow",
-          "container_width": 390,
+          "container_width": null,
           "tags": [
             "statistics_accuracy",
-            "narrow_stacked"
+            "narrow_viewport"
           ]
         }
       ]

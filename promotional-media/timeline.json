@@ -1,0 +1,156 @@
+{
+  "canvas": [
+    1440,
+    1080
+  ],
+  "fps": 30,
+  "frames": 420,
+  "background": "#2b2b2b",
+  "caption": {
+    "font": "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "size": 64,
+    "color": "#f6f8fc",
+    "center": [
+      720,
+      57
+    ]
+  },
+  "image_area": [
+    0,
+    120,
+    1440,
+    1080
+  ],
+  "crops": {
+    "dashboard": [
+      220,
+      64,
+      2660,
+      1691
+    ],
+    "utility": [
+      1862,
+      490,
+      2618,
+      864
+    ]
+  },
+  "sources": {
+    "standard": "raw/standard.png",
+    "month": "raw/sapphire-glass-month.png",
+    "year": "raw/sapphire-glass-year.png",
+    "emerald": "raw/emerald-year.png",
+    "graphite": "raw/graphite-year.png",
+    "calendar": "raw/calendar-final.mp4"
+  },
+  "calendar": {
+    "source_start_seconds": 6.866666666666666,
+    "observed_change_seconds": 7.466666666666667,
+    "stable_year_seconds": 7.5,
+    "pointer_guide": {
+      "start": [
+        1220,
+        725
+      ],
+      "target": [
+        1411,
+        582
+      ],
+      "move_frames": [
+        2,
+        15
+      ],
+      "click_frame": 18,
+      "hide_frame": 26
+    },
+    "note": "Actual single accessibility-button click recorded by ScreenCaptureKit. Small editorial pointer guide is synchronized to the recorded response; interface motion and numbers are untouched."
+  },
+  "scenes": [
+    {
+      "id": "reveal",
+      "start": 0,
+      "end": 45,
+      "caption": "Your Anki, upgraded.",
+      "wipe_frames": 18,
+      "before_fraction": 0.25
+    },
+    {
+      "id": "utility",
+      "start": 45,
+      "end": 135,
+      "caption": "Know what\u2019s left today.",
+      "reframe_frames": 9
+    },
+    {
+      "id": "calendar",
+      "start": 135,
+      "end": 225,
+      "caption": "Month + Year views"
+    },
+    {
+      "id": "themes",
+      "start": 225,
+      "end": 315,
+      "caption": "Make it yours.",
+      "order": [
+        "emerald",
+        "graphite",
+        "year"
+      ],
+      "frames_each": 30
+    },
+    {
+      "id": "install",
+      "start": 315,
+      "end": 420,
+      "name": "Home Screen Dashboard",
+      "code": "AnkiWeb: 808247776",
+      "support": "For Anki Desktop"
+    }
+  ],
+  "installation": {
+    "panel": [
+      100,
+      15,
+      1340,
+      350
+    ],
+    "name_size": 64,
+    "code_size": 76,
+    "support_size": 32,
+    "name_y": 92,
+    "code_y": 185,
+    "support_y": 263
+  },
+  "gif": {
+    "canvas": [
+      960,
+      720
+    ],
+    "fps": 15,
+    "frames": 165,
+    "segments": [
+      {
+        "id": "opening",
+        "frames": 15
+      },
+      {
+        "id": "utility",
+        "frames": 45
+      },
+      {
+        "id": "calendar",
+        "frames": 45
+      },
+      {
+        "id": "themes",
+        "frames": 45
+      },
+      {
+        "id": "return",
+        "frames": 15
+      }
+    ],
+    "return_dissolve_frames": 0
+  }
+}

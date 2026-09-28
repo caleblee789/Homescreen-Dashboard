@@ -11,6 +11,7 @@ import re
 import time
 from typing import Any, Callable, Dict, List, Mapping, MutableMapping, Optional
 
+from .shared_addon_menu import install_shared_menu_footer
 from aqt import mw
 from aqt.qt import (
     QAction,
@@ -3701,7 +3702,7 @@ class SettingsDialog(QDialog):
             self._update_settings_shell_margins()
         if hasattr(self, "appearance_grid"):
             QTimer.singleShot(0, self._reflow_compact_grids)
-        if hasattr(self, "dashboard_primary_grid"):
+        if hasattr(self, "calendar_cards_grid"):
             QTimer.singleShot(0, self._reflow_page_card_grids)
         if hasattr(self, "body_shell"):
             QTimer.singleShot(0, self._apply_responsive_layout)
@@ -3983,14 +3984,12 @@ class SettingsDialog(QDialog):
             self._reflow_event_toolbar()
         if hasattr(self, "quote_toolbar_grid"):
             self._reflow_quote_toolbar()
-        if hasattr(self, "bible_section_row"):
-            self.bible_section_row.set_compact(compact)
         if hasattr(self, "quote_list"):
             self._fit_quote_list()
         if hasattr(self, "active_events"):
             self._fit_event_tree(self.active_events)
             self._fit_event_tree(self.archived_events)
-        if hasattr(self, "dashboard_primary_grid"):
+        if hasattr(self, "calendar_cards_grid"):
             self._reflow_page_card_grids()
 
     def _create_appearance_card(self) -> SettingsCard:
@@ -4167,63 +4166,6 @@ class SettingsDialog(QDialog):
         self.dashboard_anchors: Dict[str, QWidget] = {}
         appearance_card = self._create_appearance_card()
 
-        sections_card = SettingsCard(
-            "Dashboard sections",
-            "",
-            "Reset",
-        )
-        if sections_card.reset_button is not None:
-            sections_card.reset_button.clicked.connect(
-                lambda: self._reset_card("dashboard_sections", "Dashboard sections")
-            )
-        self.dashboard_sections_card = sections_card
-        sections_card.setProperty("hdoAnchor", "content")
-        self.dashboard_anchors["content"] = sections_card
-        self.dashboard_anchors["dashboard_sections"] = sections_card
-        sections_layout = QVBoxLayout()
-        sections_layout.setSpacing(8)
-        self.visibility: Dict[str, QPushButton] = {}
-        visibility = self.staged["visibility"]
-
-        def add_visibility(key: str, title: str, description: str) -> None:
-            row, box = _switch_row(title, description, visibility[key])
-            self.visibility[key] = box
-            sections_layout.addWidget(row)
-
-        add_visibility(
-            "heatmap",
-            "Study calendar",
-            "History, due load, and events.",
-        )
-        add_visibility(
-            "remaining",
-            "Today’s progress",
-            "Cards remaining and completion.",
-        )
-        add_visibility(
-            "today",
-            "Today’s session",
-            "Cards studied, time, pace, and ETA.",
-        )
-        add_visibility(
-            "heatmap_metrics",
-            "Recent and lifetime metrics",
-            "7-day and lifetime totals.",
-        )
-        bible_row = ConfigurableSwitchRow(
-            "Bible verse",
-            "Optional verse card.",
-            visibility["bible"],
-            "Configure verse",
-        )
-        bible_switch = bible_row.switch
-        self.visibility["bible"] = bible_switch
-        self.bible_section_row = bible_row
-        self.configure_bible = bible_row.action
-        self.configure_bible.clicked.connect(lambda: self.open_page("bible_display"))
-        sections_layout.addWidget(bible_row)
-        sections_card.add_layout(sections_layout)
-
         study_card = SettingsCard("Study metrics", "", "Reset")
         self.study_metrics_card = study_card
         if study_card.reset_button is not None:
@@ -4279,17 +4221,7 @@ class SettingsDialog(QDialog):
         self.study_metrics_grid.setColumnStretch(1, 1)
         study_card.add_layout(self.study_metrics_grid)
 
-        self.dashboard_primary_wrap = QWidget()
-        self.dashboard_primary_wrap.setMinimumWidth(0)
-        self.dashboard_primary_wrap.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Preferred,
-        )
-        self.dashboard_primary_grid = QGridLayout(self.dashboard_primary_wrap)
-        self.dashboard_primary_grid.setContentsMargins(0, 0, 0, 0)
-        self.dashboard_primary_grid.setHorizontalSpacing(16)
-        self.dashboard_primary_grid.setVerticalSpacing(16)
-        layout.addWidget(self.dashboard_primary_wrap)
+        layout.addWidget(self.study_metrics_card)
 
         calendar_cards = self._create_calendar_cards()
         self.calendar_page_content = calendar_cards[0]
@@ -4368,21 +4300,6 @@ class SettingsDialog(QDialog):
         _set_accessibility(self.week_start, "First day of week", "Choose the weekday used to start calendar rows.")
         form.addRow(_field_label("Default view"), self.calendar_view)
         form.addRow(_field_label("Week starts on"), self.week_start)
-
-        event_row, event_switch = _switch_row(
-            "Show event markers",
-            "Show event markers on the calendar.",
-            self.staged["visibility"]["events"],
-        )
-        self.visibility["events"] = event_switch
-        form.addRow(event_row)
-        self.events_dependency = QLabel(
-            "Requires Study calendar."
-        )
-        self.events_dependency.setObjectName("FieldHelp")
-        self.events_dependency.setWordWrap(True)
-        self.events_dependency.setBuddy(event_switch)
-        form.addRow(self.events_dependency)
 
         range_card = SettingsCard("Calendar range", "", "Reset")
         self.calendar_range_card = range_card
@@ -5176,7 +5093,7 @@ class SettingsDialog(QDialog):
             self.retention_target,
         ):
             field.connect_changed(self._settings_changed)
-        checks = list(self.visibility.values()) + [
+        checks = [
             self.include_rescheduled,
             self.exclude_reschedules,
             self.exclude_deleted,
@@ -5302,19 +5219,6 @@ class SettingsDialog(QDialog):
         """Use deliberate two-column compositions at 760 px of content."""
 
         large_text = self.fontMetrics().lineSpacing() >= 22
-
-        if hasattr(self, "dashboard_primary_grid"):
-            wide = (
-                not large_text
-                and self.dashboard_primary_wrap.width()
-                >= SETTINGS_TWO_COLUMN_CONTENT_WIDTH
-            )
-            self._reflow_card_pair(
-                self.dashboard_primary_grid,
-                self.dashboard_sections_card,
-                self.study_metrics_card,
-                wide,
-            )
 
         if hasattr(self, "calendar_cards_grid"):
             calendar_host = self.calendar_cards_grid.parentWidget()
@@ -5712,7 +5616,6 @@ class SettingsDialog(QDialog):
         state = self.draft.dependency_state
         if not state["bible.font_color"]:
             self._font_color_invalid = False
-        self.visibility["events"].setEnabled(state["visibility.events"])
         self._update_forecast_range_visibility()
         self.font_color.setEnabled(state["bible.font_color"])
         self.font_color_swatch.setEnabled(state["bible.font_color"])
@@ -5725,7 +5628,6 @@ class SettingsDialog(QDialog):
         self.font_color_swatch.setFocusPolicy(focus_policy)
         if hasattr(self, "custom_color_container"):
             self.custom_color_container.setVisible(state["bible.font_color"])
-        self.events_dependency.setVisible(not state["visibility.events"])
 
     def _sync_draft(self) -> None:
         if self._building:
@@ -5832,7 +5734,6 @@ class SettingsDialog(QDialog):
         scoped_cards = (
             (getattr(self, "appearance_card", None), "appearance"),
             (getattr(self, "placement_card", None), "panel_placement"),
-            (getattr(self, "dashboard_sections_card", None), "dashboard_sections"),
             (getattr(self, "study_metrics_card", None), "study_metrics"),
             (getattr(self, "calendar_display_card", None), "calendar_display"),
             (getattr(self, "calendar_range_card", None), "calendar_range"),
@@ -6095,7 +5996,6 @@ class SettingsDialog(QDialog):
 
         full = not scope
         appearance_scopes = {"appearance", "dashboard"}
-        section_scopes = {"dashboard_sections", "dashboard", "home_screen_legacy"}
         study_scopes = {"study_metrics", "dashboard", "home_screen_legacy"}
         calendar_display_scopes = {"calendar_display", "calendar"}
         calendar_range_scopes = {"calendar_range", "calendar"}
@@ -6128,12 +6028,6 @@ class SettingsDialog(QDialog):
                     self.home_screen_position,
                     config["home_screen"]["position"],
                 )
-            if full:
-                for key, box in self.visibility.items():
-                    box.setChecked(bool(config["visibility"][key]))
-            elif scope in section_scopes:
-                for key in ("heatmap", "remaining", "today", "heatmap_metrics", "bible"):
-                    self.visibility[key].setChecked(bool(config["visibility"][key]))
             if full or scope in study_scopes:
                 self._set_combo_data(self.pace_unit, config["study"]["pace_unit"])
                 self.retention_target.setValue(
@@ -6147,9 +6041,6 @@ class SettingsDialog(QDialog):
                 self._legacy_week_start_value = str(heatmap["week_start"])
                 self._week_start_touched = False
                 self._set_combo_data(self.week_start, self._legacy_week_start_value)
-                self.visibility["events"].setChecked(
-                    bool(config["visibility"]["events"])
-                )
             if full or scope in calendar_range_scopes:
                 history_choice = history_range_choice(
                     heatmap.get("history_days", 0),
@@ -6626,8 +6517,6 @@ class SettingsDialog(QDialog):
             self.home_screen_position,
             "top",
         )
-        for key, box in self.visibility.items():
-            config["visibility"][key] = box.isChecked()
         config["study"].update(
             pace_unit=_combo_value(self.pace_unit, "seconds_per_card"),
             retention_target=self.retention_target.value(),
@@ -8002,6 +7891,7 @@ def install_settings_menu(controller: Any) -> None:
         getter = getattr(mw, "menuBar", None); menu_bar = getter() if callable(getter) else None
     if menu_bar is None: return
     submenu = _caleb_menu(menu_bar)
+    install_shared_menu_footer(submenu, mw, "808247776")
     existing = getattr(mw, "_home_dashboard_overhaul_settings_action", None)
     if existing is not None: return
     for action in _actions(submenu):

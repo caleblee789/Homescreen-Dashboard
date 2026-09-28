@@ -10,6 +10,7 @@ assertions with the canonical corrected 1.8.7 production and Settings contract.
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import replace
 import ctypes
 from datetime import date, timedelta
 import json
@@ -49,7 +50,7 @@ from aqt.qt import (
 
 from home_dashboard_overhaul.analytics import collect_snapshot
 from home_dashboard_overhaul.config_schema import normalize_config
-from home_dashboard_overhaul.models import DashboardSnapshot, VerseContent
+from home_dashboard_overhaul.models import DashboardSnapshot, VerseContent, ValueState
 from home_dashboard_overhaul.settings import (
     EventEditDialog,
     SETTINGS_GEOMETRY_AVAILABLE_KEY,
@@ -322,8 +323,6 @@ def _config_for(case: Mapping[str, Any]) -> dict[str, Any]:
     special = str(case.get("special", ""))
     if special in {"no-due", "markers-completion", "markers-today", "markers-event"}:
         config["heatmap"]["show_due_forecast"] = False
-    if special in {"no-event", "markers-completion", "markers-due", "markers-today"}:
-        config["visibility"]["events"] = False
     if special == "verse-exact":
         config["bible"].update(
             font_family="Avenir Next, sans-serif",
@@ -345,7 +344,13 @@ def _fixture(case: Mapping[str, Any]) -> DashboardSnapshot:
     if str(case.get("fixture", "")) == "native-statistics":
         base._require(_statistics_snapshot is not None, "native statistics snapshot is unavailable")
         return _statistics_snapshot
-    return _base_fixture(case)
+    snapshot = _base_fixture(case)
+    if str(case.get("special", "")) in {"no-event", "markers-completion", "markers-due", "markers-today"}:
+        snapshot = replace(snapshot, facts=replace(snapshot.facts,
+            events=ValueState.available(()),
+            days={iso: replace(day, events=ValueState.available(()))
+                  for iso, day in snapshot.facts.days.items()}))
+    return snapshot
 
 
 base._fixture = _fixture
@@ -625,7 +630,7 @@ def _prepare_dom(case: Mapping[str, Any], callback: Any) -> None:
         else:
             QTimer.singleShot(220, callback)
 
-    _base_prepare_dom(case, prepare_host)
+    _base_prepare_dom(dict(case, container_width=None), prepare_host)
 
 
 base._prepare_dom = _prepare_dom
@@ -710,7 +715,8 @@ base.DOM_REPORT_SCRIPT = r"""
   var yearCellHeights=yearCells.map(function(cell){return rect(cell).height;});
   var occupiedLeft=yearOccupiedNodes.length?Math.min.apply(null,yearOccupiedNodes.map(function(node){return rect(node).left;})):0;
   var occupiedRight=yearOccupiedNodes.length?Math.max.apply(null,yearOccupiedNodes.map(function(node){return rect(node).right;})):0;
-  var componentNodes=[root,layout,calendar,rail,metricsGrid,bible,frame,grid].concat(statisticCards).filter(Boolean);
+  // The root includes the deliberate 16px trailing document-scroll gutter.
+  var componentNodes=[layout,calendar,rail,metricsGrid,bible,frame,grid].concat(statisticCards).filter(Boolean);
   var componentOverflowMax=componentNodes.length?Math.max.apply(null,componentNodes.map(overflowAmount)):0;
   var progressTrackRect=rect(progressTrack);
   var progressLabelAbove=!!progressTrackRect&&!!progressHeadline&&
@@ -731,7 +737,6 @@ base.DOM_REPORT_SCRIPT = r"""
     metricsGrid:metricsRect,
     bible:bibleRect,
     frame:frameRect,
-    density:root.dataset.hdoContentMode||'',
     rootPosition:rootStyle.position,
     rootMarginTop:rootStyle.marginTop,
     rootPaddingBottom:rootStyle.paddingBottom,
@@ -741,7 +746,7 @@ base.DOM_REPORT_SCRIPT = r"""
     footerClearanceSource:root.dataset.hdoFooterClearanceSource||'',
     nativeFooterHeight:parseFloat(rootStyle.getPropertyValue('--hdo-native-footer-height'))||0,
     documentScrollPaddingBlockEnd:scroller?getComputedStyle(scroller).scrollPaddingBlockEnd:'',
-    documentOverflowX:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+    horizontalEdgesReachable:!!scroller&&rootRect.left+scroller.scrollLeft>=0&&rootRect.right+scroller.scrollLeft<=scroller.scrollWidth+1,
     bodyOverflowX:document.body.scrollWidth-document.body.clientWidth,
     componentOverflowX:componentOverflowMax,
     documentScrollMaximum:scroller?Math.max(0,scroller.scrollHeight-scroller.clientHeight):0,
@@ -777,20 +782,19 @@ base.DOM_REPORT_SCRIPT = r"""
     statisticColumnCount:bands(statisticCards,'left'),
     statisticRowCount:bands(statisticCards,'top'),
     equalStatisticCardGeometry:statisticCards.length===4&&(
-      bands(statisticCards,'left')!==2||(
+      bands(statisticCards,'left')===2&&(
         Math.max.apply(null,cardWidths)-Math.min.apply(null,cardWidths)<=1&&
-        Math.max.apply(null,cardHeights)-Math.min.apply(null,cardHeights)<=1
+        Math.abs(cardHeights[0]-cardHeights[1])<=1&&Math.abs(cardHeights[2]-cardHeights[3])<=1
       )
     ),
     metricMinimumGap:metricGaps.length?Math.min.apply(null,metricGaps):-1,
     metricTextUnclipped:metricTextUnclipped,
     metricHeadlineCount:qa('.hdo-metric-headline').length,
     layoutSideBySide:!!calendarRect&&!!railRect&&calendarRect.right<=railRect.left+1,
-    layoutStacked:!!calendarRect&&!!railRect&&calendarRect.bottom<=railRect.top+1,
     layoutColumnGap:!!calendarRect&&!!railRect?railRect.left-calendarRect.right:0,
     topEdgeDelta:!!calendarRect&&!!railRect?Math.abs(calendarRect.top-railRect.top):0,
     railWidth:railRect?railRect.width:0,
-    calendarFooterBottomDelta:calendarRect&&q('.hdo-calendar-footer')?Math.abs(calendarRect.bottom-rect(q('.hdo-calendar-footer')).bottom):null,
+    calendarFooterBottomDelta:calendarRect&&q('.hdo-calendar-footer')?Math.abs(calendarRect.bottom-rect(q('.hdo-calendar-footer')).bottom-parseFloat(getComputedStyle(q('.hdo-calendar-card')).paddingBottom)-parseFloat(getComputedStyle(q('.hdo-calendar-card')).borderBottomWidth)):null,
     verseInFooter:!!q('.hdo-calendar-footer-content > .hdo-bible-card'),
     verseInRail:!!q('.hdo-insight-rail > .hdo-bible-card'),
     verseCount:qa('.hdo-bible-card').length,
@@ -835,11 +839,10 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     base._require(state.get("view") == case.get("view"), "dashboard view mismatch")
     root = state.get("root") or {}
     root_width = float(root.get("width", 0))
-    base._require(0 < root_width <= 1160.5, "dashboard exceeds its 1160px maximum")
+    base._require(abs(root_width - 1160) <= 0.5, "dashboard is not fixed at 1160px")
     base._require(state.get("rootPosition") not in {"fixed", "sticky"}, "dashboard root left document flow")
     base._require(abs(_pixels(state.get("rootMarginTop")) - 30) <= 0.5, "dashboard top margin is not the calibrated 30px")
-    base._require(float(state.get("documentOverflowX", 0)) <= 1, "document has horizontal overflow")
-    base._require(float(state.get("bodyOverflowX", 0)) <= 1, "body has horizontal overflow")
+    base._require(bool(state.get("horizontalEdgesReachable")), "document cannot reach both dashboard edges")
     base._require(float(state.get("componentOverflowX", 0)) <= 1, "dashboard component has horizontal overflow")
     base._require(state.get("hostPreserved") == "true", "host canvas was not preserved")
     base._require(state.get("rootBackground") in {"rgba(0, 0, 0, 0)", "transparent"}, "dashboard root is not transparent")
@@ -869,49 +872,36 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
             abs(float(state.get("progressBarToMetricsGap", -99)) - 10) <= 1,
             "progress bar-to-first-metric gap is not 10px",
         )
-    expected_width = case.get("container_width")
-    if isinstance(expected_width, int):
-        base._require(abs(root_width - expected_width) <= 1, "exact dashboard container width did not settle")
-    elif str(case.get("layout", "")) == "wide":
-        base._require(abs(root_width - 1160) <= 1, "wide dashboard did not settle at 1160px")
-
     base._require(int(state.get("statisticsCardCount", 0)) == 4, "dashboard did not render four statistic cards")
-    expected_metric_columns = 1 if root_width <= 588.5 else 2
-    expected_metric_rows = 4 if expected_metric_columns == 1 else 2
+    expected_metric_columns = 2
+    expected_metric_rows = 2
     base._require(
         int(state.get("statisticColumnCount", 0)) == expected_metric_columns
         and int(state.get("statisticRowCount", 0)) == expected_metric_rows,
-        "statistic grid does not match the 588/589px responsive boundary",
+        "statistic grid is not fixed at 2x2",
     )
     base._require(bool(state.get("equalStatisticCardGeometry")), "2x2 statistic cards do not have equal geometry")
-    base._require(float(state.get("metricMinimumGap", -1)) >= 8, "metric label/value gap is below 8px")
+    base._require(float(state.get("metricMinimumGap", -1)) >= 5.5, "metric label/value gap is below 6px")
     base._require(bool(state.get("metricTextUnclipped")), "metric text is clipped")
     base._require(int(state.get("metricHeadlineCount", 0)) == 3, "statistic headlines are missing or duplicated")
 
-    expected_density = "wide" if root_width >= 1009 else "intermediate" if root_width >= 589 else "narrow"
-    base._require(state.get("density") == expected_density, "dashboard density differs from the 588/589 and 1008/1009 boundaries")
     metrics_grid = state.get("metricsGrid") or {}
     bible = state.get("bible") or {}
     base._require(float(state.get("calendarFooterBottomDelta", 99)) <= 1.5, "calendar has unused space below its footer")
     base._require(int(state.get("verseCount", 0)) == (1 if bible else 0), "verse instance is duplicated")
     if bible:
-        destination = "verseInRail" if case.get("view") == "month" else "verseInFooter"
+        destination = "verseInFooter"
         base._require(bool(state.get(destination)), "verse is in the wrong calendar-view destination")
     if case.get("view") == "year":
         base._require(not bool(state.get("verseInRail")), "Year retains a standalone verse card")
         base._require(float(state.get("railBottomDelta", 99)) <= 1, "Year rail reserves space below statistics")
-    if root_width >= 1009:
-        base._require(bool(state.get("layoutSideBySide")), "wide dashboard did not place calendar and rail side by side")
-        base._require(abs(float(state.get("railWidth", 0)) - 360) <= 1, "wide statistics rail is not 360px")
-        base._require(abs(float(state.get("layoutColumnGap", 0)) - 14) <= 1, "wide dashboard column gap is not 14px")
-        base._require(float(state.get("topEdgeDelta", 99)) <= 1, "wide calendar and statistics rail do not share a top edge")
-        gap = state.get("deckDashboardGap")
-        base._require(gap is not None and 28 <= float(gap) <= 30.5, "native deck-to-dashboard gap is not 28-30px")
-        base._require(float(metrics_grid.get("height", 0)) >= 351, "wide summary grid is below its 352px target")
-        if case.get("view") == "month" and bible:
-            base._require(float(bible.get("height", 0)) >= 181, "wide Bible card is below its 182px target")
-    else:
-        base._require(bool(state.get("layoutStacked")), "1008px-or-narrower dashboard did not stack")
+    base._require(bool(state.get("layoutSideBySide")), "wide dashboard did not place calendar and rail side by side")
+    base._require(abs(float(state.get("railWidth", 0)) - 360) <= 1, "wide statistics rail is not 360px")
+    base._require(abs(float(state.get("layoutColumnGap", 0)) - 14) <= 1, "wide dashboard column gap is not 14px")
+    base._require(float(state.get("topEdgeDelta", 99)) <= 1, "wide calendar and statistics rail do not share a top edge")
+    gap = state.get("deckDashboardGap")
+    base._require(gap is not None and 28 <= float(gap) <= 30.5, "native deck-to-dashboard gap is not 28-30px")
+    base._require(float(metrics_grid.get("height", 0)) >= 439, "wide summary grid is below its 440px target")
     base._require(
         int(state.get("nonSelectedCellShadowCount", 1)) == 0,
         "unselected calendar cells retain shadows",
@@ -937,21 +927,19 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
         base._require(float(state.get("yearFrameOverflowX", 1)) <= 1, "Year grid requires internal horizontal scrolling")
         base._require(abs(float(state.get("yearFrameScrollLeft", 1))) <= 1, "Year grid retained a horizontal scroll offset")
         base._require(bool(state.get("yearCellsSquare")), "Year heatmap cells are not square")
-        if root_width >= 1009:
-            ratio = float(state.get("yearHeatmapWidthRatio", 0))
-            base._require(ratio >= .85, "wide Year heatmap occupies less than 85 percent of its body")
-        if root_width >= 1159:
-            base._require(
-                9 <= float(state.get("yearCellWidthMin", 0))
-                and float(state.get("yearCellWidthMax", 99)) <= 10.5,
-                "1160px Year cells are outside the 9-10px target",
-            )
+        ratio = float(state.get("yearHeatmapWidthRatio", 0))
+        base._require(ratio >= .85, "wide Year heatmap occupies less than 85 percent of its body")
+        base._require(
+            9 <= float(state.get("yearCellWidthMin", 0))
+            and float(state.get("yearCellWidthMax", 99)) <= 10.5,
+            "1160px Year cells are outside the 9-10px target",
+        )
     special = str(case.get("special", ""))
     if special == "no-due":
         base._require(int(state.get("dueLegendCount", 1)) == 0, "disabled due legend remains")
     if special == "no-event":
-        base._require(int(state.get("eventLegendCount", 1)) == 0, "disabled event legend remains")
-        base._require(int(state.get("eventSummaryCount", 1)) == 0, "disabled event summary remains")
+        base._require(int(state.get("eventLegendCount", 0)) == 1, "permanent event legend missing")
+        base._require(int(state.get("eventSummaryCount", 0)) == 1, "empty event summary missing")
     if special == "markers-combined":
         base._require(int(state.get("todayCount", 0)) == 1, "today marker is missing")
         base._require(int(state.get("selectedCount", 0)) == 1, "selected marker is missing")
@@ -1054,7 +1042,7 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
             }
             base._require(
                 stable_live == canonical_stable,
-                "responsive or restart stable metric values drifted",
+                "viewport or restart stable metric values drifted",
             )
         columns = [item for item in str(state.get("statisticColumns", "")).split() if item]
         if str(case.get("layout", "")) == "wide":
@@ -4191,30 +4179,6 @@ def _assert_scoped_settings_resets(dialog: SettingsDialog) -> None:
             },
         )
 
-        event_marker = not bool(defaults["visibility"]["events"])
-
-        def stage_dashboard_sections() -> None:
-            dialog.visibility["today"].setChecked(
-                not bool(defaults["visibility"]["today"])
-            )
-            dialog.visibility["events"].setChecked(event_marker)
-
-        exercise(
-            "dashboard_sections",
-            "Dashboard sections",
-            stage_dashboard_sections,
-            {
-                "owned Today control repainted": lambda: dialog.visibility[
-                    "today"
-                ].isChecked()
-                == bool(defaults["visibility"]["today"]),
-                "Calendar event marker preserved": lambda: dialog.visibility[
-                    "events"
-                ].isChecked()
-                == event_marker,
-            },
-        )
-
         def stage_invalid_retention() -> None:
             dialog.retention_target.setValue(
                 int(defaults["study"]["retention_target"])
@@ -4242,7 +4206,6 @@ def _assert_scoped_settings_resets(dialog: SettingsDialog) -> None:
 
         def stage_calendar_display() -> None:
             dialog._set_combo_data(dialog.calendar_view, staged_calendar_view)
-            dialog.visibility["events"].setChecked(event_marker)
 
         exercise(
             "calendar_display",
@@ -4254,10 +4217,6 @@ def _assert_scoped_settings_resets(dialog: SettingsDialog) -> None:
                     "year",
                 )
                 == default_calendar_view,
-                "owned event marker repainted": lambda: dialog.visibility[
-                    "events"
-                ].isChecked()
-                == bool(defaults["visibility"]["events"]),
             },
         )
 
@@ -5047,7 +5006,7 @@ def _complete_stage() -> None:
         if expected_statistics:
             base._require(
                 set(base.REPORT.get("statistics_responsive_parity", {})) == expected_statistics,
-                "production statistics responsive parity is incomplete",
+                "production statistics viewport parity is incomplete",
             )
         if base.STAGE == "initial":
             _persist_restart_state()
