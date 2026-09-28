@@ -1,0 +1,367 @@
+{
+  "anki_version": "26.9.3",
+  "capture_count": 10,
+  "capture_report": "qa-runs/dashboard-1.9.0-20260927-100/runtime-initial.json",
+  "capture_scale_percent": 100,
+  "captures": {
+    "Amethyst-dark-month-100": {
+      "capture_method": "QMainWindow.grab-owned-isolated-window",
+      "crop_box_pixels": [
+        526,
+        428,
+        2894,
+        1699
+      ],
+      "crop_dimensions": [
+        2368,
+        1271
+      ],
+      "crop_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/crops/Amethyst-dark-month-100.png",
+      "crop_sha256": "bc0ca26a86f3673baf6eaba56cd170efdb4c703e04c3b5b5a88876538663d121",
+      "dom_checks": {
+        "cards": 4,
+        "clipped": [],
+        "footer_verse": true
+      },
+      "native_fullscreen": true,
+      "source": "docs/images/1.9.0/native-sources/Amethyst-dark-month-100.png",
+      "source_dimensions": [
+        3420,
+        2146
+      ],
+      "source_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/raw-native/Amethyst-dark-month-100.png",
+      "source_sha256": "b6a1816002df60f2932d8d2a98bc886acb4981b086fc731067a22828dd9de9f3"
+    },
+    "Emerald-dark-month-100": {
+      "capture_method": "QMainWindow.grab-owned-isolated-window",
+      "crop_box_pixels": [
+        526,
+        428,
+        2894,
+        1699
+      ],
+      "crop_dimensions": [
+        2368,
+        1271
+      ],
+      "crop_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/crops/Emerald-dark-month-100.png",
+      "crop_sha256": "b5cb6d77a7642672fcf55e6dbc5792b57cf813f191701c564ed1edf71740d537",
+      "dom_checks": {
+        "cards": 4,
+        "clipped": [],
+        "footer_verse": true
+      },
+      "native_fullscreen": true,
+      "source": "docs/images/1.9.0/native-sources/Emerald-dark-month-100.png",
+      "source_dimensions": [
+        3420,
+        2146
+      ],
+      "source_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/raw-native/Emerald-dark-month-100.png",
+      "source_sha256": "63f4e985b77ede89e032504488a3f332cfdce0733d674b8e8606bde0d33c540c"
+    },
+    "Glacier-dark-month-100": {
+      "capture_method": "QMainWindow.grab-owned-isolated-window",
+      "crop_box_pixels": [
+        526,
+        428,
+        2894,
+        1699
+      ],
+      "crop_dimensions": [
+        2368,
+        1271
+      ],
+      "crop_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/crops/Glacier-dark-month-100.png",
+      "crop_sha256": "ba7f7cb3fcee9bbe4eacb424c39b9f19d640ae9a097b522fd45b2a17f8ddd2f2",
+      "dom_checks": {
+        "cards": 4,
+        "clipped": [],
+        "footer_verse": true
+      },
+      "native_fullscreen": true,
+      "source": "docs/images/1.9.0/native-sources/Glacier-dark-month-100.png",
+      "source_dimensions": [
+        3420,
+        2146
+      ],
+      "source_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/raw-native/Glacier-dark-month-100.png",
+      "source_sha256": "f7be96f72c94f8c4f39accb39fec4197de58d135543b2ef7bb9b8e03016ca225"
+    },
+    "Glacier-light-month-100": {
+      "capture_method": "QMainWindow.grab-owned-isolated-window",
+      "crop_box_pixels": [
+        526,
+        428,
+        2894,
+        1699
+      ],
+      "crop_dimensions": [
+        2368,
+        1271
+      ],
+      "crop_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/crops/Glacier-light-month-100.png",
+      "crop_sha256": "150e34552e242dd639efbec872ddd5f2d3dbb052835adacd6471c77654ea9f9c",
+      "dom_checks": {
+        "cards": 4,
+        "clipped": [],
+        "footer_verse": true
+      },
+      "native_fullscreen": true,
+      "source": "docs/images/1.9.0/native-sources/Glacier-light-month-100.png",
+      "source_dimensions": [
+        3420,
+        2146
+      ],
+      "source_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/raw-native/Glacier-light-month-100.png",
+      "source_sha256": "268bf35654f3a049727c832feb18f3f4b107c3e06052ef01aa074de6808e71a1"
+    },
+    "Jade-light-month-100": {
+      "capture_method": "QMainWindow.grab-owned-isolated-window",
+      "crop_box_pixels": [
+        526,
+        428,
+        2894,
+        1699
+      ],
+      "crop_dimensions": [
+        2368,
+        1271
+      ],
+      "crop_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/crops/Jade-light-month-100.png",
+      "crop_sha256": "e11aa9a58c82178170617e6afaa9fa1291c60afd7a762bd03f3243984c6a167b",
+      "dom_checks": {
+        "cards": 4,
+        "clipped": [],
+        "footer_verse": true
+      },
+      "native_fullscreen": true,
+      "source": "docs/images/1.9.0/native-sources/Jade-light-month-100.png",
+      "source_dimensions": [
+        3420,
+        2146
+      ],
+      "source_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/raw-native/Jade-light-month-100.png",
+      "source_sha256": "37516317a917dd28740fb8e027eba46ceedef5e1026abe288bb3d558f4926cad"
+    },
+    "Lagoon-light-month-100": {
+      "capture_method": "QMainWindow.grab-owned-isolated-window",
+      "crop_box_pixels": [
+        526,
+        428,
+        2894,
+        1699
+      ],
+      "crop_dimensions": [
+        2368,
+        1271
+      ],
+      "crop_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/crops/Lagoon-light-month-100.png",
+      "crop_sha256": "6642351cc26218654d54c2189a2ba805d149fa61d1c06cd92fe2ca5c78bb65cb",
+      "dom_checks": {
+        "cards": 4,
+        "clipped": [],
+        "footer_verse": true
+      },
+      "native_fullscreen": true,
+      "source": "docs/images/1.9.0/native-sources/Lagoon-light-month-100.png",
+      "source_dimensions": [
+        3420,
+        2146
+      ],
+      "source_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/raw-native/Lagoon-light-month-100.png",
+      "source_sha256": "bb343a48ab24d34434022d8c4910aa5a0d04d4bcbeb574e78417d18e9231fee7"
+    },
+    "Plum-light-month-100": {
+      "capture_method": "QMainWindow.grab-owned-isolated-window",
+      "crop_box_pixels": [
+        526,
+        428,
+        2894,
+        1699
+      ],
+      "crop_dimensions": [
+        2368,
+        1271
+      ],
+      "crop_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/crops/Plum-light-month-100.png",
+      "crop_sha256": "f739f4e439ca2f17d6c82cc1da40c1f5e8ac88587ff585a417fe59bb16cae9e4",
+      "dom_checks": {
+        "cards": 4,
+        "clipped": [],
+        "footer_verse": true
+      },
+      "native_fullscreen": true,
+      "source": "docs/images/1.9.0/native-sources/Plum-light-month-100.png",
+      "source_dimensions": [
+        3420,
+        2146
+      ],
+      "source_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/raw-native/Plum-light-month-100.png",
+      "source_sha256": "eada897e77430ab6d75e19bf557529599ceae8e7b457af6ea999d0d2980e19ca"
+    },
+    "Sapphire-dark-year-100": {
+      "capture_method": "QMainWindow.grab-owned-isolated-window",
+      "crop_box_pixels": [
+        526,
+        428,
+        2894,
+        1363
+      ],
+      "crop_dimensions": [
+        2368,
+        935
+      ],
+      "crop_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/crops/Sapphire-dark-year-100.png",
+      "crop_sha256": "e5e8e19cf1a3357f6272a1963847b5b8437aa2212bc3dbb72844a09cb155a781",
+      "dom_checks": {
+        "cards": 4,
+        "clipped": [],
+        "footer_verse": true
+      },
+      "native_fullscreen": true,
+      "source": "docs/images/1.9.0/native-sources/Sapphire-dark-year-100.png",
+      "source_dimensions": [
+        3420,
+        2146
+      ],
+      "source_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/raw-native/Sapphire-dark-year-100.png",
+      "source_sha256": "7a87ea54bd19f58f3f38399184d540a9d3931618aa10c30f958c6982d4be8b97"
+    },
+    "Slate-dark-month-100": {
+      "capture_method": "QMainWindow.grab-owned-isolated-window",
+      "crop_box_pixels": [
+        526,
+        428,
+        2894,
+        1699
+      ],
+      "crop_dimensions": [
+        2368,
+        1271
+      ],
+      "crop_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/crops/Slate-dark-month-100.png",
+      "crop_sha256": "59c0e1d34782a0694b20d1c8b2f046e6d693e2a760d94a873a490de5f9d87cd1",
+      "dom_checks": {
+        "cards": 4,
+        "clipped": [],
+        "footer_verse": true
+      },
+      "native_fullscreen": true,
+      "source": "docs/images/1.9.0/native-sources/Slate-dark-month-100.png",
+      "source_dimensions": [
+        3420,
+        2146
+      ],
+      "source_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/raw-native/Slate-dark-month-100.png",
+      "source_sha256": "e0060c29f0974af5a1ee5ccb1c8de9ee431cb6163fbbd683dc2baad71fbde6e5"
+    },
+    "Slate-dark-year-100": {
+      "capture_method": "QMainWindow.grab-owned-isolated-window",
+      "crop_box_pixels": [
+        526,
+        428,
+        2894,
+        1363
+      ],
+      "crop_dimensions": [
+        2368,
+        935
+      ],
+      "crop_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/crops/Slate-dark-year-100.png",
+      "crop_sha256": "cd4fa9b21f1cdd7f7ac207a0c52477b70ccade6b4342b53453201de62d2657fc",
+      "dom_checks": {
+        "cards": 4,
+        "clipped": [],
+        "footer_verse": true
+      },
+      "native_fullscreen": true,
+      "source": "docs/images/1.9.0/native-sources/Slate-dark-year-100.png",
+      "source_dimensions": [
+        3420,
+        2146
+      ],
+      "source_qa_path": "qa-runs/dashboard-1.9.0-20260927-100/raw-native/Slate-dark-year-100.png",
+      "source_sha256": "8865b97683dda605a533691686ca09c36098156bbbf69fc25c61f3e60ba45082"
+    }
+  },
+  "edit_policy": "Exact native screenshots; proportional crop and gallery downsample only; all labels outside dashboard pixels.",
+  "native_fullscreen": true,
+  "package_sha256": "9e757dbfd0227bc2cfa342a6eff70b97247677afd8e4c13045e496ee97f6a242",
+  "profile": "Codex QA HDO Full Screen 100 1.9.0 20260927",
+  "public_outputs": {
+    "dashboard-emerald-dark.png": {
+      "dimensions": [
+        2368,
+        1271
+      ],
+      "sha256": "b5cb6d77a7642672fcf55e6dbc5792b57cf813f191701c564ed1edf71740d537",
+      "sources": [
+        "Emerald-dark-month-100"
+      ]
+    },
+    "dashboard-sapphire-year.png": {
+      "dimensions": [
+        2368,
+        935
+      ],
+      "sha256": "e5e8e19cf1a3357f6272a1963847b5b8437aa2212bc3dbb72844a09cb155a781",
+      "sources": [
+        "Sapphire-dark-year-100"
+      ]
+    },
+    "dashboard-themes-dark.png": {
+      "dimensions": [
+        2392,
+        1414
+      ],
+      "labels": [
+        "Sapphire Glass \u00b7 Amethyst",
+        "Emerald",
+        "Graphite \u00b7 Slate",
+        "Sapphire Glass \u00b7 Glacier"
+      ],
+      "sha256": "06fea7d709285b9f445f8660dbe62ad8b582bd455b55f25e1e67281fff09eac3",
+      "sources": [
+        "Amethyst-dark-month-100",
+        "Emerald-dark-month-100",
+        "Slate-dark-month-100",
+        "Glacier-dark-month-100"
+      ]
+    },
+    "dashboard-themes-light.png": {
+      "dimensions": [
+        2392,
+        1414
+      ],
+      "labels": [
+        "Sapphire Glass \u00b7 Glacier",
+        "Graphite \u00b7 Plum",
+        "Emerald \u00b7 Jade",
+        "Emerald \u00b7 Lagoon"
+      ],
+      "sha256": "8e511703c9e90abfccc5e9e7abc3e776034bab37bc22e1e27a1f234defa93a5b",
+      "sources": [
+        "Glacier-light-month-100",
+        "Plum-light-month-100",
+        "Jade-light-month-100",
+        "Lagoon-light-month-100"
+      ]
+    },
+    "dashboard-year.png": {
+      "dimensions": [
+        2368,
+        935
+      ],
+      "sha256": "cd4fa9b21f1cdd7f7ac207a0c52477b70ccade6b4342b53453201de62d2657fc",
+      "sources": [
+        "Slate-dark-year-100"
+      ]
+    }
+  },
+  "release": "1.9.0",
+  "restart_report": "qa-runs/dashboard-1.9.0-20260927-100/runtime-restart.json",
+  "schema_version": 1,
+  "sync": "disabled-and-disconnected",
+  "synthetic_fixture": true
+}

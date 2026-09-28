@@ -254,7 +254,7 @@ def run() -> None:
     _started = True
     OUTPUT.mkdir(parents=True, exist_ok=True)
     report: dict = {
-        "release": "1.8.7",
+        "release": "1.9.0",
         "stage": STAGE,
         "status": "running",
         "package_sha256": os.environ.get("HDO_RELEASE_CANDIDATE_SHA256"),
@@ -266,7 +266,7 @@ def run() -> None:
         "saved_event_names": {route: "{} {}".format(EVENT_PREFIX, route) for route in ("menu", "dashboard-gear")},
     }
     try:
-        base.RELEASE = "1.8.7"
+        base.RELEASE = "1.9.0"
         base.OUTPUT_ROOT = OUTPUT
         base.REPORT_PATH = OUTPUT / ("identity-" + STAGE + ".json")
         base._identity_gate()

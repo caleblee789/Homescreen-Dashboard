@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the corrected Home Screen Dashboard 1.8.7 UI authorities."""
+"""Validate the corrected Home Screen Dashboard 1.9.0 UI authorities."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from typing import Any, List, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 QA_ROOT = ROOT / "qa"
-RELEASE = "1.8.7"
+RELEASE = "1.9.0"
 CURRENT_AUTHORITIES = {
     "surface": "calendar_surface_manifest_1_8_7.json",
     "matrix": "visual_regression_matrix_1_8_7.json",
@@ -75,7 +75,7 @@ def _validate_palette_matrix(errors: List[str], matrix: Mapping[str, Any]) -> No
         "initial-cards-due-matches-the-progress-denominator",
         "fixed-seven-period-average-cards-per-day-rounded-half-up",
         "no-visible-again-rate-cards-completed-or-study-days",
-        "initial-live-refresh-responsive-and-restart-parity",
+        "initial-live-refresh-fixed-layout-and-restart-parity",
         "equal-2x2-card-geometry-with-12px-gaps",
         "right-aligned-single-line-values-with-at-least-8px-label-separation",
         "long-statistics-values-fit-without-wrap-clip-overlap-ellipsis-or-font-reduction",
@@ -359,7 +359,7 @@ def validate(root: Path = ROOT) -> List[str]:
     if set(matrix.get("deferred_unrun", [])) != expected_unrun:
         errors.append("visual nonblocking boundaries are incorrect")
     if capture.get("status") != "required-before-release":
-        errors.append("fresh 1.8.7 evidence must remain required before release")
+        errors.append("fresh 1.9.0 evidence must remain required before release")
 
     renderer_source = _source("renderer.py")
     dashboard_js = _source("web/dashboard.js")

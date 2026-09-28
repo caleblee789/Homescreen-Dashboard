@@ -58,8 +58,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )
 
     def test_release_metadata_and_schema_eight_are_current(self) -> None:
-        self.assertEqual(self.manifest["human_version"], "1.8.7")
-        self.assertEqual(self.settings_window_contract["release"], "1.8.7")
+        self.assertEqual(self.manifest["human_version"], "1.9.0")
+        self.assertEqual(self.settings_window_contract["release"], "1.9.0")
         self.assertEqual(self.settings_window_contract["schema_version"], 8)
         self.assertEqual(
             self.settings_window_contract["settings_profile_acceptance_gate"],
@@ -697,7 +697,6 @@ class SettingsReleaseContractTests(unittest.TestCase):
             'if case.get("id") == "settings-font-100-dashboard":',
             "_assert_scoped_settings_resets(dialog)",
             "dialog._reset_card(scope, label)",
-            '"Calendar event marker preserved"',
             '"pending manual verse restored"',
             "CAPTURE_PLAN.structured_settings_layout()",
             '"structured_work_area_logical"',
@@ -854,19 +853,16 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )[0]
         card_markers = (
             "appearance_card = self._create_appearance_card()",
-            'SettingsCard(\n            "Dashboard sections"',
             'SettingsCard("Study metrics", "", "Reset")',
             'SettingsCard("Panel placement", "", "Reset")',
             "return calendar_content, data_card",
         )
+        self.assertNotIn("self.visibility", self.settings)
+        self.assertNotIn("Show event markers", self.settings)
+        self.assertNotIn('SettingsCard(\n            "Dashboard sections"', dashboard_source)
         positions = [dashboard_source.index(marker) for marker in card_markers]
         self.assertEqual(positions, sorted(positions))
         for copy in (
-            "History, due load, and events.",
-            "Cards remaining and completion.",
-            "Cards studied, time, pace, and ETA.",
-            "7-day and lifetime totals.",
-            "Optional verse card.",
             "Changes how pace is displayed.",
             "Used to color retention status.",
             "Counts the first qualifying answer after a manual reschedule.",
@@ -1487,7 +1483,6 @@ class SettingsReleaseContractTests(unittest.TestCase):
 
         for scope in (
             "appearance",
-            "dashboard_sections",
             "study_metrics",
             "calendar_display",
             "calendar_range",
@@ -1511,13 +1506,6 @@ class SettingsReleaseContractTests(unittest.TestCase):
                     self.assertEqual(fake.preset.current, defaults["appearance"]["preset"])
                     self.assertEqual(fake.opacity.current, defaults["appearance"]["opacity"])
                     self.assertFalse(fake.forecast_days.is_valid())
-                elif scope == "dashboard_sections":
-                    for key in ("heatmap", "remaining", "today", "heatmap_metrics", "bible"):
-                        self.assertEqual(
-                            fake.visibility[key].checked,
-                            defaults["visibility"][key],
-                        )
-                    self.assertFalse(fake.visibility["events"].checked)
                 elif scope == "study_metrics":
                     self.assertEqual(
                         fake.retention_target.current,
@@ -1530,7 +1518,6 @@ class SettingsReleaseContractTests(unittest.TestCase):
                         fake.calendar_view.current,
                         defaults["heatmap"]["calendar_view"],
                     )
-                    self.assertTrue(fake.visibility["events"].checked)
                     self.assertFalse(fake.retention_target.is_valid())
                 elif scope == "calendar_range":
                     self.assertEqual(fake.history_range.current, "all")

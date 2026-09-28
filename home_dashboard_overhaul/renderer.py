@@ -642,7 +642,7 @@ def _last_seven_group(snapshot: DashboardSnapshot, target: int | None) -> str:
     return _stats_group("Last 7 Days", "hdo-last-seven", rows)
 
 
-def _all_time_group(snapshot: DashboardSnapshot, _target: int | None) -> str:
+def _all_time_group(snapshot: DashboardSnapshot, _target: int | None, *, show_current_streak: bool = True) -> str:
     state = _facts_state(snapshot, "long_term")
     if not state.is_available:
         return _stats_group(
@@ -657,6 +657,7 @@ def _all_time_group(snapshot: DashboardSnapshot, _target: int | None) -> str:
                     ("Current streak", "long_term.current_streak"),
                     ("Longest streak", "long_term.longest_streak"),
                 )
+                if show_current_streak or key != "long_term.current_streak"
             ],
         )
     stats: LongTermStats = state.value
@@ -672,25 +673,35 @@ def _all_time_group(snapshot: DashboardSnapshot, _target: int | None) -> str:
         "long_term.lifetime_retention",
         unavailable=retention == UNAVAILABLE_TEXT,
     ))
-    rows.append(_metric("Current streak", day_text(stats.current_streak), "long_term.current_streak"))
+    if show_current_streak:
+        rows.append(_metric("Current streak", day_text(stats.current_streak), "long_term.current_streak"))
     rows.append(_metric("Longest streak", day_text(stats.longest_streak), "long_term.longest_streak"))
     return _stats_group("All Time", "hdo-all-time", rows)
 
 
+def _current_streak(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
+    state = _facts_state(snapshot, "long_term")
+    count = state.value.current_streak if state.is_available else None
+    value = _format_count(count) if count is not None else UNAVAILABLE_TEXT
+    unit = ("day" if count == 1 else "days") if count is not None else ""
+    return (
+        '<div class="hdo-current-streak{}"{}>'
+        '<span class="hdo-streak-flame" aria-hidden="true"></span>'
+        '<dl><dt>Current streak</dt><dd data-hdo-metric="long_term.current_streak">'
+        '<span class="hdo-streak-number">{}</span> <span class="hdo-streak-unit">{}</span>'
+        '</dd></dl></div>'
+    ).format(
+        "" if state.is_available else " is-unavailable",
+        "" if state.is_available else ' title="Current streak unavailable"',
+        _escape(value), _escape(unit),
+    )
+
+
 def _metrics(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
-    visibility = config["visibility"]
     target_value = config.get("study", {}).get("retention_target")
     target = int(target_value) if isinstance(target_value, (int, float)) else None
-    groups: list[str] = []
-    if visibility.get("remaining", True):
-        groups.append(_progress_group(snapshot))
-    if visibility.get("today", True):
-        groups.append(_today_session_group(snapshot))
-    if visibility.get("heatmap_metrics", True):
-        groups.extend((_last_seven_group(snapshot, target), _all_time_group(snapshot, target)))
-    groups = [group for group in groups if group]
-    if not groups:
-        return ""
+    groups = [_progress_group(snapshot), _today_session_group(snapshot),
+              _last_seven_group(snapshot, target), _all_time_group(snapshot, target, show_current_streak=False)]
     return (
         '<section class="hdo-summary-metrics-grid" data-hdo-primitive="{}" '
         'aria-label="Study summary">{}</section>'
@@ -847,7 +858,7 @@ def dashboard_facts_payload(
     return {
         "activity": range_payload["activity"],
         "events": _event_state_payload(facts.events),
-        "events_enabled": bool(config.get("visibility", {}).get("events", True)),
+        "events_enabled": True,
         "today": scheduling_date,
         "calendar_date": calendar_date,
         "anchor": selected or calendar_date,
@@ -927,8 +938,6 @@ def _calendar(
     event_legend = (
         '<div class="hdo-legend-group hdo-legend-event">'
         '<i class="hdo-legend-event-marker" aria-hidden="true"></i><span>Event</span></div>'
-        if config.get("visibility", {}).get("events", True)
-        else ""
     )
     due_legend = (
         '<div class="hdo-legend-group hdo-legend-due"{}>'
@@ -942,17 +951,15 @@ def _calendar(
         '<div class="hdo-event-rows" data-hdo-event-rows hidden></div>'
         '<p class="hdo-event-empty" data-hdo-event-empty>No upcoming events</p>'
         '</div>'
-        if config.get("visibility", {}).get("events", True)
-        else ""
     )
     return (
         '<section class="hdo-card hdo-dashboard-panel hdo-calendar-card" data-hdo-primitive="{}" '
         'aria-labelledby="hdo-calendar-heading">'
-        '<header class="hdo-dashboard-header" data-hdo-primitive="{}"><div>'
+        '<header class="hdo-dashboard-header" data-hdo-primitive="{}"><div class="hdo-calendar-identity"><div>'
         '<p class="hdo-eyebrow">Study Calendar</p><div class="hdo-calendar-title-line">'
         '<h2 id="hdo-calendar-heading" data-hdo-calendar-title></h2>'
         '<span class="hdo-refresh-status" data-hdo-refresh-status role="status" hidden></span></div>'
-        '</div>{}</header>'
+        '</div>{}</div>{}</header>'
         '<div class="hdo-calendar-shell" data-hdo-calendar-view="{}" aria-busy="false">'
         '<div class="hdo-calendar-body"><div class="hdo-month-weekdays" aria-hidden="true"></div>'
         '<div class="hdo-calendar-grid-frame"><div class="hdo-year-heatmap-content">'
@@ -986,6 +993,7 @@ def _calendar(
     ).format(
         _dashboard_primitive("dashboard-panel"),
         _dashboard_primitive("dashboard-header"),
+        _current_streak(snapshot, config),
         _calendar_controls(config),
         _escape(config.get("heatmap", {}).get("calendar_view", "year")),
         _dashboard_primitive("calendar-context-bar"),
@@ -1011,7 +1019,11 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
     character_count = len(normalized_verse)
     has_verse = bool(normalized_verse)
     if not has_verse:
-        return ""
+        return ('<section class="hdo-card hdo-dashboard-panel hdo-bible-card" '
+                'data-hdo-primitive="{}" aria-labelledby="hdo-bible-title">'
+                '<h2 id="hdo-bible-title" class="hdo-eyebrow">Bible Verse</h2>'
+                '<p class="hdo-verse-empty">No verse selected.</p></section>').format(
+                    _dashboard_primitive("bible-verse-card"))
     if character_count <= 90:
         verse_class = "hdo-verse hdo-verse--short"
     elif character_count <= 180:
@@ -1042,14 +1054,8 @@ def _bible(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
 
 
 def _data_warning(snapshot: DashboardSnapshot, config: Mapping[str, Any]) -> str:
-    states = []
-    visibility = config.get("visibility", {})
-    if visibility.get("today", True):
-        states.extend((snapshot.facts.today, snapshot.facts.buried))
-    if visibility.get("remaining", True):
-        states.append(snapshot.facts.queue)
-    if visibility.get("heatmap_metrics", True):
-        states.extend((snapshot.facts.last_seven_days, snapshot.facts.long_term))
+    states = [snapshot.facts.today, snapshot.facts.buried, snapshot.facts.queue,
+              snapshot.facts.last_seven_days, snapshot.facts.long_term]
     unavailable = any(_json_value(state.status) == "unavailable" for state in states)
     if not unavailable:
         return ""
@@ -1075,63 +1081,14 @@ def render_dashboard(
     if preview:
         render_config["_preview_context"] = True
     resolved_theme = _resolved_theme(render_config, anki_dark)
-    visibility = render_config["visibility"]
-    has_calendar = bool(visibility.get("heatmap", True))
-    bible = _bible(snapshot, render_config) if visibility.get("bible", True) else ""
-    footer_bible = bible if has_calendar and render_config["heatmap"]["calendar_view"] == "year" else ""
-    rail_bible = "" if footer_bible else bible
-    calendar = (
-        _calendar(
-            snapshot,
-            render_config,
-            selected_date,
-            facts_revision,
-            last_updated_at,
-            year_scroll_left,
-            footer_bible,
-        )
-        if has_calendar
-        else ""
-    )
+    has_calendar = has_metrics = has_insights = True
+    bible = _bible(snapshot, render_config)
+    calendar = _calendar(snapshot, render_config, selected_date, facts_revision,
+                         last_updated_at, year_scroll_left, bible)
     metrics = _metrics(snapshot, render_config)
-    has_metrics = bool(metrics)
-    has_insights = bool(metrics or rail_bible)
-    sections: list[str] = []
-    if calendar or has_insights:
-        rail = (
-            '<aside class="hdo-insight-rail" aria-label="Study insights" '
-            'data-hdo-has-metrics="{}" data-hdo-has-bible="{}"{}>{}{}</aside>'.format(
-                "true" if has_metrics else "false",
-                "true" if rail_bible else "false",
-                "" if has_insights else " hidden",
-                metrics,
-                rail_bible,
-            )
-            if metrics or bible
-            else ""
-        )
-        sections.append(
-            '<div class="hdo-dashboard-layout">{}{}</div>'.format(calendar, rail)
-        )
-    else:
-        sections.append(
-            '<section class="hdo-card hdo-recovery-card" data-hdo-primitive="{}" role="status">'
-            '<p class="hdo-eyebrow">Home Screen Dashboard</p><h2>Dashboard sections are hidden</h2>'
-            '<p>Turn on at least one Home screen section to show study information here.</p>'
-            '<button type="button" data-hdo-command="settings">Open settings</button></section>'.format(
-                _dashboard_primitive("recovery-card")
-            )
-        )
-    payload = dashboard_facts_payload(
-        snapshot,
-        render_config,
-        selected_date,
-        facts_revision,
-        last_updated_at,
-        year_scroll_left,
-    )
-    if not visibility.get("heatmap", True):
-        sections.append('<script type="application/json" class="hdo-dashboard-data">{}</script>'.format(_safe_json(payload)))
+    rail = ('<aside class="hdo-insight-rail" aria-label="Study insights" '
+            'data-hdo-has-metrics="true" data-hdo-has-bible="false">{}</aside>').format(metrics)
+    sections = ['<div class="hdo-dashboard-layout">{}{}</div>'.format(calendar, rail)]
     last_updated_label = _last_updated_label(last_updated_at)
     refresh_copy = (
         "Refresh failed. Showing data last updated at {}.".format(last_updated_label)
@@ -1190,10 +1147,8 @@ def _runtime_placeholder(
         else len(_calendar_payload_dates(date.today().isoformat(), "month", week_start))
     )
     bible_skeleton = (
-        '<section class="hdo-card hdo-loading-region hdo-loading-region--bible">'
-        '<span></span><span></span><span></span></section>'
-        if config.get("visibility", {}).get("bible", True)
-        else ""
+        '<div class="hdo-loading-region--bible">'
+        '<span></span><span></span><span></span></div>'
     )
     metric_cards = "".join(
         '<section class="hdo-statistics-card hdo-loading-metric-card">{}</section>'.format(
@@ -1214,8 +1169,8 @@ def _runtime_placeholder(
         '<header><p class="hdo-eyebrow">Study Calendar</p>'
         '<h2>Loading your study dashboard…</h2>'
         '<p class="hdo-loading-message" data-hdo-loading-message role="status" aria-live="polite"></p></header>'
-        '<div class="hdo-loading-calendar-grid">{}</div><div class="hdo-loading-calendar-footer"></div></section>'
-        '<aside class="hdo-loading-rail"><div class="hdo-loading-region--metrics">{}</div>{}</aside></div>'
+        '<div class="hdo-loading-calendar-grid">{}</div><div class="hdo-loading-calendar-footer"><div class="hdo-loading-context"><div class="hdo-loading-date"><span></span><span></span></div><div class="hdo-loading-event"><span></span><span></span><span></span></div></div>{}</div></section>'
+        '<aside class="hdo-loading-rail"><div class="hdo-loading-region--metrics">{}</div></aside></div>'
         '<section class="hdo-card hdo-loading-failure" data-hdo-loading-failure{} role="alert">'
         '<p class="hdo-eyebrow">Home Screen Dashboard</p><h2>Dashboard could not load</h2>'
         '<p>The dashboard data could not be loaded. Retry or open diagnostics for details.</p>'
@@ -1240,8 +1195,8 @@ def _runtime_placeholder(
         _escape(view),
         "false" if failed else "true",
         "".join("<span></span>" for _ in range(loading_cell_count)),
-        metric_cards,
         bible_skeleton,
+        metric_cards,
         "" if failed else " hidden",
     )
 

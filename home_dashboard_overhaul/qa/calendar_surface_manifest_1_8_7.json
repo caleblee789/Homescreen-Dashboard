@@ -1,6 +1,6 @@
 {
   "schema_version": 8,
-  "release": "1.8.7",
+  "release": "1.9.0",
   "contract": "corrected-native-settings-and-production-dashboard-release-ui-2026-08-26",
   "dashboard_order": [
     "study_calendar",
@@ -38,7 +38,7 @@
     "footer_ownership": "reserved-error-row-plus-fixed-final-action-row-with-ordinary-page-padding"
   },
   "dashboard_architecture": {
-    "width_rule": "min(1160px, calc(100% - 32px))",
+    "width_rule": "1160px",
     "maximum_width": 1160,
     "minimum_side_margin": 16,
     "top_spacing": 30,
@@ -49,25 +49,25 @@
     "desktop_calendar_width_target": 786,
     "desktop_column_gap": 14,
     "desktop_rail_width": 360,
-    "stack_root_maximum_width": 1008,
-    "metric_single_column_root_maximum_width": 588,
+    "horizontal_scroll_owner": "document",
+    "fixed_metric_columns": 2,
     "rail_gap": 12,
-    "summary_grid_minimum_height": 352,
+    "summary_grid_minimum_height": 440,
     "summary_grid_shape": [
       2,
       2
     ],
     "summary_grid_gap": 12,
-    "summary_card_minimum_width": 170,
+    "summary_card_minimum_width": 174,
     "summary_card_padding": [
       14,
-      12,
-      13
+      14,
+      14
     ],
-    "metric_column_gap": 10,
-    "metric_minimum_visible_gap": 8,
+    "metric_column_gap": 6,
+    "metric_minimum_visible_gap": 6,
     "month_calendar_minimum_height": 0,
-    "bible_card_minimum_height": 182,
+    "bible_card_minimum_height": 0,
     "month_calendar_to_bible_bottom_tolerance": null,
     "year_calendar_minimum_height": 0,
     "year_calendar_to_summary_grid_bottom_tolerance": null,
@@ -88,7 +88,7 @@
       85,
       90
     ],
-    "year_narrow_cell_sizing": "fluid-square",
+    "year_cell_sizing": "fixed-shell-square",
     "year_minimum_width_floor": "none",
     "year_internal_horizontal_scrolling": false,
     "bottom_clearance": "measured-visible-action-row-height-plus-24-including-normal-fixed-or-sticky-positioning",
@@ -230,7 +230,7 @@
     {
       "id": "DASH-METRICS",
       "owner": "SummaryMetricsGrid",
-      "fixture": "one-native-statistics-snapshot-across-explicit-2x2-or-single-column-responsive-and-restart"
+      "fixture": "one-native-statistics-snapshot-across-fixed-2x2-viewports-and-restart"
     },
     {
       "id": "DASH-VERSE",
@@ -347,7 +347,7 @@
         "dashboard",
         "geometry"
       ],
-      "requirement": "The centered transparent root remains in normal flow at min(1160px, calc(100% - 32px)), with one add-on-owned 30 px top margin producing a measured 28-to-30 px deck-to-dashboard gap, a 14 px desktop column gap, a 360 px rail, and no root viewport-height or overflow clipping."
+      "requirement": "The centered transparent root remains in normal flow at 1160px, with one add-on-owned 30 px top margin producing a measured 28-to-30 px deck-to-dashboard gap, a 14 px desktop column gap, a 360 px rail, and no root viewport-height or overflow clipping."
     },
     {
       "id": "DASH-CLEARANCE",
@@ -364,7 +364,7 @@
         "statistics",
         "geometry"
       ],
-      "requirement": "At desktop width the 360 px rail uses 12 px gaps and a 352 px minimum-height 2-by-2 summary grid with equal rows and columns, minimum-170 px cards, 14 px 12 px 13 px card padding, 4 px metric row gaps, explicit minmax(0, 1fr) max-content rows, a 10 px target column gap, at least 8 px visible label-to-value separation, and no wrapping, clipping, ellipsis, overlap, font reduction, or internal scrolling."
+      "requirement": "The fixed 360 px rail uses 12 px gaps, 174 px columns, and a 440 px minimum-height 2-by-2 grid. Cards use 14 px padding and share heights within each row, growing with content. Metric rows retain 6 px label-to-value gaps. Headline captions remain centered beside their numbers when they fit, otherwise stack beneath with a 4 px gap. Long numbers wrap without clipping, abbreviation, font reduction, or internal scrolling."
     },
     {
       "id": "DASH-RESPONSIVE",
@@ -372,7 +372,7 @@
         "dashboard",
         "responsive"
       ],
-      "requirement": "The complete rail stacks below the calendar at root widths of 1008 px or less, the summary grid retains two columns through 589 px and becomes one column at 588 px or less, desktop minimum heights are removed when stacked, and no dashboard component introduces horizontal scrolling or shrinks typography."
+      "requirement": "The dashboard stays 1160 CSS pixels wide with a 360-pixel rail and two-column statistics at every viewport width. Smaller windows scroll horizontally through the document without rearrangement or typography reduction."
     },
     {
       "id": "DASH-VIEW-ALIGNMENT",
@@ -381,7 +381,7 @@
         "calendar",
         "geometry"
       ],
-      "requirement": "Calendar and top summary cards share a top edge. Both calendar views finish at the footer with natural content height, without stretching or a minimum height to align with the rail. Month keeps the verse below the statistics; Year embeds it in the footer and the rail ends after the summary grid."
+      "requirement": "Calendar and top summary cards share a top edge. Both calendar views finish at the footer with natural content height, without stretching or a minimum height to align with the rail. Both Month and Year embed the verse in the split calendar footer; the statistics rail uses equal-width 2-by-2 cards with 12px gaps and content-growing row heights."
     },
     {
       "id": "CAL-HEADER",
@@ -422,7 +422,7 @@
         "bible",
         "geometry"
       ],
-      "requirement": "Month keeps the standalone Bible card below statistics with 15 px 16 px 14 px padding, auto 1fr auto rows, centered configured typography capped at 300 px, an 11 px citation gap, and a desktop minimum height of 182 px. Year moves that single verse instance into the footer, with no nested card, left-aligned 16 px verse text at 1.35 line height, the existing 11 px label/reference, and 6 px gaps. A 1 px theme-aware divider separates the Year columns with 18 px spacing on each side, becoming horizontal in the stacked layout. Disabled or unavailable verses reserve no space or divider; switching views preserves the source, selection, settings, and refresh behavior."
+      "requirement": "Month and Year always embed one Bible region in the shared calendar footer, with left-aligned verse and reference and a vertical divider with 18 px spacing on each side. Empty verses display No verse selected. Loading uses the same split without a nested verse card. Captions remain centered beside metric numbers when space permits and stack below with a 4 px gap when necessary, preserving text size."
     },
     {
       "id": "CAL-PALETTES",
@@ -446,7 +446,7 @@
         "bible",
         "rendering"
       ],
-      "requirement": "Production preserves the configured verse font and color. Month and calendar-hidden standalone cards retain the configured size; the Year footer uses 16 px text scaled only by the existing dashboard text-scale setting. Both treatments show the complete verse and reference."
+      "requirement": "Production preserves the configured verse font and color. Both views use the shared footer, preserving configured typography with the footer size ratio and dashboard text scale. Empty libraries retain the verse region with No verse selected. All dashboard sections and Events remain visible; legacy visibility flags normalize to true."
     },
     {
       "id": "EVENT-NAME-SORT",
@@ -496,7 +496,7 @@
         "responsive",
         "restart"
       ],
-      "requirement": "Initial HTML, live refresh, wide Month and Year 2x2 layouts, intermediate and narrow layouts, and restart all expose identical metric values from one canonical snapshot."
+      "requirement": "Initial HTML, live refresh, Month and Year fixed 2x2 layouts at wide, intermediate and narrow viewport widths, and restart all expose identical metric values from one canonical snapshot."
     },
     {
       "id": "SAVE-ATOMIC",
@@ -512,7 +512,7 @@
         "release",
         "archive"
       ],
-      "requirement": "The reproducible 1.8.7 archive passes its allowlist, safe-path, byte-parity, manifest/assets, secret/link, and exact-installed-hash gates."
+      "requirement": "The reproducible 1.9.0 archive passes its allowlist, safe-path, byte-parity, manifest/assets, secret/link, and exact-installed-hash gates."
     },
     {
       "id": "ISOLATION",

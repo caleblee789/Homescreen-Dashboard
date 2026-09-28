@@ -153,8 +153,9 @@ def normalize_config(raw: object) -> Dict[str, Any]:
     home_screen["position"] = _choice(home_screen.get("position"), {"top", "bottom"}, "top")
 
     visibility = config["visibility"]
-    for key, default in defaults["visibility"].items():
-        visibility[key] = _bool(visibility.get(key), bool(default))
+    for key in defaults["visibility"]:
+        # Legacy flags remain readable, but dashboard sections are permanent.
+        visibility[key] = True
     # Buried is a scheduler-authoritative Today’s Session metric in schema 8,
     # not an independently hideable dashboard surface.
     visibility.pop("buried", None)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble immutable Home Screen Dashboard 1.8.7 release evidence."""
+"""Assemble immutable Home Screen Dashboard 1.9.0 release evidence."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from capture_plan import load_capture_plan
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 CAPTURE_PLAN = load_capture_plan(SOURCE_ROOT / "qa" / "capture_plan.json")
 RELEASE = CAPTURE_PLAN.release
-DEFAULT_CANDIDATE = SOURCE_ROOT / "dist" / "home-dashboard-overhaul-1.8.7.ankiaddon"
+DEFAULT_CANDIDATE = SOURCE_ROOT / "dist" / "home-dashboard-overhaul-1.9.0.ankiaddon"
 FULLSCREEN_WORKFLOW_STEP_IDS = (
     "all-six-pages-and-bible-views",
     "events-tabs",

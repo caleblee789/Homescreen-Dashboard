@@ -655,10 +655,13 @@ def _future_due_counts(
     args.append(max(0, int(max_offset)))
     rows = _safe_all(
         col.db,
-        "WITH eligible_due AS ("
+        # Anki's DB proxy recognizes SELECT-prefixed statements as reads.
+        # A top-level WITH clears the collection's undo history even when the
+        # statement only reads, so keep this aggregation in a derived table.
+        "SELECT CASE WHEN raw_offset < 0 THEN 0 ELSE raw_offset END AS due_offset, "
+        "count(*) FROM ("
         "SELECT queue, {raw_offset} AS raw_offset FROM cards WHERE {where}"
-        ") SELECT CASE WHEN raw_offset < 0 THEN 0 ELSE raw_offset END AS due_offset, "
-        "count(*) FROM eligible_due "
+        ") AS eligible_due "
         "WHERE NOT (raw_offset <= 0 AND queue IN (-2, -3)) "
         "AND (CASE WHEN raw_offset < 0 THEN 0 ELSE raw_offset END) <= ? "
         "GROUP BY due_offset ORDER BY due_offset".format(

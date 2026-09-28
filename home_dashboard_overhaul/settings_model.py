@@ -406,9 +406,9 @@ _SECTION_TARGETS = {
     "theme & layout": ("appearance", ""),
     "theme_layout": ("appearance", ""),
     "dashboard": ("dashboard", ""),
-    "home": ("dashboard", "dashboard_sections"),
-    "home screen": ("dashboard", "dashboard_sections"),
-    "home_screen": ("dashboard", "dashboard_sections"),
+    "home": ("dashboard", ""),
+    "home screen": ("dashboard", ""),
+    "home_screen": ("dashboard", ""),
     "activity": ("calendar", ""),
     "calendar": ("calendar", ""),
     "calendar & data": ("calendar", ""),
@@ -619,13 +619,6 @@ _APPEARANCE_RESET_PATHS: Tuple[Path, ...] = (
     ("appearance", "text_scale"),
     ("heatmap", "presets_by_theme"),
 )
-_DASHBOARD_SECTIONS_RESET_PATHS: Tuple[Path, ...] = (
-    ("visibility", "heatmap"),
-    ("visibility", "remaining"),
-    ("visibility", "today"),
-    ("visibility", "heatmap_metrics"),
-    ("visibility", "bible"),
-)
 _STUDY_METRICS_RESET_PATHS: Tuple[Path, ...] = (
     ("study", "pace_unit"),
     ("study", "retention_target"),
@@ -634,7 +627,6 @@ _STUDY_METRICS_RESET_PATHS: Tuple[Path, ...] = (
 _CALENDAR_DISPLAY_RESET_PATHS: Tuple[Path, ...] = (
     ("heatmap", "calendar_view"),
     ("heatmap", "week_start"),
-    ("visibility", "events"),
 )
 _CALENDAR_RANGE_RESET_PATHS: Tuple[Path, ...] = (
     ("heatmap", "history_days"),
@@ -661,11 +653,9 @@ _BIBLE_ROTATION_RESET_PATHS: Tuple[Path, ...] = (
 _RESET_DEFAULT_PATHS = {
     "appearance": _APPEARANCE_RESET_PATHS,
     "panel_placement": (("home_screen", "position"),),
-    "dashboard_sections": _DASHBOARD_SECTIONS_RESET_PATHS,
     "study_metrics": _STUDY_METRICS_RESET_PATHS,
     "home_screen_legacy": (
-        _DASHBOARD_SECTIONS_RESET_PATHS
-        + _STUDY_METRICS_RESET_PATHS
+        _STUDY_METRICS_RESET_PATHS
         + (("home_screen", "position"),)
     ),
     "calendar_display": _CALENDAR_DISPLAY_RESET_PATHS,
@@ -677,8 +667,7 @@ _RESET_DEFAULT_PATHS = {
         + _LOCAL_DATA_RESET_PATHS
     ),
     "dashboard": (
-        _DASHBOARD_SECTIONS_RESET_PATHS
-        + _STUDY_METRICS_RESET_PATHS
+        _STUDY_METRICS_RESET_PATHS
         + _LOCAL_DATA_RESET_PATHS
         + (("home_screen", "position"),)
     ),
@@ -720,9 +709,7 @@ class SettingsDraft:
 
     @property
     def dependency_state(self) -> Dict[str, bool]:
-        visibility = self.values["visibility"]
         return {
-            "visibility.events": bool(visibility["heatmap"]),
             "heatmap.forecast_days": True,
             "bible.font_color": not bool(self.values["bible"]["theme_aware_color"]),
         }

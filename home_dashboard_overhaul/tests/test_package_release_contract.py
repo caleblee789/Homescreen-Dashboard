@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class PackageReleaseContractTests(unittest.TestCase):
-    def test_allowlist_is_the_exact_25_member_contract(self) -> None:
+    def test_allowlist_is_the_exact_package_contract(self) -> None:
         self.assertEqual(
             tuple(build.PACKAGE_FILES),
             (
@@ -18,13 +18,13 @@ class PackageReleaseContractTests(unittest.TestCase):
                 "config.md", "config_schema.py", "controller.py",
                 "default_verses.json", "LICENSE.txt", "manifest.json",
                 "migration.py", "models.py", "README.md", "CHANGELOG.md",
-                "renderer.py", "settings.py", "settings_model.py", "themes.py",
+                "renderer.py", "settings.py", "shared_addon_menu.py", "settings_model.py", "themes.py",
                 "THIRD_PARTY_NOTICES.md", "ui_primitives.py", "verse.py",
-                "web/dashboard.css", "web/dashboard.js", "user_files/README.txt",
+                "web/dashboard.css", "web/dashboard.js", "web/streak-flame.svg", "user_files/README.txt",
                 "assets/buy_me_a_coffee.png",
             ),
         )
-        self.assertEqual(len(build.PACKAGE_FILES), 25)
+        self.assertEqual(len(build.PACKAGE_FILES), 27)
         self.assertFalse(set(build.PACKAGE_FILES) & build.DEFERRED_SOURCE_FILES)
         self.assertFalse(any(name.startswith("_vendor/") for name in build.PACKAGE_FILES))
 
