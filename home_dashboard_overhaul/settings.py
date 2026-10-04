@@ -3367,7 +3367,7 @@ class SettingsDialog(QDialog):
         self.sidebar_title.setObjectName("GlobalTitle")
         self.sidebar_title.setWordWrap(True)
         self.sidebar_version = QLabel(
-            "Version {}".format(_manifest_metadata().get("human_version", "1.9.0"))
+            "Version {}".format(_manifest_metadata().get("human_version", "1.9.1"))
         )
         self.sidebar_version.setObjectName("SidebarVersion")
         sidebar_layout.addWidget(self.sidebar_title)

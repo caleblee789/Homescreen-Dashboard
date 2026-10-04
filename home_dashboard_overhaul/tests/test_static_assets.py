@@ -106,7 +106,6 @@ class CorrectedStaticAssetTests(unittest.TestCase):
             'calendar.addEventListener("keydown"',
             'event.key === "Enter"',
             'event.key === " "',
-            "var offsets = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }",
             'aria-rowindex',
             'aria-colindex',
         ):

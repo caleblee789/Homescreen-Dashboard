@@ -1,6 +1,6 @@
 {
   "schema_version": 8,
-  "release": "1.9.0",
+  "release": "1.9.1",
   "contract": "corrected-native-settings-and-production-dashboard-release-ui-2026-08-26",
   "dashboard_order": [
     "study_calendar",
@@ -512,7 +512,7 @@
         "release",
         "archive"
       ],
-      "requirement": "The reproducible 1.9.0 archive passes its allowlist, safe-path, byte-parity, manifest/assets, secret/link, and exact-installed-hash gates."
+      "requirement": "The reproducible 1.9.1 archive passes its allowlist, safe-path, byte-parity, manifest/assets, secret/link, and exact-installed-hash gates."
     },
     {
       "id": "ISOLATION",

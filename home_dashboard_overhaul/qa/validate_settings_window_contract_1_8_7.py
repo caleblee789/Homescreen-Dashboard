@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the responsive Home Screen Dashboard 1.9.0 Settings contract."""
+"""Validate the responsive Home Screen Dashboard 1.9.1 Settings contract."""
 
 from __future__ import annotations
 
@@ -66,9 +66,9 @@ def main() -> int:
     )[0]
     errors: list[str] = []
 
-    _require(errors, manifest.get("human_version") == "1.9.0", "manifest release is not 1.9.0")
-    _require(errors, contract.get("release") == "1.9.0", "window contract release differs")
-    _require(errors, capture_plan.get("release") == "1.9.0", "capture plan release differs")
+    _require(errors, manifest.get("human_version") == "1.9.1", "manifest release is not 1.9.1")
+    _require(errors, contract.get("release") == "1.9.1", "window contract release differs")
+    _require(errors, capture_plan.get("release") == "1.9.1", "capture plan release differs")
     _require(errors, config.get("schema_version") == 8, "configuration schema changed")
     _require(errors, contract.get("minimum_size") == [860, 640], "minimum geometry differs")
     _require(errors, contract.get("default_size") == [1080, 760], "default geometry differs")
@@ -489,7 +489,7 @@ def main() -> int:
         for error in errors:
             print("ERROR: {}".format(error))
         return 1
-    print("Settings window contract: PASS (1.9.0 responsive parented QDialog)")
+    print("Settings window contract: PASS (1.9.1 responsive parented QDialog)")
     return 0
 
 

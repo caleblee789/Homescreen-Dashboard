@@ -39,6 +39,15 @@
     return result;
   }
 
+  function keyboardDate(value, key, view) {
+    var offsets = view === "year"
+      ? { ArrowLeft: -7, ArrowRight: 7, ArrowUp: -1, ArrowDown: 1 }
+      : { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+    return Object.prototype.hasOwnProperty.call(offsets, key)
+      ? addDays(value, offsets[key])
+      : null;
+  }
+
   function dayDifference(left, right) {
     var leftUtc = Date.UTC(left.getFullYear(), left.getMonth(), left.getDate());
     var rightUtc = Date.UTC(right.getFullYear(), right.getMonth(), right.getDate());
@@ -1124,17 +1133,17 @@
     calendar.addEventListener("keydown", function (event) {
       var cell = delegatedCell(event.target);
       if (!cell) return;
-      var offsets = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         selectDate(cell.dataset.date, false);
         return;
       }
-      if (!Object.prototype.hasOwnProperty.call(offsets, event.key)) return;
       var selectedDate = parseDate(cell.dataset.date);
       if (!selectedDate) return;
+      var targetDate = keyboardDate(selectedDate, event.key, state.view);
+      if (!targetDate) return;
       event.preventDefault();
-      var targetIso = isoDate(addDays(selectedDate, offsets[event.key]));
+      var targetIso = isoDate(targetDate);
       var target = Array.prototype.find.call(calendar.querySelectorAll(".hdo-calendar-day"), function (candidate) {
         return candidate.dataset.date === targetIso;
       });
@@ -1782,6 +1791,7 @@
     parseDate: parseDate,
     isoDate: isoDate,
     addDays: addDays,
+    keyboardDate: keyboardDate,
     dayDifference: dayDifference,
     monthRange: monthRange,
     yearRange: yearRange,

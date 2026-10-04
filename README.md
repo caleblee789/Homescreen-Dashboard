@@ -3,7 +3,7 @@
 A study calendar, progress tracker, and statistics dashboard for Anki's home
 screen.
 
-**Version 1.9.0** · **Anki Desktop 26.8+**
+**Version 1.9.1** · **Anki Desktop 26.8+**
 
 ## Features
 
@@ -32,13 +32,13 @@ Click an image to view it at full size.
 3. Restart Anki.
 
 [View on AnkiWeb](https://ankiweb.net/shared/info/808247776).
-You can also download the [1.9.0 add-on file](https://github.com/caleblee789/Homescreen-Dashboard/releases/download/v1.9.0/home-dashboard-overhaul-1.9.0.ankiaddon)
+You can also download the [1.9.1 add-on file](https://github.com/caleblee789/Homescreen-Dashboard/releases/download/v1.9.1/home-dashboard-overhaul-1.9.1.ankiaddon)
 and choose **Tools → Add-ons → Install from file**.
 
 If the dashboard reports conflicting add-ons, disable the entries listed in
 its message and restart Anki.
 
-See [what changed in 1.9.0](home_dashboard_overhaul/CHANGELOG.md).
+See [what changed in 1.9.1](home_dashboard_overhaul/CHANGELOG.md).
 
 ## Using the dashboard
 

@@ -1,6 +1,6 @@
 {
   "schema_version": 23,
-  "release": "1.9.0",
+  "release": "1.9.1",
   "authority": "qa/calendar_surface_manifest_1_8_7.json",
   "visual_matrix": "qa/visual_regression_matrix_1_8_7.json",
   "exact_once": true,

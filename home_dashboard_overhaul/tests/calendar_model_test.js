@@ -36,6 +36,17 @@ assert.strictEqual(year2026[year2026.length - 1], "2026-12-31");
 assert.strictEqual(model.isoDate(model.navigate(model.parseDate("2026-12-01"), "month", 1)), "2027-01-01");
 assert.strictEqual(model.isoDate(model.navigate(model.parseDate("2026-08-01"), "year", -1)), "2025-08-01");
 
+// Arrow keys follow the visible axes: weeks are rows in Month and columns in Year.
+for (const [view, expected] of Object.entries({
+  month: ["2026-08-16", "2026-08-18", "2026-08-10", "2026-08-24"],
+  year: ["2026-08-10", "2026-08-24", "2026-08-16", "2026-08-18"]
+})) {
+  ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].forEach((key, index) => {
+    assert.strictEqual(model.isoDate(model.keyboardDate(model.parseDate("2026-08-17"), key, view)), expected[index]);
+  });
+  assert.strictEqual(model.keyboardDate(model.parseDate("2026-08-17"), "Tab", view), null);
+}
+
 // Event grouping is inert, deterministic, and upcoming-event selection is
 // relative to local Today—not the selected calendar date.
 const events = [

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.9.1 — 2026-10-04
+
+- Corrected Year calendar arrow-key navigation to follow its visible rows and columns: Left and Right move one week; Up and Down move one day. Month navigation keeps its existing day and week steps.
+
 ## 1.9.0 — 2026-09-27
 
 - Made the 1160-pixel Month and Year dashboard a fixed composition with a 786-pixel calendar, 14-pixel gap, and 360-pixel statistics rail. Smaller windows scroll horizontally without rearranging panels; Year month spacing is unchanged.

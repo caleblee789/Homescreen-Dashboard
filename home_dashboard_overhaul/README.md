@@ -1,11 +1,16 @@
-# Home Screen Dashboard 1.9.0
+# Home Screen Dashboard 1.9.1
 
 Home Screen Dashboard is a calendar-first Deck Browser dashboard for Anki
 Desktop 26.8. It combines study history, due work, local events, stable study
 metrics, and a rotating Bible verse without patching Anki's private Deck
 Browser or statistics classes.
 
-## What changed in 1.9.0
+## What changed in 1.9.1
+
+Arrow keys now follow the visible Year calendar: Left and Right move one week,
+and Up and Down move one day. Month navigation retains its existing behavior.
+
+## Earlier 1.9.0 changes
 
 See the [1.9.0 changelog](CHANGELOG.md) for the fixed Month and Year layout, the shared footer, 2×2 statistics, fitted captions, and always-visible sections.
 
@@ -171,7 +176,7 @@ work remains deferred and is not packaged.
 
 ## Install
 
-Install `home-dashboard-overhaul-1.9.0.ankiaddon` through **Tools → Add-ons →
+Install `home-dashboard-overhaul-1.9.1.ankiaddon` through **Tools → Add-ons →
 Install from file**, restart Anki, and disable any legacy source add-ons named
 by the activation card. The manifest is pinned to Anki Desktop 26.8.
 
@@ -189,8 +194,8 @@ python3 home_dashboard_overhaul/qa/validate_settings_window_contract_1_8_7.py
 python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
-The builder creates one 24-member allowlisted archive, checks its version and
-safe paths, validates the 1.9.0 release authorities, and verifies every
+The builder creates one 27-member allowlisted archive, checks its version and
+safe paths, validates the 1.9.1 release authorities, and verifies every
 packaged byte against source. The canonical plan contains 116 native frames,
 including 63 Settings frames at 100% application font and two total
 controlled-restart states. Settings presentation is capped at 14 sheets.

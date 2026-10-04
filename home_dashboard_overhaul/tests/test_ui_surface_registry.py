@@ -24,7 +24,7 @@ class UiSurfaceRegistryTests(unittest.TestCase):
         self.assertEqual(actual, expected)
         self.assertEqual(len(actual), len(set(actual)))
         self.assertEqual(self.registry["schema_version"], 23)
-        self.assertEqual(self.registry["release"], "1.9.0")
+        self.assertEqual(self.registry["release"], "1.9.1")
 
     def test_entries_are_machine_checkable_and_fixture_scoped(self) -> None:
         for surface in self.registry["surfaces"]:
