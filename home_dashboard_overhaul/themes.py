@@ -101,57 +101,87 @@ def contrast_ratio(left: str, right: str) -> float:
 
 
 # Stable study semantics use a shared baseline and never inherit the selected
-# theme accent. Explicit overrides are limited to audited visual contracts.
-SEMANTIC_PALETTES: Mapping[str, Mapping[str, str]] = {
-    "light": {
-        "status_new_fill": "#225FC6",
-        "status_new_text": "#225FC6",
-        "status_learning_fill": "#8B610A",
-        "status_learning_text": "#8B610A",
-        "status_review_fill": "#7347B1",
-        "status_review_text": "#7347B1",
-        "status_buried_fill": "#64748B",
-        "status_buried_text": "#64748B",
-        "status_success_fill": "#19714F",
-        "status_success_text": "#19714F",
-        "status_warning_fill": "#D0A146",
-        "status_warning_text": "#845A08",
-        "status_danger_fill": "#D95C74",
-        "status_danger_text": "#A92948",
-        "status_event_fill": "#7D5F19",
-        "status_event_text": "#7D5F19"
-    },
-    "dark": {
-        "status_new_fill": "#93BEFF",
-        "status_new_text": "#93BEFF",
-        "status_learning_fill": "#E9C16B",
-        "status_learning_text": "#E9C16B",
-        "status_review_fill": "#C5A7F0",
-        "status_review_text": "#C5A7F0",
-        "status_buried_fill": "#94A3B8",
-        "status_buried_text": "#94A3B8",
-        "status_success_fill": "#91DCB2",
-        "status_success_text": "#91DCB2",
-        "status_warning_fill": "#E4C05B",
-        "status_warning_text": "#E4C05B",
-        "status_danger_fill": "#ED879A",
-        "status_danger_text": "#ED879A",
-        "status_event_fill": "#F0CB74",
-        "status_event_text": "#F0CB74"
-    }
-}
+# theme accent. Theme-specific differences follow the finalized Figma interface modes.
+SEMANTIC_PALETTES: Mapping[str, Mapping[str, str]] = {'dark': {'status_new_fill': '#A2BFF2',
+          'status_new_text': '#A2BFF2',
+          'status_learning_fill': '#DDBF85',
+          'status_learning_text': '#DDBF85',
+          'status_review_fill': '#C6B4E3',
+          'status_review_text': '#C6B4E3',
+          'status_buried_fill': '#B3BAC7',
+          'status_buried_text': '#B3BAC7',
+          'status_success_fill': '#96CCB0',
+          'status_success_text': '#96CCB0',
+          'status_warning_fill': '#DDBF85',
+          'status_warning_text': '#DDBF85',
+          'status_danger_fill': '#E9A4AF',
+          'status_danger_text': '#E9A4AF',
+          'status_event_fill': '#D9BB83',
+          'status_event_text': '#D9BB83'},
+ 'light': {'status_new_fill': '#345FAD',
+           'status_new_text': '#345FAD',
+           'status_learning_fill': '#825E20',
+           'status_learning_text': '#825E20',
+           'status_review_fill': '#704F98',
+           'status_review_text': '#704F98',
+           'status_buried_fill': '#5C6676',
+           'status_buried_text': '#5C6676',
+           'status_success_fill': '#2B7150',
+           'status_success_text': '#2B7150',
+           'status_warning_fill': '#825E20',
+           'status_warning_text': '#825E20',
+           'status_danger_fill': '#A43F55',
+           'status_danger_text': '#A43F55',
+           'status_event_fill': '#7D5B25',
+           'status_event_text': '#7D5B25'}}
 
 
-SEMANTIC_THEME_OVERRIDES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
-    "Sapphire Glass": {
-        "dark": {
-            "status_learning_fill": "#F47F8D",
-            "status_learning_text": "#F47F8D",
-            "status_review_fill": "#83D9A7",
-            "status_review_text": "#83D9A7"
-        }
-    }
-}
+SEMANTIC_THEME_OVERRIDES: Mapping[str, Mapping[str, Mapping[str, str]]] = {'Sapphire Glass': {'dark': {'status_learning_fill': '#E9A4AF',
+                             'status_learning_text': '#E9A4AF',
+                             'status_review_fill': '#96CCB0',
+                             'status_review_text': '#96CCB0',
+                             'status_buried_fill': '#A8B3C6',
+                             'status_buried_text': '#A8B3C6'},
+                    'light': {'status_learning_fill': '#A43F55',
+                              'status_learning_text': '#A43F55',
+                              'status_review_fill': '#2B7150',
+                              'status_review_text': '#2B7150',
+                              'status_buried_fill': '#56667E',
+                              'status_buried_text': '#56667E'}},
+ 'Emerald': {'dark': {'status_buried_fill': '#B0C2B7', 'status_buried_text': '#B0C2B7'},
+             'light': {'status_buried_fill': '#577062', 'status_buried_text': '#577062'}},
+ 'High Contrast': {'dark': {'status_new_fill': '#BEDBFF',
+                            'status_new_text': '#BEDBFF',
+                            'status_learning_fill': '#F1D796',
+                            'status_learning_text': '#F1D796',
+                            'status_review_fill': '#E3D1FF',
+                            'status_review_text': '#E3D1FF',
+                            'status_buried_fill': '#DEE8F2',
+                            'status_buried_text': '#DEE8F2',
+                            'status_success_fill': '#97DCB3',
+                            'status_success_text': '#97DCB3',
+                            'status_warning_fill': '#FFE2A1',
+                            'status_warning_text': '#FFE2A1',
+                            'status_danger_fill': '#F69AA8',
+                            'status_danger_text': '#F69AA8',
+                            'status_event_fill': '#FFE2A1',
+                            'status_event_text': '#FFE2A1'},
+                   'light': {'status_new_fill': '#124C97',
+                             'status_new_text': '#124C97',
+                             'status_learning_fill': '#664300',
+                             'status_learning_text': '#664300',
+                             'status_review_fill': '#542A87',
+                             'status_review_text': '#542A87',
+                             'status_buried_fill': '#26384D',
+                             'status_buried_text': '#26384D',
+                             'status_success_fill': '#216C48',
+                             'status_success_text': '#216C48',
+                             'status_warning_fill': '#624400',
+                             'status_warning_text': '#624400',
+                             'status_danger_fill': '#AD304A',
+                             'status_danger_text': '#AD304A',
+                             'status_event_fill': '#624400',
+                             'status_event_text': '#624400'}}}
 
 
 # Reviews Due is a stable semantic visualization. The neutral background
@@ -168,24 +198,14 @@ REVIEWS_DUE_INDICATORS: Mapping[str, tuple[str, ...]] = {
 }
 
 
-COMPLETION_SCALES: Mapping[str, Mapping[str, tuple[str, ...]]] = {
-    "Sapphire Glass": {
-        "light": ("#F5F8FC", "#E6EDFB", "#C6D5F3", "#9BB6E6", "#6B8DCA", "#3C65A3",),
-        "dark": ("#162438", "#1E3355", "#2B4F7A", "#4773A4", "#729BCD", "#A6C7EF",)
-    },
-    "Graphite": {
-        "dark": ("#22262D", "#2B333D", "#434F5F", "#606F83", "#8291A4", "#AEBAC9",),
-        "light": ("#F5F6F8", "#EAEDEF", "#D1D7DE", "#A7B2C0", "#77899E", "#4C6178",)
-    },
-    "Emerald": {
-        "dark": ("#1B2D24", "#1E3B2E", "#2C5840", "#42815C", "#6CAF84", "#9ED4B0",),
-        "light": ("#F2F7F4", "#E7F5EC", "#BFE2CE", "#8DC6A6", "#57A879", "#287747",)
-    },
-    "High Contrast": {
-        "dark": ("#101820", "#143846", "#225C70", "#3C889F", "#6EBCD0", "#ADEDFC",),
-        "light": ("#FFFFFF", "#E4F7FC", "#B0DFED", "#70BBD0", "#378499", "#175A70",)
-    }
-}
+COMPLETION_SCALES: Mapping[str, Mapping[str, tuple[str, ...]]] = {'Sapphire Glass': {'dark': ('#202735', '#253045', '#36496D', '#46629A', '#6A8DD0', '#90AFED'),
+                    'light': ('#F1F3F8', '#E7EEFA', '#C1D2F0', '#98B1E1', '#678BD2', '#2F55A4')},
+ 'Graphite': {'dark': ('#24262C', '#2E3034', '#45494F', '#5D646D', '#878E99', '#A9B0BA'),
+              'light': ('#F2F2F4', '#ECEDF0', '#CED1D6', '#ACB1B9', '#858D99', '#515A67')},
+ 'Emerald': {'dark': ('#202C28', '#21362A', '#2D523D', '#367151', '#5A9F78', '#83BF9C'),
+             'light': ('#F0F5F2', '#E5F1E9', '#BDD9C7', '#90BEA2', '#549E75', '#036B41')},
+ 'High Contrast': {'dark': ('#151B23', '#013441', '#00566B', '#087E9B', '#09B6DF', '#A2E3FA'),
+                   'light': ('#FFFFFF', '#E0F5FD', '#96D9F1', '#33B5DA', '#0484A3', '#024A5D')}}
 
 
 # Every saved palette identifier owns an authored light and dark ladder.  These
@@ -194,269 +214,344 @@ COMPLETION_SCALES: Mapping[str, Mapping[str, tuple[str, ...]]] = {
 # visually indistinguishable and produced surprising changes over host images.
 HEATMAP_COMPLETION_SCALES: Mapping[
     str, Mapping[str, Mapping[str, tuple[str, ...]]]
-] = {
-    "Sapphire Glass": {
-        "Sapphire": {
-            "light": ("#F5F8FC", "#E6EDFB", "#C6D5F3", "#9BB6E6", "#6B8DCA", "#3C65A3",),
-            "dark": ("#162438", "#1E3355", "#2B4F7A", "#4773A4", "#729BCD", "#A6C7EF",)
-        },
-        "Amethyst": {
-            "dark": ("#162438", "#352944", "#514064", "#72548A", "#9774B0", "#C1A1D4",),
-            "light": ("#F5F8FC", "#EFE8F5", "#DAC9E8", "#BDA1D1", "#9772B2", "#73508D",)
-        },
-        "Glacier": {
-            "light": ("#F5F8FC", "#E4EFF3", "#BEDAE3", "#91BFCE", "#5B94AC", "#326B84",),
-            "dark": ("#162438", "#203E4B", "#2D5C6D", "#417C90", "#699FB1", "#9EC6D2",)
-        },
-        "Sea Glass": {
-            "dark": ("#162438", "#203D35", "#2D5B4C", "#457D68", "#6CA18B", "#9BCBB5",),
-            "light": ("#F5F8FC", "#E4F2ED", "#BCDDD0", "#8FC3B2", "#5C9D88", "#327560",)
-        }
-    },
-    "Graphite": {
-        "Slate": {
-            "dark": ("#22262D", "#2B333D", "#434F5F", "#606F83", "#8291A4", "#AEBAC9",),
-            "light": ("#F5F6F8", "#EAEDEF", "#D1D7DE", "#A7B2C0", "#77899E", "#4C6178",)
-        },
-        "Steel": {
-            "light": ("#F5F6F8", "#E7EEF2", "#C5D5DF", "#9FB8C8", "#6A8FA5", "#426B82",),
-            "dark": ("#22262D", "#273641", "#3B5365", "#55788B", "#80A0B0", "#B4CFD9",)
-        },
-        "Plum": {
-            "dark": ("#22262D", "#362B3A", "#57405F", "#795680", "#9F78A8", "#C7A4CF",),
-            "light": ("#F5F6F8", "#F1E9F1", "#DFCADD", "#C4A2C1", "#9E799D", "#765371",)
-        },
-        "Mint": {
-            "light": ("#F5F6F8", "#EBF3EF", "#D0E4DA", "#A6CBB9", "#76A68F", "#487A63",),
-            "dark": ("#22262D", "#1F3931", "#355949", "#517D65", "#7AA18A", "#AACBB4",)
-        }
-    },
-    "Emerald": {
-        "Emerald": {
-            "dark": ("#1B2D24", "#1E3B2E", "#2C5840", "#42815C", "#6CAF84", "#9ED4B0",),
-            "light": ("#F2F7F4", "#E7F5EC", "#BFE2CE", "#8DC6A6", "#57A879", "#287747",)
-        },
-        "Jade": {
-            "light": ("#F2F7F4", "#E8F3EC", "#C4E2CF", "#98CAB0", "#61A47E", "#337650",),
-            "dark": ("#1B2D24", "#223C30", "#365B46", "#518064", "#7BA48A", "#ADD2B9",)
-        },
-        "Moss": {
-            "dark": ("#1B2D24", "#31391F", "#4A582A", "#687B3D", "#91A761", "#BBC993",),
-            "light": ("#F2F7F4", "#EFF1DE", "#DDE2BC", "#BCC995", "#93A467", "#657A3F",)
-        },
-        "Lagoon": {
-            "light": ("#F2F7F4", "#E4F2F1", "#BDE0DE", "#8BC4C1", "#57A29E", "#287975",),
-            "dark": ("#1B2D24", "#173F3E", "#245D5B", "#3A7F7D", "#62A5A1", "#99CECA",)
-        }
-    },
-    "High Contrast": {
-        "Cyan": {
-            "dark": ("#101820", "#143846", "#225C70", "#3C889F", "#6EBCD0", "#ADEDFC",),
-            "light": ("#FFFFFF", "#E4F7FC", "#B0DFED", "#70BBD0", "#378499", "#175A70",)
-        },
-        "Gold": {
-            "dark": ("#101820", "#3F3210", "#725818", "#A5862F", "#D5B457", "#F5DA95",),
-            "light": ("#FFFFFF", "#FFF4D5", "#E7D299", "#C4A45E", "#907134", "#63470D",)
-        },
-        "Magenta": {
-            "dark": ("#101820", "#462644", "#70416D", "#995995", "#C084BA", "#EDBCE4",),
-            "light": ("#FFFFFF", "#FBE6F6", "#E7B9DB", "#C688B7", "#965587", "#672D59",)
-        },
-        "Monochrome": {
-            "light": ("#FFFFFF", "#F0F0F0", "#CCCCCC", "#999999", "#606060", "#252525",),
-            "dark": ("#101820", "#252525", "#505050", "#888888", "#BEBEBE", "#F0F0F0",)
-        }
-    }
-}
+] = {'Sapphire Glass': {'Sapphire': {'dark': ('#202735',
+                                          '#253045',
+                                          '#36496D',
+                                          '#46629A',
+                                          '#6A8DD0',
+                                          '#90AFED'),
+                                 'light': ('#F1F3F8',
+                                           '#E7EEFA',
+                                           '#C1D2F0',
+                                           '#98B1E1',
+                                           '#678BD2',
+                                           '#2F55A4')},
+                    'Amethyst': {'dark': ('#202735',
+                                          '#312D40',
+                                          '#4B4364',
+                                          '#675A8D',
+                                          '#9282C0',
+                                          '#B3A6DE'),
+                                 'light': ('#F1F3F8',
+                                           '#EEECF7',
+                                           '#D2CCE9',
+                                           '#B3AAD6',
+                                           '#9080C2',
+                                           '#5F4A93')},
+                    'Glacier': {'dark': ('#202735',
+                                         '#21333B',
+                                         '#2C4E5C',
+                                         '#356B80',
+                                         '#5897B1',
+                                         '#82B9D0'),
+                                'light': ('#F1F3F8',
+                                          '#E5EFF4',
+                                          '#BCD6E1',
+                                          '#8EB9CB',
+                                          '#5296B1',
+                                          '#00637F')},
+                    'Sea Glass': {'dark': ('#202735',
+                                           '#24352D',
+                                           '#335044',
+                                           '#3F6E5B',
+                                           '#649B84',
+                                           '#8BBCA7'),
+                                  'light': ('#F1F3F8',
+                                            '#E7F0EC',
+                                            '#C0D7CD',
+                                            '#95BBAA',
+                                            '#5F9B82',
+                                            '#1A684E')}},
+ 'Graphite': {'Slate': {'dark': ('#24262C', '#2E3034', '#45494F', '#5D646D', '#878E99', '#A9B0BA'),
+                        'light': ('#F2F2F4', '#ECEDF0', '#CED1D6', '#ACB1B9', '#858D99', '#515A67')},
+              'Steel': {'dark': ('#24262C', '#28323B', '#3A4B5B', '#4B667F', '#7192AF', '#96B3CE'),
+                        'light': ('#F2F2F4', '#E8EEF4', '#C5D3E0', '#9DB4C9', '#6E90AF', '#355D7F')},
+              'Plum': {'dark': ('#24262C', '#372C37', '#554254', '#755874', '#A480A2', '#C4A3C2'),
+                       'light': ('#F2F2F4', '#F2EBF1', '#DBCBDA', '#C1A7C0', '#A47DA2', '#724870')},
+              'Mint': {'dark': ('#24262C', '#27342B', '#394F3F', '#496D55', '#6F997C', '#94BB9F'),
+                       'light': ('#F2F2F4', '#E8F0EA', '#C4D7C9', '#9CBAA4', '#6B9979', '#316644')}},
+ 'Emerald': {'Emerald': {'dark': ('#202C28', '#21362A', '#2D523D', '#367151', '#5A9F78', '#83BF9C'),
+                         'light': ('#F0F5F2', '#E5F1E9', '#BDD9C7', '#90BEA2', '#549E75', '#036B41')},
+             'Jade': {'dark': ('#202C28', '#20352F', '#2C5148', '#337061', '#579D8B', '#81BEAD'),
+                      'light': ('#F0F5F2', '#E5F1ED', '#BCD8D0', '#8EBDAF', '#509D89', '#016957')},
+             'Moss': {'dark': ('#202C28', '#2F3223', '#474C31', '#61683E', '#8A9462', '#ACB588'),
+                      'light': ('#F0F5F2', '#EDEFE6', '#CFD4BE', '#AEB693', '#89925D', '#56601F')},
+             'Lagoon': {'dark': ('#202C28', '#1F3536', '#285153', '#2D6F73', '#509CA0', '#7CBDC1'),
+                        'light': ('#F0F5F2', '#E4F0F1', '#BAD8DA', '#8ABCBF', '#499BA0', '#01666B')}},
+ 'High Contrast': {'Cyan': {'dark': ('#151B23', '#013441', '#00566B', '#087E9B', '#09B6DF', '#A2E3FA'),
+                            'light': ('#FFFFFF', '#E0F5FD', '#96D9F1', '#33B5DA', '#0484A3', '#024A5D')},
+                   'Gold': {'dark': ('#151B23', '#3B2B01', '#624900', '#8E6C06', '#C99E2F', '#EDD5A0'),
+                            'light': ('#FFFFFF', '#F8F0DE', '#E4CB95', '#C69F41', '#967103', '#543F02')},
+                   'Magenta': {'dark': ('#151B23', '#431F3B', '#6F3463', '#9E528D', '#D883C4', '#F7C6EA'),
+                               'light': ('#FFFFFF',
+                                         '#FCEBF7',
+                                         '#EEBCE1',
+                                         '#D487C1',
+                                         '#A35993',
+                                         '#632957')},
+                   'Monochrome': {'dark': ('#151B23',
+                                           '#2E2E2E',
+                                           '#4D4D4D',
+                                           '#717171',
+                                           '#A4A4A4',
+                                           '#D7D7D7'),
+                                  'light': ('#FFFFFF',
+                                            '#F1F1F1',
+                                            '#CECECE',
+                                            '#A4A4A4',
+                                            '#777777',
+                                            '#424242')}}}
 
 
 # Shared surfaces from the redesign; saved IDs and semantic roles stay stable.
-CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {
-    "Sapphire Glass": {
-        "light": {
-            "ui_canvas": "#F3F6FB",
-            "ui_surface_1": "#FFFFFF",
-            "ui_surface_2": "#F5F8FC",
-            "ui_surface_3": "#F5F8FC",
-            "ui_border_subtle": "#D9E2EE",
-            "ui_border_default": "#D9E2EE",
-            "ui_border_strong": "#7D91A8",
-            "ui_text_primary": "#17263A",
-            "ui_text_secondary": "#52647C",
-            "ui_text_tertiary": "#52647C",
-            "ui_text_disabled": "#8B99A8",
-            "ui_eyebrow": "#52647C",
-            "ui_accent": "#275ED6",
-            "ui_accent_hover": "#2457B2",
-            "ui_accent_pressed": "#1F4996",
-            "ui_accent_soft": "#EAF1FF",
-            "ui_accent_border": "#7FA6DC",
-            "ui_on_accent": "#FFFFFF",
-            "ui_focus": "#6097DD",
-            "progress_complete": "#275ED6"
-        },
-        "dark": {
-            "ui_canvas": "#0B1220",
-            "ui_surface_1": "#111D2E",
-            "ui_surface_2": "#162438",
-            "ui_surface_3": "#162438",
-            "ui_border_subtle": "#29384B",
-            "ui_border_default": "#29384B",
-            "ui_border_strong": "#617B96",
-            "ui_text_primary": "#EAF0F8",
-            "ui_text_secondary": "#A4B4C8",
-            "ui_text_tertiary": "#A4B4C8",
-            "ui_text_disabled": "#637487",
-            "ui_eyebrow": "#A4B4C8",
-            "ui_accent": "#8CB6FF",
-            "ui_accent_hover": "#7BB6F8",
-            "ui_accent_pressed": "#478CD8",
-            "ui_accent_soft": "#1B3354",
-            "ui_accent_border": "#477CAD",
-            "ui_on_accent": "#081727",
-            "ui_focus": "#98C8FF",
-            "progress_complete": "#8CB6FF"
-        }
-    },
-    "Graphite": {
-        "light": {
-            "ui_canvas": "#F4F5F7",
-            "ui_surface_1": "#FFFFFF",
-            "ui_surface_2": "#F5F6F8",
-            "ui_surface_3": "#F5F6F8",
-            "ui_border_subtle": "#DDDFE4",
-            "ui_border_default": "#DDDFE4",
-            "ui_border_strong": "#7D8791",
-            "ui_text_primary": "#20242B",
-            "ui_text_secondary": "#5C6470",
-            "ui_text_tertiary": "#5C6470",
-            "ui_text_disabled": "#979FA8",
-            "ui_eyebrow": "#5C6470",
-            "ui_accent": "#465B78",
-            "ui_accent_hover": "#465B70",
-            "ui_accent_pressed": "#3B4D60",
-            "ui_accent_soft": "#EDF0F5",
-            "ui_accent_border": "#8799AB",
-            "ui_on_accent": "#FFFFFF",
-            "ui_focus": "#566B80",
-            "progress_complete": "#465B78"
-        },
-        "dark": {
-            "ui_canvas": "#101215",
-            "ui_surface_1": "#191C21",
-            "ui_surface_2": "#22262D",
-            "ui_surface_3": "#22262D",
-            "ui_border_subtle": "#353A43",
-            "ui_border_default": "#353A43",
-            "ui_border_strong": "#65717D",
-            "ui_text_primary": "#F2F3F5",
-            "ui_text_secondary": "#ACB3BF",
-            "ui_text_tertiary": "#ACB3BF",
-            "ui_text_disabled": "#69737D",
-            "ui_eyebrow": "#ACB3BF",
-            "ui_accent": "#A7BDDC",
-            "ui_accent_hover": "#B4C5D6",
-            "ui_accent_pressed": "#849BAF",
-            "ui_accent_soft": "#28374B",
-            "ui_accent_border": "#60788E",
-            "ui_on_accent": "#152234",
-            "ui_focus": "#7CB2F0",
-            "progress_complete": "#A7BDDC"
-        }
-    },
-    "Emerald": {
-        "light": {
-            "ui_canvas": "#F2F7F4",
-            "ui_surface_1": "#FFFFFF",
-            "ui_surface_2": "#F2F7F4",
-            "ui_surface_3": "#F2F7F4",
-            "ui_border_subtle": "#D7E4DC",
-            "ui_border_default": "#D7E4DC",
-            "ui_border_strong": "#789083",
-            "ui_text_primary": "#18352A",
-            "ui_text_secondary": "#527063",
-            "ui_text_tertiary": "#527063",
-            "ui_text_disabled": "#8F9F95",
-            "ui_eyebrow": "#527063",
-            "ui_accent": "#087451",
-            "ui_accent_hover": "#106B49",
-            "ui_accent_pressed": "#0C5A3E",
-            "ui_accent_soft": "#E2F2E9",
-            "ui_accent_border": "#77A98F",
-            "ui_on_accent": "#FFFFFF",
-            "ui_focus": "#44A67B",
-            "progress_complete": "#087451"
-        },
-        "dark": {
-            "ui_canvas": "#0C1512",
-            "ui_surface_1": "#13211B",
-            "ui_surface_2": "#1B2D24",
-            "ui_surface_3": "#1B2D24",
-            "ui_border_subtle": "#2C4437",
-            "ui_border_default": "#2C4437",
-            "ui_border_strong": "#687E70",
-            "ui_text_primary": "#EDF6F0",
-            "ui_text_secondary": "#ABC1B3",
-            "ui_text_tertiary": "#ABC1B3",
-            "ui_text_disabled": "#65766C",
-            "ui_eyebrow": "#ABC1B3",
-            "ui_accent": "#80D6AB",
-            "ui_accent_hover": "#58CF94",
-            "ui_accent_pressed": "#2FA76B",
-            "ui_accent_soft": "#204634",
-            "ui_accent_border": "#3A7253",
-            "ui_on_accent": "#102E20",
-            "ui_focus": "#78E0AA",
-            "progress_complete": "#80D6AB"
-        }
-    },
-    "High Contrast": {
-        "light": {
-            "ui_canvas": "#FFFFFF",
-            "ui_surface_1": "#FFFFFF",
-            "ui_surface_2": "#F3F3F3",
-            "ui_surface_3": "#F3F3F3",
-            "ui_border_subtle": "#525252",
-            "ui_border_default": "#525252",
-            "ui_border_strong": "#20262D",
-            "ui_text_primary": "#111111",
-            "ui_text_secondary": "#444444",
-            "ui_text_tertiary": "#444444",
-            "ui_text_disabled": "#6F7882",
-            "ui_eyebrow": "#444444",
-            "ui_accent": "#004FCE",
-            "ui_accent_hover": "#004EA8",
-            "ui_accent_pressed": "#003E86",
-            "ui_accent_soft": "#E7EFFF",
-            "ui_accent_border": "#286FC2",
-            "ui_on_accent": "#FFFFFF",
-            "ui_focus": "#007BFF",
-            "progress_complete": "#004FCE"
-        },
-        "dark": {
-            "ui_canvas": "#000000",
-            "ui_surface_1": "#080C11",
-            "ui_surface_2": "#101820",
-            "ui_surface_3": "#101820",
-            "ui_border_subtle": "#9BACBE",
-            "ui_border_default": "#9BACBE",
-            "ui_border_strong": "#C7CDD4",
-            "ui_text_primary": "#FFFFFF",
-            "ui_text_secondary": "#D0DCE9",
-            "ui_text_tertiary": "#D0DCE9",
-            "ui_text_disabled": "#747D87",
-            "ui_eyebrow": "#D0DCE9",
-            "ui_accent": "#80CAFF",
-            "ui_accent_hover": "#7DBAFF",
-            "ui_accent_pressed": "#3B8DE8",
-            "ui_accent_soft": "#112F44",
-            "ui_accent_border": "#4D82B8",
-            "ui_on_accent": "#03111B",
-            "ui_focus": "#9DCEFF",
-            "progress_complete": "#80CAFF"
-        }
-    }
-}
+CORE_PALETTES: Mapping[str, Mapping[str, Mapping[str, str]]] = {'Sapphire Glass': {'dark': {'ui_text_secondary': '#A8B3C6',
+                             'ui_canvas': '#10141C',
+                             'ui_text_disabled': '#8492AA',
+                             'ui_disabled_border': '#303A4A',
+                             'ui_accent_soft': '#293A5B',
+                             'ui_text_primary': '#ECEFF6',
+                             'ui_border_strong': '#43516A',
+                             'ui_skeleton_highlight': '#2C3749',
+                             'ui_skeleton_base': '#222B3A',
+                             'ui_control_pressed': '#2C3749',
+                             'ui_surface_1': '#191F2B',
+                             'ui_accent': '#A3BEFA',
+                             'ui_accent_border': '#43516A',
+                             'ui_focus': '#C4D6FF',
+                             'ui_accent_pressed': '#85A5E7',
+                             'ui_accent_hover': '#C0D2FF',
+                             'ui_on_accent': '#14213A',
+                             'ui_control_background': '#222B3A',
+                             'ui_control_hover': '#2C3749',
+                             'ui_border_subtle': '#303A4A',
+                             'ui_border_default': '#303A4A',
+                             'ui_control_border': '#43516A',
+                             'ui_divider': '#303A4A',
+                             'ui_text_tertiary': '#8492AA',
+                             'ui_progress_track': '#222B3A',
+                             'ui_surface_2': '#222B3A',
+                             'ui_surface_3': '#222B3A',
+                             'ui_eyebrow': '#A8B3C6',
+                             'progress_complete': '#A3BEFA',
+                             'calendar_today_background': '#14213A',
+                             'calendar_today_text': '#F3F6FD'},
+                    'light': {'ui_text_secondary': '#56667E',
+                              'ui_canvas': '#F5F7FB',
+                              'ui_text_disabled': '#6A7990',
+                              'ui_disabled_border': '#DCE3EE',
+                              'ui_accent_soft': '#EBF0FC',
+                              'ui_text_primary': '#243148',
+                              'ui_border_strong': '#B6C2D4',
+                              'ui_skeleton_highlight': '#E8EDF6',
+                              'ui_skeleton_base': '#F0F3F8',
+                              'ui_control_pressed': '#E8EDF6',
+                              'ui_surface_1': '#FFFFFF',
+                              'ui_accent': '#335DB6',
+                              'ui_accent_border': '#B6C2D4',
+                              'ui_focus': '#315CAD',
+                              'ui_accent_pressed': '#234185',
+                              'ui_accent_hover': '#294D9B',
+                              'ui_on_accent': '#FFFFFF',
+                              'ui_control_background': '#F0F3F8',
+                              'ui_control_hover': '#E8EDF6',
+                              'ui_border_subtle': '#DCE3EE',
+                              'ui_border_default': '#DCE3EE',
+                              'ui_control_border': '#B6C2D4',
+                              'ui_divider': '#DCE3EE',
+                              'ui_text_tertiary': '#6A7990',
+                              'ui_progress_track': '#F0F3F8',
+                              'ui_surface_2': '#F0F3F8',
+                              'ui_surface_3': '#F0F3F8',
+                              'ui_eyebrow': '#56667E',
+                              'progress_complete': '#335DB6',
+                              'calendar_today_background': '#FFFFFF',
+                              'calendar_today_text': '#335DB6'}},
+ 'Graphite': {'dark': {'ui_text_secondary': '#B3BAC7',
+                       'ui_canvas': '#131519',
+                       'ui_text_disabled': '#929CAC',
+                       'ui_disabled_border': '#333944',
+                       'ui_accent_soft': '#343C4A',
+                       'ui_text_primary': '#F0F1F5',
+                       'ui_border_strong': '#596474',
+                       'ui_skeleton_highlight': '#333943',
+                       'ui_skeleton_base': '#272B33',
+                       'ui_control_pressed': '#333943',
+                       'ui_surface_1': '#1D2026',
+                       'ui_accent': '#C4CBD8',
+                       'ui_accent_border': '#596474',
+                       'ui_focus': '#E1E7F4',
+                       'ui_accent_pressed': '#AAB4C4',
+                       'ui_accent_hover': '#DDE2EC',
+                       'ui_on_accent': '#202A3B',
+                       'ui_control_background': '#272B33',
+                       'ui_control_hover': '#333943',
+                       'ui_border_subtle': '#333944',
+                       'ui_border_default': '#333944',
+                       'ui_control_border': '#596474',
+                       'ui_divider': '#333944',
+                       'ui_text_tertiary': '#929CAC',
+                       'ui_progress_track': '#272B33',
+                       'ui_surface_2': '#272B33',
+                       'ui_surface_3': '#272B33',
+                       'ui_eyebrow': '#B3BAC7',
+                       'progress_complete': '#C4CBD8',
+                       'calendar_today_background': '#202A3B',
+                       'calendar_today_text': '#F3F6FD'},
+              'light': {'ui_text_secondary': '#5C6676',
+                        'ui_canvas': '#F5F6F8',
+                        'ui_text_disabled': '#758092',
+                        'ui_disabled_border': '#DFE3E9',
+                        'ui_accent_soft': '#ECF0F5',
+                        'ui_text_primary': '#282F3B',
+                        'ui_border_strong': '#B7C0CD',
+                        'ui_skeleton_highlight': '#E6EAF0',
+                        'ui_skeleton_base': '#F0F2F5',
+                        'ui_control_pressed': '#E6EAF0',
+                        'ui_surface_1': '#FFFFFF',
+                        'ui_accent': '#46576F',
+                        'ui_accent_border': '#B7C0CD',
+                        'ui_focus': '#3B506D',
+                        'ui_accent_pressed': '#2C394E',
+                        'ui_accent_hover': '#35445C',
+                        'ui_on_accent': '#FFFFFF',
+                        'ui_control_background': '#F0F2F5',
+                        'ui_control_hover': '#E6EAF0',
+                        'ui_border_subtle': '#DFE3E9',
+                        'ui_border_default': '#DFE3E9',
+                        'ui_control_border': '#B7C0CD',
+                        'ui_divider': '#DFE3E9',
+                        'ui_text_tertiary': '#758092',
+                        'ui_progress_track': '#F0F2F5',
+                        'ui_surface_2': '#F0F2F5',
+                        'ui_surface_3': '#F0F2F5',
+                        'ui_eyebrow': '#5C6676',
+                        'progress_complete': '#46576F',
+                        'calendar_today_background': '#FFFFFF',
+                        'calendar_today_text': '#46576F'}},
+ 'Emerald': {'dark': {'ui_text_secondary': '#B0C2B7',
+                      'ui_canvas': '#101814',
+                      'ui_text_disabled': '#889F91',
+                      'ui_disabled_border': '#31483A',
+                      'ui_accent_soft': '#294A37',
+                      'ui_text_primary': '#EDF5EF',
+                      'ui_border_strong': '#597B66',
+                      'ui_skeleton_highlight': '#2D4538',
+                      'ui_skeleton_base': '#23352B',
+                      'ui_control_pressed': '#2D4538',
+                      'ui_surface_1': '#192620',
+                      'ui_accent': '#91CEAC',
+                      'ui_accent_border': '#597B66',
+                      'ui_focus': '#C8EDD5',
+                      'ui_accent_pressed': '#73B68F',
+                      'ui_accent_hover': '#B4E1C5',
+                      'ui_on_accent': '#122C1D',
+                      'ui_control_background': '#23352B',
+                      'ui_control_hover': '#2D4538',
+                      'ui_border_subtle': '#31483A',
+                      'ui_border_default': '#31483A',
+                      'ui_control_border': '#597B66',
+                      'ui_divider': '#31483A',
+                      'ui_text_tertiary': '#889F91',
+                      'ui_progress_track': '#23352B',
+                      'ui_surface_2': '#23352B',
+                      'ui_surface_3': '#23352B',
+                      'ui_eyebrow': '#B0C2B7',
+                      'progress_complete': '#91CEAC',
+                      'calendar_today_background': '#122C1D',
+                      'calendar_today_text': '#F3F6FD'},
+             'light': {'ui_text_secondary': '#577062',
+                       'ui_canvas': '#F3F7F4',
+                       'ui_text_disabled': '#6F887B',
+                       'ui_disabled_border': '#DCE7DF',
+                       'ui_accent_soft': '#E8F3EB',
+                       'ui_text_primary': '#263D30',
+                       'ui_border_strong': '#A5BEAE',
+                       'ui_skeleton_highlight': '#E3EEE7',
+                       'ui_skeleton_base': '#EFF5F1',
+                       'ui_control_pressed': '#E3EEE7',
+                       'ui_surface_1': '#FFFFFF',
+                       'ui_accent': '#2F7150',
+                       'ui_accent_border': '#A5BEAE',
+                       'ui_focus': '#246940',
+                       'ui_accent_pressed': '#1C4D35',
+                       'ui_accent_hover': '#245D41',
+                       'ui_on_accent': '#FFFFFF',
+                       'ui_control_background': '#EFF5F1',
+                       'ui_control_hover': '#E3EEE7',
+                       'ui_border_subtle': '#DCE7DF',
+                       'ui_border_default': '#DCE7DF',
+                       'ui_control_border': '#A5BEAE',
+                       'ui_divider': '#DCE7DF',
+                       'ui_text_tertiary': '#6F887B',
+                       'ui_progress_track': '#EFF5F1',
+                       'ui_surface_2': '#EFF5F1',
+                       'ui_surface_3': '#EFF5F1',
+                       'ui_eyebrow': '#577062',
+                       'progress_complete': '#2F7150',
+                       'calendar_today_background': '#FFFFFF',
+                       'calendar_today_text': '#2F7150'}},
+ 'High Contrast': {'dark': {'ui_text_secondary': '#DCE7F3',
+                            'ui_canvas': '#070B10',
+                            'ui_text_disabled': '#A8BACD',
+                            'ui_disabled_border': '#8295A9',
+                            'ui_accent_soft': '#214153',
+                            'ui_text_primary': '#FFFFFF',
+                            'ui_border_strong': '#AABCDA',
+                            'ui_skeleton_highlight': '#304456',
+                            'ui_skeleton_base': '#1C2935',
+                            'ui_control_pressed': '#304456',
+                            'ui_surface_1': '#111820',
+                            'ui_accent': '#A5DEEE',
+                            'ui_accent_border': '#AABCDA',
+                            'ui_focus': '#FFFFFF',
+                            'ui_accent_pressed': '#7AC4DD',
+                            'ui_accent_hover': '#CBF0F8',
+                            'ui_on_accent': '#0A202D',
+                            'ui_control_background': '#1C2935',
+                            'ui_control_hover': '#304456',
+                            'ui_border_subtle': '#8295A9',
+                            'ui_border_default': '#8295A9',
+                            'ui_control_border': '#AABCDA',
+                            'ui_divider': '#8295A9',
+                            'ui_text_tertiary': '#A8BACD',
+                            'ui_progress_track': '#1C2935',
+                            'ui_surface_2': '#1C2935',
+                            'ui_surface_3': '#1C2935',
+                            'ui_eyebrow': '#DCE7F3',
+                            'progress_complete': '#A5DEEE',
+                            'calendar_today_background': '#0A202D',
+                            'calendar_today_text': '#F3F6FD'},
+                   'light': {'ui_text_secondary': '#2E4258',
+                             'ui_canvas': '#FFFFFF',
+                             'ui_text_disabled': '#516980',
+                             'ui_disabled_border': '#62758A',
+                             'ui_accent_soft': '#E6F2F7',
+                             'ui_text_primary': '#13202E',
+                             'ui_border_strong': '#41586E',
+                             'ui_skeleton_highlight': '#E1EAF1',
+                             'ui_skeleton_base': '#F1F5F8',
+                             'ui_control_pressed': '#E1EAF1',
+                             'ui_surface_1': '#FFFFFF',
+                             'ui_accent': '#18536B',
+                             'ui_accent_border': '#41586E',
+                             'ui_focus': '#0D3E59',
+                             'ui_accent_pressed': '#0B3144',
+                             'ui_accent_hover': '#103F55',
+                             'ui_on_accent': '#FFFFFF',
+                             'ui_control_background': '#F1F5F8',
+                             'ui_control_hover': '#E1EAF1',
+                             'ui_border_subtle': '#62758A',
+                             'ui_border_default': '#62758A',
+                             'ui_control_border': '#41586E',
+                             'ui_divider': '#62758A',
+                             'ui_text_tertiary': '#516980',
+                             'ui_progress_track': '#F1F5F8',
+                             'ui_surface_2': '#F1F5F8',
+                             'ui_surface_3': '#F1F5F8',
+                             'ui_eyebrow': '#2E4258',
+                             'progress_complete': '#18536B',
+                             'calendar_today_background': '#FFFFFF',
+                             'calendar_today_text': '#18536B'}}}
 
 
 HEATMAP_PRESET_NAMES: Mapping[str, tuple[str, ...]] = {
@@ -467,80 +562,93 @@ HEATMAP_PRESET_NAMES: Mapping[str, tuple[str, ...]] = {
 }
 
 
-HEATMAP_COMPLETION_TEXT = {
-    "Sapphire Glass": {
-        "Sapphire": {
-            "light": ("#52647C", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",),
-            "dark": ("#A4B4C8", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",)
-        },
-        "Amethyst": {
-            "dark": ("#A4B4C8", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
-            "light": ("#52647C", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",)
-        },
-        "Glacier": {
-            "light": ("#52647C", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",),
-            "dark": ("#A4B4C8", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",)
-        },
-        "Sea Glass": {
-            "dark": ("#A4B4C8", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
-            "light": ("#52647C", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",)
-        }
-    },
-    "Graphite": {
-        "Slate": {
-            "dark": ("#ACB3BF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
-            "light": ("#5C6470", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",)
-        },
-        "Steel": {
-            "light": ("#5C6470", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",),
-            "dark": ("#ACB3BF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",)
-        },
-        "Plum": {
-            "dark": ("#ACB3BF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
-            "light": ("#5C6470", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",)
-        },
-        "Mint": {
-            "light": ("#5C6470", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",),
-            "dark": ("#ACB3BF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",)
-        }
-    },
-    "Emerald": {
-        "Emerald": {
-            "dark": ("#ABC1B3", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
-            "light": ("#527063", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",)
-        },
-        "Jade": {
-            "light": ("#527063", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",),
-            "dark": ("#ABC1B3", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",)
-        },
-        "Moss": {
-            "dark": ("#ABC1B3", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
-            "light": ("#527063", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",)
-        },
-        "Lagoon": {
-            "light": ("#527063", "#101820", "#101820", "#101820", "#101820", "#FFFFFF",),
-            "dark": ("#ABC1B3", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",)
-        }
-    },
-    "High Contrast": {
-        "Cyan": {
-            "dark": ("#D0DCE9", "#FFFFFF", "#FFFFFF", "#000000", "#101820", "#101820",),
-            "light": ("#444444", "#101820", "#101820", "#101820", "#000000", "#FFFFFF",)
-        },
-        "Gold": {
-            "dark": ("#D0DCE9", "#FFFFFF", "#FFFFFF", "#101820", "#101820", "#101820",),
-            "light": ("#444444", "#101820", "#101820", "#101820", "#FFFFFF", "#FFFFFF",)
-        },
-        "Magenta": {
-            "dark": ("#D0DCE9", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#101820", "#101820",),
-            "light": ("#444444", "#101820", "#101820", "#101820", "#FFFFFF", "#FFFFFF",)
-        },
-        "Monochrome": {
-            "light": ("#444444", "#101820", "#101820", "#101820", "#FFFFFF", "#FFFFFF",),
-            "dark": ("#D0DCE9", "#FFFFFF", "#FFFFFF", "#101820", "#101820", "#101820",)
-        }
-    }
-}
+HEATMAP_COMPLETION_TEXT = {'Sapphire Glass': {'Sapphire': {'dark': ('#F3F6FD',
+                                          '#F3F6FD',
+                                          '#F3F6FD',
+                                          '#F3F6FD',
+                                          '#101C2D',
+                                          '#101C2D'),
+                                 'light': ('#101C2D',
+                                           '#101C2D',
+                                           '#101C2D',
+                                           '#101C2D',
+                                           '#101C2D',
+                                           '#F3F6FD')},
+                    'Amethyst': {'dark': ('#F3F6FD',
+                                          '#F3F6FD',
+                                          '#F3F6FD',
+                                          '#F3F6FD',
+                                          '#101C2D',
+                                          '#101C2D'),
+                                 'light': ('#101C2D',
+                                           '#101C2D',
+                                           '#101C2D',
+                                           '#101C2D',
+                                           '#101C2D',
+                                           '#F3F6FD')},
+                    'Glacier': {'dark': ('#F3F6FD',
+                                         '#F3F6FD',
+                                         '#F3F6FD',
+                                         '#F3F6FD',
+                                         '#101C2D',
+                                         '#101C2D'),
+                                'light': ('#101C2D',
+                                          '#101C2D',
+                                          '#101C2D',
+                                          '#101C2D',
+                                          '#101C2D',
+                                          '#F3F6FD')},
+                    'Sea Glass': {'dark': ('#F3F6FD',
+                                           '#F3F6FD',
+                                           '#F3F6FD',
+                                           '#F3F6FD',
+                                           '#101C2D',
+                                           '#101C2D'),
+                                  'light': ('#101C2D',
+                                            '#101C2D',
+                                            '#101C2D',
+                                            '#101C2D',
+                                            '#101C2D',
+                                            '#F3F6FD')}},
+ 'Graphite': {'Slate': {'dark': ('#F3F6FD', '#F3F6FD', '#F3F6FD', '#F3F6FD', '#101C2D', '#101C2D'),
+                        'light': ('#101C2D', '#101C2D', '#101C2D', '#101C2D', '#101C2D', '#F3F6FD')},
+              'Steel': {'dark': ('#F3F6FD', '#F3F6FD', '#F3F6FD', '#F3F6FD', '#101C2D', '#101C2D'),
+                        'light': ('#101C2D', '#101C2D', '#101C2D', '#101C2D', '#101C2D', '#F3F6FD')},
+              'Plum': {'dark': ('#F3F6FD', '#F3F6FD', '#F3F6FD', '#F3F6FD', '#101C2D', '#101C2D'),
+                       'light': ('#101C2D', '#101C2D', '#101C2D', '#101C2D', '#101C2D', '#F3F6FD')},
+              'Mint': {'dark': ('#F3F6FD', '#F3F6FD', '#F3F6FD', '#F3F6FD', '#101C2D', '#101C2D'),
+                       'light': ('#101C2D', '#101C2D', '#101C2D', '#101C2D', '#101C2D', '#F3F6FD')}},
+ 'Emerald': {'Emerald': {'dark': ('#F3F6FD', '#F3F6FD', '#F3F6FD', '#F3F6FD', '#10271F', '#10271F'),
+                         'light': ('#10271F', '#10271F', '#10271F', '#10271F', '#10271F', '#F3F6FD')},
+             'Jade': {'dark': ('#F3F6FD', '#F3F6FD', '#F3F6FD', '#F3F6FD', '#10271F', '#10271F'),
+                      'light': ('#10271F', '#10271F', '#10271F', '#10271F', '#10271F', '#F3F6FD')},
+             'Moss': {'dark': ('#F3F6FD', '#F3F6FD', '#F3F6FD', '#F3F6FD', '#10271F', '#10271F'),
+                      'light': ('#10271F', '#10271F', '#10271F', '#10271F', '#10271F', '#F3F6FD')},
+             'Lagoon': {'dark': ('#F3F6FD', '#F3F6FD', '#F3F6FD', '#F3F6FD', '#10271F', '#10271F'),
+                        'light': ('#10271F', '#10271F', '#10271F', '#10271F', '#10271F', '#F3F6FD')}},
+ 'High Contrast': {'Cyan': {'dark': ('#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#000000', '#000000'),
+                            'light': ('#000000', '#000000', '#000000', '#000000', '#000000', '#FFFFFF')},
+                   'Gold': {'dark': ('#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#000000', '#000000'),
+                            'light': ('#000000', '#000000', '#000000', '#000000', '#000000', '#FFFFFF')},
+                   'Magenta': {'dark': ('#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#000000', '#000000'),
+                               'light': ('#000000',
+                                         '#000000',
+                                         '#000000',
+                                         '#000000',
+                                         '#FFFFFF',
+                                         '#FFFFFF')},
+                   'Monochrome': {'dark': ('#FFFFFF',
+                                           '#FFFFFF',
+                                           '#FFFFFF',
+                                           '#FFFFFF',
+                                           '#000000',
+                                           '#000000'),
+                                  'light': ('#000000',
+                                            '#000000',
+                                            '#000000',
+                                            '#000000',
+                                            '#000000',
+                                            '#FFFFFF')}}}
 
 
 def _heat_text(fill: str, primary: str) -> str:
@@ -576,12 +684,12 @@ def _heat_tokens(
 def _build_theme(theme_name: str, variant: str) -> Theme:
     core = dict(CORE_PALETTES[theme_name][variant])
     skeleton_opacity = .10 if variant == "light" else .16
-    core["ui_skeleton_base"] = composite_color(
+    core.setdefault("ui_skeleton_base", composite_color(
         core["ui_accent"], core["ui_surface_2"], skeleton_opacity
-    )
-    core["ui_skeleton_highlight"] = composite_color(
+    ))
+    core.setdefault("ui_skeleton_highlight", composite_color(
         core["ui_accent"], core["ui_surface_2"], skeleton_opacity * 1.8
-    )
+    ))
     core["ui_shadow_card"] = "none"
     core["ui_shadow_overlay"] = (
         "none" if theme_name == "High Contrast"
@@ -595,8 +703,8 @@ def _build_theme(theme_name: str, variant: str) -> Theme:
     core.update({
         "ui_disabled_surface": core["ui_surface_3"],
         "ui_disabled_border": core["ui_border_default"],
-        "ui_control_hover": core["ui_accent_soft"],
-        "ui_control_pressed": core["ui_surface_3"],
+        "ui_control_hover": core.get("ui_control_hover", core["ui_accent_soft"]),
+        "ui_control_pressed": core.get("ui_control_pressed", core["ui_surface_3"]),
         "ui_overlay_surface": core["ui_surface_1"],
         "ui_scrollbar_track": core["ui_surface_2"],
         "ui_scrollbar_thumb": core["ui_border_strong"],
@@ -605,9 +713,9 @@ def _build_theme(theme_name: str, variant: str) -> Theme:
         "status_danger_soft": composite_color(core["status_danger_fill"], core["ui_surface_1"], .13),
         "calendar_empty_bg": core["heat_complete_0"],
         "calendar_outside_bg": core["ui_surface_2"],
-        "calendar_outside_text": core["ui_text_tertiary"],
+        "calendar_outside_text": core["ui_text_secondary"],
         "calendar_future_bg": core["ui_surface_3"],
-        "calendar_future_text": core["ui_text_tertiary"],
+        "calendar_future_text": core["ui_text_secondary"],
         "calendar_footer_bg": core["ui_surface_2"],
         "calendar_today_ring": core["ui_accent"],
         "calendar_selected_ring": core["ui_accent"],

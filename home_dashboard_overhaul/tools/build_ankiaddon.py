@@ -41,6 +41,10 @@ PACKAGE_FILES = [
     "web/dashboard.css",
     "web/dashboard.js",
     "web/streak-flame.svg",
+    "web/settings.svg",
+    "web/today-badge.svg",
+    "web/InterVariable.woff2",
+    "web/Inter-LICENSE.txt",
     "user_files/README.txt",
     "assets/buy_me_a_coffee.png",
 ]
@@ -72,8 +76,10 @@ RELEASE_CONTRACT_FILES = (
 )
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 FIXED_TIMESTAMP = (2026, 9, 27, 0, 0, 0)
-EXPECTED_PACKAGE_MEMBER_COUNT = 27
+EXPECTED_PACKAGE_MEMBER_COUNT = 31
 EXPECTED_PACKAGE_LINKS = frozenset({
+    "https://github.com/rsms/inter",
+    "http://scripts.sil.org/OFL",
     "https://buymeacoffee.com/caleblee78f",
     "https://ankiweb.net/shared/info/1888718775",
     "https://ankiweb.net/shared/info/808247776",
@@ -132,7 +138,7 @@ def _validate_no_packaged_secrets(sources: dict[str, str]) -> None:
 
 def _validate_package_inputs() -> None:
     if len(PACKAGE_FILES) != EXPECTED_PACKAGE_MEMBER_COUNT:
-        raise ValueError("package allowlist must contain exactly 27 members")
+        raise ValueError("package allowlist must contain exactly {} members".format(EXPECTED_PACKAGE_MEMBER_COUNT))
     if len(PACKAGE_FILES) != len(set(PACKAGE_FILES)):
         raise ValueError("package allowlist contains duplicate members")
     unsafe = [name for name in PACKAGE_FILES if not _archive_path_is_safe(name)]
@@ -152,7 +158,7 @@ def _validate_package_inputs() -> None:
     sources = {
         relative: payload.decode("utf-8")
         for relative, payload in payloads.items()
-        if Path(relative).suffix.casefold() != ".png"
+        if Path(relative).suffix.casefold() not in {".png", ".woff2"}
     }
     for relative, source in sources.items():
         if relative.endswith(".py"):
@@ -184,7 +190,10 @@ def _validate_package_inputs() -> None:
         for match in re.findall(r"https?://[^\s<>\]\)\}\"']+", source)
         if not (relative.endswith(".svg") and match == "http://www.w3.org/2000/svg")
     )
-    if links != EXPECTED_PACKAGE_LINKS or any(not link.startswith("https://") for link in links):
+    if links != EXPECTED_PACKAGE_LINKS or any(
+        not link.startswith("https://") and link != "http://scripts.sil.org/OFL"
+        for link in links
+    ):
         raise ValueError("packaged external link allowlist drifted")
 
 
@@ -264,18 +273,18 @@ def _validate_theme_contract(namespace: dict) -> None:
         raise ValueError("release must expose exactly four ordered dashboard themes")
     if not callable(resolver) or not isinstance(heatmaps, dict) or not isinstance(defaults, dict):
         raise ValueError("theme resolver and authored heatmap presets are required")
-    expected_semantic_overrides = {
-        "Sapphire Glass": {
-            "dark": {
-                "status_learning_fill": "#F47F8D",
-                "status_learning_text": "#F47F8D",
-                "status_review_fill": "#83D9A7",
-                "status_review_text": "#83D9A7",
-            },
-        },
+    semantic_roles = {
+        "status_{}_{}".format(role, suffix)
+        for role in ("new", "learning", "review", "buried", "success", "warning", "danger", "event")
+        for suffix in ("fill", "text")
     }
-    if not isinstance(semantic_palettes, dict) or semantic_overrides != expected_semantic_overrides:
-        raise ValueError("theme semantic baselines and audited overrides must remain explicit")
+    if not isinstance(semantic_palettes, dict) or not isinstance(semantic_overrides, dict):
+        raise ValueError("theme semantic baselines and overrides must remain explicit")
+    for theme_name, modes in semantic_overrides.items():
+        if theme_name not in expected_themes or not isinstance(modes, dict) or not set(modes).issubset({"light", "dark"}):
+            raise ValueError("semantic overrides must target an existing theme and color mode")
+        if any(not isinstance(values, dict) or not set(values).issubset(semantic_roles) for values in modes.values()):
+            raise ValueError("theme overrides may recolor only the declared study-status roles")
 
     required_heatmap_roles = {
         *{"heat_complete_{}".format(level) for level in range(6)},
@@ -295,8 +304,9 @@ def _validate_theme_contract(namespace: dict) -> None:
                 if set(tokens) != required_heatmap_roles:
                     raise ValueError("{} / {} / {} has an incomplete authored ladder".format(theme_name, preset_name, mode))
                 fills = [tokens["heat_complete_{}".format(level)] for level in range(6)]
-                distances = [_perceptual_distance(fills[0], fill) for fill in fills[1:]]
-                if any(left >= right for left, right in zip(distances, distances[1:])):
+                luminances = [_luminance(fill) for fill in fills]
+                direction = 1 if mode == "dark" else -1
+                if any((right - left) * direction <= 0 for left, right in zip(luminances, luminances[1:])):
                     raise ValueError("{} / {} / {} intensity is not monotonic".format(theme_name, preset_name, mode))
                 if any(_perceptual_distance(left, right) < 1.5 for left, right in zip(fills, fills[1:])):
                     raise ValueError("{} / {} / {} has indistinguishable adjacent levels".format(theme_name, preset_name, mode))
@@ -325,6 +335,7 @@ def _validate_theme_contract(namespace: dict) -> None:
         "progress_complete", "calendar_empty_bg",
         "calendar_outside_bg", "calendar_outside_text", "calendar_future_bg",
         "calendar_future_text", "calendar_footer_bg", "calendar_today_ring",
+        "calendar_today_background", "calendar_today_text",
         "calendar_selected_ring", "calendar_ring_halo", "calendar_event_halo",
         "calendar_ring_halo", "ui_disabled_surface", "ui_disabled_border",
         "ui_control_hover", "ui_control_pressed",
@@ -338,17 +349,19 @@ def _validate_theme_contract(namespace: dict) -> None:
             for level in range(1, 4):
                 if _contrast(resolved["heat_due_bg_{}".format(level)], resolved["ui_text_primary"]) < 4.5:
                     raise ValueError("{} {} due level {} fails text contrast".format(theme_name, mode, level))
-            for text_role in ("ui_text_primary", "ui_text_secondary", "ui_text_tertiary"):
+            for text_role in ("ui_text_primary", "ui_text_secondary"):
                 for surface_role in ("ui_surface_1", "ui_surface_2", "ui_surface_3"):
                     if _contrast(resolved[text_role], resolved[surface_role]) < 4.5:
                         raise ValueError("{} {} {} fails on {}".format(theme_name, mode, text_role, surface_role))
+            if _contrast(resolved["calendar_today_text"], resolved["calendar_today_background"]) < 4.5:
+                raise ValueError("{} {} today badge fails text contrast".format(theme_name, mode))
             for accent_role in ("ui_accent", "ui_accent_hover", "ui_accent_pressed"):
                 if _contrast(resolved["ui_on_accent"], resolved[accent_role]) < 4.5:
                     raise ValueError("{} {} button text fails on {}".format(theme_name, mode, accent_role))
             # Strong boundaries are independently gated. Accent borders are a
             # secondary cue paired with contrast-safe accent text and a soft
             # state fill, so their standalone ratio remains advisory.
-            for boundary, surface in (("ui_border_strong", "ui_surface_2"),):
+            for boundary, surface in (("ui_focus", "ui_surface_2"),):
                 if _contrast(resolved[boundary], resolved[surface]) < 3:
                     raise ValueError("{} {} {} fails graphical contrast".format(theme_name, mode, boundary))
             semantic = {
@@ -427,21 +440,21 @@ def _validate_visual_matrix(matrix: dict) -> None:
     viewport_cases = matrix.get("fixed_viewport_cases", [])
     if [(entry.get("viewport_width"), entry.get("root_width"), entry.get("layout"))
         for entry in viewport_cases] != [
-        (1440, 1160, "fixed-2x2"), (1191, 1160, "fixed-2x2"), (620, 1160, "fixed-2x2")
+        (1440, 1200, "fixed-2x2"), (1191, 1200, "fixed-2x2"), (620, 1200, "fixed-2x2")
     ]:
         raise ValueError("dashboard fixed viewport matrix drifted")
     layout = matrix.get("dashboard_layout_contract", {})
     expected_layout = {
-        "root_width_rule": "1160px",
+        "root_width_rule": "1200px",
         "rendered_deck_gap_range": [28, 30],
         "addon_top_margin_target": 30,
-        "desktop_columns": ["minmax(0, 1fr)", "360px"],
-        "desktop_column_gap": 14,
+        "desktop_columns": ["minmax(0, 1fr)", "436px"],
+        "desktop_column_gap": 16,
         "rail_gap": 12,
-        "summary_grid_minimum_height": 440,
+        "summary_grid_minimum_height": 432,
         "summary_grid_shape": [2, 2],
-        "summary_card_minimum_width": 174,
-        "summary_card_padding": [14, 14, 14],
+        "summary_card_minimum_width": 212,
+        "summary_card_padding": [15, 15, 15],
         "metric_column_gap": 6,
         "metric_minimum_visible_gap": 6,
         "horizontal_scroll_owner": "document",
@@ -489,8 +502,8 @@ def validate_sources() -> dict:
     if manifest.get("package") != "home_dashboard_overhaul" or manifest.get("name") != "Home Screen Dashboard":
         raise ValueError("unexpected add-on identity")
     version = manifest.get("human_version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.9.1":
-        raise ValueError("release artifact must use semantic version 1.9.1")
+    if not isinstance(version, str) or not VERSION_RE.fullmatch(version) or version != "1.9.2":
+        raise ValueError("release artifact must use semantic version 1.9.2")
     if (manifest.get("min_point_version"), manifest.get("max_point_version")) != (260800, 260903):
         raise ValueError("release must support Anki 26.8 and record the tested 26.9.3 version")
     if config.get("schema_version") != 8:
@@ -510,18 +523,18 @@ def validate_sources() -> dict:
         raise ValueError("dashboard text scale must default to 100")
     dashboard_architecture = surface_contract.get("dashboard_architecture", {})
     expected_dashboard_architecture = {
-        "width_rule": "1160px",
-        "maximum_width": 1160,
+        "width_rule": "1200px",
+        "maximum_width": 1200,
         "minimum_side_margin": 16,
         "top_spacing": 30,
         "rendered_deck_gap_range": [28, 30],
-        "desktop_column_gap": 14,
-        "desktop_rail_width": 360,
+        "desktop_column_gap": 16,
+        "desktop_rail_width": 436,
         "horizontal_scroll_owner": "document",
         "fixed_metric_columns": 2,
-        "summary_grid_minimum_height": 440,
-        "summary_card_minimum_width": 174,
-        "summary_card_padding": [14, 14, 14],
+        "summary_grid_minimum_height": 432,
+        "summary_card_minimum_width": 212,
+        "summary_card_padding": [15, 15, 15],
         "metric_column_gap": 6,
         "month_calendar_to_bible_bottom_tolerance": None,
         "year_calendar_to_summary_grid_bottom_tolerance": None,
@@ -663,20 +676,20 @@ def validate_sources() -> dict:
         ),
         "web/dashboard.css": (
             "hdo-calendar-footer", "hdo-calendar-card-action", "hdo-context-action--primary",
-            "width: 1160px", "max-width: 1160px",
-            "margin: 30px max(16px, calc((100% - 1160px) / 2)) 0", "--dashboard-column-gap: 14px",
-            "--rail-gap: 12px", "--summary-pad-x: 14px", "--metric-column-gap: 6px",
+            "width: 1200px", "max-width: 1200px",
+            "margin: 30px max(16px, calc((100% - 1200px) / 2)) 0", "--dashboard-column-gap: 16px",
+            "--rail-gap: 12px", "--summary-pad-x: 15px", "--metric-column-gap: 6px",
             "padding: 0 0 var(--hdo-bottom-clearance)", "pointer-events: none",
             "min-width: min(190px", "max-width: min(220px",
             "repeat(2, minmax(170px, 1fr))", "grid-auto-rows: auto",
-            "min-height: 440px",
-            "padding: 14px var(--summary-pad-x)",
+            "min-height: 432px",
+            "padding: 15px var(--summary-pad-x)",
             "column-gap: var(--metric-column-gap)",
-            "minmax(0, 1fr) 360px",
-            "repeat(6, max(37px, calc(37px * var(--hdo-scale))))",
+            "minmax(0, 1fr) 436px",
+            "repeat(6, max(38px, calc(38px * var(--hdo-scale))))",
             "var(--hdo-year-label-width) repeat(var(--hdo-year-weeks, 53), var(--hdo-year-cell-size))",
             "--hdo-year-cell-size: clamp(var(--hdo-year-cell-min),",
-            "min-block-size: 6px",
+            "min-block-size: 7px",
             "hdo-progress-headline", "hdo-metric-headline",
             "grid-template-rows: auto 1fr auto", "padding: 15px 16px 14px",
             'hdo-calendar-footer-content .hdo-calendar-context',
@@ -808,7 +821,7 @@ def validate_sources() -> dict:
         surface_contract, visual_matrix, capture_contract, probe_contract,
         surface_registry,
     )):
-        raise ValueError("1.9.1 release authorities use different versions")
+        raise ValueError("1.9.2 release authorities use different versions")
     if surface_registry.get("surfaces") != surface_contract.get("canonical_surfaces"):
         raise ValueError("surface registry differs from the canonical surface authority")
     if capture_plan.release != version:
@@ -895,12 +908,12 @@ def validate_sources() -> dict:
     if not (0 < wide_counts["initial"] <= full_counts["initial"] and wide_counts["restart"] <= full_counts["restart"]):
         raise ValueError("wide 100 percent profile is not a valid subset of the full capture plan")
     if full_counts != {"initial": 114, "restart": 2, "total": 116}:
-        raise ValueError("corrected 1.9.1 full capture count must be 116")
+        raise ValueError("corrected 1.9.2 full capture count must be 116")
     settings_counts = capture_plan.counts("settings")
     if settings_counts != {"initial": 62, "restart": 1, "total": 63}:
-        raise ValueError("minimal 1.9.1 Settings capture count must be exactly 63")
+        raise ValueError("minimal 1.9.2 Settings capture count must be exactly 63")
     if 2 + len(capture_plan.detail_groups("settings")) > 14:
-        raise ValueError("minimal 1.9.1 Settings evidence exceeds 14 sheets")
+        raise ValueError("minimal 1.9.2 Settings evidence exceeds 14 sheets")
     structured_gate_id = "macos-fullscreen-no-space-switch-menu-and-dashboard-gear"
     if capture_plan.profile("settings").get("required_structured_manual_results") != [
         structured_gate_id

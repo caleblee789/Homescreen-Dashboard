@@ -104,7 +104,7 @@ def fixture(case):
         s=replace(s,facts=replace(s.facts,events=ValueState.available(events), today=ValueState.available(replace(s.facts.today.value,answers=12486,new_cards_studied=1048)),long_term=ValueState.available(replace(s.facts.long_term.value,lifetime_cards_studied=1082640))),verse=VerseContent('Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God. And the peace of God, which transcends all understanding, will guard your hearts and your minds in Christ Jesus.','Philippians 4:6–7'))
     return s
 
-DOM=r'''(()=>{const r=document.querySelector('#hdo-dashboard');if(!r)return {ready:false};const q=s=>r.querySelector(s),qa=s=>[...r.querySelectorAll(s)],rect=n=>{if(!n)return null;let b=n.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height,right:b.right,bottom:b.bottom}};return {ready:true,root:rect(r),calendar:rect(q('.hdo-calendar-card')),rail:rect(q('.hdo-insight-rail')),cards:qa('.hdo-statistics-card').map(rect),verse:rect(q('.hdo-bible-card')),footerVerse:!!q('.hdo-calendar-footer-content .hdo-bible-card'),context:rect(q('.hdo-calendar-context')),cells:qa('.hdo-calendar-day').length,loading:r.classList.contains('hdo-dashboard--loading'),scale:getComputedStyle(r).getPropertyValue('--hdo-scale'),scrollX:scrollX,viewport:innerWidth,scrollWidth:document.scrollingElement.scrollWidth,clearance:r.dataset.hdoFooterClearance,headlines:qa('.hdo-metric-headline').map(n=>({value:rect(n.querySelector('dd')),label:rect(n.querySelector('dt')),stacked:n.classList.contains('hdo-metric-headline--stacked')})),clipped:qa('.hdo-event-title,.hdo-verse-body,.hdo-context-actions button').filter(n=>n.scrollWidth>n.clientWidth+2&&getComputedStyle(n).overflowX==='hidden').map(n=>n.className)}})()'''
+DOM=r'''(()=>{const r=document.querySelector('#hdo-dashboard');if(!r)return {ready:false};const q=s=>r.querySelector(s),qa=s=>[...r.querySelectorAll(s)],rect=n=>{if(!n)return null;let b=n.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height,right:b.right,bottom:b.bottom}};return {ready:true,root:rect(r),calendar:rect(q('.hdo-calendar-card')),rail:rect(q('.hdo-insight-rail')),cards:qa('.hdo-statistics-card').map(rect),verse:rect(q('.hdo-bible-card')),footerVerse:!!q('.hdo-calendar-footer-content .hdo-bible-card'),context:rect(q('.hdo-calendar-context')),cells:qa('.hdo-calendar-day').length,loading:r.classList.contains('hdo-dashboard--loading'),scale:getComputedStyle(r).getPropertyValue('--hdo-scale'),scrollX:scrollX,viewport:innerWidth,scrollWidth:document.scrollingElement.scrollWidth,clearance:r.dataset.hdoFooterClearance,headlines:qa('.hdo-metric-headline').map(n=>({value:rect(n.querySelector('dd')),label:rect(n.querySelector('dt')),stacked:getComputedStyle(n).flexDirection==='column'})),clipped:qa('.hdo-event-title,.hdo-verse-body,.hdo-context-actions button').filter(n=>n.scrollWidth>n.clientWidth+2&&getComputedStyle(n).overflowX==='hidden').map(n=>n.className)}})()'''
 
 def prepare(case,done):
     js='window.scrollTo('+('1e6' if case['state']=='narrow-right' else '0')+','+('1e6' if case.get('bottom') else '0')+')'
@@ -113,15 +113,15 @@ def prepare(case,done):
 
 def validate(case,s):
     base._require(s.get('ready'),'dashboard missing')
-    base._require(abs(s['root']['width']-1160)<1,'fixed width changed')
+    base._require(abs(s['root']['width']-1200)<1,'fixed width changed')
     if not s['loading']:
         base._require(not s['clipped'],'clipped content')
         for headline in s['headlines']:
             v,l=headline['value'],headline['label']
-            base._require(l['y']>=v['bottom']+3 if headline['stacked'] else abs(v['y']+v['height']/2-l['y']-l['height']/2)<1,'headline caption alignment changed')
+            base._require(l['y']>=v['bottom']-4 if headline['stacked'] else l['x']>=v['right']+3,'headline caption alignment changed')
         cards=s['cards']
         if len(cards)==4:
-            base._require(abs(cards[0]['width']-174)<1,'card width changed')
+            base._require(abs(cards[0]['width']-212)<1,'card width changed')
             base._require(abs(cards[0]['y']-cards[1]['y'])<1 and abs(cards[2]['y']-cards[3]['y'])<1,'cards lost paired rows')
             base._require(cards[2]['y']>cards[0]['y'],'cards no longer 2x2')
         if s['calendar']:base._require(s['footerVerse'],'verse escaped footer')

@@ -164,12 +164,12 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("width: 4px", year_marker)
 
     def test_shared_shell_uses_fixed_desktop_geometry(self) -> None:
-        self.assertIn("width: 1160px", self.css)
-        self.assertIn("max-width: 1160px", self.css)
-        self.assertIn("margin: 30px max(16px, calc((100% - 1160px) / 2)) 0", self.css)
-        self.assertIn("--dashboard-column-gap: 14px", self.css)
+        self.assertIn("width: 1200px", self.css)
+        self.assertIn("max-width: 1200px", self.css)
+        self.assertIn("margin: 30px max(16px, calc((100% - 1200px) / 2)) 0", self.css)
+        self.assertIn("--dashboard-column-gap: 16px", self.css)
         self.assertIn("--rail-gap: 12px", self.css)
-        self.assertIn("--summary-pad-x: 14px", self.css)
+        self.assertIn("--summary-pad-x: 15px", self.css)
         self.assertIn("--metric-column-gap: 6px", self.css)
         self.assertIn("--hdo-native-footer-height: 60px", self.css)
         self.assertIn("--hdo-native-footer-gap: 24px", self.css)
@@ -178,7 +178,7 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("grid-template-columns: minmax(0, 1fr);", self.css)
         self.assertIn("repeat(2, minmax(170px, 1fr))", self.css)
         self.assertNotIn("repeat(auto-fit", self.css)
-        self.assertIn("minmax(0, 1fr) 360px", self.css)
+        self.assertIn("minmax(0, 1fr) 436px", self.css)
         for retired in ("308px", "640px", "860px", "900px", "1000px", "1220px"):
             self.assertNotIn("hdo-dashboard (min-width: {})".format(retired), self.css)
         self.assertNotRegex(self.css, r"grid-template-columns:\s*repeat\(3")
@@ -190,12 +190,12 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertNotIn("dashboardDensity", self.js)
         self.assertNotIn("hdoWideHeadline", self.js)
         self.assertNotIn("data-hdo-wide-headline", self.css)
-        self.assertIn("min-height: 440px", self.css)
+        self.assertIn("min-height: 432px", self.css)
         self.assertIn("min-height: 182px", self.css)
         stat_card_rule = self.css.rsplit(".hdo-statistics-card {", 1)[1].split("}", 1)[0]
-        self.assertIn("padding: 14px var(--summary-pad-x)", stat_card_rule)
+        self.assertIn("padding: 15px var(--summary-pad-x)", stat_card_rule)
         stat_header_rule = self.css.split(".hdo-stat-card-header {", 1)[1].split("}", 1)[0]
-        self.assertIn("margin-bottom: 9px", stat_header_rule)
+        self.assertIn("margin-bottom: 7px", stat_header_rule)
         stat_title_rule = self.css.split(".hdo-statistics-card h3 {", 1)[1].split("}", 1)[0]
         self.assertIn("font-size: var(--hdo-font-card-title)", stat_title_rule)
         self.assertIn("white-space: normal", stat_title_rule)
@@ -216,8 +216,8 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         self.assertIn("overflow-wrap: anywhere", progress_chip_rule)
         self.assertIn("white-space: normal", progress_chip_rule)
         progress_rule = self.css.split(".hdo-progress-track {", 1)[1].split("}", 1)[0]
-        self.assertIn("min-block-size: 6px", progress_rule)
-        self.assertIn("margin: 0 0 10px", progress_rule)
+        self.assertIn("min-block-size: 7px", progress_rule)
+        self.assertIn("margin: 0 0 12px", progress_rule)
         progress_headline_rule = self.css.split(
             ".hdo-progress-headline {", 1
         )[1].split("}", 1)[0]
@@ -260,7 +260,7 @@ class CorrectedStaticAssetTests(unittest.TestCase):
         year = self.css.split(".hdo-calendar-grid--year {", 1)[1].split("}", 1)[0]
         month = self.css.split(".hdo-calendar-grid--month {", 1)[1].split("}", 1)[0]
         dashboard_buttons = self.css.split("#hdo-dashboard button {", 1)[1].split("}", 1)[0]
-        self.assertIn("repeat(6, max(37px, calc(37px * var(--hdo-scale))))", month)
+        self.assertIn("repeat(6, max(38px, calc(38px * var(--hdo-scale))))", month)
         self.assertIn(
             "var(--hdo-year-label-width) repeat(var(--hdo-year-weeks, 53), var(--hdo-year-cell-size))",
             year,

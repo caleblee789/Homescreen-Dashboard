@@ -143,7 +143,7 @@ class DashboardController:
         self._active_settings_dialog: Optional[Any] = None
 
     def start(self) -> None:
-        mw.addonManager.setWebExports(self.package, r"web/.*\.(css|js|svg)")
+        mw.addonManager.setWebExports(self.package, r"web/.*\.(css|js|svg|woff2)")
         self._install_hooks()
         try:
             mw.addonManager.setConfigUpdatedAction(self.package, self._external_config_update)

@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "release": "1.9.1",
+  "release": "1.9.2",
   "authority": "native-exact-package-settings-and-deck-browser",
   "palette_ids_by_theme": {
     "Sapphire Glass": [
@@ -303,33 +303,33 @@
       "id": "PROD-STATS-WIDE-MONTH",
       "layout": "fixed-2x2",
       "view": "month",
-      "root_width": 1160,
-      "calendar_width_target": 786,
-      "rail_width": 360
+      "root_width": 1200,
+      "calendar_width_target": 748,
+      "rail_width": 436
     },
     {
       "id": "PROD-STATS-WIDE-YEAR",
       "layout": "fixed-2x2",
       "view": "year",
-      "root_width": 1160,
-      "calendar_width_target": 786,
-      "rail_width": 360
+      "root_width": 1200,
+      "calendar_width_target": 748,
+      "rail_width": 436
     },
     {
       "id": "PROD-STATS-INTERMEDIATE",
       "layout": "fixed-2x2",
       "view": "month",
-      "root_width": 1160
+      "root_width": 1200
     },
     {
       "id": "PROD-STATS-NARROW",
       "layout": "fixed-2x2",
       "view": "month",
-      "root_width": 1160
+      "root_width": 1200
     }
   ],
   "dashboard_layout_contract": {
-    "root_width_rule": "1160px",
+    "root_width_rule": "1200px",
     "rendered_deck_gap_range": [
       28,
       30
@@ -337,20 +337,20 @@
     "addon_top_margin_target": 30,
     "desktop_columns": [
       "minmax(0, 1fr)",
-      "360px"
+      "436px"
     ],
-    "desktop_column_gap": 14,
+    "desktop_column_gap": 16,
     "rail_gap": 12,
-    "summary_grid_minimum_height": 440,
+    "summary_grid_minimum_height": 432,
     "summary_grid_shape": [
       2,
       2
     ],
-    "summary_card_minimum_width": 174,
+    "summary_card_minimum_width": 212,
     "summary_card_padding": [
-      14,
-      14,
-      14
+      15,
+      15,
+      15
     ],
     "metric_column_gap": 6,
     "metric_minimum_visible_gap": 6,
@@ -385,7 +385,7 @@
     "long-statistics-values-fit-without-wrap-clip-overlap-ellipsis-or-font-reduction"
   ],
   "dashboard_quality_assertions": [
-    "centered-1160px-shell-with-16px-minimum-side-insets",
+    "centered-1200px-shell-with-16px-minimum-side-insets",
     "single-owner-28-to-30px-rendered-deck-gap",
     "aligned-calendar-and-top-summary-card-edges",
     "month-and-year-shared-split-footer-with-verse-and-separated-event",
@@ -485,21 +485,21 @@
     {
       "id": "PROD-FIXED-WIDE",
       "viewport_width": 1440,
-      "root_width": 1160,
+      "root_width": 1200,
       "layout": "fixed-2x2",
       "view": "month"
     },
     {
       "id": "PROD-FIXED-OVERFLOW",
       "viewport_width": 1191,
-      "root_width": 1160,
+      "root_width": 1200,
       "layout": "fixed-2x2",
       "view": "month"
     },
     {
       "id": "PROD-FIXED-NARROW",
       "viewport_width": 620,
-      "root_width": 1160,
+      "root_width": 1200,
       "layout": "fixed-2x2",
       "view": "month"
     }

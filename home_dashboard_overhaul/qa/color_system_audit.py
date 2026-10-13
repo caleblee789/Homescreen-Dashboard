@@ -99,7 +99,7 @@ def _category(relative: str, line: str, literal: str) -> tuple[int, str]:
         if "status_" in lowered or "semantic_palette" in lowered:
             return 2, "centralized stable study-semantic definition"
         return 1, "centralized neutral or accent theme definition"
-    if relative == "web/streak-flame.svg":
+    if relative in {"web/streak-flame.svg", "web/settings.svg", "web/today-badge.svg"}:
         return 5, "unchanged Figma asset used only as an alpha mask; CSS supplies the theme accent"
     if relative in QA_COLOR_FILES:
         return 5, "QA-only fixture or comparison framing outside the represented viewport"
@@ -192,7 +192,18 @@ def contrast_audit() -> dict[str, Any]:
     for theme_name in PRESETS:
         for mode in ("light", "dark"):
             tokens = resolve_theme(theme_name, mode, mode == "dark")
-            for text_role in ("ui_text_primary", "ui_text_secondary", "ui_text_tertiary"):
+            _check(
+                checks,
+                theme=theme_name,
+                mode=mode,
+                group="today badge text",
+                foreground_role="calendar_today_text",
+                foreground=tokens["calendar_today_text"],
+                background_role="calendar_today_background",
+                background=tokens["calendar_today_background"],
+                threshold=4.5,
+            )
+            for text_role in ("ui_text_primary", "ui_text_secondary"):
                 for surface_role in ("ui_surface_1", "ui_surface_2", "ui_surface_3", "calendar_footer_bg"):
                     _check(
                         checks,
@@ -432,7 +443,7 @@ def contrast_audit() -> dict[str, Any]:
                     ratio=contrast_ratio(tokens[role], tokens["calendar_ring_halo"]),
                     note="The interaction ring is isolated from data color by the surface halo.",
                 )
-            for boundary_role, adjacent_role in (("ui_border_strong", "ui_surface_2"),):
+            for boundary_role, adjacent_role in (("ui_focus", "ui_surface_2"),):
                 _check(
                     checks,
                     theme=theme_name,

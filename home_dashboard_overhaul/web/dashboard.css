@@ -1,21 +1,29 @@
+@font-face {
+  font-family: "HDO Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("InterVariable.woff2") format("woff2");
+}
+
 #hdo-dashboard,
 #hdo-dashboard * {
   box-sizing: border-box;
 }
 
 #hdo-dashboard {
-  --dashboard-column-gap: 14px;
+  --dashboard-column-gap: 16px;
   --rail-gap: 12px;
   --panel-pad-x: 16px;
-  --summary-pad-x: 14px;
+  --summary-pad-x: 15px;
   --metric-column-gap: 6px;
-  --hdo-font-primary: calc(28px * var(--hdo-scale));
+  --hdo-font-primary: calc(30px * var(--hdo-scale));
   --hdo-font-screen: calc(22px * var(--hdo-scale));
   --hdo-font-section: calc(16px * var(--hdo-scale));
-  --hdo-font-card-title: calc(16px * var(--hdo-scale));
+  --hdo-font-card-title: calc(12.5px * var(--hdo-scale));
   --hdo-font-heading: calc(14px * var(--hdo-scale));
   --hdo-font-body: calc(12px * var(--hdo-scale));
-  --hdo-font-support: calc(12px * var(--hdo-scale));
+  --hdo-font-support: calc(11px * var(--hdo-scale));
   --hdo-year-label-width: calc(32px * var(--hdo-scale));
   --hdo-year-cell-min: calc(7px * var(--hdo-scale));
   --hdo-year-cell-size: clamp(var(--hdo-year-cell-min), calc((100cqi - 66px - var(--hdo-year-label-width) - var(--hdo-year-weeks, 53) * 2px) / var(--hdo-year-weeks, 53)), max(10px, var(--hdo-year-cell-min)));
@@ -27,18 +35,19 @@
   background: transparent;
   color: var(--ui-text-primary);
   container: hdo-dashboard / inline-size;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-family: "HDO Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: var(--hdo-font-body);
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
   isolation: isolate;
-  margin: 30px max(16px, calc((100% - 1160px) / 2)) 0;
-  max-width: 1160px;
+  margin: 30px max(16px, calc((100% - 1200px) / 2)) 0;
+  max-width: 1200px;
   padding: 0 0 var(--hdo-bottom-clearance);
   position: relative;
   text-align: left;
   scroll-padding-bottom: var(--hdo-bottom-clearance);
-  width: 1160px;
+  width: 1200px;
 }
 
 /* An over-constrained block's end margin does not extend document overflow.
@@ -214,7 +223,7 @@
 
 #hdo-dashboard .hdo-streak-unit {
   color: var(--ui-text-secondary);
-  font-size: var(--hdo-font-support);
+  font-size: calc(12px * var(--hdo-scale));
   font-weight: 500;
 }
 
@@ -232,7 +241,7 @@
 }
 
 #hdo-dashboard .hdo-refresh-status {
-  color: var(--ui-text-tertiary);
+  color: var(--ui-text-secondary);
   font-size: var(--hdo-font-support);
   line-height: 1.4;
   font-weight: 650;
@@ -255,7 +264,7 @@
   color: var(--ui-text-primary);
   font-size: var(--hdo-font-screen);
   line-height: 1.2;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -.015em;
   margin-bottom: 0;
 }
@@ -494,7 +503,7 @@
   display: grid;
   column-gap: 6px;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: repeat(6, max(37px, calc(37px * var(--hdo-scale))));
+  grid-template-rows: repeat(6, max(38px, calc(38px * var(--hdo-scale))));
   row-gap: 6px;
 }
 
@@ -525,7 +534,7 @@
 
 #hdo-dashboard .hdo-year-weekday-label {
   align-self: center;
-  color: var(--ui-text-tertiary);
+  color: var(--ui-text-secondary);
   font-size: var(--hdo-font-support);
   font-weight: 650;
   grid-column: 1;
@@ -819,7 +828,7 @@
 }
 
 #hdo-dashboard .hdo-legend-endpoint {
-  color: var(--ui-text-tertiary);
+  color: var(--ui-text-secondary);
   font-size: var(--hdo-font-support);
   line-height: 1.4;
 }
@@ -946,7 +955,7 @@
 }
 
 #hdo-dashboard .hdo-context-label {
-  color: var(--ui-text-tertiary);
+  color: var(--ui-text-secondary);
   font-size: var(--hdo-font-support);
   line-height: 1.4;
   font-weight: 400;
@@ -1281,9 +1290,9 @@
   align-content: start;
   min-height: 0;
   min-width: 0;
-  padding: 14px var(--summary-pad-x);
+  padding: 15px var(--summary-pad-x);
   align-self: stretch;
-  min-height: 213px;
+  min-height: 192px;
 }
 
 #hdo-dashboard .hdo-stat-card-header {
@@ -1291,7 +1300,7 @@
   display: flex;
   gap: 3px;
   justify-content: space-between;
-  margin-bottom: 9px;
+  margin-bottom: 7px;
   min-width: 0;
 }
 
@@ -1300,7 +1309,7 @@
   font-size: var(--hdo-font-card-title);
   font-weight: 600;
   letter-spacing: 0;
-  line-height: 1.2;
+  line-height: 1.35;
   margin: 0;
   text-transform: none;
   white-space: normal;
@@ -1353,7 +1362,7 @@
 
 #hdo-dashboard .hdo-metric-row dt {
   color: var(--ui-text-secondary);
-  font-size: var(--hdo-font-body);
+  font-size: calc(11.5px * var(--hdo-scale));
   line-height: 1.4;
   min-width: 0;
   white-space: normal;
@@ -1387,7 +1396,7 @@
 }
 
 #hdo-dashboard .hdo-metric-row.is-unavailable dd {
-  color: var(--ui-text-tertiary);
+  color: var(--ui-text-secondary);
   font-weight: 650;
 }
 
@@ -1415,12 +1424,12 @@
 }
 
 #hdo-dashboard .hdo-progress-track {
-  background: var(--ui-surface-3);
+  background: var(--ui-progress-track);
   border: 0;
   border-radius: 999px;
   display: block;
-  min-block-size: 6px;
-  margin: 0 0 10px;
+  min-block-size: 7px;
+  margin: 0 0 12px;
   overflow: hidden;
   position: relative;
   width: 100%;
@@ -1441,24 +1450,24 @@
   flex-wrap: wrap;
   gap: 6px;
   font-size: var(--hdo-font-primary);
-  font-weight: 650;
-  line-height: 1.2;
-  margin-bottom: 8px;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-bottom: 6px;
 }
 
 #hdo-dashboard .hdo-progress-caption {
   color: var(--ui-text-secondary);
-  font-size: var(--hdo-font-support);
+  font-size: var(--hdo-font-body);
   line-height: 1.4;
   font-weight: 400;
 }
 
 #hdo-dashboard .hdo-metric-row.hdo-metric-headline {
-  align-items: center;
+  align-items: baseline;
   display: flex;
   flex-wrap: nowrap;
-  gap: 6px;
-  margin-bottom: 9px;
+  gap: 4px;
+  margin-bottom: 16px;
   min-width: 0;
 }
 
@@ -1513,7 +1522,7 @@
 }
 
 #hdo-dashboard .hdo-verse-reference {
-  color: var(--ui-text-tertiary);
+  color: var(--ui-text-secondary);
   font-size: var(--hdo-font-support);
   line-height: 1.4;
   justify-self: center;
@@ -1720,11 +1729,11 @@
 
 #hdo-dashboard[data-hdo-has-calendar="true"][data-hdo-has-insights="true"] .hdo-dashboard-layout,
 #hdo-dashboard .hdo-loading-layout {
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) 436px;
 }
 
 #hdo-dashboard .hdo-summary-metrics-grid {
-  min-height: 440px;
+  min-height: 432px;
 }
 
 #hdo-dashboard .hdo-bible-card {
@@ -1753,47 +1762,95 @@
   to { opacity: .9; }
 }
 
-/* Final shared Month/Year composition. */
+/* Refined Figma composition, shared by both calendar views. */
 #hdo-dashboard .hdo-dashboard-header { align-items: center; }
-#hdo-dashboard .hdo-current-streak { min-width: 128px; min-height: 46px; border-radius: 7px; gap: 9px; }
-#hdo-dashboard .hdo-streak-flame { flex-basis: 16px; width: 16px; height: 20px; mask-size: 16px 20px; -webkit-mask-size: 16px 20px; }
+#hdo-dashboard .hdo-current-streak { min-width: 144px; min-height: 53px; border-radius: 10px; gap: 10px; }
+#hdo-dashboard .hdo-settings-icon {
+  background: currentColor;
+  display: block;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  -webkit-mask: url("settings.svg") center / 16px 16px no-repeat;
+  mask: url("settings.svg") center / 16px 16px no-repeat;
+  margin: 0;
+}
 #hdo-dashboard .hdo-header-controls { gap: 12px; flex-wrap: nowrap; }
-#hdo-dashboard .hdo-view-switch { min-width: 112px; padding: 2px; }
-#hdo-dashboard .hdo-view-switch button { min-height: 26px; flex: 1; font-size: calc(11px * var(--hdo-scale)); padding: 3px 8px; border-radius: 6px; }
+#hdo-dashboard .hdo-view-switch { min-width: 112px; padding: 3px; min-height: 34px; border: 0; background: var(--ui-surface-2); }
+#hdo-dashboard .hdo-view-switch button { min-height: 28px; flex: 1; font-size: calc(11.5px * var(--hdo-scale)); padding: 3px 8px; border-radius: 6px; }
 #hdo-dashboard .hdo-view-switch button + button { border-inline-start: 0; }
-#hdo-dashboard .hdo-period-controls { padding: 0; }
-#hdo-dashboard .hdo-period-controls button { font-size: calc(11px * var(--hdo-scale)); }
-#hdo-dashboard button.hdo-settings { background: transparent; border-color: transparent; width: 32px; height: 32px; }
+#hdo-dashboard .hdo-period-controls { padding: 0; min-width: 120px; min-height: 34px; background: var(--ui-surface-1); border-color: var(--ui-border-default); }
+#hdo-dashboard .hdo-period-controls button { font-size: calc(11.5px * var(--hdo-scale)); font-weight: 500; background: transparent; }
+#hdo-dashboard .hdo-period-controls button + button { border-inline-start: 0; }
+#hdo-dashboard .hdo-view-switch button[aria-pressed="true"] { font-weight: 600; }
+#hdo-dashboard button.hdo-settings { background: var(--ui-surface-1); border-color: var(--ui-border-default); display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; padding: 0; width: 32px; height: 34px; }
+#hdo-dashboard .hdo-month-weekdays { color: var(--ui-text-secondary); font-weight: 500; margin-bottom: 8px; min-height: 16px; }
+#hdo-dashboard .hdo-calendar-grid--month { grid-template-rows: repeat(6, max(38px, calc(38px * var(--hdo-scale)))); }
+#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day { border-radius: 6px; padding: 8px 9px; }
+#hdo-dashboard .hdo-calendar-grid--month .hdo-date-number { font-weight: 500; }
+#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day.is-today { outline: 0; }
+#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day.is-today .hdo-date-number {
+  background: transparent;
+  box-shadow: none;
+  color: var(--calendar-today-text);
+  font-weight: 600;
+  margin: -2px -3px;
+  height: 24px;
+  min-width: 24px;
+  padding: 0;
+  isolation: isolate;
+}
+#hdo-dashboard .hdo-calendar-grid--month .hdo-calendar-day.is-today .hdo-date-number::before {
+  background: var(--calendar-today-background);
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  -webkit-mask: url("today-badge.svg") center / 24px 24px no-repeat;
+  mask: url("today-badge.svg") center / 24px 24px no-repeat;
+}
 #hdo-dashboard .hdo-calendar-footer { background: transparent; }
-#hdo-dashboard .hdo-calendar-footer-content .hdo-event-sections { border-top: 1px solid var(--ui-border-subtle); padding-top: 16px; }
+#hdo-dashboard .hdo-calendar-footer-content[data-hdo-footer-verse="true"] { grid-template-columns: minmax(0, 300fr) minmax(0, 389fr); }
+#hdo-dashboard .hdo-calendar-footer-content .hdo-calendar-context { row-gap: 10px; }
+#hdo-dashboard .hdo-calendar-footer-content .hdo-calendar-date-group { gap: 10px; }
+#hdo-dashboard .hdo-calendar-footer-content .hdo-event-sections { border-top: 0; padding-top: 0; }
 #hdo-dashboard .hdo-calendar-footer-content .hdo-selected-date-line { font-size: calc(13px * var(--hdo-scale)); }
-#hdo-dashboard .hdo-date-state-chip { border-radius: 5px; border-color: transparent; font-size: calc(9px * var(--hdo-scale)); min-height: 19px; padding: 3px 5px; }
+#hdo-dashboard .hdo-date-state-chip { border-radius: 5px; border-color: transparent; font-size: calc(9px * var(--hdo-scale)); min-height: 21px; padding: 3px 6px; }
 #hdo-dashboard .hdo-date-state-chip.is-today { border-color: transparent; }
-#hdo-dashboard .hdo-context-actions button { font-size: calc(11px * var(--hdo-scale)); min-height: 28px; font-weight: 400; }
+#hdo-dashboard .hdo-context-actions button { font-size: calc(12px * var(--hdo-scale)); min-height: 32px !important; height: auto; font-weight: 500; padding-inline: 14px !important; border-radius: 7px !important; }
+#hdo-dashboard .hdo-context-actions .hdo-context-action--primary { font-weight: 500; }
+#hdo-dashboard .hdo-context-action--primary { background: var(--ui-accent-soft) !important; border-color: transparent !important; color: var(--ui-accent) !important; }
 #hdo-dashboard .hdo-event-copy { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 8px; }
 #hdo-dashboard .hdo-event-copy > .hdo-context-label { grid-column: 1 / -1; font-size: calc(11px * var(--hdo-scale)); }
 #hdo-dashboard .hdo-event-copy > .hdo-event-meta { grid-column: 1 / -1; order: 2; }
 #hdo-dashboard .hdo-event-row { position: relative; grid-template-columns: minmax(0, 1fr); }
 #hdo-dashboard .hdo-event-row .hdo-context-event-marker { position: absolute; top: 5px; margin-top: 0; }
 #hdo-dashboard .hdo-event-row .hdo-context-label { padding-inline-start: 18px; }
-#hdo-dashboard .hdo-event-heading { min-height: 20px; }
-#hdo-dashboard button.hdo-event-title { font-size: calc(13px * var(--hdo-scale)); }
-#hdo-dashboard button.hdo-event-edit { color: var(--ui-accent); border-color: transparent; padding: 0 3px; min-height: 20px; font-size: calc(11px * var(--hdo-scale)); order: 0; }
+#hdo-dashboard .hdo-event-heading { min-height: 28px; }
+#hdo-dashboard button.hdo-event-title { font-size: calc(12px * var(--hdo-scale)); font-weight: 600; }
+#hdo-dashboard button.hdo-event-edit { color: var(--ui-text-secondary); background: var(--ui-surface-1); border-color: var(--ui-border-default); padding: 3px 10px; min-height: 28px; font-size: calc(12px * var(--hdo-scale)); order: 0; }
 #hdo-dashboard .hdo-event-row--wrapped .hdo-event-heading { grid-column: 1 / -1; }
 #hdo-dashboard .hdo-event-row--wrapped button.hdo-event-edit { justify-self: start; }
-#hdo-dashboard .hdo-lifetime-card .hdo-metric-headline dd { font-size: calc(22px * var(--hdo-scale)); }
-#hdo-dashboard .hdo-progress-card, #hdo-dashboard .hdo-session-card { min-height: 215px; }
-#hdo-dashboard .hdo-loading-calendar-footer { height: auto; min-height: 152px; display: grid; grid-template-columns: 284fr 442fr; gap: 18px; padding: 12px 14px; }
+#hdo-dashboard .hdo-recent-card .hdo-metric-headline dd,
+#hdo-dashboard .hdo-lifetime-card .hdo-metric-headline dd { font-size: calc(26px * var(--hdo-scale)); line-height: calc(26px * 1.35 * var(--hdo-scale)); }
+#hdo-dashboard .hdo-lifetime-card .hdo-metric-headline dd { font-size: calc(24px * var(--hdo-scale)); }
+#hdo-dashboard .hdo-metric-headline dt { font-size: calc(11.5px * var(--hdo-scale)); font-weight: 400; }
+#hdo-dashboard .hdo-metric-headline dd { line-height: 1.35; }
+#hdo-dashboard .hdo-metric-divider { border-top: 1px solid var(--ui-border-default); margin-top: 6px; padding-top: 8px; }
+#hdo-dashboard .hdo-progress-card, #hdo-dashboard .hdo-session-card { min-height: 228px; }
+#hdo-dashboard .hdo-loading-calendar-footer { height: auto; min-height: 138px; display: grid; grid-template-columns: 300fr 389fr; gap: 18px; padding: 16px 0 0; }
 #hdo-dashboard .hdo-loading-region--bible { grid-column: 2; margin: 0; }
-#hdo-dashboard .hdo-loading-metric-card { min-height: 213px; }
+#hdo-dashboard .hdo-loading-metric-card { min-height: 192px; }
+#hdo-dashboard .hdo-loading-metric-card:nth-child(-n+2) { min-height: 228px; }
 #hdo-dashboard .hdo-calendar-card { padding: 20px; }
 #hdo-dashboard .hdo-calendar-shell[data-hdo-calendar-view="month"] { background: transparent; border: 0; padding: 0; }
 #hdo-dashboard .hdo-calendar-footer { margin: 12px 0 0; border-top: 0; overflow: visible; }
 #hdo-dashboard .hdo-calendar-legend { padding-inline: 0; }
-#hdo-dashboard .hdo-calendar-footer-content { padding: 14px 0 0; }
-#hdo-dashboard .hdo-calendar-footer-content .hdo-eyebrow { font-size: calc(10px * var(--hdo-scale)); font-weight: 500; letter-spacing: 0; }
+#hdo-dashboard .hdo-completion-legend i { width: 10px; height: 10px; }
+#hdo-dashboard .hdo-calendar-footer-content { padding: 16px 0 0; }
+#hdo-dashboard .hdo-calendar-footer-content .hdo-eyebrow { font-size: calc(11px * var(--hdo-scale)); font-weight: 600; letter-spacing: 0; text-transform: none; }
 #hdo-dashboard .hdo-calendar-footer-content .hdo-verse { font-weight: 400; }
-#hdo-dashboard .hdo-calendar-footer-content .hdo-verse-reference { font-size: calc(10px * var(--hdo-scale)); }
+#hdo-dashboard .hdo-calendar-footer-content .hdo-verse-reference { font-size: calc(11px * var(--hdo-scale)); }
 
 #hdo-dashboard .hdo-metric-row.hdo-metric-headline--stacked {
   flex-direction: column;

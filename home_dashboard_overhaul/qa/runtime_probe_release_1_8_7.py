@@ -1,10 +1,10 @@
-"""Fail-closed native production and Settings probe for release 1.9.1.
+"""Fail-closed native production and Settings probe for release 1.9.2.
 
 The disposable helper add-on installs this module as ``__init__.py`` and the
 retained 1.8.4 production harness as ``_probe_base.py``.  The retained harness
 supplies exact-package identity, scheduler-limit, Deck Browser mounting, and
 native capture plumbing.  This module replaces its release matrix and
-assertions with the canonical corrected 1.9.1 production and Settings contract.
+assertions with the canonical corrected 1.9.2 production and Settings contract.
 """
 
 from __future__ import annotations
@@ -839,7 +839,7 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     base._require(state.get("view") == case.get("view"), "dashboard view mismatch")
     root = state.get("root") or {}
     root_width = float(root.get("width", 0))
-    base._require(abs(root_width - 1160) <= 0.5, "dashboard is not fixed at 1160px")
+    base._require(abs(root_width - 1200) <= 0.5, "dashboard is not fixed at 1200px")
     base._require(state.get("rootPosition") not in {"fixed", "sticky"}, "dashboard root left document flow")
     base._require(abs(_pixels(state.get("rootMarginTop")) - 30) <= 0.5, "dashboard top margin is not the calibrated 30px")
     base._require(bool(state.get("horizontalEdgesReachable")), "document cannot reach both dashboard edges")
@@ -860,17 +860,17 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
     )
     if bool(state.get("progressTrackVisible")):
         base._require(
-            abs(float(state.get("progressTrackHeight", 0)) - 6) <= 0.5,
-            "numeric progress track is not 6px",
+            abs(float(state.get("progressTrackHeight", 0)) - 7) <= 0.5,
+            "numeric progress track is not 7px",
         )
         base._require(bool(state.get("progressLabelAbove")), "progress headline is not aligned above the track")
         base._require(
-            abs(float(state.get("progressHeadlineToBarGap", -99)) - 8) <= 1,
-            "progress headline-to-bar gap is not 8px",
+            abs(float(state.get("progressHeadlineToBarGap", -99)) - 6) <= 1,
+            "progress headline-to-bar gap is not 6px",
         )
         base._require(
-            abs(float(state.get("progressBarToMetricsGap", -99)) - 10) <= 1,
-            "progress bar-to-first-metric gap is not 10px",
+            abs(float(state.get("progressBarToMetricsGap", -99)) - 12) <= 1,
+            "progress bar-to-first-metric gap is not 12px",
         )
     base._require(int(state.get("statisticsCardCount", 0)) == 4, "dashboard did not render four statistic cards")
     expected_metric_columns = 2
@@ -896,12 +896,12 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
         base._require(not bool(state.get("verseInRail")), "Year retains a standalone verse card")
         base._require(float(state.get("railBottomDelta", 99)) <= 1, "Year rail reserves space below statistics")
     base._require(bool(state.get("layoutSideBySide")), "wide dashboard did not place calendar and rail side by side")
-    base._require(abs(float(state.get("railWidth", 0)) - 360) <= 1, "wide statistics rail is not 360px")
-    base._require(abs(float(state.get("layoutColumnGap", 0)) - 14) <= 1, "wide dashboard column gap is not 14px")
+    base._require(abs(float(state.get("railWidth", 0)) - 436) <= 1, "wide statistics rail is not 436px")
+    base._require(abs(float(state.get("layoutColumnGap", 0)) - 16) <= 1, "wide dashboard column gap is not 16px")
     base._require(float(state.get("topEdgeDelta", 99)) <= 1, "wide calendar and statistics rail do not share a top edge")
     gap = state.get("deckDashboardGap")
     base._require(gap is not None and 28 <= float(gap) <= 30.5, "native deck-to-dashboard gap is not 28-30px")
-    base._require(float(metrics_grid.get("height", 0)) >= 439, "wide summary grid is below its 440px target")
+    base._require(float(metrics_grid.get("height", 0)) >= 431, "wide summary grid is below its 432px target")
     base._require(
         int(state.get("nonSelectedCellShadowCount", 1)) == 0,
         "unselected calendar cells retain shadows",
@@ -932,7 +932,7 @@ def _validate_dom(case: Mapping[str, Any], state: Mapping[str, Any]) -> None:
         base._require(
             9 <= float(state.get("yearCellWidthMin", 0))
             and float(state.get("yearCellWidthMax", 99)) <= 10.5,
-            "1160px Year cells are outside the 9-10px target",
+            "1200px Year cells are outside the 9-10px target",
         )
     special = str(case.get("special", ""))
     if special == "no-due":

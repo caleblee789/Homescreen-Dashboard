@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.2 — 2026-10-12
+
+- Refined the fixed dashboard layout, typography, calendar controls, and shared footer.
+- Updated all four themes and sixteen calendar palettes with coordinated light and dark colors while preserving saved preference IDs.
+- Placed Cards studied beside the Session and All Time totals, made progress-row spacing consistent, and centered the settings icon. Larger text and long totals retain a readable fitted layout.
+
 ## 1.9.1 — 2026-10-04
 
 - Corrected Year calendar arrow-key navigation to follow its visible rows and columns: Left and Right move one week; Up and Down move one day. Month navigation keeps its existing day and week steps.

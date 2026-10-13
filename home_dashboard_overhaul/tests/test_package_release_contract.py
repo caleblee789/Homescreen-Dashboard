@@ -20,11 +20,12 @@ class PackageReleaseContractTests(unittest.TestCase):
                 "migration.py", "models.py", "README.md", "CHANGELOG.md",
                 "renderer.py", "settings.py", "shared_addon_menu.py", "settings_model.py", "themes.py",
                 "THIRD_PARTY_NOTICES.md", "ui_primitives.py", "verse.py",
-                "web/dashboard.css", "web/dashboard.js", "web/streak-flame.svg", "user_files/README.txt",
+                "web/dashboard.css", "web/dashboard.js", "web/streak-flame.svg", "web/settings.svg", "web/today-badge.svg",
+                "web/InterVariable.woff2", "web/Inter-LICENSE.txt", "user_files/README.txt",
                 "assets/buy_me_a_coffee.png",
             ),
         )
-        self.assertEqual(len(build.PACKAGE_FILES), 27)
+        self.assertEqual(len(build.PACKAGE_FILES), 31)
         self.assertFalse(set(build.PACKAGE_FILES) & build.DEFERRED_SOURCE_FILES)
         self.assertFalse(any(name.startswith("_vendor/") for name in build.PACKAGE_FILES))
 

@@ -250,6 +250,8 @@ def _metric(
     compact_value: object | None = None,
 ) -> str:
     classes = [modifier] if modifier else []
+    if metric_key in {"queue.eta", "long_term.longest_streak"}:
+        classes.append("hdo-metric-divider")
     if metric_key in {"today.answers", "last_seven_days.cards_studied", "long_term.lifetime_cards_studied"}:
         classes.append("hdo-metric-headline")
     if (
@@ -910,10 +912,7 @@ def _calendar_controls(config: Mapping[str, Any]) -> str:
         '<button type="button" data-hdo-calendar="next" aria-label="Next period" title="Next period">›</button></div>'
         '<button type="button" class="hdo-settings" data-hdo-command="calendar-settings" '
         'aria-label="Calendar settings" title="Calendar settings">'
-        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
-        '<path d="M9.7 2.8h4.6l.6 2.2c.5.2 1 .5 1.5.9l2.2-.6 2.3 4-1.6 1.6v2.2l1.6 1.6-2.3 4-2.2-.6c-.5.4-1 .7-1.5.9l-.6 2.2H9.7L9.1 19c-.5-.2-1-.5-1.5-.9l-2.2.6-2.3-4 1.6-1.6v-2.2L3.1 9.3l2.3-4 2.2.6c.5-.4 1-.7 1.5-.9l.6-2.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>'
-        '<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/>'
-        '</svg></button>'
+        '<span class="hdo-settings-icon" aria-hidden="true"></span></button>'
         '</div>'
     ).format("true" if view == "month" else "false", "true" if view == "year" else "false")
 

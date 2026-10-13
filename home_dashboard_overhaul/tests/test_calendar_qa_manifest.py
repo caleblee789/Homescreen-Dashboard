@@ -38,7 +38,7 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
 
     def test_manifest_is_the_authoritative_1_8_7_schema_eight_contract(self) -> None:
         self.assertEqual(self.manifest["schema_version"], 8)
-        self.assertEqual(self.manifest["release"], "1.9.1")
+        self.assertEqual(self.manifest["release"], "1.9.2")
         self.assertEqual(
             self.manifest["contract"],
             "corrected-native-settings-and-production-dashboard-release-ui-2026-08-26",
@@ -64,23 +64,23 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(settings["page_switching"], "native-stacked-widget-only-no-render-timer")
         dashboard = self.manifest["dashboard_architecture"]
         self.assertEqual(
-            dashboard["width_rule"], "1160px"
+            dashboard["width_rule"], "1200px"
         )
-        self.assertEqual(dashboard["maximum_width"], 1160)
+        self.assertEqual(dashboard["maximum_width"], 1200)
         self.assertEqual(dashboard["minimum_side_margin"], 16)
         self.assertEqual(dashboard["top_spacing"], 30)
         self.assertEqual(dashboard["rendered_deck_gap_range"], [28, 30])
-        self.assertEqual(dashboard["desktop_calendar_width_target"], 786)
-        self.assertEqual(dashboard["desktop_column_gap"], 14)
-        self.assertEqual(dashboard["desktop_rail_width"], 360)
+        self.assertEqual(dashboard["desktop_calendar_width_target"], 748)
+        self.assertEqual(dashboard["desktop_column_gap"], 16)
+        self.assertEqual(dashboard["desktop_rail_width"], 436)
         self.assertEqual(dashboard["horizontal_scroll_owner"], "document")
         self.assertEqual(dashboard["fixed_metric_columns"], 2)
         self.assertEqual(dashboard["rail_gap"], 12)
-        self.assertEqual(dashboard["summary_grid_minimum_height"], 440)
+        self.assertEqual(dashboard["summary_grid_minimum_height"], 432)
         self.assertEqual(dashboard["summary_grid_shape"], [2, 2])
         self.assertEqual(dashboard["summary_grid_gap"], 12)
-        self.assertEqual(dashboard["summary_card_minimum_width"], 174)
-        self.assertEqual(dashboard["summary_card_padding"], [14, 14, 14])
+        self.assertEqual(dashboard["summary_card_minimum_width"], 212)
+        self.assertEqual(dashboard["summary_card_padding"], [15, 15, 15])
         self.assertEqual(dashboard["metric_column_gap"], 6)
         self.assertEqual(dashboard["metric_minimum_visible_gap"], 6)
         self.assertEqual(dashboard["month_calendar_minimum_height"], 0)
@@ -237,16 +237,16 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
         self.assertEqual(
             self.matrix["dashboard_layout_contract"],
             {
-                "root_width_rule": "1160px",
+                "root_width_rule": "1200px",
                 "rendered_deck_gap_range": [28, 30],
                 "addon_top_margin_target": 30,
-                "desktop_columns": ["minmax(0, 1fr)", "360px"],
-                "desktop_column_gap": 14,
+                "desktop_columns": ["minmax(0, 1fr)", "436px"],
+                "desktop_column_gap": 16,
                 "rail_gap": 12,
-                "summary_grid_minimum_height": 440,
+                "summary_grid_minimum_height": 432,
                 "summary_grid_shape": [2, 2],
-                "summary_card_minimum_width": 174,
-                "summary_card_padding": [14, 14, 14],
+                "summary_card_minimum_width": 212,
+                "summary_card_padding": [15, 15, 15],
                 "metric_column_gap": 6,
                 "metric_minimum_visible_gap": 6,
                 "horizontal_scroll_owner": "document",
@@ -273,21 +273,21 @@ class CanonicalUiReleaseQaContractTests(unittest.TestCase):
                 for case in self.matrix["statistics_accuracy_cases"]
             ],
             [
-                ("PROD-STATS-WIDE-MONTH", 1160, "fixed-2x2"),
-                ("PROD-STATS-WIDE-YEAR", 1160, "fixed-2x2"),
-                ("PROD-STATS-INTERMEDIATE", 1160, "fixed-2x2"),
-                ("PROD-STATS-NARROW", 1160, "fixed-2x2"),
+                ("PROD-STATS-WIDE-MONTH", 1200, "fixed-2x2"),
+                ("PROD-STATS-WIDE-YEAR", 1200, "fixed-2x2"),
+                ("PROD-STATS-INTERMEDIATE", 1200, "fixed-2x2"),
+                ("PROD-STATS-NARROW", 1200, "fixed-2x2"),
             ],
         )
         self.assertEqual(
             [(case["viewport_width"], case["root_width"], case["layout"])
              for case in self.matrix["fixed_viewport_cases"]],
-            [(1440, 1160, "fixed-2x2"), (1191, 1160, "fixed-2x2"), (620, 1160, "fixed-2x2")],
+            [(1440, 1200, "fixed-2x2"), (1191, 1200, "fixed-2x2"), (620, 1200, "fixed-2x2")],
         )
         self.assertEqual(
             self.matrix["dashboard_quality_assertions"],
             [
-                "centered-1160px-shell-with-16px-minimum-side-insets",
+                "centered-1200px-shell-with-16px-minimum-side-insets",
                 "single-owner-28-to-30px-rendered-deck-gap",
                 "aligned-calendar-and-top-summary-card-edges",
                 "month-and-year-shared-split-footer-with-verse-and-separated-event",

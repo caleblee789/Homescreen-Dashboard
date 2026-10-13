@@ -123,9 +123,9 @@ def stress_snapshot(reference: date, *, events_enabled: bool = True):
 class PreviewHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         request = urlparse(self.path)
-        if request.path in {"/web/dashboard.css", "/web/dashboard.js", "/web/streak-flame.svg"}:
+        if request.path in {"/web/dashboard.css", "/web/dashboard.js", "/web/streak-flame.svg", "/web/settings.svg", "/web/today-badge.svg", "/web/InterVariable.woff2"}:
             asset = ROOT / request.path.lstrip("/")
-            mime = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml"}[asset.suffix]
+            mime = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml", ".woff2": "font/woff2"}[asset.suffix]
             self._send(asset.read_bytes(), mime)
             return
         if request.path != "/":
@@ -159,6 +159,9 @@ class PreviewHandler(BaseHTTPRequestHandler):
                 },
             }
         )
+        palette = query.get("palette", [""])[0]
+        if palette:
+            config["heatmap"]["presets_by_theme"][theme] = palette
         fixture = query.get("fixture", ["reference"])[0]
         events_enabled = query.get("events", ["present"])[0] != "none"
         snapshot = (

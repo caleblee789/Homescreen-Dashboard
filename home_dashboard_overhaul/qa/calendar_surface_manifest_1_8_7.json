@@ -1,6 +1,6 @@
 {
   "schema_version": 8,
-  "release": "1.9.1",
+  "release": "1.9.2",
   "contract": "corrected-native-settings-and-production-dashboard-release-ui-2026-08-26",
   "dashboard_order": [
     "study_calendar",
@@ -38,31 +38,31 @@
     "footer_ownership": "reserved-error-row-plus-fixed-final-action-row-with-ordinary-page-padding"
   },
   "dashboard_architecture": {
-    "width_rule": "1160px",
-    "maximum_width": 1160,
+    "width_rule": "1200px",
+    "maximum_width": 1200,
     "minimum_side_margin": 16,
     "top_spacing": 30,
     "rendered_deck_gap_range": [
       28,
       30
     ],
-    "desktop_calendar_width_target": 786,
-    "desktop_column_gap": 14,
-    "desktop_rail_width": 360,
+    "desktop_calendar_width_target": 748,
+    "desktop_column_gap": 16,
+    "desktop_rail_width": 436,
     "horizontal_scroll_owner": "document",
     "fixed_metric_columns": 2,
     "rail_gap": 12,
-    "summary_grid_minimum_height": 440,
+    "summary_grid_minimum_height": 432,
     "summary_grid_shape": [
       2,
       2
     ],
     "summary_grid_gap": 12,
-    "summary_card_minimum_width": 174,
+    "summary_card_minimum_width": 212,
     "summary_card_padding": [
-      14,
-      14,
-      14
+      15,
+      15,
+      15
     ],
     "metric_column_gap": 6,
     "metric_minimum_visible_gap": 6,
@@ -347,7 +347,7 @@
         "dashboard",
         "geometry"
       ],
-      "requirement": "The centered transparent root remains in normal flow at 1160px, with one add-on-owned 30 px top margin producing a measured 28-to-30 px deck-to-dashboard gap, a 14 px desktop column gap, a 360 px rail, and no root viewport-height or overflow clipping."
+      "requirement": "The centered transparent root remains in normal flow at 1200px, with one add-on-owned 30 px top margin producing a measured 28-to-30 px deck-to-dashboard gap, a 16 px desktop column gap, a 436 px rail, and no root viewport-height or overflow clipping."
     },
     {
       "id": "DASH-CLEARANCE",
@@ -364,7 +364,7 @@
         "statistics",
         "geometry"
       ],
-      "requirement": "The fixed 360 px rail uses 12 px gaps, 174 px columns, and a 440 px minimum-height 2-by-2 grid. Cards use 14 px padding and share heights within each row, growing with content. Metric rows retain 6 px label-to-value gaps. Headline captions remain centered beside their numbers when they fit, otherwise stack beneath with a 4 px gap. Long numbers wrap without clipping, abbreviation, font reduction, or internal scrolling."
+      "requirement": "The fixed 436 px rail uses 12 px gaps, 212 px columns, and a 432 px minimum-height 2-by-2 grid. Cards use 15 px padding and share heights within each row, growing with content. Metric rows retain 6 px label-to-value gaps. Session and All Time captions sit beneath their numbers; Last 7 Days stays beside its number when it fits and stacks when required. Long numbers wrap without clipping, abbreviation, font reduction, or internal scrolling."
     },
     {
       "id": "DASH-RESPONSIVE",
@@ -372,7 +372,7 @@
         "dashboard",
         "responsive"
       ],
-      "requirement": "The dashboard stays 1160 CSS pixels wide with a 360-pixel rail and two-column statistics at every viewport width. Smaller windows scroll horizontally through the document without rearrangement or typography reduction."
+      "requirement": "The dashboard stays 1200 CSS pixels wide with a 436-pixel rail and two-column statistics at every viewport width. Smaller windows scroll horizontally through the document without rearrangement or typography reduction."
     },
     {
       "id": "DASH-VIEW-ALIGNMENT",
@@ -413,7 +413,7 @@
         "calendar",
         "footer"
       ],
-      "requirement": "The legend remains unchanged. Month details use 10 px 14 px padding, 40/60 date-event columns with an 18 px gap above 640 px of calendar content width, and a wrapping single row when empty. Year uses 12 px 14 px padding and 52/48 context-verse columns with a 16 px gap above 660 px, stacking with a 12 px gap below. Dates retain an 8 px badge gap, cards actions stay with their date, event context is inline, Edit stays beside its title, and metadata follows within 3 px. Titles wrap completely; empty contexts contain one appropriate status without event rows or controls. Existing lookup, fallback, browsing, editing, adding, tooltips, selection, and Most Missed behavior remain intact."
+      "requirement": "The legend remains unchanged. Month details use 10 px 15 px padding, 40/60 date-event columns with an 18 px gap above 640 px of calendar content width, and a wrapping single row when empty. Year uses 12 px 15 px padding and 52/48 context-verse columns with a 16 px gap above 660 px, stacking with a 12 px gap below. Dates retain an 8 px badge gap, cards actions stay with their date, event context is inline, Edit stays beside its title, and metadata follows within 3 px. Titles wrap completely; empty contexts contain one appropriate status without event rows or controls. Existing lookup, fallback, browsing, editing, adding, tooltips, selection, and Most Missed behavior remain intact."
     },
     {
       "id": "DASH-VERSE",
@@ -512,7 +512,7 @@
         "release",
         "archive"
       ],
-      "requirement": "The reproducible 1.9.1 archive passes its allowlist, safe-path, byte-parity, manifest/assets, secret/link, and exact-installed-hash gates."
+      "requirement": "The reproducible 1.9.2 archive passes its allowlist, safe-path, byte-parity, manifest/assets, secret/link, and exact-installed-hash gates."
     },
     {
       "id": "ISOLATION",

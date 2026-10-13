@@ -31,7 +31,7 @@ if str(PACKAGE_PARENT) not in sys.path:
 from home_dashboard_overhaul.qa.color_system_audit import write_release_reports
 
 
-RELEASE = "1.9.1"
+RELEASE = "1.9.2"
 THEMES = (
     ("SG", "Sapphire Glass", "sapphire-glass"),
     ("GR", "Graphite", "graphite"),

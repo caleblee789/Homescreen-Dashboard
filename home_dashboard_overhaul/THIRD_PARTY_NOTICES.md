@@ -33,6 +33,12 @@ exactly 500 quoted verses, less than 25% of its textual content, and no complete
 book. See [Tyndale's current permissions guidance](https://www.tyndale.com/permissions)
 before redistributing a materially changed verse library or commercial product.
 
+## Inter font
+
+The dashboard bundles the unmodified Inter variable font by The Inter Project
+Authors (https://github.com/rsms/inter). Its SIL Open Font License 1.1 and
+copyright notice are included in `web/Inter-LICENSE.txt`.
+
 ## Legacy source acknowledgements
 
 The product behavior was also informed by the locally supplied New Cards Counter,

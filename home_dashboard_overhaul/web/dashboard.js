@@ -531,9 +531,7 @@
         probe.textContent = text;
         return probe.getBoundingClientRect().width;
       }
-      var captionWidth = Math.max.apply(null, label.textContent.trim().split(/\s+/).map(function (word) {
-        return width(label, word);
-      }));
+      var captionWidth = width(label, label.textContent.trim());
       var gap = parseFloat(global.getComputedStyle(headline).columnGap) || 0;
       var needed = width(value, value.innerText.trim()) + captionWidth + gap;
       probe.remove();
@@ -557,6 +555,11 @@
     }
 
     updateContentFit();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () {
+        if (root.isConnected) updateContentFit();
+      });
+    }
     if (typeof global.ResizeObserver === "function") {
       new global.ResizeObserver(updateContentFit).observe(root);
     } else {

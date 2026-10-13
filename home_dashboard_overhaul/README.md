@@ -1,11 +1,24 @@
-# Home Screen Dashboard 1.9.1
+# Home Screen Dashboard 1.9.2
 
 Home Screen Dashboard is a calendar-first Deck Browser dashboard for Anki
 Desktop 26.8. It combines study history, due work, local events, stable study
 metrics, and a rotating Bible verse without patching Anki's private Deck
 Browser or statistics classes.
 
-## What changed in 1.9.1
+## What changed in 1.9.2
+
+The current Figma dashboard uses a 1,200 px layout with a 748 px calendar,
+16 px panel gap, and 436 px statistics rail. It includes the local Inter font,
+refined streak and navigation controls, and shared Month/Year footer. Session,
+Last 7 Days, and All Time captions sit beside their headline numbers when space
+permits. Progress rows use consistent spacing, and the settings icon is centered.
+Study metrics and saved preference IDs remain compatible.
+
+Themes and all 16 calendar palettes follow the finalized Figma colors: authored
+light and dark surfaces, control states, study-status colors, and six-step
+calendar ramps. Saved theme and palette IDs remain compatible.
+
+## Earlier 1.9.1 changes
 
 Arrow keys now follow the visible Year calendar: Left and Right move one week,
 and Up and Down move one day. Month navigation retains its existing behavior.
@@ -99,11 +112,11 @@ See the [1.9.0 changelog](CHANGELOG.md) for the fixed Month and Year layout, the
   remain remembered independently for each theme and are saved with the draft.
 - Month is always 42 cells. Year uses one 53-week tree with square cells.
   Calendar legend and event-summary groups disappear when their features are disabled.
-- The production root is transparent and stays at a fixed 1,160 CSS-pixel width
+- The production root is transparent and stays at a fixed 1,200 CSS-pixel width
   in normal document flow, with a 30 px top margin. It is centered when space
   permits and keeps at least 16 px side insets. Smaller windows scroll
   horizontally through the document without shrinking text or rearranging
-  panels. The calendar and 360 px insight rail remain side by side, with a
+  panels. The calendar and 436 px insight rail remain side by side, with a
   two-column statistics grid. Dashboard height follows its content. The root
   measures Anki's visible normally positioned, fixed, or sticky bottom action
   container and maintains a 24 px clearance, using 60 px only as the
@@ -176,7 +189,7 @@ work remains deferred and is not packaged.
 
 ## Install
 
-Install `home-dashboard-overhaul-1.9.1.ankiaddon` through **Tools → Add-ons →
+Install `home-dashboard-overhaul-1.9.2.ankiaddon` through **Tools → Add-ons →
 Install from file**, restart Anki, and disable any legacy source add-ons named
 by the activation card. The manifest is pinned to Anki Desktop 26.8.
 
@@ -194,8 +207,8 @@ python3 home_dashboard_overhaul/qa/validate_settings_window_contract_1_8_7.py
 python3 home_dashboard_overhaul/tools/build_ankiaddon.py
 ```
 
-The builder creates one 27-member allowlisted archive, checks its version and
-safe paths, validates the 1.9.1 release authorities, and verifies every
+The builder creates one 31-member allowlisted archive, checks its version and
+safe paths, validates the 1.9.2 release authorities, and verifies every
 packaged byte against source. The canonical plan contains 116 native frames,
 including 63 Settings frames at 100% application font and two total
 controlled-restart states. Settings presentation is capped at 14 sheets.
@@ -214,6 +227,6 @@ explicitly unrun, unclaimed, and nonblocking for 1.8.7.
 Copyright 2026. Licensed under AGPL-3.0-or-later. See
 `THIRD_PARTY_NOTICES.md` for Scripture and upstream notices.
 
-The final Month and Year dashboards share a fixed 1160 CSS-pixel layout: a 786-pixel calendar, 14-pixel gap, and 360-pixel statistics rail. Four statistics cards remain in two equal columns with 12-pixel gaps. Both views place the verse beside the selected-date and event details in the calendar footer. Narrow windows scroll horizontally; Year month spacing is unchanged.
+The final Month and Year dashboards share a fixed 1200 CSS-pixel layout: a 748-pixel calendar, 16-pixel gap, and 436-pixel statistics rail. Four statistics cards remain in two equal columns with 12-pixel gaps. Both views place the verse beside the selected-date and event details in the calendar footer. Narrow windows scroll horizontally; Year month spacing is unchanged.
 
-Dashboard sections are always visible, including Events. Legacy section-visibility flags are restored to enabled when configuration is loaded. An empty verse library displays “No verse selected.” in the shared footer. “Cards studied” stays vertically centered beside its number when it fits, and moves underneath at enlarged text sizes or with long values.
+Dashboard sections are always visible, including Events. Legacy section-visibility flags are restored to enabled when configuration is loaded. An empty verse library displays “No verse selected.” in the shared footer. “Cards studied” shares its number’s baseline when it fits, and moves underneath at enlarged text sizes or with long values.

@@ -49,8 +49,8 @@ class SettingsReleaseContractTests(unittest.TestCase):
         )
 
     def test_release_metadata_and_schema_eight_are_current(self) -> None:
-        self.assertEqual(self.manifest["human_version"], "1.9.1")
-        self.assertEqual(self.settings_window_contract["release"], "1.9.1")
+        self.assertEqual(self.manifest["human_version"], "1.9.2")
+        self.assertEqual(self.settings_window_contract["release"], "1.9.2")
         self.assertEqual(self.settings_window_contract["schema_version"], 8)
         self.assertEqual(
             self.settings_window_contract["settings_profile_acceptance_gate"],
@@ -190,7 +190,7 @@ class SettingsReleaseContractTests(unittest.TestCase):
                 ]
                 for level in range(6)
             ),
-            ("#22262D", "#2B333D", "#434F5F", "#606F83", "#8291A4", "#AEBAC9"),
+            ("#24262C", "#2E3034", "#45494F", "#5D646D", "#878E99", "#A9B0BA"),
         )
 
     def test_settings_palette_is_owned_only_by_anki_appearance(self) -> None:

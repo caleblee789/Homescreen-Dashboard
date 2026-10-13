@@ -195,6 +195,8 @@ def caption_for(path: Path, captions: Mapping[str, str] | None = None) -> str:
             stable_id,
             suffix.replace("-", " ").title(),
         )
+    if captions is not None and path.stem in captions:
+        return captions[path.stem]
     key = path.name[:2]
     return "{}  {}".format(key, label_for(path))
 
